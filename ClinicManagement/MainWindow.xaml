@@ -227,10 +227,10 @@
                                     <RowDefinition Height="auto"></RowDefinition>
                                 </Grid.RowDefinitions>
                                 <Grid Grid.Row="0">
-                                    <TextBlock Text="Khách hàng" HorizontalAlignment="Center"></TextBlock>
+                                    <TextBlock Text="Thống kê" HorizontalAlignment="Center"></TextBlock>
                                 </Grid>
                                 <Grid Grid.Row="1">
-                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Human" />
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="MonitorDashboard" />
                                 </Grid>
                             </Grid>
 
