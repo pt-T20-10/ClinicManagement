@@ -1,0 +1,265 @@
+﻿<Window x:Class="ClinicManagement.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClinicManagement"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        mc:Ignorable="d"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        DataContext="{StaticResource MainVM}"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Name="mainWindow"
+        Style="{StaticResource MaterialDesignWindow}"
+        Height="1000" Width="1400" 
+        xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
+        WindowStartupLocation="CenterScreen">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=mainWindow}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Grid.ColumnSpan="2">
+            <uc:ControlBarUC Tag="{Binding Title, ElementName=mainWindow}"></uc:ControlBarUC>
+        </Grid>
+
+        <materialDesign:Card Grid.Row="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="100"></RowDefinition>
+                    <RowDefinition ></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Logo + Tên -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                        <TextBlock Text="MediClinic" FontWeight="Bold" FontSize="28" Foreground="Black"/>
+                        <TextBlock Text="Hệ thống quản lý phòng khám" FontSize="18" Foreground="Gray"/>
+                    </StackPanel>
+
+                    <!-- Tìm kiếm -->
+                    <TextBox Grid.Column="1" Margin="111,0,519,0" VerticalAlignment="Center"
+                            Width="500" Height="36"
+                            materialDesign:HintAssist.Hint="Tìm kiếm bệnh nhân, lịch hẹn..."
+                            Foreground="Black"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            materialDesign:TextFieldAssist.HasClearButton="True" Grid.ColumnSpan="2"
+                 />
+
+                    <!-- Nút chức năng -->
+                    <StackPanel HorizontalAlignment="Right" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" >
+                        <Button   Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm lịch hẹn" Style="{StaticResource MaterialDesignOutlinedButton}" />
+                        <Button  Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bệnh nhân" Style="{StaticResource MaterialDesignOutlinedButton}" />
+                        <!-- User Profile Section - Added in 3rd row -->
+                        <materialDesign:Card Padding="15 5 15 5">
+                            <Grid  Height="Auto">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- User Info -->
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Bs. Nguyễn Văn A" Foreground="Black" FontWeight="Medium" FontSize="14"/>
+                                    <TextBlock Text="Quản trị viên" Foreground="#AAAAAA" FontSize="12"/>
+                                </StackPanel>
+                            </Grid>
+                        </materialDesign:Card>
+                    </StackPanel>
+                </Grid>
+                <TabControl Grid.Row="1"
+                         TabStripPlacement="Left">
+                    <TabItem Width="200" Height="80" Padding="0">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Tổng quan" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="TriangleWave" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+                        <uc:DashBoardUC></uc:DashBoardUC>
+                    </TabItem>
+                    <TabItem Width="200" Height="80" Padding="0">
+                        <TabItem.Header>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Bệnh nhân" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="AccountMultiple" />
+                                </Grid>
+                            </Grid>
+                        </TabItem.Header>
+
+
+                    </TabItem>
+
+
+                    <TabItem Width="200" Height="80">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Khám bệnh" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1" Height="24" VerticalAlignment="Bottom">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="MedicalCottonSwab" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+
+                    </TabItem>
+
+
+                    <TabItem Width="200" Height="80"  Padding="0">
+
+                        <TabItem.Header>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Lịch hẹn" HorizontalAlignment="Center"/>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Calendar" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+
+
+
+                    </TabItem>
+                    <TabItem Width="200" Height="80" Padding="0">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Kho" HorizontalAlignment="Center" Height="17" VerticalAlignment="Top"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Dns" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+
+                    </TabItem>
+                    <TabItem Width="200" Height="80"  Padding="0">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Bán thuốc" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Pill" />
+                                </Grid>
+                            </Grid>
+                        </TabItem.Header>
+
+                    </TabItem>
+                    <TabItem Width="200" Height="80" Padding="0">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Bác sĩ " HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Doctor" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+
+                    </TabItem>
+                    <TabItem Width="200" Height="80">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Khách hàng" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Human" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+
+                    </TabItem>
+                    <TabItem Width="200" Height="80">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
+                                    <TextBlock Text="Cài đặt" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1" Height="24" VerticalAlignment="Bottom">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="CogOutline" />
+                                </Grid>
+                            </Grid>
+
+                        </TabItem.Header>
+
+                    </TabItem>
+                </TabControl>
+
+            </Grid>
+        </materialDesign:Card>
+
+
+    </Grid>
+</Window>
