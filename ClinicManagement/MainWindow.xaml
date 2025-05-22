@@ -56,14 +56,7 @@
                         <TextBlock Text="Hệ thống quản lý phòng khám" FontSize="18" Foreground="Gray"/>
                     </StackPanel>
 
-                    <!-- Tìm kiếm -->
-                    <TextBox Grid.Column="1" Margin="111,0,519,0" VerticalAlignment="Center"
-                            Width="500" Height="36"
-                            materialDesign:HintAssist.Hint="Tìm kiếm bệnh nhân, lịch hẹn..."
-                            Foreground="Black"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                            materialDesign:TextFieldAssist.HasClearButton="True" Grid.ColumnSpan="2"
-                 />
+                 
 
                     <!-- Nút chức năng -->
                     <StackPanel HorizontalAlignment="Right" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" >
@@ -85,6 +78,8 @@
                         </materialDesign:Card>
                     </StackPanel>
                 </Grid>
+                <!--#region Tab control-->
+               
                 <TabControl Grid.Row="1"
                          TabStripPlacement="Left">
                     <TabItem Width="200" Height="80" Padding="0">
@@ -105,6 +100,8 @@
                         </TabItem.Header>
                         <uc:DashBoardUC></uc:DashBoardUC>
                     </TabItem>
+
+
                     <TabItem Width="200" Height="80" Padding="0">
                         <TabItem.Header>
                             <Grid>
@@ -120,7 +117,8 @@
                                 </Grid>
                             </Grid>
                         </TabItem.Header>
-
+                        
+                        <uc:PantientUC></uc:PantientUC>
 
                     </TabItem>
 
@@ -162,9 +160,6 @@
                             </Grid>
 
                         </TabItem.Header>
-
-
-
                     </TabItem>
                     <TabItem Width="200" Height="80" Padding="0">
                         <TabItem.Header >
@@ -182,7 +177,6 @@
                             </Grid>
 
                         </TabItem.Header>
-
                     </TabItem>
                     <TabItem Width="200" Height="80"  Padding="0">
                         <TabItem.Header >
@@ -256,10 +250,8 @@
 
                     </TabItem>
                 </TabControl>
-
+            <!--#endregion-->
             </Grid>
         </materialDesign:Card>
-
-
     </Grid>
 </Window>

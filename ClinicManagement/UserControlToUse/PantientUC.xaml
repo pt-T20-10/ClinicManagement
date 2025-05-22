@@ -5,8 +5,127 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ClinicManagement.UserControlToUse"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             TextElement.FontWeight="Regular"
+             TextElement.FontSize="13"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="Auto"
+             Background="{DynamicResource MaterialDesignPaper}"
+             FontFamily="{DynamicResource MaterialDesignFont}"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             Name="PantientUc">
+    <materialDesign:Card>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid HorizontalAlignment="Left" Grid.Row="0" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Margin="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180"></ColumnDefinition>
+                        <ColumnDefinition Width="180"></ColumnDefinition>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày bắt đầu" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+                    </Grid>
+                    <Grid Grid.Column="1">
+                        <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày kết thúc" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+                    </Grid>
+
+                </Grid>
+                <Grid Grid.Column="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                        <ColumnDefinition Width="auto"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <RadioButton
+              Margin="5 5 5 5"
+              Grid.Column="0"
+              Content="VIP"
+              Style="{StaticResource MaterialDesignRadioButton}"/>
+                    <RadioButton
+              Margin="5 5 5 5"
+              Grid.Column="1"
+              Content="Bảo hiểm"
+              Style="{StaticResource MaterialDesignRadioButton}"/>
+                    <RadioButton
+              Margin="5 5 5 5"
+              Grid.Column="2"
+              Content="Thường"
+              Style="{StaticResource MaterialDesignRadioButton}"/>
+
+                </Grid>
+                <TextBox
+                    Margin="20 0 0 0"
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Left"
+                    Height="42"
+                    Width="500"
+                    Padding="15 0 0 0 "
+                    materialDesign:HintAssist.Hint="Họ tên hoặc mã bảo hiểm"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                   />
+                <Button
+                  HorizontalAlignment="Right"
+                 Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                 Grid.Column="2"
+                 Width="80"
+                 Height="32"
+                 Content="Tìm"
+                 ToolTip="Resource name: MaterialDesignRaisedButton"></Button>
+            </Grid>
+            <ListView Grid.Row="1" ItemsSource="{Binding Items1}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn
+                     Width="200"
+                     DisplayMemberBinding="{Binding InsuranceCode}">
+                            <GridViewColumn.Header>
+                                Bảo hiểm y tế
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                     DisplayMemberBinding="{Binding FullName}"
+                     Width="200">
+                            <GridViewColumn.Header>
+                                Họ và tên
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                     DisplayMemberBinding="{Binding PatientType.TypeName}"
+                     Width="100" >
+                            <GridViewColumn.Header>
+                                Khách hàng
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                     DisplayMemberBinding="{Binding Phone}"
+                     Width="150">
+                            <GridViewColumn.Header>
+                                Điện thoại
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                    DisplayMemberBinding="{Binding Address}">
+                            <GridViewColumn.Header>
+                                Địa chỉ
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+    </materialDesign:Card>
+   
 </UserControl>

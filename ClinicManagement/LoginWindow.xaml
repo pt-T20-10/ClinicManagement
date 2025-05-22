@@ -64,7 +64,7 @@
                            Text="{Binding UserName}"
                            Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
                         <PasswordBox
-                             Margin="5 5 5 20"
+                            Margin="5 5 5 20"
                             materialDesign:HintAssist.Hint="Password"
                             materialDesign:PasswordBoxAssist.Password="{Binding Password2, Mode=TwoWay}"
                             x:Name="FloatingPasswordBox"

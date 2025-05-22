@@ -39,9 +39,9 @@ namespace ClinicManagement.ViewModels
                      //if (p == null)
                      //    return;
 
-                     //p.Hide();
-                     //LoginWindow loginWindow = new LoginWindow();
-                     //loginWindow.ShowDialog();
+                     p.Hide();
+                     LoginWindow loginWindow = new LoginWindow();
+                     loginWindow.ShowDialog();
                      //if (loginWindow.DataContext == null)
                      //    return;
                      p.Show();
