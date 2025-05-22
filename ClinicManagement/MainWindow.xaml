@@ -160,6 +160,7 @@
                             </Grid>
 
                         </TabItem.Header>
+                        <uc:AppointmentUC></uc:AppointmentUC>
                     </TabItem>
                     <TabItem Width="200" Height="80" Padding="0">
                         <TabItem.Header >
@@ -177,6 +178,7 @@
                             </Grid>
 
                         </TabItem.Header>
+                        <uc:StockUC Margin="0,11,0,-11"></uc:StockUC>
                     </TabItem>
                     <TabItem Width="200" Height="80"  Padding="0">
                         <TabItem.Header >

@@ -5,8 +5,699 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ClinicManagement.UserControlToUse"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
-            
-    </Grid>
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             TextElement.FontWeight="Regular"
+             TextElement.FontSize="13"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="Auto"
+             Background="{DynamicResource MaterialDesignPaper}"
+             FontFamily="{DynamicResource MaterialDesignFont}"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             Name="PantientUc">
+    <materialDesign:Card >
+        <TabControl
+        materialDesign:ColorZoneAssist.Mode="PrimaryLight"
+        Style="{StaticResource MaterialDesignFilledTabControl}">
+            <TabItem
+                Header="Kho">
+                <materialDesign:Card>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="191*"/>
+                            <ColumnDefinition Width="195*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="2" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
+                                <ColumnDefinition ></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Grid >
+                                <StackPanel Grid.Column="0" Margin="15 5 5 5 ">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock 
+                                            Grid.Column="0"
+                                            Text="Tháng" 
+                                            VerticalAlignment="Center"
+                                            Margin="5,5,5,0"/>
+                                        <materialDesign:NumericUpDown
+                                            Grid.Column="1"
+                                            Minimum="1"
+                                            Maximum="12"
+                                            Value="1"   
+                                            Margin="5"
+                                            Width="40">
+                                            <materialDesign:NumericUpDown.IncreaseContent>
+                                                <Border
+                                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                    <materialDesign:PackIcon Kind="ArrowUp" />
+                                                </Border>
+                                            </materialDesign:NumericUpDown.IncreaseContent>
+
+                                            <materialDesign:NumericUpDown.DecreaseContent>
+                                                <Border
+                                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                    <materialDesign:PackIcon Kind="ArrowDown" />
+                                                </Border>
+                                            </materialDesign:NumericUpDown.DecreaseContent>
+                                        </materialDesign:NumericUpDown>
+                                    </Grid>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock 
+                                            Grid.Column="0"
+                                            Text="Năm" 
+                                            VerticalAlignment="Center"
+                                            Margin="5,5,12,0"/>
+                                        <materialDesign:NumericUpDown  
+                                            Grid.Column="1"
+                                            Value="2025"
+                                            Margin="5"
+                                            Width="100">
+                                            <materialDesign:NumericUpDown.IncreaseContent>
+                                                <Border
+                                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                    <materialDesign:PackIcon Kind="ArrowUp" />
+                                                </Border>
+                                            </materialDesign:NumericUpDown.IncreaseContent>
+
+                                            <materialDesign:NumericUpDown.DecreaseContent>
+                                                <Border
+                                                    BorderBrush="{DynamicResource MaterialDesign.Brush.Foreground}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="20">
+                                                    <materialDesign:PackIcon Kind="ArrowDown" />
+                                                </Border>
+                                            </materialDesign:NumericUpDown.DecreaseContent>
+                                        </materialDesign:NumericUpDown>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="auto"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+
+                                <ComboBox
+                                    ItemsSource="{Binding SupplierList}"
+                                    DisplayMemberPath="SupplierName"
+                                    Grid.Column="0"
+                                    Margin="10 5 15 5"
+                                    Width="180"
+                                    materialDesign:HintAssist.Hint="Chọn nhà cung cấp"
+                                    Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                </ComboBox>
+                                <ComboBox
+                                    ItemsSource="{Binding CategoryList}"
+                                    DisplayMemberPath="CategoryName"
+                                    Grid.Column="1"
+                                    Margin="10 5 5 5"
+                                    Width="120"
+                                    materialDesign:HintAssist.Hint="Loại"
+                                    Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                </ComboBox>
+                            </Grid>
+                            <TextBox
+                                Margin="20 0 0 0"
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Left"
+                                Height="42"
+                                Width="300"
+                                Padding="15 0 0 0 "
+                                materialDesign:HintAssist.Hint="Tên thuốc"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                            <Button
+                                 HorizontalAlignment="Right"
+                                 Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                                 Grid.Column="2"
+                                 Width="100"
+                                 Height="32"
+                                 Content="Tìm"
+                                 ToolTip="Resource name: MaterialDesignRaisedButton"
+                                 Command="{Binding SearchMedicineCommand}"></Button>
+
+                            <Grid Grid.Column="3" Margin="15,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+
+                                <Button 
+                                    Grid.Column="0"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Width="120"
+                                    Height="32"
+                                    Margin="0,5,30,5"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding PrintCommand}">
+
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon 
+                                        Kind="Printer" 
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,5,0"/>
+                                        <TextBlock Text="Xuất excel"/>
+                                    </StackPanel>
+                                </Button>
+                                <materialDesign:Card 
+                                        Grid.Column="1"
+                                        Margin="0,10,0,0"
+                                        Padding="8"
+                                        UniformCornerRadius="6"
+                                        >
+                                    <StackPanel HorizontalAlignment="Right">
+                                        <Grid Margin="0,5,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock 
+                                            Grid.Column="0"
+                                            Text="Số lượng tồn cuối: " 
+                                            FontWeight="Medium"
+                                            VerticalAlignment="Center"/>
+                                            <TextBlock
+                                            Grid.Column="1"
+                                            Text="{Binding TotalQuantity}"
+                                            FontWeight="Medium"
+                                            Margin="5,0,0,0"
+                                            VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,5,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock 
+                                                Grid.Column="0"
+                                                Text="Thành tiền tồn cuối: " 
+                                                FontWeight="Medium"
+                                                VerticalAlignment="Center"/>
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Text="{Binding TotalValue, StringFormat='{}{0:N0} VNĐ'}"
+                                                FontWeight="SemiBold"
+                                                Foreground="#FF333333"
+                                                Background="#FFF0F0F0"
+                                                Padding="5,2"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </materialDesign:Card>
+                            </Grid>
+                        </Grid>
+
+
+
+                        <ListView Grid.Row="1" ItemsSource="{Binding ListMedicine}" Grid.ColumnSpan="2">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn
+                                         Width="120"
+                                         DisplayMemberBinding="{Binding MSHNNB}">
+                                        <GridViewColumn.Header>
+                                            MSHNNB
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                             DisplayMemberBinding="{Binding Name}"
+                                             Width="150">
+                                        <GridViewColumn.Header>
+                                            Tên thuốc
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                         DisplayMemberBinding="{Binding MedicineCaterogy.CategoryName}"
+                                         Width="100" >
+                                        <GridViewColumn.Header>
+                                            Loại
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                         DisplayMemberBinding="{Binding Unit.UnitName}"
+                                         Width="90">
+                                        <GridViewColumn.Header>
+                                            ĐVT
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                        Width="150"
+                                        DisplayMemberBinding="{Binding Supplier.SupplierName}">
+                                        <GridViewColumn.Header>
+                                            Nhà cung cấp
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                         Width="150"
+                                         DisplayMemberBinding="{Binding ExpiryDate}">
+                                        <GridViewColumn.Header>
+                                            Hạn dùng
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn
+                                             DisplayMemberBinding="{Binding UnitPrice}"
+                                             Width="130">
+                                        <GridViewColumn.Header>
+                                            Giá nhập
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                         DisplayMemberBinding="{Binding SellPrice}"
+                                         Width="130">
+                                        <GridViewColumn.Header>
+                                            Giá bán
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                         DisplayMemberBinding="{Binding Quantity}"
+                                         Width="120">
+                                        <GridViewColumn.Header>
+                                            Còn lại
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+
+                                </GridView>
+
+                            </ListView.View>
+                        </ListView>
+                    </Grid>
+                </materialDesign:Card>
+
+            </TabItem>
+
+            <TabItem Header="Nhập kho">
+
+
+
+                <materialDesign:Card Margin="5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+
+                        <TextBlock 
+                        Grid.Row="0" 
+                        Text="NHẬP THUỐC MỚI" 
+                        FontWeight="Bold" 
+                        FontSize="18" 
+                        Margin="20,15,0,15" 
+                        HorizontalAlignment="Left"/>
+
+                        <!-- Form Fields - Row 1 -->
+                        <Grid Grid.Row="1" Margin="20,10,20,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Nhà cung cấp -->
+                            <ComboBox
+                                Grid.Column="0"
+                                ItemsSource="{Binding SupplierList}"
+                                DisplayMemberPath="SupplierName"
+                                SelectedItem="{Binding SelectedSupplier}"
+                                Margin="5"
+                                Width="220"
+                                HorizontalAlignment="Left"
+                                materialDesign:HintAssist.Hint="Chọn nhà cung cấp"
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+
+                            <!-- Đơn vị thuốc -->
+                            <ComboBox
+                                Grid.Column="1"
+                                ItemsSource="{Binding UnitList}"
+                                DisplayMemberPath="UnitName"
+                                SelectedItem="{Binding SelectedUnit}"
+                                Margin="5"
+                                Width="220"
+                                HorizontalAlignment="Left"
+                                materialDesign:HintAssist.Hint="Đơn vị thuốc"
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+
+                            <!-- Loại thuốc -->
+                            <ComboBox
+                                Grid.Column="2"
+                                ItemsSource="{Binding CategoryList}"
+                                DisplayMemberPath="CategoryName"
+                                SelectedItem="{Binding SelectedCategory}"
+                                Margin="5"
+                                Width="220"
+                                HorizontalAlignment="Left"
+                                materialDesign:HintAssist.Hint="Loại thuốc"
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                        </Grid>
+
+                        <!-- Form Fields - Row 2 -->
+                        <Grid Grid.Row="2" Margin="20,10,20,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Tên thuốc -->
+                            <TextBox
+                            Grid.Column="0"
+                            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            materialDesign:HintAssist.Hint="Tên thuốc"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <!-- MSHNNB -->
+                            <TextBox
+                            Grid.Column="1"
+                            Text="{Binding MSHNNB, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            materialDesign:HintAssist.Hint="MSHNNB"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <!-- Số lượng -->
+                            <materialDesign:NumericUpDown
+                            Grid.Column="2"
+                            Value="{Binding Quantity}"
+                            Minimum="0"
+                            Margin="5"
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            materialDesign:HintAssist.Hint="Số lượng"
+                            Style="{StaticResource MaterialDesignOutlinedNumericUpDown}">
+                            </materialDesign:NumericUpDown>
+                        </Grid>
+
+                        <!-- Form Fields - Row 3 -->
+                        <Grid Grid.Row="3" Margin="20,10,20,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Giá nhập -->
+                            <TextBox
+                    Grid.Column="0"
+                    Text="{Binding UnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+                    Margin="5"
+                    Width="220"
+                    HorizontalAlignment="Left"
+                    materialDesign:HintAssist.Hint="Giá nhập (VNĐ)"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <!-- Giá xuất -->
+                            <TextBox
+                    Grid.Column="1"
+                    Text="{Binding SellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+                    Margin="5"
+                    Width="220"
+                    HorizontalAlignment="Left"
+                    materialDesign:HintAssist.Hint="Giá bán (VNĐ)"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <!-- Hạn sử dụng -->
+                            <DatePicker
+                    Grid.Column="2"
+                    SelectedDate="{Binding ExpiryDate}"
+                    Margin="5"
+                    Width="220"
+                    HorizontalAlignment="Left"
+                    materialDesign:HintAssist.Hint="Hạn sử dụng"
+                    Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+                        </Grid>
+
+                        <!-- Buttons -->
+                        <Grid Grid.Row="4" Margin="20,30,20,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Thêm vào kho Button -->
+                            <Button
+                                Grid.Column="0"
+                                Content="Hủy"
+                                Command="{Binding RestartCommand}"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Width="180"
+                                Height="40"
+                                Margin="0,0,50,0"
+                                HorizontalAlignment="Right">
+                                <Button.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2" Direction="270" Color="#DDDDDD"/>
+                                </Button.Effect>
+                            </Button>
+                            <Button
+                                 Grid.Column="1"
+                                 Content="Thêm vào kho"
+                                 Command="{Binding AddNewMedicineCommand}"
+                                 Style="{StaticResource MaterialDesignRaisedButton}"
+                                 Width="180"
+                                 Height="40"
+                                 Margin="50,0,5,0"
+                                 HorizontalAlignment="Left">
+                                <Button.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="2" Direction="270" Color="#DDDDDD"/>
+                                </Button.Effect>
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </materialDesign:Card>
+            </TabItem>
+
+            <TabItem Header="Quản lí đơn vị">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Panel - Unit Management Form -->
+                    <materialDesign:Card 
+                        Grid.Column="0" 
+                        Margin="0,0,10,0" 
+                        Padding="16" 
+                        UniformCornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <!-- For Description -->
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <TextBlock 
+                                Grid.Row="0"
+                                Text="THÔNG TIN ĐƠN VỊ"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Margin="0,0,0,20"
+                                HorizontalAlignment="Center"/>
+
+                            <!-- Input Fields -->
+                            <TextBox 
+                                Grid.Row="1"
+                                Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                materialDesign:HintAssist.Hint="Tên đơn vị đo"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,15"
+                                Width="300"
+                                HorizontalAlignment="Center"/>
+
+                            <!-- Description Field -->
+                            <TextBox 
+                                Grid.Row="2"
+                                Text="{Binding Description, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                materialDesign:HintAssist.Hint="Mô tả chi tiết"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                TextWrapping="Wrap"
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                Height="80"
+                                Margin="0,0,0,20"
+                                Width="300"
+                                HorizontalAlignment="Center"/>
+
+                            <!-- Action Buttons -->
+                            <StackPanel 
+                                Grid.Row="3" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,20">
+                                <Button 
+                                    Command="{Binding AddCommand}" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    materialDesign:ButtonAssist.CornerRadius="5"
+                                    Margin="5" 
+                                    Width="90"
+                                    Height="36">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Thêm"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button 
+                                    Command="{Binding EditCommand}" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    materialDesign:ButtonAssist.CornerRadius="5"
+                                    Background="#FF3F51B5"
+                                    BorderBrush="#FF3F51B5"
+                                    Margin="5" 
+                                    Width="90"
+                                    Height="36">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Sửa"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button 
+                                    Command="{Binding DeleteCommand}" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    materialDesign:ButtonAssist.CornerRadius="5"
+                                    Background="#FFE91E63"
+                                    BorderBrush="#FFE91E63"
+                                    Margin="5" 
+                                    Width="90"
+                                    Height="36">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Xóa"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Information Box -->
+                            <materialDesign:Card 
+                                Height="200"
+                                VerticalAlignment="Top"
+                                Grid.Row="4" 
+                                Margin="0,10,0,0"
+                                UniformCornerRadius="5"
+                                Background="#FFF5F5F5">
+                                <StackPanel Margin="16">
+                                    <TextBlock 
+                                        Text="Hướng dẫn sử dụng:"
+                                        FontWeight="Medium"
+                                        Margin="0,0,0,8"/>
+                                    <TextBlock 
+                                        Text="1. Chọn một đơn vị từ danh sách để sửa hoặc xóa." 
+                                        TextWrapping="Wrap"
+                                        Margin="0,0,0,4"/>
+                                    <TextBlock 
+                                        Text="2. Điền tên đơn vị và mô tả, nhấn 'Thêm' để tạo đơn vị mới." 
+                                        TextWrapping="Wrap"
+                                        Margin="0,0,0,4"/>
+                                    <TextBlock 
+                                        Text="3. Sửa thông tin đơn vị hiện tại và nhấn 'Sửa' để cập nhật." 
+                                        TextWrapping="Wrap"
+                                        Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </materialDesign:Card>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Right Panel - Units List -->
+                    <materialDesign:Card 
+                        Grid.Column="1" 
+                        Margin="10,0,0,0"
+                        UniformCornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- List Header -->
+                            <Grid 
+                                Grid.Row="0" 
+                                Background="{DynamicResource PrimaryHueMidBrush}" 
+                                Height="50">
+                                <TextBlock 
+                                    Text="DANH SÁCH ĐƠN VỊ ĐO" 
+                                    FontWeight="Medium" 
+                                    FontSize="16" 
+                                    Foreground="White" 
+                                    VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- List View -->
+                            <ScrollViewer 
+                                Grid.Row="1" 
+                                VerticalScrollBarVisibility="Auto"
+                                Margin="0,5,0,0">
+                                <ListView 
+                                    ItemsSource="{Binding ListUnit}" 
+                                    SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                                    BorderThickness="0">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn 
+                                                Header="ID" 
+                                                DisplayMemberBinding="{Binding Id}" 
+                                                Width="100"/>
+                                            <GridViewColumn 
+                                                Header="Tên đơn vị đo" 
+                                                DisplayMemberBinding="{Binding DisplayName}" 
+                                                Width="180"/>
+                                            <GridViewColumn 
+                                                Header="Mô tả" 
+                                                DisplayMemberBinding="{Binding Description}" 
+                                                Width="250"/>
+                                        </GridView>
+                                    </ListView.View>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="Padding" Value="8"/>
+                                            <Setter Property="Margin" Value="0,2"/>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+    </materialDesign:Card>
+
+
 </UserControl>

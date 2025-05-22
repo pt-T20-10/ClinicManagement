@@ -43,8 +43,7 @@
                     Width="500"
                     Padding="15 0 0 0 "
                     materialDesign:HintAssist.Hint="Họ tên"
-                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                   
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"                  
                    />
                 <Button
                   HorizontalAlignment="Right"
@@ -88,6 +87,13 @@
                      Width="150">
                             <GridViewColumn.Header>
                                 Điện thoại
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                            DisplayMemberBinding="{Binding Schedule}"
+                            Width="150">
+                            <GridViewColumn.Header>
+                                Lịch làm việc
                             </GridViewColumn.Header>
                         </GridViewColumn>
                         <GridViewColumn
