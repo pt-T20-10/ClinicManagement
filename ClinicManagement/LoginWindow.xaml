@@ -14,7 +14,7 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Đăng nhập" Height="300" Width="500"
+        Title="Đăng nhập" Height="700" Width="850"
         WindowStyle="None"
         ResizeMode="NoResize"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
@@ -31,73 +31,82 @@
         <Grid Grid.Row="0">
             <uc:ControlBarUC Tag="{Binding Title, ElementName=loginWindow}"></uc:ControlBarUC>
         </Grid>
-
-        <TextBlock Grid.Row ="1"
-              Margin="0 5 0 0 "
-              VerticalAlignment="Top"
-              HorizontalAlignment="Center"
-              FontSize="25"
-              FontWeight="Bold"
-              Text="Welcome" />
-        <materialDesign:Card Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Height="190" Width="400">
-            <Grid>
-                <Grid.Resources>
-                    <Style TargetType="Grid">
-                        <Setter Property="Margin" Value="15 0 5 0"></Setter>
-                    </Style>
-                </Grid.Resources>
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-
-                <TextBox
-                  Grid.Row="0"
-                  VerticalAlignment="Center"
-                  materialDesign:HintAssist.Hint="User Name"
-                  Text="{Binding UserName}"
-                  Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
-                <PasswordBox
-                  Grid.Row="1"
-                  x:Name="FloatingPasswordBox"
-                  materialDesign:HintAssist.Foreground="Green"
-                  materialDesign:HintAssist.Hint="Password"
-                  materialDesign:TextFieldAssist.UnderlineBrush="Green"
-                  Style="{StaticResource MaterialDesignFloatingHintPasswordBox}">
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="PasswordChanged">
-                            <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" CommandParameter="{Binding ElementName=FloatingPasswordBox}"/>
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
-                </PasswordBox>
-
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-                    <Button
-                       IsDefault="True"
-                       Width="100"
-                       Content="Login"
-                       Command="{Binding LoginCommand}"
-                        CommandParameter="{Binding ElementName=loginWindow}"
-                       IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-                       Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-                       Background="Snow"
-                       ToolTip="Resource name: MaterialDesignRaisedSecondaryButton"/>
-                    <Button Grid.Column="1"
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.5*"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            
+            <materialDesign:Card Grid.Column="1">
+                <Grid>
+                    <Grid.Resources>
+                        <Style TargetType="Grid">
+                            <Setter Property="Margin" Value="15 0 5 0"></Setter>
+                        </Style>
+                    </Grid.Resources>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1.5*"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row ="0"
+                        Margin="0 5 0 0 "
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        FontSize="50"
+                        FontWeight="Bold"
+                        Text="Welcome" />
+                    <StackPanel Grid.Row="0" VerticalAlignment="Bottom">
+                        <TextBox
+                           Margin="5 0 5 20"
+                           Grid.Row="0"
+                           VerticalAlignment="Center"
+                           materialDesign:HintAssist.Hint="User Name"
+                           Text="{Binding UserName}"
+                           Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
+                        <PasswordBox
+                             Margin="5 5 5 20"
+                            materialDesign:HintAssist.Hint="Password"
+                            materialDesign:PasswordBoxAssist.Password="{Binding Password2, Mode=TwoWay}"
+                            x:Name="FloatingPasswordBox"
+                            IsEnabled="{Binding ElementName=RevealPasswordFloatingEnabled, Path=IsChecked}"
+                            Style="{StaticResource MaterialDesignFloatingHintRevealPasswordBox}">
+                        <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="PasswordChanged">
+                                    <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" CommandParameter="{Binding ElementName=FloatingPasswordBox}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </PasswordBox>
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="10,30,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button
+                            VerticalAlignment="Top"
+                            IsDefault="True"
                             Width="100"
-                           Content="Cancel"
-                            Command="{Binding CloseCommand}"
-                            CommandParameter="{Binding ElementName=loginWindow}"
-                           IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-                           Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-                           ToolTip="Resource name: MaterialDesignRaisedSecondaryButton"/>
-                </Grid>
+                            Content="Login"
+                            Command="{Binding LoginCommand}"
+                             CommandParameter="{Binding ElementName=loginWindow}"
+                            IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+                            Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+                            Background="Snow"
+                            ToolTip="Resource name: MaterialDesignRaisedSecondaryButton"/>
+                        <Button Grid.Column="1"
+                                 VerticalAlignment="Top"
+                             Width="100"
+                            Content="Cancel"
+                             Command="{Binding CloseCommand}"
+                             CommandParameter="{Binding ElementName=loginWindow}"
+                            IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+                            Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+                            ToolTip="Resource name: MaterialDesignRaisedSecondaryButton"/>
+                    </Grid>
 
-            </Grid>
-        </materialDesign:Card>
+                </Grid>
+            </materialDesign:Card>
+        </Grid>
+       
     </Grid>
 </Window>

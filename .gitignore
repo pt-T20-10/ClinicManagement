@@ -9,12 +9,15 @@
 *.user
 *.userosscache
 *.sln.docstates
+# User-specific folders
+.vs/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
 # Mono auto generated files
 mono_crash.*
+*/Properties/AssemblyInfo.cs
 
 # Build results
 [Dd]ebug/
@@ -361,3 +364,13 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Bỏ qua thư mục build output
+bin/
+obj/
+*.DataProvider.cs
+# Bỏ qua các file cấu hình tạm thời
+*.user
+*.suo
+*.tmp
+*.log
