@@ -5,8 +5,103 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ClinicManagement.UserControlToUse"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <Grid>
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+             TextElement.FontWeight="Regular"
+             TextElement.FontSize="13"
+             TextOptions.TextFormattingMode="Ideal"
+             TextOptions.TextRenderingMode="Auto"
+             Background="{DynamicResource MaterialDesignPaper}"
+             FontFamily="{DynamicResource MaterialDesignFont}"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             Name="DoctorUc">
+    <materialDesign:Card>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid HorizontalAlignment="Left" Grid.Row="0" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"></ColumnDefinition>
             
-    </Grid>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Margin="5 15 5 15">
+                    <Grid Grid.Column="0">
+                        <Button   Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bác sĩ" Style="{StaticResource MaterialDesignRaisedButton}"
+                                   Command="{Binding AddDoctorCommand}"/>
+                    </Grid>
+                </Grid>
+
+                <TextBox
+                    Margin="20 0 0 0"
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    Height="42"
+                    Width="500"
+                    Padding="15 0 0 0 "
+                    materialDesign:HintAssist.Hint="Họ tên"
+                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                   
+                   />
+                <Button
+                  HorizontalAlignment="Right"
+                 Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                 Grid.Column="2"
+                 Width="120"
+                 Height="32"
+                 Content="Tìm"
+                 ToolTip="Resource name: MaterialDesignRaisedButton"
+                  Command="{Binding SearchDoctorCommand}">
+                    </Button>
+            </Grid>
+
+
+            <ListView Grid.Row="1" ItemsSource="{Binding List}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn
+                     Width="80"
+                     DisplayMemberBinding="{Binding DoctorID}">
+                            <GridViewColumn.Header>
+                                ID
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                     DisplayMemberBinding="{Binding FullName}"
+                     Width="200">
+                            <GridViewColumn.Header>
+                                Họ và tên
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                     DisplayMemberBinding="{Binding DoctorSpecialty.SpecialName}"
+                     Width="150" >
+                            <GridViewColumn.Header>
+                                Chuyên khoa
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                     DisplayMemberBinding="{Binding Phone}"
+                     Width="150">
+                            <GridViewColumn.Header>
+                                Điện thoại
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn
+                    DisplayMemberBinding="{Binding Address}">
+                            <GridViewColumn.Header>
+                                Địa chỉ
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+    </materialDesign:Card>
+
 </UserControl>
+

@@ -79,10 +79,11 @@
                   HorizontalAlignment="Right"
                  Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
                  Grid.Column="2"
-                 Width="80"
+                 Width="100"
                  Height="32"
                  Content="Tìm"
-                 ToolTip="Resource name: MaterialDesignRaisedButton"></Button>
+                 ToolTip="Resource name: MaterialDesignRaisedButton"
+                     Command="{Binding SearchPatientCommand}"></Button>
             </Grid>
             <ListView Grid.Row="1" ItemsSource="{Binding Items1}">
                 <ListView.View>

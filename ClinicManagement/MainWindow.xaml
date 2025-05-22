@@ -211,7 +211,7 @@
                             </Grid>
 
                         </TabItem.Header>
-
+                        <uc:DoctorUC></uc:DoctorUC>
                     </TabItem>
                     <TabItem Width="200" Height="80">
                         <TabItem.Header >
