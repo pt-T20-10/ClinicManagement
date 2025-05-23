@@ -148,14 +148,18 @@
                                 materialDesign:HintAssist.Hint="Tên thuốc"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                             <Button
-                                 HorizontalAlignment="Right"
+                                  HorizontalAlignment="Right"
                                  Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
                                  Grid.Column="2"
-                                 Width="100"
+                                 Width="120"
                                  Height="32"
-                                 Content="Tìm"
                                  ToolTip="Resource name: MaterialDesignRaisedButton"
-                                 Command="{Binding SearchMedicineCommand}"></Button>
+                                  Command="{Binding SearchCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Tìm kiếm"/>
+                                </StackPanel>
+                            </Button>
 
                             <Grid Grid.Column="3" Margin="15,0,0,0">
                                 <Grid.ColumnDefinitions>
@@ -233,79 +237,80 @@
                         </Grid>
 
 
-
-                        <ListView Grid.Row="1" ItemsSource="{Binding ListMedicine}" Grid.ColumnSpan="2">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn
+                        <ScrollViewer  Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <ListView Grid.Row="1" ItemsSource="{Binding ListMedicine}" Grid.ColumnSpan="2">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn
                                          Width="120"
                                          DisplayMemberBinding="{Binding MSHNNB}">
-                                        <GridViewColumn.Header>
-                                            MSHNNB
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                MSHNNB
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                              DisplayMemberBinding="{Binding Name}"
                                              Width="150">
-                                        <GridViewColumn.Header>
-                                            Tên thuốc
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                Tên thuốc
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                          DisplayMemberBinding="{Binding MedicineCaterogy.CategoryName}"
                                          Width="100" >
-                                        <GridViewColumn.Header>
-                                            Loại
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                Loại
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                          DisplayMemberBinding="{Binding Unit.UnitName}"
                                          Width="90">
-                                        <GridViewColumn.Header>
-                                            ĐVT
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                ĐVT
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                         Width="150"
                                         DisplayMemberBinding="{Binding Supplier.SupplierName}">
-                                        <GridViewColumn.Header>
-                                            Nhà cung cấp
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                Nhà cung cấp
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                          Width="150"
                                          DisplayMemberBinding="{Binding ExpiryDate}">
-                                        <GridViewColumn.Header>
-                                            Hạn dùng
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
+                                            <GridViewColumn.Header>
+                                                Hạn dùng
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
 
-                                    <GridViewColumn
+                                        <GridViewColumn
                                              DisplayMemberBinding="{Binding UnitPrice}"
                                              Width="130">
-                                        <GridViewColumn.Header>
-                                            Giá nhập
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                Giá nhập
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                          DisplayMemberBinding="{Binding SellPrice}"
                                          Width="130">
-                                        <GridViewColumn.Header>
-                                            Giá bán
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
+                                            <GridViewColumn.Header>
+                                                Giá bán
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
+                                        <GridViewColumn
                                          DisplayMemberBinding="{Binding Quantity}"
                                          Width="120">
-                                        <GridViewColumn.Header>
-                                            Còn lại
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
+                                            <GridViewColumn.Header>
+                                                Còn lại
+                                            </GridViewColumn.Header>
+                                        </GridViewColumn>
 
-                                </GridView>
+                                    </GridView>
 
-                            </ListView.View>
-                        </ListView>
+                                </ListView.View>
+                            </ListView>
+                        </ScrollViewer>
                     </Grid>
                 </materialDesign:Card>
 
@@ -618,15 +623,15 @@
                                     <TextBlock 
                                         Text="1. Chọn một đơn vị từ danh sách để sửa hoặc xóa." 
                                         TextWrapping="Wrap"
-                                        Margin="0,0,0,4"/>
+                                        Margin="0,4,0,4"/>
                                     <TextBlock 
                                         Text="2. Điền tên đơn vị và mô tả, nhấn 'Thêm' để tạo đơn vị mới." 
                                         TextWrapping="Wrap"
-                                        Margin="0,0,0,4"/>
+                                        Margin="0,4,0,4"/>
                                     <TextBlock 
                                         Text="3. Sửa thông tin đơn vị hiện tại và nhấn 'Sửa' để cập nhật." 
                                         TextWrapping="Wrap"
-                                        Margin="0,0,0,4"/>
+                                        Margin="0,4,0,4"/>
                                 </StackPanel>
                             </materialDesign:Card>
                         </Grid>
@@ -694,6 +699,269 @@
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
+            </TabItem>
+
+            <TabItem Header="Nhà cung cấp">
+                <materialDesign:Card Margin="5">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Supplier Management panel -->
+                        <materialDesign:Card Grid.Row="0" Margin="10" UniformCornerRadius="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Form Title -->
+                                <TextBlock 
+                        Grid.Row="0" 
+                        Text="THÔNG TIN NHÀ CUNG CẤP" 
+                        FontWeight="Bold" 
+                        FontSize="18" 
+                        Margin="15,15,0,15" 
+                        HorizontalAlignment="Left"/>
+
+                                <!-- Horizontal Input Controls - Grid layout -->
+                                <Grid Grid.Row="1" Margin="15,0,15,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Row 1 -->
+                                    <!-- Supplier Code -->
+                                    <TextBox
+                            Grid.Row="0" Grid.Column="0"
+                            Text="{Binding SupplierCode, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Mã nhà cung cấp (VD: NCC001)"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Supplier Name -->
+                                    <TextBox
+                            Grid.Row="0" Grid.Column="1"
+                            Text="{Binding SupplierName, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Tên nhà cung cấp"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Contact Person -->
+                                    <TextBox
+                            Grid.Row="2" Grid.Column="1"
+                            Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Người liên hệ"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Phone -->
+                                    <TextBox
+                            Grid.Row="0" Grid.Column="2"
+                            Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Số điện thoại"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Row 2 -->
+                                    <!-- Email -->
+                                    <TextBox
+                            Grid.Row="1" Grid.Column="0"
+                            Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Email"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Tax Code -->
+                                    <TextBox
+                            Grid.Row="1" Grid.Column="1"
+                            Text="{Binding TaxCode, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Mã số thuế"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Address -->
+                                    <TextBox
+                            Grid.Row="2" Grid.Column="0"
+                            Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                            Margin="5"
+                            materialDesign:HintAssist.Hint="Địa chỉ"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+
+
+                                    <!-- Action Buttons -->
+                                    <StackPanel VerticalAlignment="Center" Grid.Column="3" Grid.Row="0" Grid.RowSpan="3" Orientation="Vertical">
+                                        <Button 
+                                              Command="{Binding AddSupplierCommand}" 
+                                              Style="{StaticResource MaterialDesignRaisedButton}"
+                                              materialDesign:ButtonAssist.CornerRadius="5"
+                                              Margin="0,0,0,0" 
+                                              Height="36"
+                                              Width="110">          
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Thêm"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button 
+                                          Command="{Binding UpdateSupplierCommand}" 
+                                          Style="{StaticResource MaterialDesignRaisedButton}"
+                                          materialDesign:ButtonAssist.CornerRadius="5"
+                                          Background="#FF3F51B5"
+                                          BorderBrush="#FF3F51B5"
+                                          Margin="0,5,0,0" 
+                                          Height="36"
+                                          Width="110">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Cập nhật"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button 
+                                              Command="{Binding DeleteSupplierCommand}" 
+                                              Style="{StaticResource MaterialDesignRaisedButton}"
+                                              materialDesign:ButtonAssist.CornerRadius="5"
+                                              Background="#FFE91E63"
+                                              BorderBrush="#FFE91E63"
+                                             Margin="0,5,0,0" 
+                                              Height="36"
+                                              Width="110">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Xóa"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                    
+                                <!-- Action Buttons and Search + Filter in the same row -->
+                                <Grid Grid.Row="2" Margin="15,10,15,15">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                     
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                              
+
+                                    <!-- Filter Options -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <RadioButton 
+                                Content="Tất cả" 
+                                IsChecked="{Binding ShowAllSuppliers}"
+                                Margin="0,0,15,0"
+                                GroupName="SupplierFilter"/>
+                                        <RadioButton 
+                                Content="Đang hoạt động" 
+                                IsChecked="{Binding ShowActiveSuppliers}"
+                                Margin="0,0,15,0"
+                                GroupName="SupplierFilter"/>
+                                        <RadioButton 
+                                Content="Ngừng hoạt động" 
+                                IsChecked="{Binding ShowInactiveSuppliers}"
+                                GroupName="SupplierFilter"/>
+                                    </StackPanel>
+
+                                    <TextBox
+                                    Margin="20 0 0 0"
+                                    Grid.Column="2"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    Height="42"
+                                    Width="500"
+                                    Padding="15 0 0 0 "
+                                    materialDesign:HintAssist.Hint="Tên nhà cung cấp"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                    <Button
+                                      HorizontalAlignment="Right"
+                                     Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                                     Grid.Column="2"
+                                     Width="120"
+                                     Height="32"
+                                     ToolTip="Resource name: MaterialDesignRaisedButton"
+                                      Command="{Binding SearchCommand}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Tìm kiếm"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                            
+                            
+                            
+                            
+                            
+                        </materialDesign:Card>
+
+                        <!-- Supplier List with more space -->
+                        <materialDesign:Card Grid.Row="1" Margin="10" UniformCornerRadius="8">
+                            <Grid>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <ListView 
+                        Grid.Row="1" 
+                        ItemsSource="{Binding SupplierList}"
+                        SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}">
+                                        <ListView.View>
+                                            <GridView>
+                                                <GridViewColumn Header="Mã NCC" DisplayMemberBinding="{Binding SupplierCode}" Width="110"/>
+                                                <GridViewColumn Header="NCC" DisplayMemberBinding="{Binding SupplierName}" Width="150"/>
+                                                <GridViewColumn Header="Người liên hệ" DisplayMemberBinding="{Binding ContactPerson}" Width="145"/>
+                                                <GridViewColumn Header="SĐT" DisplayMemberBinding="{Binding Phone}" Width="120"/>
+                                                <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="110"/>
+                                                <GridViewColumn Header="Địa chỉ" DisplayMemberBinding="{Binding Address}" Width="200"/>
+                                                <GridViewColumn Header="Mã số thuế" DisplayMemberBinding="{Binding TaxCode}" Width="130"/>
+                                                <GridViewColumn Header="Trạng thái">
+                                                    <GridViewColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock>
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                                <Setter Property="Text" Value="Hoạt động"/>
+                                                                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                                <Setter Property="Text" Value="Ngừng"/>
+                                                                                <Setter Property="Foreground" Value="#F44336"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </GridViewColumn.CellTemplate>
+                                                </GridViewColumn>
+                                            </GridView>
+                                        </ListView.View>
+                                        <ListView.ItemContainerStyle>
+                                            <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Padding" Value="8"/>
+                                                <Setter Property="Margin" Value="0,1"/>
+                                            </Style>
+                                        </ListView.ItemContainerStyle>
+                                    </ListView>
+                                </ScrollViewer>
+                            </Grid>
+                        </materialDesign:Card>
+                    </Grid>
+                </materialDesign:Card>
             </TabItem>
 
         </TabControl>

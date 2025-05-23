@@ -82,7 +82,7 @@
                
                 <TabControl Grid.Row="1"
                          TabStripPlacement="Left">
-                    <TabItem Width="200" Height="80" Padding="0">
+                    <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -102,7 +102,7 @@
                     </TabItem>
 
 
-                    <TabItem Width="200" Height="80" Padding="0">
+                    <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header>
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -123,7 +123,7 @@
                     </TabItem>
 
 
-                    <TabItem Width="200" Height="80">
+                    <TabItem Width="150" Height="80">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -143,7 +143,7 @@
                     </TabItem>
 
 
-                    <TabItem Width="200" Height="80"  Padding="0">
+                    <TabItem Width="150" Height="80"  Padding="0">
 
                         <TabItem.Header>
                             <Grid>
@@ -162,7 +162,7 @@
                         </TabItem.Header>
                         <uc:AppointmentUC></uc:AppointmentUC>
                     </TabItem>
-                    <TabItem Width="200" Height="80" Padding="0">
+                    <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -180,7 +180,7 @@
                         </TabItem.Header>
                         <uc:StockUC Margin="0,11,0,-11"></uc:StockUC>
                     </TabItem>
-                    <TabItem Width="200" Height="80"  Padding="0">
+                    <TabItem Width="150" Height="80"  Padding="0">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -197,7 +197,7 @@
                         </TabItem.Header>
 
                     </TabItem>
-                    <TabItem Width="200" Height="80" Padding="0">
+                    <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -215,7 +215,7 @@
                         </TabItem.Header>
                         <uc:DoctorUC></uc:DoctorUC>
                     </TabItem>
-                    <TabItem Width="200" Height="80">
+                    <TabItem Width="150" Height="80">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -233,7 +233,7 @@
                         </TabItem.Header>
 
                     </TabItem>
-                    <TabItem Width="200" Height="80">
+                    <TabItem Width="150" Height="80">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>

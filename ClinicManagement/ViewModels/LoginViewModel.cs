@@ -34,7 +34,7 @@ namespace ClinicManagement.ViewModels
             UserName = "";
             Password = "";
             LoginCommand = new RelayCommand<Window>(
-                 async (p) =>
+                  (p) =>
                  {
                     //await Login(p);
                  },

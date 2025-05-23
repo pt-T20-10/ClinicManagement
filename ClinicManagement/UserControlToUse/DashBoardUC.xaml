@@ -268,22 +268,24 @@
             </Grid>
 
             <!-- Danh sách lịch hẹn -->
-            <ListView Grid.Row="2" 
+            <ScrollViewer  Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <ListView Grid.Row="2" 
                     ItemsSource="{Binding TodayAppointments}" 
                     ItemTemplate="{StaticResource AppointmentItemTemplate}"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                     BorderThickness="0"
                     Background="Transparent"
            >
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Margin" Value="0"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                    </Style>
-                </ListView.ItemContainerStyle>
-            </ListView>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </UserControl>

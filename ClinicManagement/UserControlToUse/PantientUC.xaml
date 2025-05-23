@@ -76,56 +76,62 @@
                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                    />
                 <Button
-                  HorizontalAlignment="Right"
-                 Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
-                 Grid.Column="2"
-                 Width="100"
-                 Height="32"
-                 Content="Tìm"
-                 ToolTip="Resource name: MaterialDesignRaisedButton"
-                     Command="{Binding SearchPatientCommand}"></Button>
+                      HorizontalAlignment="Right"
+                     Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                     Grid.Column="2"
+                     Width="120"
+                     Height="32"
+                     ToolTip="Resource name: MaterialDesignRaisedButton"
+                      Command="{Binding SearchCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                        <TextBlock Text="Tìm kiếm"/>
+                    </StackPanel>
+                </Button>
             </Grid>
-            <ListView Grid.Row="1" ItemsSource="{Binding Items1}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <ListView Grid.Row="1" ItemsSource="{Binding Items1}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn
                      Width="200"
                      DisplayMemberBinding="{Binding InsuranceCode}">
-                            <GridViewColumn.Header>
-                                Bảo hiểm y tế
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                <GridViewColumn.Header>
+                                    Bảo hiểm y tế
+                                </GridViewColumn.Header>
+                            </GridViewColumn>
+                            <GridViewColumn
                      DisplayMemberBinding="{Binding FullName}"
                      Width="200">
-                            <GridViewColumn.Header>
-                                Họ và tên
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                <GridViewColumn.Header>
+                                    Họ và tên
+                                </GridViewColumn.Header>
+                            </GridViewColumn>
+                            <GridViewColumn
                      DisplayMemberBinding="{Binding PatientType.TypeName}"
                      Width="100" >
-                            <GridViewColumn.Header>
-                                Khách hàng
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                <GridViewColumn.Header>
+                                    Khách hàng
+                                </GridViewColumn.Header>
+                            </GridViewColumn>
+                            <GridViewColumn
                      DisplayMemberBinding="{Binding Phone}"
                      Width="150">
-                            <GridViewColumn.Header>
-                                Điện thoại
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                <GridViewColumn.Header>
+                                    Điện thoại
+                                </GridViewColumn.Header>
+                            </GridViewColumn>
+                            <GridViewColumn
                     DisplayMemberBinding="{Binding Address}">
-                            <GridViewColumn.Header>
-                                Địa chỉ
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
+                                <GridViewColumn.Header>
+                                    Địa chỉ
+                                </GridViewColumn.Header>
+                            </GridViewColumn>
 
-                    </GridView>
-                </ListView.View>
-            </ListView>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </ScrollViewer>
         </Grid>
     </materialDesign:Card>
    

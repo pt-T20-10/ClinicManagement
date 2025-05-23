@@ -15,26 +15,31 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="DoctorUc">
-    <materialDesign:Card>
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid HorizontalAlignment="Left" Grid.Row="0" >
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto"></ColumnDefinition>
-            
-                    <ColumnDefinition Width="*"></ColumnDefinition>
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" Margin="5 15 5 15">
-                    <Grid Grid.Column="0">
-                        <Button   Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bác sĩ" Style="{StaticResource MaterialDesignRaisedButton}"
-                                   Command="{Binding AddDoctorCommand}"/>
-                    </Grid>
-                </Grid>
+    <TabControl
+materialDesign:ColorZoneAssist.Mode="PrimaryLight"
+Style="{StaticResource MaterialDesignFilledTabControl}">
+        <TabItem
+        Header="Bác sĩ">
+            <materialDesign:Card>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid HorizontalAlignment="Left" Grid.Row="0" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
 
-                <TextBox
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" Margin="5 15 5 15">
+                            <Grid Grid.Column="0">
+                                <Button   Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bác sĩ" Style="{StaticResource MaterialDesignRaisedButton}"
+                                   Command="{Binding AddDoctorCommand}"/>
+                            </Grid>
+                        </Grid>
+
+                        <TextBox
                     Margin="20 0 0 0"
                     Grid.Column="2"
                     VerticalAlignment="Center"
@@ -45,69 +50,273 @@
                     materialDesign:HintAssist.Hint="Họ tên"
                     Style="{StaticResource MaterialDesignOutlinedTextBox}"                  
                    />
-                <Button
-                  HorizontalAlignment="Right"
-                 Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
-                 Grid.Column="2"
-                 Width="120"
-                 Height="32"
-                 Content="Tìm"
-                 ToolTip="Resource name: MaterialDesignRaisedButton"
-                  Command="{Binding SearchDoctorCommand}">
-                    </Button>
-            </Grid>
+                        <Button
+                     HorizontalAlignment="Right"
+                     Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                     Grid.Column="2"
+                     Width="120"
+                     Height="32"
+                     ToolTip="Resource name: MaterialDesignRaisedButton"
+                     Command="{Binding SearchCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                                <TextBlock Text="Tìm kiếm"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
 
-
-            <ListView Grid.Row="1" ItemsSource="{Binding List}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn
+                    <ScrollViewer  Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <ListView Grid.Row="1" ItemsSource="{Binding List}">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn
                      Width="80"
                      DisplayMemberBinding="{Binding DoctorID}">
-                            <GridViewColumn.Header>
-                                ID
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                        <GridViewColumn.Header>
+                                            ID
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
                      DisplayMemberBinding="{Binding FullName}"
                      Width="200">
-                            <GridViewColumn.Header>
-                                Họ và tên
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                        <GridViewColumn.Header>
+                                            Họ và tên
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
                      DisplayMemberBinding="{Binding DoctorSpecialty.SpecialName}"
                      Width="150" >
-                            <GridViewColumn.Header>
-                                Chuyên khoa
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                        <GridViewColumn.Header>
+                                            Chuyên khoa
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
                      DisplayMemberBinding="{Binding Phone}"
                      Width="150">
-                            <GridViewColumn.Header>
-                                Điện thoại
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                        <GridViewColumn.Header>
+                                            Điện thoại
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
                             DisplayMemberBinding="{Binding Schedule}"
                             Width="150">
-                            <GridViewColumn.Header>
-                                Lịch làm việc
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-                        <GridViewColumn
+                                        <GridViewColumn.Header>
+                                            Lịch làm việc
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
                     DisplayMemberBinding="{Binding Address}">
-                            <GridViewColumn.Header>
-                                Địa chỉ
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
+                                        <GridViewColumn.Header>
+                                            Địa chỉ
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
 
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </Grid>
-    </materialDesign:Card>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </ScrollViewer>
+                </Grid>
+            </materialDesign:Card>
+        </TabItem>
 
+        <TabItem
+            Header="Quản lí chuyên khoa">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="350"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Panel - Unit Management Form -->
+                <materialDesign:Card 
+                     Grid.Column="0" 
+                     Margin="0,0,10,0" 
+                     Padding="16" 
+                     UniformCornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <!-- For Description -->
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <TextBlock 
+                 Grid.Row="0"
+                 Text="THÔNG TIN CHUYÊN KHOA"
+                 FontSize="16"
+                 FontWeight="Bold"
+                 Margin="0,0,0,20"
+                 HorizontalAlignment="Center"/>
+
+                        <!-- Input Fields -->
+                        <TextBox 
+                 Grid.Row="1"
+                 Text="{Binding SpecialtyName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                 materialDesign:HintAssist.Hint="Tên đơn vị đo"
+                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                 Margin="0,0,0,15"
+                 Width="300"
+                 HorizontalAlignment="Center"/>
+
+                        <!-- Description Field -->
+                        <TextBox 
+                 Grid.Row="2"
+                 Text="{Binding Description, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                 materialDesign:HintAssist.Hint="Mô tả chi tiết"
+                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                 TextWrapping="Wrap"
+                 AcceptsReturn="True"
+                 VerticalScrollBarVisibility="Auto"
+                 Height="80"
+                 Margin="0,0,0,20"
+                 Width="300"
+                 HorizontalAlignment="Center"/>
+
+                        <!-- Action Buttons -->
+                        <StackPanel 
+                 Grid.Row="3" 
+                 Orientation="Horizontal" 
+                 HorizontalAlignment="Center"
+                 Margin="0,0,0,20">
+                            <Button 
+                     Command="{Binding AddCommand}" 
+                     Style="{StaticResource MaterialDesignRaisedButton}"
+                     materialDesign:ButtonAssist.CornerRadius="5"
+                     Margin="5" 
+                     Width="90"
+                     Height="36">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="Thêm"/>
+                                </StackPanel>
+                            </Button>
+                            <Button 
+                     Command="{Binding EditCommand}" 
+                     Style="{StaticResource MaterialDesignRaisedButton}"
+                     materialDesign:ButtonAssist.CornerRadius="5"
+                     Background="#FF3F51B5"
+                     BorderBrush="#FF3F51B5"
+                     Margin="5" 
+                     Width="90"
+                     Height="36">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="Sửa"/>
+                                </StackPanel>
+                            </Button>
+                            <Button 
+                     Command="{Binding DeleteCommand}" 
+                     Style="{StaticResource MaterialDesignRaisedButton}"
+                     materialDesign:ButtonAssist.CornerRadius="5"
+                     Background="#FFE91E63"
+                     BorderBrush="#FFE91E63"
+                     Margin="5" 
+                     Width="90"
+                     Height="36">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="Xóa"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Information Box -->
+                        <materialDesign:Card 
+                 Height="200"
+                 VerticalAlignment="Top"
+                 Grid.Row="4" 
+                 Margin="0,10,0,0"
+                 UniformCornerRadius="5"
+                 Background="#FFF5F5F5">
+                            <StackPanel Margin="16">
+                                <TextBlock 
+                         Text="Hướng dẫn sử dụng:"
+                         FontWeight="Medium"
+                         Margin="0,0,0,8"/>
+                                <TextBlock 
+                         Text="1. Chọn một chuyên khoa từ danh sách để sửa hoặc xóa." 
+                         TextWrapping="Wrap"
+                         Margin="0,4,0,4"/>
+                                <TextBlock 
+                         Text="2. Điền tên chuyên khoa và mô tả, nhấn 'Thêm' để tạo chuyên khoa mới." 
+                         TextWrapping="Wrap"
+                         Margin="0,4,0,4"/>
+                                <TextBlock 
+                         Text="3. Sửa thông tin chuyên khoa hiện tại và nhấn 'Sửa' để cập nhật." 
+                         TextWrapping="Wrap"
+                         Margin="0,4,0,4"/>
+                            </StackPanel>
+                        </materialDesign:Card>
+                    </Grid>
+                </materialDesign:Card>
+
+                <!-- Right Panel - Units List -->
+                <materialDesign:Card 
+         Grid.Column="1" 
+         Margin="10,0,0,0"
+         UniformCornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- List Header -->
+                        <Grid 
+                 Grid.Row="0" 
+                 Background="{DynamicResource PrimaryHueMidBrush}" 
+                 Height="50">
+                            <TextBlock 
+                     Text="DANH SÁCH ĐƠN VỊ ĐO" 
+                     FontWeight="Medium" 
+                     FontSize="16" 
+                     Foreground="White" 
+                     VerticalAlignment="Center" 
+                     HorizontalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- List View -->
+                        <ScrollViewer 
+                 Grid.Row="1" 
+                 VerticalScrollBarVisibility="Auto"
+                 Margin="0,5,0,0">
+                            <ListView 
+                     ItemsSource="{Binding ListUnit}" 
+                     SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                     BorderThickness="0">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn 
+                                 Header="ID" 
+                                 DisplayMemberBinding="{Binding Id}" 
+                                 Width="100"/>
+                                        <GridViewColumn 
+                                 Header="Tên chuyên khoa" 
+                                 DisplayMemberBinding="{Binding DisplayName}" 
+                                 Width="180"/>
+                                        <GridViewColumn 
+                                 Header="Mô tả" 
+                                 DisplayMemberBinding="{Binding Description}" 
+                                 Width="250"/>
+                                    </GridView>
+                                </ListView.View>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Padding" Value="8"/>
+                                        <Setter Property="Margin" Value="0,2"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                            </ListView>
+                        </ScrollViewer>
+                    </Grid>
+                </materialDesign:Card>
+            </Grid>
+        </TabItem>
+    </TabControl>
 </UserControl>
 
