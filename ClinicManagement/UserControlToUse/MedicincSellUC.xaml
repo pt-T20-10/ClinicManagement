@@ -289,30 +289,31 @@
             <Grid Margin="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock 
-                    Grid.Column="0" 
-                    Text="Khách hàng:" 
-                    VerticalAlignment="Center" 
-                    FontWeight="Medium"/>
-
-                <ComboBox 
-                    Grid.Column="1"
-                    Margin="16,0"
-                    ItemsSource="{Binding PatientList}"
-                    DisplayMemberPath="FullName"
-                    SelectedItem="{Binding SelectedPatient}"
-                    materialDesign:HintAssist.Hint="Chọn khách hàng"
-                    Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-
-                <Button
-                    Grid.Column="2"
-                    Style="{StaticResource MaterialDesignFlatButton}"
-                    Content="+ Thêm khách hàng mới"
-                    Command="{Binding AddNewPatientCommand}"/>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Bệnh nhân:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox
+                           Width="220"
+                           materialDesign:HintAssist.Hint="Nhập tên khách hàng"
+                           Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
+                           Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="15,0,20,0">
+                        <TextBlock Text="Số điện thoại:" VerticalAlignment="Center" Margin="15,0,8,0"/>
+                        <TextBox
+                           Width="220"
+                           Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
+                           materialDesign:HintAssist.Hint="Nhập số điện thoại"
+                           Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
+                    <Button
+                        Grid.Column="2"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        Content="+ Thêm khách hàng mới"
+                        Command="{Binding AddNewPatientCommand}"/>
             </Grid>
         </materialDesign:Card>
     </Grid>

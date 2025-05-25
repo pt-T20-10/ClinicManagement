@@ -141,7 +141,7 @@
                             </Grid>
 
                         </TabItem.Header>
-
+                        <uc:ExamineUC></uc:ExamineUC>
                     </TabItem>
 
 

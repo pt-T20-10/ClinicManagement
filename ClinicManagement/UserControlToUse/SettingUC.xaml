@@ -14,7 +14,6 @@
             Background="{DynamicResource MaterialDesignPaper}"
             FontFamily="{DynamicResource MaterialDesignFont}"
             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-           
             Name="SettingUc">
     <materialDesign:Card>
         

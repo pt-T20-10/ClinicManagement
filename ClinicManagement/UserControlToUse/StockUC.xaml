@@ -456,7 +456,7 @@
                                 materialDesign:HintAssist.Hint="Hạn sử dụng"
                                 Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
                             
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Grid.RowSpan="2" Grid.Column="3" Grid.Row="0">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Grid.RowSpan="3" Grid.Column="3" Grid.Row="0">
                                 <Button
                                     Margin="0 0 0 15"
                                     Content="Quản lí loại thuốc"
