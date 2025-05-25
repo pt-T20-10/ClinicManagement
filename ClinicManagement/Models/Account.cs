@@ -1,0 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace ClinicManagement.Models;
+
+public partial class Account
+{
+    public string Username { get; set; } = null!;
+
+    public int? DoctorId { get; set; }
+
+    public string Password { get; set; } = null!;
+
+    public string? Role { get; set; }
+
+    public bool? IsLogined { get; set; }
+
+    public bool? IsDeleted { get; set; }
+
+    public virtual Doctor? Doctor { get; set; }
+}

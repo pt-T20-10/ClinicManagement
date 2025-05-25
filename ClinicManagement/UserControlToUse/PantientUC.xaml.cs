@@ -24,5 +24,7 @@ namespace ClinicManagement.UserControlToUse
         {
             InitializeComponent();
         }
+
+        
     }
 }

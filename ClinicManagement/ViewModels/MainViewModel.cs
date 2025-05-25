@@ -35,30 +35,30 @@ namespace ClinicManagement.ViewModels
 
                  (p) =>
                  {
-                     //Isloaded = true;
-                     //if (p == null)
-                     //    return;
+                     Isloaded = true;
+                     if (p == null)
+                         return;
 
                      p.Hide();
                      LoginWindow loginWindow = new LoginWindow();
                      loginWindow.ShowDialog();
-                     //if (loginWindow.DataContext == null)
-                     //    return;
-                     p.Show();
-                     //var loginVM = loginWindow.DataContext as LoginViewModel;
-                    // if (loginVM.IsLogin)
-                    // {
-                    //     p.Show();
-                 
-                         
-                    // }
-                    //else
-                    // {
-                    //     p.Close();
-                    // }
+                     if (loginWindow.DataContext == null)
+                         return;
+
+                     var loginVM = loginWindow.DataContext as LoginViewModel;
+                     if (loginVM.IsLogin)
+                     {
+                         p.Show();
+                        ;
+
+                     }
+                     else
+                     {
+                         p.Close();
+                     }
                  },
                  (p) => true
-            ); 
+            );
 
         }
         //void LoadListStock()

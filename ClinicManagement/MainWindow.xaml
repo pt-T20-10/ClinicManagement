@@ -120,7 +120,7 @@
                             </Grid>
                         </TabItem.Header>
 
-                        <uc:PantientUC></uc:PantientUC>
+                        <uc:PantientUC DataContext="{StaticResource PatientVM}"></uc:PantientUC>
 
                     </TabItem>
 

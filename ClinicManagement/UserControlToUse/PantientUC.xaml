@@ -15,155 +15,163 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="PantientUc">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" CommandParameter="{Binding ElementName=PantientUc}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <materialDesign:Card>
         <TabControl
             materialDesign:ColorZoneAssist.Mode="PrimaryLight"
             Style="{StaticResource MaterialDesignFilledTabControl}">
-            
+
             <TabItem Header="Bệnh nhân">
                 <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-
-                <Grid HorizontalAlignment="Left" Grid.Row="0" >
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"></ColumnDefinition>
-                        <ColumnDefinition Width="auto"></ColumnDefinition>
-                        <ColumnDefinition Width="auto"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="107*"/>
+                        <ColumnDefinition Width="45*"/>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
 
-
-
-                    <Grid Grid.Column="0" Margin="5">
+                    <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="2" >
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="180"></ColumnDefinition>
-                            <ColumnDefinition Width="180"></ColumnDefinition>
-
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0">
-                            <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày bắt đầu" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+
+
+
+                        <Grid Grid.Column="0" Margin="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"></ColumnDefinition>
+                                <ColumnDefinition Width="180"></ColumnDefinition>
+
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày bắt đầu" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày kết thúc" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+                            </Grid>
+
                         </Grid>
+
+
+
                         <Grid Grid.Column="1">
-                            <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày kết thúc" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <RadioButton
+                               Margin="5 5 5 5"
+                               Grid.Column="0"
+                               Content="VIP"
+                               Style="{StaticResource MaterialDesignRadioButton}"/>
+                            <RadioButton
+                               Margin="5 5 5 5"
+                               Grid.Column="1"
+                               Content="Bảo hiểm"
+                               Style="{StaticResource MaterialDesignRadioButton}"/>
+                            <RadioButton
+                               Margin="5 5 5 5"
+                               Grid.Column="2"
+                               Content="Thường"
+                               Style="{StaticResource MaterialDesignRadioButton}"/>
+
                         </Grid>
-
-                    </Grid>
-
-
-
-                    <Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"></ColumnDefinition>
-                            <ColumnDefinition Width="auto"></ColumnDefinition>
-                            <ColumnDefinition Width="auto"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                        <RadioButton
-                       Margin="5 5 5 5"
-                       Grid.Column="0"
-                       Content="VIP"
-                       Style="{StaticResource MaterialDesignRadioButton}"/>
-                        <RadioButton
-       Margin="5 5 5 5"
-       Grid.Column="1"
-       Content="Bảo hiểm"
-       Style="{StaticResource MaterialDesignRadioButton}"/>
-                        <RadioButton
-       Margin="5 5 5 5"
-       Grid.Column="2"
-       Content="Thường"
-       Style="{StaticResource MaterialDesignRadioButton}"/>
-
-                    </Grid>
-                    <Grid  HorizontalAlignment="Left" Grid.Column="2">
-                        <TextBox
-               Margin="20 0 0 0"
-               Grid.Column="2"
-               VerticalAlignment="Center"
-               HorizontalAlignment="Left"
-               Height="42"
-               Width="500"
-               Padding="15 0 0 0 "
-               materialDesign:HintAssist.Hint="Họ tên hoặc mã bảo hiểm"
-               Style="{StaticResource MaterialDesignOutlinedTextBox}"
-  />
+                        <Grid  HorizontalAlignment="Left" Grid.Column="2">
+                            <TextBox
+                               Margin="20 0 0 0"
+                               Grid.Column="2"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Left"
+                               Height="42"
+                               Width="500"
+                               Padding="15 0 0 0 "
+                               materialDesign:HintAssist.Hint="Họ tên hoặc mã bảo hiểm"
+                               Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 />
+                            <Button
+                                 HorizontalAlignment="Right"
+                                Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                                Grid.Column="2"
+                                Width="120"
+                                Height="32"
+                                ToolTip="Resource name: MaterialDesignRaisedButton"
+                                 Command="{Binding SearchCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Tìm kiếm"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
                         <Button
-                 HorizontalAlignment="Right"
-                Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
-                Grid.Column="2"
-                Width="120"
-                Height="32"
-                ToolTip="Resource name: MaterialDesignRaisedButton"
-                 Command="{Binding SearchCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
-                                <TextBlock Text="Tìm kiếm"/>
-                            </StackPanel>
+                           Margin="50 5 5 5 "
+                           Grid.Column="3"
+                           IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+                           Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
+                           Command="{Binding AddPatientCommand}"
+                           ToolTip="MaterialDesignFloatingActionDarkButton">
+                            <materialDesign:PackIcon
+                             Width="30"
+                             Height="40"
+                             Kind="PlusThick"
+                             />
                         </Button>
+
                     </Grid>
-                    <Button
-             Margin="50 5 5 5 "
-           Grid.Column="3"
-           IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-           Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
-             Command="{Binding AddPatientCommand}"
-           ToolTip="MaterialDesignFloatingActionDarkButton"
-          >
-                        <materialDesign:PackIcon
-         Width="30"
-         Height="40"
-         Kind="PlusThick"
-         />
-                    </Button>
 
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.ColumnSpan="2">
+                        <ListView Grid.Row="1" ItemsSource="{Binding PatientList}">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn
+                                          Width="200"
+                                          DisplayMemberBinding="{Binding InsuranceCode}">
+                                        <GridViewColumn.Header>
+                                            Bảo hiểm y tế
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                          DisplayMemberBinding="{Binding FullName}"
+                                          Width="200">
+                                        <GridViewColumn.Header>
+                                            Họ và tên
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                          DisplayMemberBinding="{Binding PatientType.TypeName}"
+                                          Width="100" >
+                                        <GridViewColumn.Header>
+                                            Khách hàng
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                          DisplayMemberBinding="{Binding Phone}"
+                                          Width="150">
+                                        <GridViewColumn.Header>
+                                            Điện thoại
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+                                    <GridViewColumn
+                                         DisplayMemberBinding="{Binding Address}">
+                                        <GridViewColumn.Header>
+                                            Địa chỉ
+                                        </GridViewColumn.Header>
+                                    </GridViewColumn>
+
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </ScrollViewer>
                 </Grid>
-
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <ListView Grid.Row="1" ItemsSource="{Binding Items1}">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn
-                          Width="200"
-                          DisplayMemberBinding="{Binding InsuranceCode}">
-                                    <GridViewColumn.Header>
-                                        Bảo hiểm y tế
-                                    </GridViewColumn.Header>
-                                </GridViewColumn>
-                                <GridViewColumn
-                          DisplayMemberBinding="{Binding FullName}"
-                          Width="200">
-                                    <GridViewColumn.Header>
-                                        Họ và tên
-                                    </GridViewColumn.Header>
-                                </GridViewColumn>
-                                <GridViewColumn
-                          DisplayMemberBinding="{Binding PatientType.TypeName}"
-                          Width="100" >
-                                    <GridViewColumn.Header>
-                                        Khách hàng
-                                    </GridViewColumn.Header>
-                                </GridViewColumn>
-                                <GridViewColumn
-                          DisplayMemberBinding="{Binding Phone}"
-                          Width="150">
-                                    <GridViewColumn.Header>
-                                        Điện thoại
-                                    </GridViewColumn.Header>
-                                </GridViewColumn>
-                                <GridViewColumn
-                          DisplayMemberBinding="{Binding Address}">
-                                    <GridViewColumn.Header>
-                                        Địa chỉ
-                                    </GridViewColumn.Header>
-                                </GridViewColumn>
-
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                </ScrollViewer>
-            </Grid> 
             </TabItem>
             <TabItem Header="Quản lí loại bệnh nhân">
                 <Grid Margin="10">
@@ -199,26 +207,26 @@
 
                             <!-- Input Fields -->
                             <TextBox 
-                            Grid.Row="1"
-                            Text="{Binding TypeName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                            materialDesign:HintAssist.Hint="Tên loại bệnh nhân"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                            Margin="0,0,0,15"
-                            Width="300"
-                            HorizontalAlignment="Center"/>
+                                Grid.Row="1"
+                                Text="{Binding TypeName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                materialDesign:HintAssist.Hint="Tên loại bệnh nhân"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,15"
+                                Width="300"
+                                HorizontalAlignment="Center"/>
 
                             <!-- Description Field -->
                             <TextBox 
-                            Grid.Row="2"
-                            Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                            materialDesign:HintAssist.Hint="Mức ưu đãi (giảm giá)"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            VerticalScrollBarVisibility="Auto"
-                            Margin="0,0,0,20"
-                            Width="300"
-                            HorizontalAlignment="Center"/>
+                                Grid.Row="2"
+                                Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                materialDesign:HintAssist.Hint="Mức ưu đãi (giảm giá)"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                TextWrapping="Wrap"
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                Margin="0,0,0,20"
+                                Width="300"
+                                HorizontalAlignment="Center"/>
 
                             <!-- Action Buttons -->
                             <StackPanel 
@@ -289,7 +297,7 @@
                                         Text="2. Điền tên loại bệnh nhân và mức ưu đãi, nhấn 'Thêm' để tạo loại bệnh nhân mới." 
                                         TextWrapping="Wrap"
                                         Margin="0,4,0,4"/>
-                                        <TextBlock 
+                                    <TextBlock 
                                         Text="3. Sửa thông tin loại bệnh nhânhiện tại và nhấn 'Sửa' để cập nhật." 
                                         TextWrapping="Wrap"
                                         Margin="0,4,0,4"/>
@@ -329,15 +337,20 @@
                                 VerticalScrollBarVisibility="Auto"
                                 Margin="0,5,0,0">
                                 <ListView 
-                                    ItemsSource="{Binding ListUnit}" 
+                                    ItemsSource="{Binding PatientTypeList}" 
                                     SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                                     BorderThickness="0">
-                                        <ListView.View>
+                                    <ListView.View>
                                         <GridView>
                                             <GridViewColumn 
-                                            Header="ID" 
-                                            DisplayMemberBinding="{Binding PatientTypeID}" 
-                                            Width="100"/>
+                                                   DisplayMemberBinding="{Binding PatientTypeId}" 
+                                                     Width="100">
+
+                                                <GridViewColumn.Header>
+                                                 ID
+                                                </GridViewColumn.Header>
+
+                                            </GridViewColumn>
                                             <GridViewColumn 
                                                 Header="Tên loại bệnh nhân" 
                                                 DisplayMemberBinding="{Binding TypeName}" 
@@ -348,13 +361,7 @@
                                                 Width="250"/>
                                         </GridView>
                                     </ListView.View>
-                                    <ListView.ItemContainerStyle>
-                                        <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                            <Setter Property="Padding" Value="8"/>
-                                            <Setter Property="Margin" Value="0,2"/>
-                                        </Style>
-                                    </ListView.ItemContainerStyle>
+                                   
                                 </ListView>
                             </ScrollViewer>
                         </Grid>
@@ -362,7 +369,7 @@
                 </Grid>
             </TabItem>
         </TabControl>
-       
+
     </materialDesign:Card>
-   
+
 </UserControl>
