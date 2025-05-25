@@ -43,6 +43,7 @@
                     <RowDefinition Height="100"></RowDefinition>
                     <RowDefinition ></RowDefinition>
                 </Grid.RowDefinitions>
+                
                 <Grid Margin="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -56,7 +57,7 @@
                         <TextBlock Text="Hệ thống quản lý phòng khám" FontSize="18" Foreground="Gray"/>
                     </StackPanel>
 
-                 
+
 
                     <!-- Nút chức năng -->
                     <StackPanel HorizontalAlignment="Right" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" >
@@ -78,8 +79,9 @@
                         </materialDesign:Card>
                     </StackPanel>
                 </Grid>
+                
                 <!--#region Tab control-->
-               
+
                 <TabControl Grid.Row="1"
                          TabStripPlacement="Left">
                     <TabItem Width="150" Height="80" Padding="0">
@@ -117,7 +119,7 @@
                                 </Grid>
                             </Grid>
                         </TabItem.Header>
-                        
+
                         <uc:PantientUC></uc:PantientUC>
 
                     </TabItem>
@@ -191,11 +193,11 @@
                                     <TextBlock Text="Bán thuốc" HorizontalAlignment="Center"></TextBlock>
                                 </Grid>
                                 <Grid Grid.Row="1">
-                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Pill" />
+                                    <materialDesign:PackIcon HorizontalAlignment="Right" Width="24" Height="24"  Kind="Pill" Margin="0,0,19,0" VerticalAlignment="Center" />
                                 </Grid>
                             </Grid>
                         </TabItem.Header>
-
+                        <uc:MedicincSellUC Margin="0,17,0,-17"></uc:MedicincSellUC>
                     </TabItem>
                     <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header >
@@ -249,10 +251,10 @@
                             </Grid>
 
                         </TabItem.Header>
-
+                        <uc:SettingUC></uc:SettingUC>
                     </TabItem>
                 </TabControl>
-            <!--#endregion-->
+                <!--#endregion-->
             </Grid>
         </materialDesign:Card>
     </Grid>

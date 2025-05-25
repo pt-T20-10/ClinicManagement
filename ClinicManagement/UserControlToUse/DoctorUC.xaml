@@ -274,7 +274,7 @@ Style="{StaticResource MaterialDesignFilledTabControl}">
                      Text="DANH SÁCH ĐƠN VỊ ĐO" 
                      FontWeight="Medium" 
                      FontSize="16" 
-                     Foreground="White" 
+                     Foreground="Black" 
                      VerticalAlignment="Center" 
                      HorizontalAlignment="Center"/>
                         </Grid>
