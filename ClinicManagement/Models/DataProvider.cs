@@ -18,7 +18,7 @@ namespace ClinicManagement.Models
         private static DataProvider _instance;
 
         // Connection string được sử dụng bởi cả EF và ADO.NET
-        private readonly string _connectionString = @"Data Source=acer\mssqlserver03;Initial Catalog=ClinicManagement;Integrated Security=True;Trust Server Certificate=True;MultipleActiveResultSets=True";
+        private readonly string _connectionString = @"Data Source=LAPTOP-JB63GGME\SQLEXPRESS01;Initial Catalog=ClinicManagement;Integrated Security=True;Trust Server Certificate=True;MultipleActiveResultSets=True";
 
         // Instance của DbContext để sử dụng Entity Framework
         private ClinicDbContext _dbContext;
