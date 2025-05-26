@@ -20,6 +20,7 @@
         Name="mainWindow"
         Style="{StaticResource MaterialDesignWindow}"
         Height="1000" Width="1400" 
+        WindowState="Maximized"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen">
     <i:Interaction.Triggers>
@@ -61,8 +62,8 @@
 
                     <!-- Nút chức năng -->
                     <StackPanel HorizontalAlignment="Right" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" >
-                        <Button   Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm lịch hẹn" Style="{StaticResource MaterialDesignOutlinedButton}" />
-                        <Button  Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bệnh nhân" Style="{StaticResource MaterialDesignOutlinedButton}" />
+                        <Button Command="{Binding AddAppointmentCommand}" CommandParameter="{Binding ElementName=MainTabControl}" Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm lịch hẹn" Style="{StaticResource MaterialDesignOutlinedButton}" />
+                        <Button Command="{Binding AddPatientCommand}" Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bệnh nhân" Style="{StaticResource MaterialDesignOutlinedButton}" />
                         <!-- User Profile Section - Added in 3rd row -->
                         <materialDesign:Card Padding="15 5 15 5">
                             <Grid  Height="Auto">
@@ -83,7 +84,8 @@
                 <!--#region Tab control-->
 
                 <TabControl Grid.Row="1"
-                         TabStripPlacement="Left">
+                         TabStripPlacement="Left"
+                           x:Name="MainTabControl">
                     <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header >
                             <Grid>
@@ -100,7 +102,7 @@
                             </Grid>
 
                         </TabItem.Header>
-                        <uc:DashBoardUC></uc:DashBoardUC>
+                        <uc:DashBoardUC DataContext="{StaticResource DashboardVM}"></uc:DashBoardUC>
                     </TabItem>
 
 
@@ -120,7 +122,7 @@
                             </Grid>
                         </TabItem.Header>
 
-                        <uc:PantientUC DataContext="{StaticResource PatientVM}"></uc:PantientUC>
+                        <uc:PantientUC DataContext="{StaticResource PatientVM}"/>
 
                     </TabItem>
 
@@ -145,7 +147,7 @@
                     </TabItem>
 
 
-                    <TabItem Width="150" Height="80"  Padding="0">
+                    <TabItem x:Name="AppointmentTab" Width="150" Height="80"  Padding="0">
 
                         <TabItem.Header>
                             <Grid>

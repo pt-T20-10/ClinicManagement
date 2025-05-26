@@ -1,4 +1,5 @@
 ﻿
+using ClinicManagement.SubWindow;
 using ClinicManagement.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using static MaterialDesignThemes.Wpf.Theme;
 
 namespace ClinicManagement.ViewModels
 {
@@ -28,6 +31,10 @@ namespace ClinicManagement.ViewModels
         public string _TotalStock;
         public string TotalStock { get => _TotalStock; set { _TotalStock = value; OnPropertyChanged();  } }
         public ICommand LoadedWindowCommand { get; set; }
+        public ICommand AddPatientCommand { get; set; } 
+        public ICommand AddAppointmentCommand { get; set; }
+
+
         // mọi thứ xử lý sẽ nằm trong này
         public MainViewModel()
         {
@@ -59,7 +66,31 @@ namespace ClinicManagement.ViewModels
                  },
                  (p) => true
             );
-
+            AddPatientCommand = new RelayCommand<Window>(
+                (p) =>
+                {
+                    AddPatientWindow addPatientWindow = new AddPatientWindow();
+                    addPatientWindow.ShowDialog();
+                },
+                (p) => true
+            );
+            AddAppointmentCommand = new RelayCommand<System.Windows.Controls.TabControl>(
+                (tabControl) =>
+                {
+                    if (tabControl != null)
+                    {
+                        foreach (var item in tabControl.Items)
+                        {
+                            if (item is TabItem tabItem && tabItem.Name == "AppointmentTab")
+                            {
+                                tabControl.SelectedItem = tabItem;
+                                break;
+                            }
+                        }
+                    }       
+                },
+        (p) => true
+    );
         }
         //void LoadListStock()
         //{

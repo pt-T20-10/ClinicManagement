@@ -17,7 +17,7 @@
         WindowStyle="None"
         ResizeMode="NoResize"
         Name="addPatientWindow"
-        Title="Thêm bệnh nhân mới"
+        Title="THÊM BỆNH NHÂN"
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
@@ -76,12 +76,12 @@
                                  Margin="0,0,8,0"/>
 
                         <!-- Gender -->
-                        <ComboBox Grid.Column="1"
-                                  ItemsSource="{Binding GenderList}"
-                                  SelectedItem="{Binding SelectedGender}"
-                                  materialDesign:HintAssist.Hint="Giới tính"
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  Margin="8,0,0,0"/>
+                        <StackPanel HorizontalAlignment="Center" Grid.Column="1" Orientation="Horizontal">
+                            <RadioButton Margin="5 0 10 0" Content="Nam"/>
+                            <RadioButton  Margin="5 0 10 0" Content="Nữ"/>
+                            <RadioButton Margin="5 0 10 0" Content="Khác"/>
+                        </StackPanel>
+
                     </Grid>
 
                     <!-- Phone -->
@@ -105,30 +105,6 @@
                     <!-- Insurance Number -->
                     <TextBox Text="{Binding InsuranceNumber, UpdateSourceTrigger=PropertyChanged}"
                              materialDesign:HintAssist.Hint="Số BHYT"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
-
-                    <!-- Medical History -->
-                    <TextBox Text="{Binding MedicalHistory, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Tiền sử bệnh"
-                             TextWrapping="Wrap"
-                             AcceptsReturn="True"
-                             MinHeight="80"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
-
-                    <!-- Allergy Information -->
-                    <TextBox Text="{Binding AllergyInfo, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Thông tin dị ứng"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
-
-                    <!-- Notes -->
-                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Ghi chú"
-                             TextWrapping="Wrap"
-                             AcceptsReturn="True"
-                             MinHeight="60"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
                 </StackPanel>

@@ -9,8 +9,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1200">
 
-    <UserControl.Resources>
-        <!-- Định nghĩa DataTemplate cho trạng thái lịch hẹn -->
+    <!--<UserControl.Resources>
+        --><!-- Định nghĩa DataTemplate cho trạng thái lịch hẹn --><!--
         <DataTemplate x:Key="AppointmentStatusTemplate">
             <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Center">
                 <Border.Style>
@@ -65,7 +65,7 @@
             </Border>
         </DataTemplate>
 
-        <!-- DataTemplate cho từng mục lịch hẹn -->
+        --><!-- DataTemplate cho từng mục lịch hẹn --><!--
         <DataTemplate x:Key="AppointmentItemTemplate">
             <materialDesign:Card Margin="0,8" Padding="0">
                 <Grid>
@@ -76,27 +76,27 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Viết tắt tên bệnh nhân -->
+                    --><!-- Viết tắt tên bệnh nhân --><!--
                     <Border Grid.Column="0" Width="40" Height="40" Background="#E0E0E0" 
                             CornerRadius="20" Margin="16,12">
                         <TextBlock Text="{Binding Initials}" HorizontalAlignment="Center" 
                                    VerticalAlignment="Center" FontWeight="Medium"/>
                     </Border>
 
-                    <!-- Thông tin bệnh nhân và lý do khám -->
+                    --><!-- Thông tin bệnh nhân và lý do khám --><!--
                     <StackPanel Grid.Column="1" Margin="0,12" VerticalAlignment="Center">
                         <TextBlock Text="{Binding PatientName}" FontWeight="Medium" FontSize="14"/>
                         <TextBlock Text="{Binding Reason}" Foreground="#616161" FontSize="12" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <!-- Giờ hẹn và bác sĩ -->
+                    --><!-- Giờ hẹn và bác sĩ --><!--
                     <StackPanel Grid.Column="2" Margin="12" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Time}" FontWeight="Medium" HorizontalAlignment="Right"/>
                         <TextBlock Text="{Binding Doctor}" Foreground="#616161" FontSize="12" 
                                    HorizontalAlignment="Right" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <!-- Trạng thái -->
+                    --><!-- Trạng thái --><!--
                     <ContentControl Grid.Column="3" Margin="8,0,16,0" VerticalAlignment="Center"
                                   ContentTemplate="{StaticResource AppointmentStatusTemplate}"
                                   Content="{Binding}"/>
@@ -104,10 +104,12 @@
             </materialDesign:Card>
         </DataTemplate>
 
-        <!-- Định nghĩa màu sắc cho các chỉ số -->
+        --><!-- Định nghĩa màu sắc cho các chỉ số --><!--
         <SolidColorBrush x:Key="PositiveChangeBrush" Color="#4CAF50"/>
         <SolidColorBrush x:Key="NegativeChangeBrush" Color="#F44336"/>
-    </UserControl.Resources>
+    </UserControl.Resources>-->
+    <materialDesign:Card>
+        
 
     <Grid>
         <Grid.RowDefinitions>
@@ -153,9 +155,9 @@
 
                     <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
                               Orientation="Horizontal" VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="ArrowUpBold" Foreground="{StaticResource PositiveChangeBrush}" 
+                        <materialDesign:PackIcon Kind="ArrowUpBold"
                                              Height="16" Width="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding PatientsChange}" Foreground="{StaticResource PositiveChangeBrush}" 
+                        <TextBlock Text="{Binding PatientsChange}" 
                                  Margin="4,0,0,0" FontSize="12"/>
                         <TextBlock Text=" so với hôm qua" Foreground="#616161" FontSize="12"/>
                     </StackPanel>
@@ -190,7 +192,7 @@
                               Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding PendingAppointments}" Foreground="#FF9800" 
                                  FontSize="12"/>
-                        <TextBlock Text=" đang chờ xác nhận" Foreground="#616161" FontSize="12"/>
+                        <TextBlock Text=" khách đang chờ" Foreground="#616161" FontSize="12"/>
                     </StackPanel>
                 </Grid>
             </materialDesign:Card>
@@ -221,9 +223,9 @@
 
                     <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
                               Orientation="Horizontal" VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="ArrowUpBold" Foreground="{StaticResource PositiveChangeBrush}" 
+                        <materialDesign:PackIcon Kind="ArrowUpBold"
                                              Height="16" Width="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding RevenueChange}" Foreground="{StaticResource PositiveChangeBrush}" 
+                        <TextBlock Text="{Binding RevenueChange}"
                                  Margin="4,0,0,0" FontSize="12"/>
                         <TextBlock Text=" so với hôm qua" Foreground="#616161" FontSize="12"/>
                     </StackPanel>
@@ -233,59 +235,196 @@
 
         <!-- Phần nội dung chính -->
         <Grid Grid.Row="2" Margin="16,16,16,16">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- Tab chuyển đổi giữa các chế độ xem -->
-            <materialDesign:ColorZone Grid.Row="0" Mode="Standard" Padding="0" 
-                                  CornerRadius="4" Background="Transparent">
-                <StackPanel Orientation="Horizontal">
-                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
-                          Content="Lịch hẹn hôm nay" 
-                          Command="{Binding ShowTodayAppointmentsCommand}"
-                      ></Button>
-                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
-                          Content="Bệnh nhân gần đây" 
-                          Command="{Binding ShowRecentPatientsCommand}"
-                        ></Button>
-                </StackPanel>
-            </materialDesign:ColorZone>
-
-            <!-- Tiêu đề phần lịch hẹn -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <!-- Tiêu đề phần lịch hẹn -->
             <Grid Grid.Row="1" Margin="0,16,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
 
                 <TextBlock Grid.Column="0" Text="Lịch hẹn hôm nay" FontSize="18" FontWeight="Medium"/>
-                <TextBlock Grid.Column="1" 
-                       Text="{Binding CurrentDate, StringFormat='Danh sách các lịch hẹn trong ngày {0}'}" 
-                       Foreground="#616161"/>
-            </Grid>
+                    <TextBlock Grid.Column="0" Grid.Row="1" Margin="5 10 0 0"
+           Text="{Binding CurrentDate, StringFormat='Danh sách các lịch hẹn trong ngày {0:dd/MM/yyyy}'}"
+           Foreground="#616161"/>
+
+                </Grid>
 
             <!-- Danh sách lịch hẹn -->
-            <ScrollViewer  Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <ListView Grid.Row="2" 
-                    ItemsSource="{Binding TodayAppointments}" 
-                    ItemTemplate="{StaticResource AppointmentItemTemplate}"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto"
-                    BorderThickness="0"
-                    Background="Transparent"
-           >
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Margin" Value="0"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                </ListView>
-            </ScrollViewer>
-        </Grid>
-    </Grid>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <ListView 
+                        ItemsSource="{Binding TodayAppointments}" 
+                        BorderThickness="0"
+                        Background="Transparent"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        Margin="0 0 5 0"
+                        >
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="White" 
+                                    CornerRadius="8" 
+                                    Padding="0" 
+                                    Margin="0,4" 
+                                    BorderThickness="1" 
+                                    BorderBrush="#EEEEEE">
+                                    <Grid Height="70">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="70"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="120"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Patient Initials -->
+                                        <Border Grid.Column="0" 
+                                            Width="40" Height="40" 
+                                            Background="#F0F0F0"
+                                            CornerRadius="4" 
+                                            HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Initials}" 
+                                               FontWeight="SemiBold" 
+                                               FontSize="16"
+                                               VerticalAlignment="Center" 
+                                               HorizontalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Patient Info -->
+                                        <StackPanel Grid.Column="1" 
+                                    VerticalAlignment="Center" 
+                                    Margin="0,0,10,0">
+                                            <TextBlock Text="{Binding PatientName}"
+                                                Foreground="#757575" 
+                                       FontWeight="SemiBold" 
+                                       FontSize="14"/>
+                                            <TextBlock Text="{Binding Notes}" 
+                                       Foreground="#757575" 
+                                       FontSize="12" 
+                                       Margin="0,4,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Doctor Name -->
+                                        <TextBlock Grid.Column="2" 
+                                   Text="{Binding DoctorName}" 
+                                   VerticalAlignment="Center"
+                                   Foreground="#757575" 
+                                   FontSize="12" 
+                                   Margin="0,0,15,0"/>
+
+                                        <!-- Time and Status -->
+                                        <Grid Grid.Column="3" Margin="0,0,15,0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Time -->
+                                            <TextBlock Grid.Row="0" 
+                                       Text="{Binding Time}" 
+                                       FontWeight="SemiBold"
+                                       FontSize="14" 
+                                       HorizontalAlignment="Right" 
+                                       VerticalAlignment="Center"/>
+
+                                            <!-- Status -->
+                                            <Border Grid.Row="1" 
+                                    HorizontalAlignment="Right" 
+                                    VerticalAlignment="Center" 
+                                    CornerRadius="4" 
+                                    Padding="8,2">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                <Setter Property="Background" Value="#FFF8E8"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Đã xác nhận">
+                                                                <Setter Property="Background" Value="#E1F5FE"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                <Setter Property="Background" Value="#E8F5E9"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Hoàn thành">
+                                                                <Setter Property="Background" Value="#F3E5F5"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Status}" FontSize="11">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                    <Setter Property="Foreground" Value="#E65100"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Đã xác nhận">
+                                                                    <Setter Property="Foreground" Value="#01579B"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                    <Setter Property="Foreground" Value="#1B5E20"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Hoàn thành">
+                                                                    <Setter Property="Foreground" Value="#4A148C"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                    <Setter Property="Foreground" Value="#B71C1C"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,4"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <Border Background="{TemplateBinding Background}" 
+                                    Padding="{TemplateBinding Padding}" 
+                                    Margin="{TemplateBinding Margin}" 
+                                    BorderThickness="0">
+                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                </ScrollViewer>
+            </Grid>
+    </Grid>   
+    </materialDesign:Card>
 </UserControl>
