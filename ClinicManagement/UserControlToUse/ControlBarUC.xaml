@@ -29,7 +29,7 @@
                         Width="50"
                         Background="Transparent"
                         BorderThickness="0"
-                        BorderBrush="Transparent"
+                      
                         Command="{Binding MinimizingWindowCommand}"
                         CommandParameter="{Binding ElementName=ucControlBar}"
                     ToolTip="Minimize" />
@@ -39,7 +39,7 @@
                       Width="50"
                       Background="Transparent"
                       BorderThickness="0"
-                      BorderBrush="Transparent"
+                   
                       Content="{materialDesign:PackIcon Kind=Maximize}"
                       Command="{Binding MaximizingWindowCommand}"
                       CommandParameter="{Binding ElementName=ucControlBar}"
@@ -50,7 +50,7 @@
                        Width="50"
                        Background="Transparent"
                        BorderThickness="0"
-                       BorderBrush="Transparent"
+                    
                      Content="{materialDesign:PackIcon Kind=Close}"
                         Command="{Binding ClosingWindowCommand}"
                         CommandParameter="{Binding ElementName=ucControlBar}"

@@ -338,7 +338,7 @@
                                 Margin="0,5,0,0">
                                 <ListView 
                                     ItemsSource="{Binding PatientTypeList}" 
-                                    SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                                    SelectedItem="{Binding SelectedType, Mode=TwoWay}"
                                     BorderThickness="0">
                                     <ListView.View>
                                         <GridView>
