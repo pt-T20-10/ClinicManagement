@@ -47,47 +47,55 @@
 
 
                         <Grid Grid.Column="0" Margin="5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="180"></ColumnDefinition>
-                                <ColumnDefinition Width="180"></ColumnDefinition>
-
-                            </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0">
-                                <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày bắt đầu" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
+                                <DatePicker SelectedDate="{Binding SelectedDate, UpdateSourceTrigger=PropertyChanged}" x:Name="DateCreated" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày tạo" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
                             </Grid>
-                            <Grid Grid.Column="1">
-                                <DatePicker Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Width="160" materialDesign:HintAssist.Hint="Ngày kết thúc" Style="{StaticResource MaterialDesignFloatingHintDatePicker}" />
-                            </Grid>
-
                         </Grid>
-
-
-
                         <Grid Grid.Column="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="auto"></ColumnDefinition>
                                 <ColumnDefinition Width="auto"></ColumnDefinition>
                                 <ColumnDefinition Width="auto"></ColumnDefinition>
+                                <ColumnDefinition Width="auto"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <RadioButton
-                               Margin="5 5 5 5"
-                               Grid.Column="0"
-                               Content="VIP"
-                               Style="{StaticResource MaterialDesignRadioButton}"/>
-                            <RadioButton
+                               x:Name="VIPSelectd"
                                Margin="5 5 5 5"
                                Grid.Column="1"
-                               Content="Bảo hiểm"
+                               Content="VIP"
+                               IsChecked="{Binding IsVIPSelected}"
+                               Command="{Binding VIPSelectedCommand}"
                                Style="{StaticResource MaterialDesignRadioButton}"/>
                             <RadioButton
+                               x:Name="InsurabceSelectd"
+                                 IsChecked="{Binding IsInsuranceSelected}"
+                                 Command="{Binding InsuranceSelectedCommand}"
                                Margin="5 5 5 5"
                                Grid.Column="2"
+                               Content="Bảo hiểm y tế"
+                               Style="{StaticResource MaterialDesignRadioButton}"/>
+                            <RadioButton
+                               x:Name="NormalSelectd"
+                                IsChecked="{Binding IsNormalSelected}"
+                                 Command="{Binding NormalSelectedCommand}"
+                               Margin="5 5 5 5"
+                               Grid.Column="3"
                                Content="Thường"
                                Style="{StaticResource MaterialDesignRadioButton}"/>
+                            <RadioButton  
+                                x:Name="AllSelectd"
+                                 IsChecked="{Binding IsAllSelected}"
+                                  Command="{Binding AllSelectedCommand}"
+                                Margin="5 5 5 5"
+                                Grid.Column="0"
+                                Content="Tất cả"
+                                Style="{StaticResource MaterialDesignRadioButton}"/>
 
                         </Grid>
                         <Grid  HorizontalAlignment="Left" Grid.Column="2">
                             <TextBox
+                               x:Name="Searchtbx"
+                                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                Margin="20 0 0 0"
                                Grid.Column="2"
                                VerticalAlignment="Center"
@@ -104,7 +112,8 @@
                                 Grid.Column="2"
                                 Width="120"
                                 Height="32"
-                                ToolTip="Resource name: MaterialDesignRaisedButton"
+                                IsDefault="True"
+                                ToolTip="Nhận tên bệnh nhân hoặc mã bảo hiểm"
                                  Command="{Binding SearchCommand}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
@@ -112,65 +121,96 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
-                        <Button
-                           Margin="50 5 5 5 "
-                           Grid.Column="3"
-                           IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-                           Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
-                           Command="{Binding AddPatientCommand}"
-                           ToolTip="MaterialDesignFloatingActionDarkButton">
-                            <materialDesign:PackIcon
-                             Width="30"
-                             Height="40"
-                             Kind="PlusThick"
-                             />
-                        </Button>
+                        <DockPanel
+                            Grid.Column="3"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="10 0 0 0"
+                            LastChildFill="False">
+                            <Button
+                                DockPanel.Dock="Left"
+                                Command="{Binding ResetFiltersCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Width="100"
+                                Height="32"
+                                HorizontalAlignment="Left"
+                                Margin="0,0,10,0"
+                                ToolTip="Đặt lại tất cả bộ lọc">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Refresh" Margin="0,0,5,0" Width="16" Height="16"/>
+                                        <TextBlock Text="Đặt lại"/>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+
+                            <Grid Width="100"></Grid>
+                            <Button
+                                DockPanel.Dock="Right"
+                                Margin=" 0 10 0 0"
+                                IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+                                Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
+                                materialDesign:HintAssist.Hint="Thêm bệnh nhân mới"
+                                Command="{Binding AddPatientCommand}"
+                                HorizontalAlignment="Right"
+                                ToolTip="Thêm bệnh nhân mới">
+                                <materialDesign:PackIcon
+                                    Width="30"
+                                    Height="40"
+                                    Kind="PlusThick"/>
+                                  </Button>
+                        </DockPanel>
+
 
                     </Grid>
 
+
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.ColumnSpan="2">
-                        <ListView Grid.Row="1" ItemsSource="{Binding PatientList}">
+                        <ListView Grid.Row="1" 
+                              ItemsSource="{Binding PatientList}"
+                              SelectedItem="{Binding SelectedPatient, Mode=TwoWay}">
+                            <ListView.InputBindings>
+                                <MouseBinding MouseAction="LeftDoubleClick" 
+                                      Command="{Binding OpenPatientDetailsCommand}" 
+                                      CommandParameter="{Binding SelectedPatient}"/>
+                                <KeyBinding Key="Enter"
+                                        Command="{Binding OpenPatientDetailsCommand}"
+                                        CommandParameter="{Binding SelectedPatient}"/>
+                            </ListView.InputBindings>
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn
-                                          Width="200"
-                                          DisplayMemberBinding="{Binding InsuranceCode}">
-                                        <GridViewColumn.Header>
-                                            Bảo hiểm y tế
-                                        </GridViewColumn.Header>
+                                    <GridViewColumn Width="200" DisplayMemberBinding="{Binding InsuranceCode}">
+                                        <GridViewColumn.Header>Bảo hiểm y tế</GridViewColumn.Header>
                                     </GridViewColumn>
-                                    <GridViewColumn
-                                          DisplayMemberBinding="{Binding FullName}"
-                                          Width="200">
-                                        <GridViewColumn.Header>
-                                            Họ và tên
-                                        </GridViewColumn.Header>
+                                    <GridViewColumn DisplayMemberBinding="{Binding FullName}" Width="200">
+                                        <GridViewColumn.Header>Họ và tên</GridViewColumn.Header>
                                     </GridViewColumn>
-                                    <GridViewColumn
-                                          DisplayMemberBinding="{Binding PatientType.TypeName}"
-                                          Width="100" >
-                                        <GridViewColumn.Header>
-                                            Khách hàng
-                                        </GridViewColumn.Header>
+                                    <GridViewColumn DisplayMemberBinding="{Binding PatientType.TypeName}" Width="150">
+                                        <GridViewColumn.Header>Khách hàng</GridViewColumn.Header>
                                     </GridViewColumn>
-                                    <GridViewColumn
-                                          DisplayMemberBinding="{Binding Phone}"
-                                          Width="150">
-                                        <GridViewColumn.Header>
-                                            Điện thoại
-                                        </GridViewColumn.Header>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Phone}" Width="150">
+                                        <GridViewColumn.Header>Điện thoại</GridViewColumn.Header>
                                     </GridViewColumn>
-                                    <GridViewColumn
-                                         DisplayMemberBinding="{Binding Address}">
-                                        <GridViewColumn.Header>
-                                            Địa chỉ
-                                        </GridViewColumn.Header>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Address}" Width="400">
+                                        <GridViewColumn.Header>Địa chỉ</GridViewColumn.Header>
                                     </GridViewColumn>
-
+                                    <GridViewColumn Width="130">
+                                      
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Xem chi tiết"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenPatientDetailsCommand}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Width="120" Height="30"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                 </GridView>
                             </ListView.View>
                         </ListView>
                     </ScrollViewer>
+
                 </Grid>
             </TabItem>
             <TabItem Header="Quản lí loại bệnh nhân">

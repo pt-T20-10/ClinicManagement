@@ -25,6 +25,10 @@ namespace ClinicManagement.UserControlToUse
             InitializeComponent();
         }
 
-        
+        private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+         
+ 
+        }
     }
 }

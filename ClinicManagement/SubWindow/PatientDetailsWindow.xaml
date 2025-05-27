@@ -78,13 +78,13 @@
                             <!-- ID -->
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Mã bệnh nhân:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Patient.PatientCode}" 
-                                       VerticalAlignment="Center" Margin="0,0,32,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Patient.PatientId}" 
+                                         FontSize="22" VerticalAlignment="Center" Margin="0,0,32,8"/>
 
                             <!-- Birth Year -->
                             <TextBlock Grid.Row="1" Grid.Column="2" Text="Năm sinh:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Patient.BirthYear}" 
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Patient.DateOfBirth}" 
                                        VerticalAlignment="Center" Margin="0,0,0,8"/>
 
                             <!-- Gender -->
