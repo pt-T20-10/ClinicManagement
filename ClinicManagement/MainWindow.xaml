@@ -217,7 +217,7 @@
                             </Grid>
 
                         </TabItem.Header>
-                        <uc:DoctorUC></uc:DoctorUC>
+                        <uc:DoctorUC DataContext="{StaticResource DoctorVM}"></uc:DoctorUC>
                     </TabItem>
                     <TabItem Width="150" Height="80">
                         <TabItem.Header >
@@ -233,7 +233,7 @@
                                     <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="MonitorDashboard" />
                                 </Grid>
                             </Grid>
-
+                    
                         </TabItem.Header>
 
                     </TabItem>
