@@ -7,4 +7,6 @@
     <viewmodel:PatientViewModel x:Key="PatientVM"/>
     <viewmodel:DashBoardViewModel x:Key="DashboardVM"/>
     <viewmodel:DoctorViewModel x:Key="DoctorVM"/>
+    <viewmodel:StockMedicineViewModel x:Key="StockMedicineVM"/>
+    
 </ResourceDictionary> 

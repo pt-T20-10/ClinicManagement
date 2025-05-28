@@ -182,7 +182,7 @@
                             </Grid>
 
                         </TabItem.Header>
-                        <uc:StockUC Margin="0,11,0,-11"></uc:StockUC>
+                        <uc:StockUC DataContext="{StaticResource StockMedicineVM}"></uc:StockUC>
                     </TabItem>
                     <TabItem Width="150" Height="80"  Padding="0">
                         <TabItem.Header >

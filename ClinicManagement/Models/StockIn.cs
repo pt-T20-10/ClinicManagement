@@ -22,4 +22,7 @@ public partial class StockIn
     public virtual ICollection<InvoiceDetail> InvoiceDetails { get; set; } = new List<InvoiceDetail>();
 
     public virtual Medicine Medicine { get; set; } = null!;
+
+
+
 }
