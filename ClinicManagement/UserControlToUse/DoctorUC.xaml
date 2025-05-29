@@ -49,7 +49,6 @@
                             <ComboBox Width="180"
                           ItemsSource="{Binding ListSpecialty}"
                           DisplayMemberPath="SpecialtyName"
-                          
                           SelectedItem="{Binding SelectedSpecialty}"
                           materialDesign:HintAssist.Hint="Chuyên khoa"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
