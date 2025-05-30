@@ -1,4 +1,6 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.SubWindow;
+using MaterialDesignThemes.Wpf;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ namespace ClinicManagement.ViewModels
         private bool _isValidating = false; // Flag to control when to validate
 
         #region Properties
-   
+        #region Initial Data
         private ObservableCollection<Stock> _ListMedicine;
         public ObservableCollection<Stock> ListMedicine
         {
@@ -101,6 +103,7 @@ namespace ClinicManagement.ViewModels
             
             }
         }
+        #endregion
 
         #region StockProperties
 
@@ -471,6 +474,34 @@ namespace ClinicManagement.ViewModels
         }
         #endregion
 
+        #region StockinMedicine Properties
+        private Medicine _currentMedicine;
+        public Medicine CurrentMedicine
+        {
+            get => _currentMedicine;
+            set
+            {
+                _currentMedicine = value;
+                OnPropertyChanged();
+              
+            }
+        }
+        private ObservableCollection<Medicine.StockInWithRemaining> _currentMedicineDetails;
+        public ObservableCollection<Medicine.StockInWithRemaining> CurrentMedicineDetails
+        {
+            get => _currentMedicineDetails;
+            set
+            {
+                _currentMedicineDetails = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string DialogTitle => CurrentMedicine != null
+            ? $"Chi tiết các lô thuốc: {CurrentMedicine.Name}"
+            : "Chi tiết lô thuốc";
+        #endregion
+
         #region Commands
         // Unit Commands
         public ICommand AddUnitCommand { get; set; }
@@ -506,12 +537,27 @@ namespace ClinicManagement.ViewModels
         public ICommand SearchStockMedicineCommand { get; set; }
         public ICommand ResetStockFiltersCommand { get; set; }
 
+        //StockIn Commands
+        public ICommand AddNewMedicineCommand { get; set; }
+        public ICommand RestartCommand { get; set; }
+    
+        public ICommand ShowMedicineDetailsCommand { get; set; }
 
         #endregion
         #endregion
 
         public StockMedicineViewModel()
         {
+            ShowMedicineDetailsCommand = new RelayCommand<Medicine>(
+      (medicine) => {
+          if (medicine != null)
+          {
+              var detailsWindow = new MedicineDetailsWindow(medicine);
+              detailsWindow.ShowDialog();
+          }
+      },
+      (medicine) => medicine != null
+  );
             LoadData();
             InitializeCommands();   
         }
@@ -605,6 +651,20 @@ namespace ClinicManagement.ViewModels
             (   (p) => ExecuteResetStockFilters(),
                 (p) => true
             );
+
+            // Add these lines to the InitializeCommands method
+            AddNewMedicineCommand = new RelayCommand<object>(
+                (p) => ExecuteAddNewMedicine(),
+                (p) => CanExecuteAddNewMedicine()
+            );
+
+            RestartCommand = new RelayCommand<object>(
+                (p) => ExecuteRestart(),
+                (p) => true
+            );
+
+
+            
 
         }
         #endregion
@@ -1377,6 +1437,8 @@ namespace ClinicManagement.ViewModels
             }
         }
         #endregion
+
+        #region StockMedicine Methods
         private void ExecuteSupplierRefresh()
         {
             SupplierList = new ObservableCollection<Supplier>(
@@ -1392,7 +1454,7 @@ namespace ClinicManagement.ViewModels
             
             SelectedStockCategoryName = null;
             SelectedStockSupplier = null;
-            SelectedStockUnitId = null;
+            SelectedStockUnit = null;
             SearchStockMedicine = ""; // Clear search text
             // Reset the stock medicine list to show all items
             ListStockMedicine = new ObservableCollection<Stock>(_allStockMedicine);
@@ -1437,9 +1499,9 @@ namespace ClinicManagement.ViewModels
             // Apply filters and update the list
             ListStockMedicine = new ObservableCollection<Stock>(filteredList.ToList());
         }
+        #endregion
 
 
-     
         #region LoadData
         public void LoadData()
         {
@@ -1533,6 +1595,319 @@ namespace ClinicManagement.ViewModels
             var unit = DataProvider.Instance.Context.Units
                 .FirstOrDefault(c => c.UnitName.Trim().ToLower() == unitName.Trim().ToLower() && (bool)!c.IsDeleted);
             return unit?.UnitId;
+        }
+
+    
+ 
+        #endregion
+
+        #region StockInProperties
+        private MedicineCategory _stockinSelectedCategory;
+        public MedicineCategory StockinSelectedCategory
+        {
+            get => _stockinSelectedCategory;
+            set
+            {
+                _stockinSelectedCategory = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Supplier _stockinSelectedSupplier;
+        public Supplier StockinSelectedSupplier
+        {
+            get => _stockinSelectedSupplier;
+            set
+            {
+                _stockinSelectedSupplier = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Unit _stockinSelectedUnit;
+        public Unit StockinSelectedUnit
+        {
+            get => _stockinSelectedUnit;
+            set
+            {
+                _stockinSelectedUnit = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _stockinMedicineName;
+        public string StockinMedicineName
+        {
+            get => _stockinMedicineName;
+            set
+            {
+                _stockinMedicineName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _stockinMSHNNB;
+        public string StockinMSHNNB
+        {
+            get => _stockinMSHNNB;
+            set
+            {
+                _stockinMSHNNB = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _stockinQuantity = 1;
+        public int StockinQuantity
+        {
+            get => _stockinQuantity;
+            set
+            {
+                _stockinQuantity = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _stockinUnitPrice;
+        public decimal StockinUnitPrice
+        {
+            get => _stockinUnitPrice;
+            set
+            {
+                _stockinUnitPrice = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _stockinSellPrice;
+        public decimal StockinSellPrice
+        {
+            get => _stockinSellPrice;
+            set
+            {
+                _stockinSellPrice = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DateTime? _stockinExpiryDate = DateTime.Now.AddYears(1);
+        public DateTime? StockinExpiryDate
+        {
+            get => _stockinExpiryDate;
+            set
+            {
+                _stockinExpiryDate = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Stock _selectedMedicine;
+        public Stock SelectedMedicine
+        {
+            get => _selectedMedicine;
+            set
+            {
+                _selectedMedicine = value;
+                OnPropertyChanged();
+                if (value != null)
+                {
+                    LoadMedicineDetailsForStockIn(value.Medicine);
+                }
+            }
+        }
+        #endregion
+
+        #region StockIn Methods
+        private bool CanExecuteAddNewMedicine()
+        {
+            // Basic validation
+            return StockinSelectedCategory != null &&
+                   StockinSelectedSupplier != null &&
+                   StockinSelectedUnit != null &&
+                   !string.IsNullOrWhiteSpace(StockinMedicineName) &&
+                   StockinQuantity > 0 &&
+                   StockinUnitPrice > 0 &&
+                   StockinSellPrice > 0 &&
+                   StockinExpiryDate.HasValue;
+        }
+
+        private void ExecuteAddNewMedicine()
+        {
+            try
+            {
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // Check for the three different cases
+                        DateOnly expiryDateOnly = DateOnly.FromDateTime(StockinExpiryDate.Value);
+                        
+                        // Case 1 & 3: Find medicine with the same name but potentially different supplier
+                        var existingMedicineWithName = DataProvider.Instance.Context.Medicines
+                            .FirstOrDefault(m => m.Name.ToLower() == StockinMedicineName.ToLower().Trim() && 
+                                            (bool)!m.IsDeleted);
+                        
+                        // Case 2: Find medicine with exact same details (name, supplier, unit, category)
+                        var existingExactMedicine = DataProvider.Instance.Context.Medicines
+                            .FirstOrDefault(m => m.Name.ToLower() == StockinMedicineName.ToLower().Trim() &&
+                                            m.SupplierId == StockinSelectedSupplier.SupplierId &&
+                                            m.UnitId == StockinSelectedUnit.UnitId &&
+                                            m.CategoryId == StockinSelectedCategory.CategoryId &&
+                                            (bool)!m.IsDeleted);
+                        
+                        Medicine medicine;
+                        string resultMessage = string.Empty;
+                        
+                        if (existingExactMedicine != null)
+                        {
+                            // Case 2: Existing medicine with identical fields
+                            medicine = existingExactMedicine;
+                            resultMessage = $"Đã thêm số lượng cho thuốc '{medicine.Name}' hiện có.";
+                        }
+                        else if (existingMedicineWithName != null && existingMedicineWithName.SupplierId != StockinSelectedSupplier.SupplierId)
+                        {
+                            // Case 3: Medicine with same name but different supplier
+                            // Create a new medicine
+                            medicine = new Medicine
+                            {
+                                Name = StockinMedicineName.Trim(),
+                                Mshnnb = StockinMSHNNB?.Trim(),
+                                CategoryId = StockinSelectedCategory.CategoryId,
+                                UnitId = StockinSelectedUnit.UnitId,
+                                SupplierId = StockinSelectedSupplier.SupplierId,
+                                ExpiryDate = expiryDateOnly,
+                                IsDeleted = false
+                            };
+                            DataProvider.Instance.Context.Medicines.Add(medicine);
+                            DataProvider.Instance.Context.SaveChanges();
+                            
+                            resultMessage = $"Đã thêm thuốc '{medicine.Name}' mới với nhà cung cấp khác.";
+                        }
+                        else
+                        {
+                            // Case 1: Completely new medicine
+                            medicine = new Medicine
+                            {
+                                Name = StockinMedicineName.Trim(),
+                                Mshnnb = StockinMSHNNB?.Trim(),
+                                CategoryId = StockinSelectedCategory.CategoryId,
+                                UnitId = StockinSelectedUnit.UnitId,
+                                SupplierId = StockinSelectedSupplier.SupplierId,
+                                ExpiryDate = expiryDateOnly,
+                                IsDeleted = false
+                            };
+                            DataProvider.Instance.Context.Medicines.Add(medicine);
+                            DataProvider.Instance.Context.SaveChanges();
+                            
+                            resultMessage = $"Đã thêm thuốc mới '{medicine.Name}'.";
+                        }
+                        
+                        // Add new stock-in entry
+                        var stockIn = new StockIn
+                        {
+                            MedicineId = medicine.MedicineId,
+                            Quantity = StockinQuantity,
+                            ImportDate = DateTime.Now,
+                            UnitPrice = StockinUnitPrice,
+                            SellPrice = StockinSellPrice,
+                            TotalCost = StockinUnitPrice * StockinQuantity
+                        };
+                        
+                        DataProvider.Instance.Context.StockIns.Add(stockIn);
+                        DataProvider.Instance.Context.SaveChanges();
+                        
+                        // Update or create stock entry
+                        var existingStock = DataProvider.Instance.Context.Stocks
+                            .FirstOrDefault(s => s.MedicineId == medicine.MedicineId);
+                        
+                        if (existingStock != null)
+                        {
+                            // Update existing stock
+                            existingStock.Quantity += StockinQuantity;
+                            existingStock.LastUpdated = DateTime.Now;
+                        }
+                        else
+                        {
+                            // Create new stock entry
+                            var newStock = new Stock
+                            {
+                                MedicineId = medicine.MedicineId,
+                                Quantity = StockinQuantity,
+                                LastUpdated = DateTime.Now
+                            };
+                            DataProvider.Instance.Context.Stocks.Add(newStock);
+                        }
+                        
+                        DataProvider.Instance.Context.SaveChanges();
+                        transaction.Commit();
+                        
+                        MessageBox.Show(
+                            resultMessage,
+                            "Thêm thuốc thành công",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                        
+                        // Refresh data
+                        LoadData();
+                        ExecuteRestart();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        throw new Exception("Lỗi khi lưu dữ liệu: " + ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Đã xảy ra lỗi: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ExecuteRestart()
+        {
+            // Clear all form fields
+            StockinMedicineName = string.Empty;
+            StockinMSHNNB = string.Empty;
+            StockinQuantity = 1;
+            StockinUnitPrice = 0;
+            StockinSellPrice = 0;
+            StockinExpiryDate = DateTime.Now.AddYears(1);
+            StockinSelectedCategory = null;
+            StockinSelectedSupplier = null;
+            StockinSelectedUnit = null;
+            SelectedMedicine = null;
+        }
+
+        private void LoadMedicineDetailsForStockIn(Medicine medicine)
+        {
+            if (medicine == null) return;
+            
+            StockinMedicineName = medicine.Name;
+            StockinMSHNNB = medicine.Mshnnb;
+            StockinSelectedCategory = medicine.Category;
+            StockinSelectedSupplier = medicine.Supplier;
+            StockinSelectedUnit = medicine.Unit;
+            StockinUnitPrice = medicine.CurrentUnitPrice;
+            StockinSellPrice = medicine.CurrentSellPrice;
+            if (medicine.ExpiryDate.HasValue)
+            {
+                try
+                {
+                    StockinExpiryDate = new DateTime(
+                        medicine.ExpiryDate.Value.Year,
+                        medicine.ExpiryDate.Value.Month,
+                        medicine.ExpiryDate.Value.Day);
+                }
+                catch
+                {
+                    StockinExpiryDate = DateTime.Now.AddYears(1);
+                }
+            }
         }
         #endregion
 

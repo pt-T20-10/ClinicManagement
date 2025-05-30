@@ -15,8 +15,8 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="PantientUc">
-    
     <materialDesign:Card >
+        
         <TabControl
         materialDesign:ColorZoneAssist.Mode="PrimaryLight"
         Style="{StaticResource MaterialDesignFilledTabControl}">
@@ -211,16 +211,28 @@
 
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Width="220" DisplayMemberBinding="{Binding Medicine.Mshnnb}" Header="Mã thuốc"/>
                                         <GridViewColumn Width="200" DisplayMemberBinding="{Binding Medicine.Name}" Header="Tên thuốc"/>
                                         <GridViewColumn Width="180" DisplayMemberBinding="{Binding Medicine.Category.CategoryName}" Header="Loại"/>
                                         <GridViewColumn Width="180" DisplayMemberBinding="{Binding Medicine.Unit.UnitName}" Header="ĐVĐ"/>
-                                        <GridViewColumn Width="180" DisplayMemberBinding="{Binding Medicine.Supplier.SupplierName}">
-                                            <GridViewColumn.Header>Nhà cung cấp</GridViewColumn.Header>
-                                        </GridViewColumn>
-                                        <GridViewColumn Width="180" DisplayMemberBinding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Header="Đơn giá"/>
-                                        <GridViewColumn  DisplayMemberBinding="{Binding Quantity}" Header="Tồn kho"/>
-                                    </GridView>
+                                        <GridViewColumn Width="200" DisplayMemberBinding="{Binding Medicine.Supplier.SupplierName}" Header="Nhà cung cấp"/>
+                                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" Header="Ngày nhập mới nhất"/>
+                                        <GridViewColumn Width="180" DisplayMemberBinding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Header="Đơn giá hiện tại"/>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Quantity}" Header="Tổng tồn kho"/>
+                                            <GridViewColumn Width="130" Header="Thao tác">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.ShowMedicineDetailsCommand}"
+                    CommandParameter="{Binding Medicine}"
+                    Content="Xem chi tiết"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Width="120" Height="30"
+                    ToolTip="Xem chi tiết lô thuốc">
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+
+                                        </GridView>
                                 </ListView.View>
 
                             </ListView>
@@ -278,7 +290,7 @@
                                 Grid.Column="0" Grid.Row="0"
                                 ItemsSource="{Binding SupplierList}"
                                 DisplayMemberPath="SupplierName"
-                                SelectedItem="{Binding SelectedSupplier}"
+                                SelectedItem="{Binding StockinSelectedSupplier}"
                                 Margin="5"
                                 Width="220"
                                 HorizontalAlignment="Left"
@@ -290,7 +302,7 @@
                                     Grid.Column="0" Grid.Row="1"
                                 ItemsSource="{Binding UnitList}"
                                 DisplayMemberPath="UnitName"
-                                SelectedItem="{Binding SelectedUnit}"
+                                SelectedItem="{Binding StockinSelectedUnit}"
                                 Margin="5"
                                 Width="220"
                                 HorizontalAlignment="Left"
@@ -299,10 +311,10 @@
 
                             <!-- Loại thuốc -->
                             <ComboBox
-                                     Grid.Column="0" Grid.Row="2"
+                                Grid.Column="0" Grid.Row="2"
                                 ItemsSource="{Binding CategoryList}"
                                 DisplayMemberPath="CategoryName"
-                                SelectedItem="{Binding SelectedCategory}"
+                                SelectedItem="{Binding StockinSelectedCategory}"
                                 Margin="5"
                                 Width="220"
                                 HorizontalAlignment="Left"
@@ -312,7 +324,7 @@
                             <!-- Tên thuốc -->
                             <TextBox
                                  Grid.Column="1" Grid.Row="0"
-                            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinMedicineName, UpdateSourceTrigger=PropertyChanged}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -322,7 +334,7 @@
                             <!-- MSHNNB -->
                             <TextBox
                             Grid.Column="1" Grid.Row="1"
-                            Text="{Binding MSHNNB, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinMSHNNB, UpdateSourceTrigger=PropertyChanged}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -332,7 +344,7 @@
                             <!-- Số lượng -->
                             <materialDesign:NumericUpDown
                             Grid.Column="1" Grid.Row="2"
-                            Value="{Binding Quantity}"
+                            Value="{Binding StockinQuantity}"
                             Minimum="0"
                             Margin="5"
                             Width="220"
@@ -343,7 +355,7 @@
                   
                             <TextBox
                             Grid.Column="2" Grid.Row="0"
-                            Text="{Binding UnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinUnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -353,7 +365,7 @@
                             <!-- Giá xuất -->
                             <TextBox
                            Grid.Column="2" Grid.Row="1"
-                            Text="{Binding SellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinSellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -363,7 +375,7 @@
                             <!-- Hạn sử dụng -->
                             <DatePicker
                               Grid.Column="2" Grid.Row="2"
-                                SelectedDate="{Binding ExpiryDate}"
+                                SelectedDate="{Binding StockinExpiryDate}"
                                 Margin="5"
                                 Width="220"
                                 HorizontalAlignment="Left"
@@ -428,6 +440,8 @@
                                         <GridViewColumn Width="200" DisplayMemberBinding="{Binding Medicine.Supplier.SupplierName}">
                                             <GridViewColumn.Header>Nhà cung cấp</GridViewColumn.Header>
                                         </GridViewColumn>
+                                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" Header="Ngày nhập"/>
+
                                         <GridViewColumn  Width="150" DisplayMemberBinding="{Binding Medicine.ExpiryDate}">
                                             <GridViewColumn.Header>Hạn dùng</GridViewColumn.Header>
                                         </GridViewColumn>
@@ -1203,6 +1217,5 @@
 
         </TabControl>
     </materialDesign:Card>
-
 
 </UserControl>

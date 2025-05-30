@@ -37,6 +37,15 @@ public partial class Medicine
 
     public virtual Unit? Unit { get; set; }
 
+    public DateTime? LatestImportDate
+    {
+        get
+        {
+            var availableStockIn = GetAvailableStockIns().FirstOrDefault();
+            return availableStockIn?.ImportDate;
+        }
+    }
+
     public decimal CurrentUnitPrice
     {
         get
@@ -56,69 +65,104 @@ public partial class Medicine
     }
 
 
-    /// Lấy danh sách các lô nhập còn hàng, sắp xếp theo ngày nhập (cũ nhất trước)
 
+    /// Lấy danh sách các lô nhập kho, bao gồm cả các lô có cùng ngày nhập nhưng khác giá
+    /// </summary>
+    private List<StockInWithRemaining> _availableStockInsCache;
+    private bool _isCalculatingStockIns = false;
     private IEnumerable<StockInWithRemaining> GetAvailableStockIns()
     {
-        if (StockIns == null || !StockIns.Any())
+        // Return cache if available to prevent recursive calls
+        if (_availableStockInsCache != null)
+            return _availableStockInsCache;
+
+        // Guard against recursion
+        if (_isCalculatingStockIns)
             return Enumerable.Empty<StockInWithRemaining>();
 
-        // Tính tổng số lượng đã bán
-        var totalSold = InvoiceDetails?.Sum(id => id.Quantity) ?? 0;
-        var remainingToSubtract = totalSold;
+        _isCalculatingStockIns = true;
 
-        // Duyệt qua các lô nhập theo thứ tự thời gian (FIFO)
-        var stockInsWithRemaining = new List<StockInWithRemaining>();
-
-        foreach (var stockIn in StockIns.OrderBy(si => si.ImportDate))
+        try
         {
-            var remainingInThisLot = stockIn.Quantity - Math.Min(remainingToSubtract, stockIn.Quantity);
+            if (StockIns == null || !StockIns.Any())
+                return Enumerable.Empty<StockInWithRemaining>();
 
-            if (remainingInThisLot > 0)
+            // Tính tổng số lượng đã bán
+            var totalSold = InvoiceDetails?.Sum(id => id.Quantity) ?? 0;
+            var remainingToSubtract = totalSold;
+
+            // Duyệt qua các lô nhập theo thứ tự thời gian (FIFO)
+            var stockInsWithRemaining = new List<StockInWithRemaining>();
+
+            // Sắp xếp theo ngày và thời gian nhập chính xác
+            foreach (var stockIn in StockIns.OrderBy(si => si.ImportDate))
             {
+                var remainingInThisLot = stockIn.Quantity - Math.Min(remainingToSubtract, stockIn.Quantity);
+
+                // Thêm vào danh sách mọi lô nhập để hiển thị lịch sử đầy đủ
                 stockInsWithRemaining.Add(new StockInWithRemaining
                 {
                     StockIn = stockIn,
-                    RemainingQuantity = remainingInThisLot
+                    RemainingQuantity = Math.Max(0, remainingInThisLot)
                 });
+
+                remainingToSubtract = Math.Max(0, remainingToSubtract - stockIn.Quantity);
             }
 
-            remainingToSubtract = Math.Max(0, remainingToSubtract - stockIn.Quantity);
-
-            if (remainingToSubtract <= 0) break;
+            // Cache the result
+            _availableStockInsCache = stockInsWithRemaining;
+            return stockInsWithRemaining;
         }
-
-        return stockInsWithRemaining.Where(s => s.RemainingQuantity > 0);
+        finally
+        {
+            _isCalculatingStockIns = false;
+        }
     }
 
-
-    /// Lấy thông tin chi tiết về các lô hàng còn tồn
-
+    /// <summary>
+    /// Lấy thông tin chi tiết về các lô hàng
+    /// </summary>
+ // Modify the public method to clear the cache before recalculating
     public IEnumerable<StockInWithRemaining> GetDetailedStock()
     {
+        // Clear the cache to ensure we get fresh data
+        _availableStockInsCache = null;
         return GetAvailableStockIns();
     }
 
-
-    /// Tổng số lượng còn lại tính theo FIFO
-
+    /// <summary>
+    /// Tổng số lượng còn lại
+    /// </summary>
     public int CalculatedRemainingQuantity
     {
         get => GetAvailableStockIns().Sum(s => s.RemainingQuantity);
     }
 
+    /// <summary>
+    /// Tổng số lượng tồn kho chính xác bằng cách tính trực tiếp từ dữ liệu
+    /// </summary>
+    public int TotalStockQuantity
+    {
+        get
+        {
+            // Tính bằng cách lấy tổng số lượng nhập trừ đi tổng số lượng đã bán
+            var totalStockIn = StockIns?.Sum(si => si.Quantity) ?? 0;
+            var totalSold = InvoiceDetails?.Sum(id => id.Quantity) ?? 0;
+            return totalStockIn - totalSold;
+        }
+    }
 
+    /// <summary>
+    /// Class hỗ trợ lưu thông tin lô hàng còn lại
+    /// </summary>
+    public class StockInWithRemaining
+    {
+        public StockIn StockIn { get; set; }
+        public int RemainingQuantity { get; set; }
 
-/// Class hỗ trợ lưu thông tin lô hàng còn lại
-
-public class StockInWithRemaining
-{
-    public StockIn StockIn { get; set; }
-    public int RemainingQuantity { get; set; }
-
-    public decimal UnitPrice => StockIn.UnitPrice;
-    public decimal? SellPrice => StockIn.SellPrice;
-    public DateTime? ImportDate => StockIn.ImportDate;
-}
+        public decimal UnitPrice => StockIn.UnitPrice;
+        public decimal? SellPrice => StockIn.SellPrice;
+        public DateTime? ImportDate => StockIn.ImportDate;
+    }
 
 }

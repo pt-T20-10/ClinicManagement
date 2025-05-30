@@ -1,4 +1,5 @@
-﻿using ClinicManagement.ViewModels;
+﻿using ClinicManagement.Models;
+using ClinicManagement.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +12,19 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace ClinicManagement.UserControlToUse
+namespace ClinicManagement.SubWindow
 {
     /// <summary>
-    /// Interaction logic for StockUC.xaml
+    /// Interaction logic for MedicineDetailsWindow.xaml
     /// </summary>
-    public partial class StockUC : UserControl
+    public partial class MedicineDetailsWindow : Window
     {
-        public StockUC()
+        public MedicineDetailsWindow(Medicine medicine)
         {
             InitializeComponent();
-            DataContext = new StockMedicineViewModel();
+            DataContext = new MedicineDetailsViewModel(medicine, this);
         }
     }
 }
