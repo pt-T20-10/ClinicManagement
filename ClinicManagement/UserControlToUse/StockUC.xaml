@@ -21,6 +21,7 @@
         materialDesign:ColorZoneAssist.Mode="PrimaryLight"
         Style="{StaticResource MaterialDesignFilledTabControl}">
             <TabItem
+       
                 Header="Kho">
                 <materialDesign:Card>
                     <Grid>
@@ -243,7 +244,14 @@
             </TabItem>
 
             <TabItem Header="Nhập kho">
-             <materialDesign:Card Margin="5">
+                <TabItem.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="🔄 Làm mới" 
+                            Command="{Binding RestartCommand}"
+                            FontWeight="Bold"/>
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <materialDesign:Card Margin="5">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -371,6 +379,7 @@
                             HorizontalAlignment="Left"
                             materialDesign:HintAssist.Hint="Giá bán (VNĐ)"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                            
 
                             <!-- Hạn sử dụng -->
                             <DatePicker
@@ -381,8 +390,16 @@
                                 HorizontalAlignment="Left"
                                 materialDesign:HintAssist.Hint="Hạn sử dụng"
                                 Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
-                            
-                            <StackPanel Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Grid.RowSpan="2" Grid.Column="3" Grid.Row="1">
+                            <DatePicker
+                                Grid.Column="3" Grid.Row="0"
+                                  SelectedDate="{Binding ImportDate}"
+                                  Margin="5"
+                                  Width="220"
+                                  HorizontalAlignment="Left"
+                                  materialDesign:HintAssist.Hint="Ngày nhập"
+                                  Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+
+                            <StackPanel Margin="7 10 0 0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Grid.RowSpan="2" Grid.Column="3" Grid.Row="1">
                                
                                 <Button
                                          Margin="0 0 0 15"
@@ -1168,18 +1185,21 @@
                                         Grid.Row="1" 
                                         ItemsSource="{Binding SupplierList}"
                                         SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
-                                         HorizontalContentAlignment="Center"
+                                         HorizontalContentAlignment="Left"
+                                        
                                          VerticalContentAlignment="Center"
                                          ScrollViewer.CanContentScroll="True"
                                          VirtualizingPanel.IsVirtualizing="True"
 >
                                         <ListView.View>
                                             <GridView>
-                                                <GridViewColumn Header="Mã NCC" DisplayMemberBinding="{Binding SupplierCode }" Width="120"/>
+                                                <GridViewColumn Header="Mã NCC" DisplayMemberBinding="{Binding SupplierCode }" Width="120">
+                                                   
+                                                </GridViewColumn>
                                                 <GridViewColumn Header="NCC" DisplayMemberBinding="{Binding SupplierName}" Width="200"/>
                                                 <GridViewColumn Header="Người liên hệ" DisplayMemberBinding="{Binding ContactPerson}" Width="150"/>
                                                 <GridViewColumn Header="SĐT" DisplayMemberBinding="{Binding Phone}" Width="150"/>
-                                                <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="150"/>
+                                                <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="180"/>
                                                 <GridViewColumn Header="Mã số thuế" DisplayMemberBinding="{Binding TaxCode}" Width="150"/>
                                                 <GridViewColumn Header="Địa chỉ" DisplayMemberBinding="{Binding Address}" Width="500"/>
                                                 <GridViewColumn Header="Trạng thái">
