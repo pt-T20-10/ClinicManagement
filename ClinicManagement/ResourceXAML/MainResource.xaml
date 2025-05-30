@@ -8,5 +8,6 @@
     <viewmodel:DashBoardViewModel x:Key="DashboardVM"/>
     <viewmodel:DoctorViewModel x:Key="DoctorVM"/>
     <viewmodel:StockMedicineViewModel x:Key="StockMedicineVM"/>
-    
+    <viewmodel:AddPatientViewModel x:Key="AddPatientVM"/>
+
 </ResourceDictionary> 

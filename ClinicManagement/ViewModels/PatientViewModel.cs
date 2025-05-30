@@ -235,7 +235,7 @@ namespace ClinicManagement.ViewModels
             InitializeFilterCommands();
             IsAllSelected = true;
 
-            AddCommand = new RelayCommand<object>(
+            AddPatientCommand = new RelayCommand<object>(
                    (p) =>
                    {
                        // Mở cửa sổ thêm bệnh nhân mới

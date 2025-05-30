@@ -18,10 +18,11 @@
         ResizeMode="NoResize"
         Name="addPatientWindow"
         Title="THÊM BỆNH NHÂN"
+        DataContext="{StaticResource AddPatientVM}"
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
-        Width="600" Height="600"
+        Width="600" Height="650"
        >
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -50,52 +51,45 @@
                                HorizontalAlignment="Center"
                                Margin="0,0,0,24"/>
 
-                    <!-- Patient Code -->
-                    <TextBox Text="{Binding PatientCode, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Mã bệnh nhân"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,8,0,16"/>
-
                     <!-- Full Name -->
-                    <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Họ và tên"
+                    <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             materialDesign:HintAssist.Hint="Họ và tên *"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
 
-                    <!-- Birth Year -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBox Grid.Column="0" 
-                                 Text="{Binding BirthYear, UpdateSourceTrigger=PropertyChanged}"
-                                 materialDesign:HintAssist.Hint="Năm sinh"
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 Margin="0,0,8,0"/>
+                        <!-- DatePicker for Birth Date -->
+                        <DatePicker Grid.Column="0" 
+                SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                materialDesign:HintAssist.Hint="Ngày sinh"
+                Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                Margin="0,0,8,0"/>
 
                         <!-- Gender -->
-                        <StackPanel HorizontalAlignment="Center" Grid.Column="1" Orientation="Horizontal">
-                            <RadioButton Margin="5 0 10 0" Content="Nam"/>
-                            <RadioButton  Margin="5 0 10 0" Content="Nữ"/>
-                            <RadioButton Margin="5 0 10 0" Content="Khác"/>
-                        </StackPanel>
-
+                        <GroupBox Grid.Column="1" Header="Giới tính"
+              Style="{StaticResource MaterialDesignGroupBox}"
+              Margin="8,0,0,0"
+              Padding="8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <RadioButton IsChecked="{Binding IsMale}" Margin="5 0 10 0" Content="Nam"/>
+                                <RadioButton IsChecked="{Binding IsFemale}" Margin="5 0 10 0" Content="Nữ"/>
+                                <RadioButton IsChecked="{Binding IsOther}" Margin="5 0 10 0" Content="Khác"/>
+                            </StackPanel>
+                        </GroupBox>
                     </Grid>
 
                     <!-- Phone -->
-                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Số điện thoại"
+                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             materialDesign:HintAssist.Hint="Số điện thoại *"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
 
-                    <!-- Email -->
-                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Email"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
-
+        
                     <!-- Address -->
                     <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
                              materialDesign:HintAssist.Hint="Địa chỉ"
@@ -107,6 +101,16 @@
                              materialDesign:HintAssist.Hint="Số BHYT"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
+
+                    <!-- Patient Type -->
+                    <ComboBox ItemsSource="{Binding PatientTypeList}"
+                              SelectedItem="{Binding SelectedPatientType, Mode=TwoWay}"
+                              DisplayMemberPath="TypeName"
+                              materialDesign:HintAssist.Hint="Loại bệnh nhân"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Margin="0,0,0,16"/>
+
+                    
                 </StackPanel>
             </ScrollViewer>
         </materialDesign:Card>
@@ -118,8 +122,8 @@
                     Margin="16">
             <Button Command="{Binding SaveCommand}"
                     Style="{StaticResource MaterialDesignRaisedButton}"
-                    Width="150" 
-                    Height="45" 
+                     Width="150"
+                    Height="40"
                     Margin="0,0,24,0">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="ContentSave" 
@@ -131,8 +135,8 @@
 
             <Button Command="{Binding CancelCommand}"
                     Style="{StaticResource MaterialDesignOutlinedButton}"
-                    Width="150" 
-                    Height="45">
+                    Width="150"
+                    Height="40">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="Close" 
                                              VerticalAlignment="Center" 
