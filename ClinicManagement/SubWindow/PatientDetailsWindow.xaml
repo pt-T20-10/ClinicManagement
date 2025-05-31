@@ -78,14 +78,14 @@
                             <!-- Patient ID - Read Only -->
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Mã bệnh nhân:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,16"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Patient.PatientId}" 
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding PatientId}" 
                                        FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,32,16"/>
 
                             <!-- Full Name -->
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Họ tên bệnh nhân:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <TextBox Grid.Row="1" Grid.Column="1" 
-                                     Text="{Binding Patient.FullName, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Họ và tên"
                                      VerticalAlignment="Center" Margin="0,0,32,8"/>
@@ -94,7 +94,7 @@
                             <TextBlock Grid.Row="1" Grid.Column="2" Text="Ngày sinh:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <DatePicker Grid.Row="1" Grid.Column="3" 
-                                        SelectedDate="{Binding Patient.DateOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                                        SelectedDate="{Binding DateOfBirth, UpdateSourceTrigger=PropertyChanged}"
                                         Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                         materialDesign:HintAssist.Hint="Chọn ngày sinh" 
                                         VerticalAlignment="Center" Margin="0,0,0,8"/>
@@ -104,7 +104,7 @@
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" 
                                       ItemsSource="{Binding GenderOptions}"
-                                      SelectedValue="{Binding Patient.Gender, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValue="{Binding Gender, UpdateSourceTrigger=PropertyChanged}"
                                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                       materialDesign:HintAssist.Hint="Chọn giới tính"
                                       VerticalAlignment="Center" Margin="0,0,32,8"/>
@@ -113,7 +113,7 @@
                             <TextBlock Grid.Row="2" Grid.Column="2" Text="Số điện thoại:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <TextBox Grid.Row="2" Grid.Column="3" 
-                                     Text="{Binding Patient.Phone, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Nhập số điện thoại"
                                      VerticalAlignment="Center" Margin="0,0,0,8"/>
@@ -122,7 +122,7 @@
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Mã bảo hiểm:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <TextBox Grid.Row="3" Grid.Column="1" 
-                                     Text="{Binding Patient.InsuranceCode, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged}" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Nhập mã BHYT"
                                      VerticalAlignment="Center" Margin="0,0,32,8"/>
@@ -130,15 +130,19 @@
                             <!-- Patient Type -->
                             <TextBlock Grid.Row="3" Grid.Column="2" Text="Loại bệnh nhân:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="3" Grid.Column="3" 
-                                       Text="{Binding Patient.PatientType.TypeName}" 
-                                       VerticalAlignment="Center" Margin="0,0,0,8"/>
-                            
+                            <ComboBox Grid.Row="3" Grid.Column="3" 
+                                      ItemsSource="{Binding PatientTypes}"
+                                      SelectedItem="{Binding SelectedPatientType, UpdateSourceTrigger=PropertyChanged}"
+                                      DisplayMemberPath="TypeName"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Chọn loại bệnh nhân"
+                                      VerticalAlignment="Center" Margin="0,0,0,8"/>
+
                             <!-- Address -->
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Địa chỉ:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,0"/>
                             <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" 
-                                     Text="{Binding Patient.Address, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" 
                                      TextWrapping="Wrap" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Nhập địa chỉ đầy đủ"

@@ -489,12 +489,15 @@ namespace ClinicManagement.ViewModels
         {
             if (patient == null) return;
 
+            var viewModel = new PatientDetailsWindowViewModel();
+            viewModel.Patient = patient;  // This will now properly set all derived properties
+            
             var detailsWindow = new PatientDetailsWindow
             {
-                DataContext = new PatientDetailsWindowViewModel { Patient = patient }
+                DataContext = viewModel
             };
             detailsWindow.ShowDialog();
-            LoadData();
+            LoadData();  // Refresh data after the details window is closed
         }
 
         #endregion

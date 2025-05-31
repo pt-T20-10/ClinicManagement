@@ -1,5 +1,6 @@
 ﻿using ClinicManagement.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -25,6 +26,7 @@ namespace ClinicManagement.ViewModels
                 _patient = value;
                 OnPropertyChanged();
                 LoadRelatedData();
+
             }
         }
 
@@ -61,8 +63,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private List<string> _genderOptions;
-        public List<string> GenderOptions
+        private ObservableCollection<string> _genderOptions;
+        public ObservableCollection<string> GenderOptions
         {
             get => _genderOptions;
             set
@@ -117,26 +119,170 @@ namespace ClinicManagement.ViewModels
             }
         }
         // Add this to your PatientDetailsWindowViewModel.cs
-private DateTime? _birthDate;
-public DateTime? BirthDate
-{
-    get
-    {
-        if (Patient?.DateOfBirth != null)
-            return new DateTime(Patient.DateOfBirth.Value.Year, Patient.DateOfBirth.Value.Month, Patient.DateOfBirth.Value.Day);
-        return null;
-    }
-    set
-    {
-        if (value.HasValue)
-            Patient.DateOfBirth = DateOnly.FromDateTime(value.Value);
-        else
-            Patient.DateOfBirth = null;
-        
-        OnPropertyChanged();
-    }
-}
+        private DateTime? _birthDate;
+        public DateTime? BirthDate
+        {
+            get
+            {
+                if (Patient?.DateOfBirth != null)
+                    return new DateTime(Patient.DateOfBirth.Value.Year, Patient.DateOfBirth.Value.Month, Patient.DateOfBirth.Value.Day);
+                return null;
+            }
+            set
+            {
+                if (value.HasValue)
+                    Patient.DateOfBirth = DateOnly.FromDateTime(value.Value);
+                else
+                    Patient.DateOfBirth = null;
 
+                OnPropertyChanged();
+            }
+        }
+        // Patient ID - Read Only
+        private int _patientId;
+        public int PatientId
+        {
+            get => _patientId;
+            set
+            {
+                _patientId = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Full Name
+        private string _fullName;
+        public string FullName
+        {
+            get => _fullName;
+            set
+            {
+                _fullName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Date of Birth
+        private DateTime? _dateOfBirth;
+        public DateTime? DateOfBirth
+        {
+            get => _dateOfBirth;
+            set
+            {
+                _dateOfBirth = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _phone;
+        public string Phone
+        {
+            get => _phone;
+            set
+            {
+                _phone = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Insurance Code
+        private string _insuranceCode;
+        public string InsuranceCode
+        {
+            get => _insuranceCode;
+            set
+            {
+                _insuranceCode = value;
+                OnPropertyChanged();
+            }
+        }
+        // Gender
+        private string _gender;
+        public string Gender
+        {
+            get => _gender;
+            set
+            {
+                _gender = value;
+                OnPropertyChanged();
+            }
+        }
+        private ObservableCollection<PatientType> _patientTypes;
+        public ObservableCollection<PatientType> PatientTypes
+        {
+            get => _patientTypes;
+            set
+            {
+                _patientTypes = value;
+                OnPropertyChanged();
+            }
+        }
+        private int _patientTypeId;
+        public int PatientTypeId
+        {
+            get => _patientTypeId;
+            set
+            {
+                _patientTypeId = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Type Name
+        private string _typeName;
+        public string TypeName
+        {
+            get => _typeName;
+            set
+            {
+                _typeName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Discount
+        private string _discount;
+        public string Discount
+        {
+            get => _discount;
+            set
+            {
+                _discount = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Address
+        private string _address;
+        public string Address
+        {
+            get => _address;
+            set
+            {
+                _address = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+        // Selected Patient Type
+        private PatientType _selectedPatientType;
+        public PatientType SelectedPatientType
+        {
+            get => _selectedPatientType;
+            set
+            {
+                _selectedPatientType = value;
+                OnPropertyChanged();
+                // Update related properties when selection changes
+                if (SelectedPatientType != null)
+                {
+                    PatientTypeId = SelectedPatientType.PatientTypeId;
+                    TypeName = SelectedPatientType.TypeName;
+                    Discount = SelectedPatientType.Discount.ToString();
+                }
+            }
+        }
 
         private string _searchTerm;
         public string SearchTerm
@@ -219,38 +365,16 @@ public DateTime? BirthDate
         public PatientDetailsWindowViewModel()
         {
             InitializeCommands();
-            InitializeStatusLists();
+         
             InitializeGenderOptions();
         }
 
         private void InitializeGenderOptions()
         {
-            GenderOptions = new List<string> { "Nam", "Nữ", "Khác" };
+            GenderOptions = new ObservableCollection<string> { "Nam", "Nữ", "Khác" };
         }
 
-        private void InitializeStatusLists()
-        {
-            // Initialize invoice status list
-            InvoiceStatusList = new ObservableCollection<StatusItem>
-            {
-                new StatusItem { Status = "All", DisplayName = "Tất cả" },
-                new StatusItem { Status = "Paid", DisplayName = "Đã thanh toán" },
-                new StatusItem { Status = "Pending", DisplayName = "Chờ thanh toán" },
-                new StatusItem { Status = "Canceled", DisplayName = "Đã hủy" }
-            };
-            SelectedInvoiceStatus = InvoiceStatusList[0];
 
-            // Initialize appointment status list
-            AppointmentStatusList = new ObservableCollection<StatusItem>
-            {
-                new StatusItem { Status = "All", DisplayName = "Tất cả" },
-                new StatusItem { Status = "Scheduled", DisplayName = "Đã hẹn" },
-                new StatusItem { Status = "Completed", DisplayName = "Hoàn thành" },
-                new StatusItem { Status = "Canceled", DisplayName = "Đã hủy" },
-                new StatusItem { Status = "Missed", DisplayName = "Bỏ lỡ" }
-            };
-            SelectedAppointmentStatus = AppointmentStatusList[0];
-        }
 
         private void InitializeCommands()
         {
@@ -366,13 +490,7 @@ public DateTime? BirthDate
                         }
                         break;
 
-                    case nameof(Patient.InsuranceCode):
-                        if (!string.IsNullOrWhiteSpace(Patient.InsuranceCode) &&
-                            !Regex.IsMatch(Patient.InsuranceCode, @"^\d{10}$"))
-                        {
-                            error = "Mã bảo hiểm phải có 10 chữ số";
-                        }
-                        break;
+
                 }
 
                 return error;
@@ -433,42 +551,87 @@ public DateTime? BirthDate
 
         private void LoadRelatedData()
         {
-            if (Patient == null)
-                return;
+            if (Patient == null) return;
 
-            try
+            // Load patient information
+            PatientId = Patient.PatientId;
+            FullName = Patient.FullName ?? string.Empty;
+            DateOfBirth = Patient.DateOfBirth?.ToDateTime(TimeOnly.MinValue);
+            Phone = Patient.Phone ?? string.Empty;
+            InsuranceCode = Patient.InsuranceCode ?? string.Empty;
+            Gender = Patient.Gender ?? string.Empty;
+            Address = Patient.Address ?? string.Empty;
+            PatientTypeId = Patient.PatientType.PatientTypeId;
+            TypeName = Patient.PatientType.TypeName ?? string.Empty;
+            Discount = Patient.PatientType.Discount?.ToString() ?? string.Empty;
+
+            // Load patient types
+            PatientTypes = new ObservableCollection<PatientType>(
+                DataProvider.Instance.Context.PatientTypes
+                .Where(pt => pt.IsDeleted != true)
+                .OrderBy(pt => pt.TypeName)
+                .ToList()
+            );
+
+            // Set selected patient type
+            SelectedPatientType = PatientTypes.FirstOrDefault(pt => pt.PatientTypeId == Patient.PatientTypeId);
+
+            // Load gender options
+            GenderOptions = new ObservableCollection<string> { "Nam", "Nữ", "Khác" };
+
+     
+
+
+            // Load related collections
+            LoadMedicalRecords();
+            LoadInvoices();
+            LoadAppointments();
+        }
+
+        private void LoadMedicalRecords()
+        {
+            MedicalRecords = new ObservableCollection<MedicalRecord>(
+                DataProvider.Instance.Context.MedicalRecords
+                .Include(m => m.Doctor)
+                .Where(m => m.PatientId == PatientId && m.IsDeleted != true)
+                .OrderByDescending(m => m.RecordDate)
+                .ToList()
+            );
+        }
+
+        private void LoadInvoices()
+        {
+            Invoices = new ObservableCollection<Invoice>(
+                DataProvider.Instance.Context.Invoices
+                .Where(i => i.PatientId == PatientId)
+                .OrderByDescending(i => i.InvoiceDate)
+                .ToList()
+            );
+        }
+
+        private void LoadAppointments()
+        {
+            Appointments = new ObservableCollection<Appointment>(
+                DataProvider.Instance.Context.Appointments
+                .Include(a => a.Doctor)
+                .Where(a => a.PatientId == PatientId && a.IsDeleted != true)
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToList()
+            );
+        }
+
+        // Loading indicator property
+        private bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
             {
-                // Load medical records
-                MedicalRecords = new ObservableCollection<MedicalRecord>(
-                    DataProvider.Instance.Context.MedicalRecords
-                        .Include(m => m.Doctor)
-                        .Where(m => m.PatientId == Patient.PatientId && m.IsDeleted != true)
-                        .OrderByDescending(m => m.RecordDate)
-                        .ToList()
-                );
-
-                // Load invoices
-                Invoices = new ObservableCollection<Invoice>(
-                    DataProvider.Instance.Context.Invoices
-                        .Where(i => i.PatientId == Patient.PatientId)
-                        .OrderByDescending(i => i.InvoiceDate)
-                        .ToList()
-                );
-
-                // Load appointments
-                Appointments = new ObservableCollection<Appointment>(
-                    DataProvider.Instance.Context.Appointments
-                        .Include(a => a.Doctor)
-                        .Where(a => a.PatientId == Patient.PatientId && a.IsDeleted != true)
-                        .OrderByDescending(a => a.AppointmentDate)
-                        .ToList()
-                );
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                _isLoading = value;
+                OnPropertyChanged();
             }
         }
+
 
         private bool CanUpdatePatient()
         {
@@ -483,7 +646,7 @@ public DateTime? BirthDate
             // Check if patient has any active appointments
             bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
                 .Any(a => a.PatientId == Patient.PatientId &&
-                      (a.Status == "Scheduled" || a.Status == "Confirmed" || a.Status == "InProgress") &&
+                      (a.Status == "Đang chờ" || a.Status == "Đã khám" || a.Status == "Đã hủy") &&
                       a.IsDeleted != true);
 
             return !hasActiveAppointments;
@@ -499,7 +662,7 @@ public DateTime? BirthDate
 
                 // Find the patient in database
                 var patientToUpdate = DataProvider.Instance.Context.Patients
-                    .FirstOrDefault(p => p.PatientId == Patient.PatientId);
+                    .FirstOrDefault(p => p.PatientId == PatientId);
 
                 if (patientToUpdate == null)
                 {
@@ -508,31 +671,34 @@ public DateTime? BirthDate
                 }
 
                 // Update patient information
-                patientToUpdate.FullName = Patient.FullName?.Trim();
-                patientToUpdate.DateOfBirth = Patient.DateOfBirth;
-                patientToUpdate.Gender = Patient.Gender;
-                patientToUpdate.Phone = Patient.Phone?.Trim();
-                patientToUpdate.Address = Patient.Address?.Trim();
-                patientToUpdate.InsuranceCode = Patient.InsuranceCode?.Trim();
+                patientToUpdate.FullName = FullName?.Trim();
+                patientToUpdate.DateOfBirth = DateOfBirth.HasValue ? DateOnly.FromDateTime(DateOfBirth.Value) : null;
+                patientToUpdate.PatientTypeId = PatientTypeId;
+                patientToUpdate.Gender = Gender;
+                patientToUpdate.Phone = Phone?.Trim();
+                patientToUpdate.Address = Address?.Trim();
+                patientToUpdate.InsuranceCode = InsuranceCode?.Trim();
 
-                // Save changes
+                // Save changes to database
                 DataProvider.Instance.Context.SaveChanges();
 
-                // Refresh patient data from database
+                // Refresh the current data from database
                 var refreshedPatient = DataProvider.Instance.Context.Patients
                     .Include(p => p.PatientType)
-                    .FirstOrDefault(p => p.PatientId == Patient.PatientId);
+                    .FirstOrDefault(p => p.PatientId == PatientId);
 
-                if (refreshedPatient != null)
-                {
-                    Patient = refreshedPatient;
-                }
 
-                MessageBox.Show("Thông tin bệnh nhân đã được cập nhật thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Thông tin bệnh nhân đã được cập nhật thành công!",
+                               "Thông báo",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi cập nhật thông tin: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Lỗi khi cập nhật thông tin: {ex.Message}",
+                               "Lỗi",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Error);
             }
         }
 
@@ -543,7 +709,7 @@ public DateTime? BirthDate
                 // Check if patient has active appointments
                 bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
                     .Any(a => a.PatientId == Patient.PatientId &&
-                          (a.Status == "Scheduled" || a.Status == "Confirmed" || a.Status == "InProgress") &&
+                          (a.Status == "Đang chờ" || a.Status == "Đã khám" || a.Status == "Đã hủy") &&
                           a.IsDeleted != true);
 
                 if (hasActiveAppointments)
@@ -664,6 +830,13 @@ public DateTime? BirthDate
             }
         }
 
+        private int? GetPatientTypeIdByName(string typeName)
+        {
+            var patientType = PatientTypes?.FirstOrDefault(pt =>
+                pt.TypeName?.Trim().Equals(typeName.Trim(), StringComparison.OrdinalIgnoreCase) == true);
+            return patientType?.PatientTypeId;
+        }
+
         private void FilterAppointments()
         {
             try
@@ -675,7 +848,7 @@ public DateTime? BirthDate
                     .Where(a => a.PatientId == Patient.PatientId && a.IsDeleted != true);
 
                 // Filter by status if not "All"
-                if (SelectedAppointmentStatus != null && SelectedAppointmentStatus.Status != "All")
+                if (SelectedAppointmentStatus != null && SelectedAppointmentStatus.Status != "Tất cả")
                 {
                     query = query.Where(a => a.Status == SelectedAppointmentStatus.Status);
                 }
@@ -767,9 +940,27 @@ public DateTime? BirthDate
             {
                 MessageBox.Show($"Lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-    }
 
+        }
+
+        private void LoadPatientTypesList()
+        {
+            PatientTypes = new ObservableCollection<PatientType>(
+                DataProvider.Instance.Context.PatientTypes
+                .Where(pt => pt.IsDeleted != true)
+                .ToList()
+            );
+
+            if (Patient?.PatientTypeId != null)
+            {
+                SelectedPatientType = PatientTypes.FirstOrDefault(pt => pt.PatientTypeId == Patient.PatientTypeId);
+            }
+
+
+        }
+
+    
+    }
     public class StatusItem
     {
         public string Status { get; set; } = string.Empty;
