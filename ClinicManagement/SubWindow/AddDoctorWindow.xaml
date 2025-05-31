@@ -12,17 +12,22 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
+        DataContext="{StaticResource AddDoctorVM}"
         mc:Ignorable="d"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
         WindowStyle="None"
         ResizeMode="NoResize"
         Name="addDoctorWindow"
-        Title="Thêm bác sĩ mới"
+        Title="THÊM BÁC SĨ"
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
         Width="600" Height="650"
         >
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=addDoctorWindow}"/>
@@ -50,55 +55,61 @@
                                HorizontalAlignment="Center"
                                Margin="0,0,0,24"/>
 
-                    <!-- Doctor ID -->
-                    <TextBox Text="{Binding DoctorID, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Mã bác sĩ"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,8,0,16"/>
-
                     <!-- Full Name -->
-                    <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Họ và tên"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                 materialDesign:HintAssist.Hint="Họ và tên *"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
 
                     <!-- Specialty -->
-                    <ComboBox ItemsSource="{Binding SpecialtyList}"
-                              DisplayMemberPath="SpecialName"
-                              SelectedItem="{Binding SelectedSpecialty}"
-                              materialDesign:HintAssist.Hint="Chuyên khoa"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <ComboBox ItemsSource="{Binding SpecialtyList}"
+                                  DisplayMemberPath="SpecialtyName"
+                                  SelectedItem="{Binding SelectedSpecialty}"
+                                  materialDesign:HintAssist.Hint="Chuyên khoa *"
+                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                    </StackPanel>
 
                     <!-- Phone -->
-                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Số điện thoại"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                 materialDesign:HintAssist.Hint="Số điện thoại *"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
 
                     <!-- Email -->
-                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Email"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                 materialDesign:HintAssist.Hint="Email"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
 
                     <!-- Work Schedule -->
-                    <TextBox Text="{Binding Schedule, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Lịch làm việc"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding Schedule, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                 materialDesign:HintAssist.Hint="Lịch làm việc"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBlock Text="{Binding ScheduleFormatExample}"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   FontSize="11"
+                                   Margin="4,4,0,0"
+                                   FontStyle="Italic"/>
+                    </StackPanel>
 
                     <!-- Address -->
-                    <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Địa chỉ"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Địa chỉ"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
 
                     <!-- Certificate Link -->
-                    <TextBox Text="{Binding CertificateLink, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Link chứng chỉ"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding CertificateLink, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Link chứng chỉ"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
 
                     <!-- Account Information Section -->
                     <TextBlock Text="Thông tin tài khoản" 
@@ -106,44 +117,60 @@
                                Margin="0,8,0,16"/>
 
                     <!-- Username -->
-                    <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Tên đăng nhập"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                 materialDesign:HintAssist.Hint="Tên đăng nhập"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
 
                     <!-- Password -->
-                    <PasswordBox x:Name="PasswordBox"
-                                 materialDesign:HintAssist.Hint="Mật khẩu"
-                                 Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                                 Margin="0,0,0,16">
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="PasswordChanged">
-                                <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" 
-                                                       CommandParameter="{Binding ElementName=PasswordBox}"/>
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                    </PasswordBox>
+                    <StackPanel Margin="0,0,0,16">
+                        <PasswordBox x:Name="PasswordBox"
+                 materialDesign:HintAssist.Hint="Mật khẩu"
+                 materialDesign:PasswordBoxAssist.Password="{Binding Password, Mode=TwoWay}"
+                 Style="{StaticResource MaterialDesignFloatingHintRevealPasswordBox}">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="PasswordChanged">
+                                    <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" 
+                                       CommandParameter="{Binding ElementName=PasswordBox}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </PasswordBox>
+                    </StackPanel>
 
                     <!-- Confirm Password -->
-                    <PasswordBox x:Name="ConfirmPasswordBox"
-                                 materialDesign:HintAssist.Hint="Xác nhận mật khẩu"
-                                 Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                                 Margin="0,0,0,16">
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="PasswordChanged">
-                                <i:InvokeCommandAction Command="{Binding ConfirmPasswordChangedCommand}" 
-                                                       CommandParameter="{Binding ElementName=ConfirmPasswordBox}"/>
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                    </PasswordBox>
+                    <StackPanel Margin="0,0,0,16">
+                        <PasswordBox x:Name="ConfirmPasswordBox"
+                 materialDesign:HintAssist.Hint="Xác nhận mật khẩu"
+                 materialDesign:PasswordBoxAssist.Password="{Binding ConfirmPassword, Mode=TwoWay}"
+                 Style="{StaticResource MaterialDesignFloatingHintRevealPasswordBox}">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="PasswordChanged">
+                                    <i:InvokeCommandAction Command="{Binding ConfirmPasswordChangedCommand}" 
+                                       CommandParameter="{Binding ElementName=ConfirmPasswordBox}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </PasswordBox>
+                        <TextBlock Text="Mật khẩu không khớp"
+               Foreground="Red"
+               Margin="4,4,0,0"
+               FontSize="11"
+               Visibility="{Binding ShowPasswordMismatchError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
 
                     <!-- Role -->
-                    <ComboBox ItemsSource="{Binding RoleList}"
-                              DisplayMemberPath="RoleName"
-                              SelectedItem="{Binding SelectedRole}"
-                              materialDesign:HintAssist.Hint="Vai trò"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Margin="0,0,0,16"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <ComboBox ItemsSource="{Binding RoleList}"
+                                  SelectedItem="{Binding SelectedRole}"
+                                  materialDesign:HintAssist.Hint="Vai trò"
+                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                    </StackPanel>
+
+                    <!-- Required fields note -->
+                    <TextBlock Text="* Thông tin bắt buộc" 
+                               FontStyle="Italic"
+                               Foreground="{DynamicResource MaterialDesignBodyLight}"
+                               Margin="4,0,0,8"/>
                 </StackPanel>
             </ScrollViewer>
         </materialDesign:Card>

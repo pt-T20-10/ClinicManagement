@@ -494,6 +494,7 @@ namespace ClinicManagement.ViewModels
                 DataContext = new PatientDetailsWindowViewModel { Patient = patient }
             };
             detailsWindow.ShowDialog();
+            LoadData();
         }
 
         #endregion

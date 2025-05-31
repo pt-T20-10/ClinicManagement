@@ -22,12 +22,13 @@
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
         Width="1100" Height="700">
-    <!--DataContext="{StaticResource PatientDetailsVM}"-->
+    
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
-            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=patientdetailsWindow}"/>
+            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=doctordetailsWindow}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -35,193 +36,283 @@
         </Grid.RowDefinitions>
 
         <!-- Control Bar -->
-        <Grid Grid.Row="0" Grid.ColumnSpan="2">
-            <uc:ControlBarUC Tag="{Binding Title, ElementName=doctordetailsWindow}"></uc:ControlBarUC>
+        <Grid Grid.Row="0">
+            <uc:ControlBarUC Tag="{Binding Title, ElementName=doctordetailsWindow}"/>
         </Grid>
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        
+        <!-- Main Content -->
+        <TabControl Grid.Row="1" 
+                    materialDesign:ColorZoneAssist.Mode="PrimaryLight" 
+                    Style="{StaticResource MaterialDesignFilledTabControl}">
+            
+            <!-- Doctor Information Tab -->
+            <TabItem Header="Thông tin bác sĩ">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-            <!-- Doctor Information Header -->
-            <TextBlock 
-         Grid.Row="0" 
-         Text="THÔNG TIN BÁC SĨ" 
-         FontWeight="Bold" 
-         FontSize="18" 
-         Margin="15,15,0,20" 
-         HorizontalAlignment="Left"/>
+                        <!-- Personal Information GroupBox -->
+                        <GroupBox Grid.Row="0"
+                                  Header="Thông tin cá nhân"
+                                  Style="{StaticResource MaterialDesignGroupBox}"
+                                  materialDesign:ColorZoneAssist.Mode="PrimaryLight"
+                                  Margin="0,0,0,20"
+                                  BorderThickness="1">
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-            <!-- Doctor Information Form -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <Grid Margin="15,0,15,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                                <!-- Left Column -->
+                                <!-- Doctor ID -->
+                                <TextBox Grid.Row="0" Grid.Column="0"
+                                         Text="{Binding DoctorID, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         materialDesign:HintAssist.Hint="ID bác sĩ"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="5,10,15,10"/>
+
+                                <!-- Full Name -->
+                                <TextBox Grid.Row="1" Grid.Column="0"
+                                         Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Họ tên"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="5,10,15,10"/>
+
+                                <!-- Specialty -->
+                                <ComboBox Grid.Row="2" Grid.Column="0"
+                                          ItemsSource="{Binding SpecialtyList}"
+                                          DisplayMemberPath="SpecialtyName"
+                                          SelectedItem="{Binding SelectedSpecialty}"
+                                          materialDesign:HintAssist.Hint="Chuyên khoa"
+                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                          Margin="5,10,15,10"/>
+
+                                <!-- Certificate Link -->
+                                <TextBox Grid.Row="3" Grid.Column="0"
+                                         Text="{Binding CertificateLink, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Link chứng chỉ"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="5,10,15,10"/>
+
+                                <!-- Right Column -->
+                                <!-- Phone -->
+                                <TextBox Grid.Row="0" Grid.Column="1"
+                                         Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Số điện thoại"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="15,10,5,10"/>
+
+                                <!-- Work Schedule -->
+                                <TextBox Grid.Row="1" Grid.Column="1"
+                                         Text="{Binding Schedule, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Lịch làm việc"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="15,10,5,10"/>
+
+                                <!-- Address -->
+                                <TextBox Grid.Row="2" Grid.Column="1"
+                                         Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                                         materialDesign:HintAssist.Hint="Địa chỉ"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="15,10,5,10"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Account Information GroupBox -->
+                        <GroupBox Grid.Row="1"
+                                  Header="Thông tin tài khoản"
+                                  Style="{StaticResource MaterialDesignGroupBox}"
+                                  materialDesign:ColorZoneAssist.Mode="PrimaryLight"
+                                  Margin="0,0,0,20"
+                                  BorderThickness="1">
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Username -->
+                                <TextBox Grid.Row="0" Grid.Column="0"
+                                         Text="{Binding UserName, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         materialDesign:HintAssist.Hint="Tên đăng nhập"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="5,10,15,10"/>
+
+                                <!-- Role -->
+                                <TextBox Grid.Row="0" Grid.Column="1"
+                                         Text="{Binding Role, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         materialDesign:HintAssist.Hint="Vai trò"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="15,10,5,10"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Action Buttons -->
+                        <!-- Action Buttons -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Personal Info Buttons -->
+                            <StackPanel Grid.Column="0"
+                Orientation="Horizontal"
+                HorizontalAlignment="Center"
+                Margin="0,20,0,0">
+
+                                <Button Command="{Binding UpdateDoctorInfoCommand}"
+                Style="{StaticResource MaterialDesignRaisedButton}"
+                materialDesign:ButtonAssist.CornerRadius="5"
+                Width="180"
+                Height="45"
+                Margin="0,0,15,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Update" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Cập nhật thông tin"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Command="{Binding DeleteDoctorCommand}"
+                Style="{StaticResource MaterialDesignRaisedButton}"
+                materialDesign:ButtonAssist.CornerRadius="5"
+                Background="#F44336"
+                BorderBrush="#F44336"
+                Width="180"
+                Height="45">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Xóa bác sĩ"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Account Info Button -->
+                            <StackPanel Grid.Column="1"
+                Orientation="Horizontal"
+                HorizontalAlignment="Center"
+                Margin="0,20,0,0">
+
+                                <Button Command="{Binding ChangePasswordCommand}"
+                Style="{StaticResource MaterialDesignRaisedButton}"
+                materialDesign:ButtonAssist.CornerRadius="5"
+                Background="#FF3F51B5"
+                BorderBrush="#FF3F51B5"
+                Width="180"
+                Height="45">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Lock" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Đặt lại mật khẩu"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Appointments Tab -->
+            <TabItem Header="Lịch hẹn của bác sĩ">
+                <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+                    
+                    <!-- Filter and Search Section -->
+                    <Grid Grid.Row="0" Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Left Column -->
-                    <!-- Doctor ID -->
-                    <TextBox
-                 Grid.Row="0" 
-                 Grid.Column="0"
-                 Text="{Binding DoctorID, Mode=OneWay}"
-                 IsReadOnly="True"
-                 materialDesign:HintAssist.Hint="ID bác sĩ"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="5,10,15,10"
-                 VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                            <!-- Date Range -->
+                            <DatePicker Width="160" 
+                   materialDesign:HintAssist.Hint="Từ ngày" 
+                   Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                   SelectedDate="{Binding AppointmentStartDate}"/>
 
-                    <!-- Full Name -->
-                    <TextBox
-                 Grid.Row="1" 
-                 Grid.Column="0"
-                 Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
-                 materialDesign:HintAssist.Hint="Họ tên"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="5,10,15,10"
-                 VerticalAlignment="Center"/>
+                            <DatePicker Width="160" 
+                   Margin="15,0,0,0"
+                   materialDesign:HintAssist.Hint="Đến ngày" 
+                   Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                   SelectedDate="{Binding AppointmentEndDate}"/>
 
-                    <!-- Specialty -->
-                    <ComboBox
-                 Grid.Row="2" 
-                 Grid.Column="0"
-                 ItemsSource="{Binding SpecialtyList}"
-                 DisplayMemberPath="SpecialName"
-                 SelectedItem="{Binding SelectedSpecialty}"
-                 materialDesign:HintAssist.Hint="Chuyên khoa"
+                            <!-- Filter By Status -->
+                            <ComboBox Width="200"
+                 Margin="15,0,0,0"
+                 materialDesign:HintAssist.Hint="Trạng thái"
                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                 Margin="5,10,15,10"
-                 VerticalAlignment="Center"/>
+                 ItemsSource="{Binding AppointmentStatusList}"
+                 SelectedItem="{Binding SelectedAppointmentStatus}"/>
 
-                    <!-- Certificate Link -->
-                    <TextBox
-                 Grid.Row="3" 
-                 Grid.Column="0"
-                 Text="{Binding CertificateLink, UpdateSourceTrigger=PropertyChanged}"
-                 materialDesign:HintAssist.Hint="Link chứng chỉ"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="5,10,15,10"
-                 VerticalAlignment="Center"/>
+                            <!-- Search Button -->
+                            <Button Command="{Binding SearchAppointmentsCommand}"
+               Style="{StaticResource MaterialDesignRaisedButton}"
+               Width="120"
+               Height="35"
+               Margin="15,0,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Search" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Tìm kiếm"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
 
-                    <!-- Right Column -->
-                    <!-- Phone -->
-                    <TextBox
-                 Grid.Row="0" 
-                 Grid.Column="1"
-                 Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
-                 materialDesign:HintAssist.Hint="Số điện thoại"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="15,10,5,10"
-                 VerticalAlignment="Center"/>
+                    <!-- Appointments List -->
+                    <!-- Appointments List -->
+                    <DataGrid Grid.Row="1"
+         ItemsSource="{Binding DoctorAppointmentsDisplay}"
+         AutoGenerateColumns="False"
+         IsReadOnly="True"
+         CanUserAddRows="False"
+         materialDesign:DataGridAssist.CellPadding="13 8 8 8"
+         materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding AppointmentId}" Width="80"/>
+                            <DataGridTextColumn Header="Bệnh nhân" Binding="{Binding PatientName}" Width="200"/>
+                            <DataGridTextColumn Header="Ngày hẹn" Binding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120"/>
+                            <DataGridTextColumn Header="Giờ hẹn" Binding="{Binding AppointmentTimeString}" Width="100"/>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="120"/>
+                            <DataGridTextColumn Header="Lý do khám" Binding="{Binding Reason}" Width="*"/>
 
-                    <!-- Work Schedule -->
-                    <TextBox
-                 Grid.Row="1" 
-                 Grid.Column="1"
-                 Text="{Binding Schedule, UpdateSourceTrigger=PropertyChanged}"
-                 materialDesign:HintAssist.Hint="Lịch làm việc"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="15,10,5,10"
-                 VerticalAlignment="Center"/>
+                            <!-- Action Buttons -->
+                            <DataGridTemplateColumn Width="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Xem chi tiết"
+                          Command="{Binding DataContext.ViewAppointmentDetailsCommand, 
+                                   RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                          CommandParameter="{Binding}"
+                          Style="{StaticResource MaterialDesignRaisedButton}"
+                          Width="120" Height="30"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
 
-                    <!-- Address -->
-                    <TextBox
-                 Grid.Row="2" 
-                 Grid.Column="1"
-                 Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
-                 materialDesign:HintAssist.Hint="Địa chỉ"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="15,10,5,10"
-                 VerticalAlignment="Center"/>
-
-                    <!-- Username -->
-                    <TextBox
-                 Grid.Row="3" 
-                 Grid.Column="1"
-                 Text="{Binding UserName, Mode=OneWay}"
-                 IsReadOnly="True"
-                 materialDesign:HintAssist.Hint="Tên đăng nhập"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="15,10,5,10"
-                 VerticalAlignment="Center"/>
-
-                    <!-- Role -->
-                    <TextBox
-                 Grid.Row="4" 
-                 Grid.Column="1"
-                 Text="{Binding Role, Mode=OneWay}"
-                 IsReadOnly="True"
-                 materialDesign:HintAssist.Hint="Vai trò"
-                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                 Margin="15,10,5,10"
-                 VerticalAlignment="Center"/>
-
-                    <!-- Action Buttons - Update and Change Password -->
-                    <StackPanel 
-                        Grid.Row="5" 
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        Margin="0,30,0,0">
-
-                        <Button 
-                            Command="{Binding UpdateDoctorInfoCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            materialDesign:ButtonAssist.CornerRadius="5"
-                            Width="180"
-                            Height="45"
-                            Margin="0,0,15,0">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Update" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="Cập nhật thông tin"/>
-                            </StackPanel>
-                        </Button>
-
-                        <Button 
-                            Command="{Binding ChangePasswordCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            materialDesign:ButtonAssist.CornerRadius="5"
-                            Background="#FF3F51B5"
-                            BorderBrush="#FF3F51B5"
-                            Width="180"
-                            Height="45"
-                            Margin="0,0,15,0">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Lock" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="Đổi mật khẩu"/>
-                            </StackPanel>
-                        </Button>
-                        
-                        <Button 
-                            Command="{Binding DeleteDoctorCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            materialDesign:ButtonAssist.CornerRadius="5"
-                            Background="#F44336"
-                            BorderBrush="#F44336"
-                            Width="180"
-                            Height="45">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="Xóa bác sĩ"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
                 </Grid>
-            </ScrollViewer>
-        </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

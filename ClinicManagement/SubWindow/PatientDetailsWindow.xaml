@@ -21,13 +21,17 @@
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
-        Width="1100" Height="700">
-    <!--DataContext="{StaticResource PatientDetailsVM}"-->
+        Width="1300" Height="700">
+    <Window.Resources>
+        <local:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
+        <local:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
+    </Window.Resources>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=patientdetailsWindow}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -68,58 +72,95 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Patient Header -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" 
-                                       Text="{Binding Patient.FullName}" 
-                                       FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/>
+                            <!-- Patient ID - Read Only -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Mã bệnh nhân:" 
+                                       FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,16"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Patient.PatientId}" 
+                                       FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,32,16"/>
 
-                            <!-- ID -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Mã bệnh nhân:" 
+                            <!-- Full Name -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Họ tên bệnh nhân:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Patient.PatientId}" 
-                                         FontSize="22" VerticalAlignment="Center" Margin="0,0,32,8"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                     Text="{Binding Patient.FullName, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Họ và tên"
+                                     VerticalAlignment="Center" Margin="0,0,32,8"/>
 
-                            <!-- Birth Year -->
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Năm sinh:" 
+                            <!-- Birth Date -->
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Ngày sinh:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Patient.DateOfBirth}" 
-                                       VerticalAlignment="Center" Margin="0,0,0,8"/>
+                            <DatePicker Grid.Row="1" Grid.Column="3" 
+                                        SelectedDate="{Binding Patient.DateOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                        materialDesign:HintAssist.Hint="Chọn ngày sinh" 
+                                        VerticalAlignment="Center" Margin="0,0,0,8"/>
 
                             <!-- Gender -->
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Giới tính:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Patient.Gender}" 
-                                       VerticalAlignment="Center" Margin="0,0,32,8"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" 
+                                      ItemsSource="{Binding GenderOptions}"
+                                      SelectedValue="{Binding Patient.Gender, UpdateSourceTrigger=PropertyChanged}"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Chọn giới tính"
+                                      VerticalAlignment="Center" Margin="0,0,32,8"/>
 
                             <!-- Phone -->
                             <TextBlock Grid.Row="2" Grid.Column="2" Text="Số điện thoại:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
-                            <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding Patient.Phone}" 
-                                       VerticalAlignment="Center" Margin="0,0,0,8"/>
+                            <TextBox Grid.Row="2" Grid.Column="3" 
+                                     Text="{Binding Patient.Phone, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Nhập số điện thoại"
+                                     VerticalAlignment="Center" Margin="0,0,0,8"/>
 
+                            <!-- Insurance Code -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Mã bảo hiểm:" 
+                                       FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" 
+                                     Text="{Binding Patient.InsuranceCode, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Nhập mã BHYT"
+                                     VerticalAlignment="Center" Margin="0,0,32,8"/>
+
+                            <!-- Patient Type -->
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="Loại bệnh nhân:" 
+                                       FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
+                            <TextBlock Grid.Row="3" Grid.Column="3" 
+                                       Text="{Binding Patient.PatientType.TypeName}" 
+                                       VerticalAlignment="Center" Margin="0,0,0,8"/>
+                            
                             <!-- Address -->
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Địa chỉ:" 
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Địa chỉ:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" 
-                                       Text="{Binding Patient.Address}" TextWrapping="Wrap" 
-                                       VerticalAlignment="Center" Margin="0,0,0,0"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" 
+                                     Text="{Binding Patient.Address, UpdateSourceTrigger=PropertyChanged}" 
+                                     TextWrapping="Wrap" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Nhập địa chỉ đầy đủ"
+                                     AcceptsReturn="True"
+                                     Height="60"
+                                     VerticalScrollBarVisibility="Auto"
+                                     VerticalAlignment="Center" Margin="0,0,0,0"/>
                         </Grid>
 
                         <!-- Action Buttons -->
                         <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
                             <Button Command="{Binding UpdatePatientCommand}" 
                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Width="150" Height="36" Margin="0,0,0,16">
+                                    Width="150" Height="36" Margin="16,0,16,16">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="AccountEdit" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Sửa thông tin"/>
+                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Lưu thông tin"/>
                                 </StackPanel>
                             </Button>
                             <Button Command="{Binding DeletePatientCommand}" 
                                     Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-                                    Width="150" Height="36">
+                                    Width="150" Height="36" Margin="16,0,16,16">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Delete" Margin="0,0,8,0"/>
                                     <TextBlock Text="Xóa bệnh nhân"/>
@@ -128,6 +169,7 @@
                         </StackPanel>
                     </Grid>
                 </Border>
+
 
                 <!-- Tab Control for Medical Records, Invoices, Appointments -->
                 <TabControl Grid.Row="1" Style="{StaticResource MaterialDesignFilledTabControl}">
@@ -179,7 +221,7 @@
                             <ListView Grid.Row="1" ItemsSource="{Binding MedicalRecords}">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="Mã hồ sơ" DisplayMemberBinding="{Binding RecordID}" Width="120"/>
+                                        <GridViewColumn Header="Mã hồ sơ" DisplayMemberBinding="{Binding RecordId}" Width="120"/>
                                         <GridViewColumn Header="Ngày khám" Width="150">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
@@ -188,7 +230,7 @@
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
                                         <GridViewColumn Header="Bác sĩ" DisplayMemberBinding="{Binding Doctor.FullName}" Width="150"/>
-                                        <GridViewColumn Header="Chẩn đoán" DisplayMemberBinding="{Binding Diagnosis}" Width="200"/>
+                                        <GridViewColumn Header="Chẩn đoán" DisplayMemberBinding="{Binding Diagnosis}" Width="300"/>
                                         <GridViewColumn Header="Đơn thuốc" Width="140">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
@@ -231,12 +273,7 @@
                                         </GridViewColumn>
                                     </GridView>
                                 </ListView.View>
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Margin" Value="0,2"/>
-                                    </Style>
-                                </ListView.ItemContainerStyle>
+
                             </ListView>
                         </Grid>
                     </TabItem>
@@ -244,13 +281,17 @@
                     <!-- Invoices Tab -->
                     <TabItem Header="Hóa đơn">
                         <Grid Margin="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="413*"/>
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
                             <!-- Filter & Search -->
-                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid Grid.Row="0" Margin="0,0,0,8" Grid.ColumnSpan="2">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
@@ -288,73 +329,97 @@
                             </Grid>
 
                             <!-- Invoices List -->
-                            <ListView Grid.Row="1" ItemsSource="{Binding Invoices}">
+                            <ListView Grid.Row="1" ItemsSource="{Binding Invoices}" Grid.ColumnSpan="2" 
+                                      ScrollViewer.CanContentScroll="True"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="Mã hóa đơn" DisplayMemberBinding="{Binding InvoiceID}" Width="100"/>
-                                        <GridViewColumn Header="Ngày lập" Width="120">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Loại" DisplayMemberBinding="{Binding InvoiceType}" Width="120"/>
-                                        <GridViewColumn Header="Tổng tiền" Width="150">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" 
-                                                               HorizontalAlignment="Right"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Trạng thái" Width="150">
+                                        <GridViewColumn Header="Mã hóa đơn" DisplayMemberBinding="{Binding InvoiceId}" Width="140"/>
+                                        <GridViewColumn Header="Ngày lập" DisplayMemberBinding="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}" Width="120"/>
+                                        <!--<GridViewColumn Header="Loại" Width="110">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock>
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Paid">
-                                                                        <Setter Property="Text" Value="Đã thanh toán"/>
-                                                                        <Setter Property="Foreground" Value="#4CAF50"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Pending">
-                                                                        <Setter Property="Text" Value="Chờ thanh toán"/>
-                                                                        <Setter Property="Foreground" Value="#FF9800"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Canceled">
-                                                                        <Setter Property="Text" Value="Đã hủy"/>
-                                                                        <Setter Property="Foreground" Value="#F44336"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0}">
+                                                                <Binding Path="IsPharmacySale" Converter="{StaticResource BooleanToPharmacyConverter}"/>
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
                                                     </TextBlock>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>-->
+                                       
+                                        <GridViewColumn Header="Tổng tiền" Width="120">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" 
+                                                          TextWrapping="Wrap"
+                                                          HorizontalAlignment="Right"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
-                                        <GridViewColumn Header="" Width="150">
+                                        <GridViewColumn Header="Trạng thái" Width="180">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border CornerRadius="4" Padding="8,4">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã thanh toán">
+                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Chờ thanh toán">
+                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                    </DataTrigger>
+                                                                    
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock>
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã thanh toán">
+                                                                            <Setter Property="Text" Value="Đã thanh toán"/>
+                                                                            <Setter Property="Foreground" Value="#1B5E20"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Chờ thanh toán">
+                                                                            <Setter Property="Text" Value="Chờ thanh toán"/>
+                                                                            <Setter Property="Foreground" Value="#E65100"/>
+                                                                        </DataTrigger>
+                                                                        
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Header="Ghi chú" DisplayMemberBinding="{Binding Notes}"/>
+                                        <GridViewColumn Header="Thao tâc">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Command="{Binding DataContext.ViewInvoiceCommand, 
-                                                                        RelativeSource={RelativeSource FindAncestor, 
-                                                                        AncestorType={x:Type ListView}}}" 
+                                                                RelativeSource={RelativeSource FindAncestor, 
+                                                                AncestorType={x:Type ListView}}}" 
                                                                 CommandParameter="{Binding}"
                                                                 Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                Margin="0,0,8,0" Width="70" Height="32">
+                                                                Margin="0,0,8,0" Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="FileDocumentOutline" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Xem"/>
                                                             </StackPanel>
                                                         </Button>
                                                         <Button Command="{Binding DataContext.PrintInvoiceCommand, 
-                                                                        RelativeSource={RelativeSource FindAncestor, 
-                                                                        AncestorType={x:Type ListView}}}" 
+                                                                RelativeSource={RelativeSource FindAncestor, 
+                                                                AncestorType={x:Type ListView}}}" 
                                                                 CommandParameter="{Binding}"
                                                                 Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                Width="70" Height="32">
+                                                               Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="Printer" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="In"/>
@@ -363,16 +428,12 @@
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
+                                            
                                         </GridViewColumn>
                                     </GridView>
                                 </ListView.View>
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Margin" Value="0,2"/>
-                                    </Style>
-                                </ListView.ItemContainerStyle>
                             </ListView>
+
                         </Grid>
                     </TabItem>
 
@@ -413,89 +474,128 @@
                             </Grid>
 
                             <!-- Appointments List -->
-                            <ListView Grid.Row="1" ItemsSource="{Binding Appointments}">
+                            <ListView Grid.Row="1" ItemsSource="{Binding Appointments}"
+                                  ScrollViewer.CanContentScroll="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="Ngày hẹn" Width="140">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding AppointmentDate, StringFormat='dd/MM/yyyy HH:mm'}"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
+                                        <GridViewColumn Header="Ngày hẹn" DisplayMemberBinding="{Binding AppointmentDate, StringFormat='dd/MM/yyyy HH:mm'}" Width="140"/>
                                         <GridViewColumn Header="Bác sĩ" DisplayMemberBinding="{Binding Doctor.FullName}" Width="150"/>
-                                        <GridViewColumn Header="Dịch vụ" DisplayMemberBinding="{Binding ServiceType}" Width="150"/>
-                                        <GridViewColumn Header="Ghi chú" DisplayMemberBinding="{Binding Notes}" Width="200"/>
-                                        <GridViewColumn Header="Trạng thái" Width="150">
+                                        <GridViewColumn Header="Loại hẹn" DisplayMemberBinding="{Binding AppointmentType.TypeName}" Width="150"/>
+                                        <GridViewColumn Header="Ghi chú" DisplayMemberBinding="{Binding Notes}" Width="400"/>
+                                        <GridViewColumn Header="Trạng thái" Width="130">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock>
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
+                                                    <Border CornerRadius="4" Padding="8,4">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Scheduled">
-                                                                        <Setter Property="Text" Value="Đã hẹn"/>
-                                                                        <Setter Property="Foreground" Value="#2196F3"/>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Completed">
-                                                                        <Setter Property="Text" Value="Hoàn thành"/>
-                                                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Canceled">
-                                                                        <Setter Property="Text" Value="Đã hủy"/>
-                                                                        <Setter Property="Foreground" Value="#F44336"/>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã khám">
+                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Missed">
-                                                                        <Setter Property="Text" Value="Bỏ lỡ"/>
-                                                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
                                                                     </DataTrigger>
+                                                         
                                                                 </Style.Triggers>
                                                             </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                        </Border.Style>
+                                                        <TextBlock>
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                            <Setter Property="Text" Value="Đang chờ"/>
+                                                                            <Setter Property="Foreground" Value="#01579B"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                            <Setter Property="Text" Value="Đang khám"/>
+                                                                            <Setter Property="Foreground" Value="#4A148C"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã khám">
+                                                                            <Setter Property="Text" Value="Đã khám"/>
+                                                                            <Setter Property="Foreground" Value="#1B5E20"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                            <Setter Property="Text" Value="Đã hủy"/>
+                                                                            <Setter Property="Foreground" Value="#B71C1C"/>
+                                                                        </DataTrigger>
+                                                                        
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
-                                        <!--<GridViewColumn Header="" Width="180">
+                                        <GridViewColumn Header="Thao tác">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Command="{Binding DataContext.EditAppointmentCommand, 
-                                                                        RelativeSource={RelativeSource FindAncestor, 
-                                                                        AncestorType={x:Type ListView}}}" 
-                                                                CommandParameter="{Binding}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                Margin="0,0,8,0" Width="70" Height="32">
+                                    RelativeSource={RelativeSource FindAncestor, 
+                                    AncestorType={x:Type ListView}}}" 
+                                    CommandParameter="{Binding}"
+                              
+                                    Margin="0,0,8,0" Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarEdit" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Sửa"/>
                                                             </StackPanel>
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Canceled">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
                                                         </Button>
                                                         <Button Command="{Binding DataContext.CancelAppointmentCommand, 
-                                                                        RelativeSource={RelativeSource FindAncestor, 
-                                                                        AncestorType={x:Type ListView}}}" 
-                                                                CommandParameter="{Binding}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                Width="70" Height="32"
-                                                                Visibility="{Binding Status, Converter={StaticResource StatusToVisibilityConverter}}">
+                                    RelativeSource={RelativeSource FindAncestor, 
+                                    AncestorType={x:Type ListView}}}" 
+                                    CommandParameter="{Binding}"
+                                
+                                   Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarRemove" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Hủy"/>
                                                             </StackPanel>
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Completed">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Canceled">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
                                                         </Button>
                                                     </StackPanel>
-                                                    </DataTemplate>
+                                                </DataTemplate>
                                             </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>-->
+                                        </GridViewColumn>
                                     </GridView>
                                 </ListView.View>
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Margin" Value="0,2"/>
-                                    </Style>
-                                </ListView.ItemContainerStyle>
                             </ListView>
+
                         </Grid>
                     </TabItem>
                 </TabControl>

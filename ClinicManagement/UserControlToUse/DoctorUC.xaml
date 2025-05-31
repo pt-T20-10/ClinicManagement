@@ -22,9 +22,7 @@
         Header="Bác sĩ">
             <materialDesign:Card>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
+
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto"/>
                         <RowDefinition />
@@ -100,57 +98,90 @@
 
                     </Grid>
 
-                    <ScrollViewer  Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.ColumnSpan="2">
-                        <ListView Grid.Row="1" ItemsSource="{Binding DoctorList}">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn
-                     Width="80"
-                     DisplayMemberBinding="{Binding DoctorId}">
-                                        <GridViewColumn.Header>
-                                            ID
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
-                     DisplayMemberBinding="{Binding FullName}"
-                     Width="200">
-                                        <GridViewColumn.Header>
-                                            Họ và tên
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
-                                     DisplayMemberBinding="{Binding Specialty.SpecialtyName}"
-                                     Width="150" >
-                                        <GridViewColumn.Header>
-                                            Chuyên khoa
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
-                                     DisplayMemberBinding="{Binding Phone}"
-                                     Width="150">
-                                        <GridViewColumn.Header>
-                                            Điện thoại
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
-                                    <GridViewColumn
-                                    DisplayMemberBinding="{Binding Schedule}"
-                                    Width="200">
-                                        <GridViewColumn.Header>
-                                            Lịch làm việc
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
+                    <Grid Grid.Row="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <ListView ItemsSource="{Binding DoctorList}" 
+                  HorizontalContentAlignment="Stretch"
+                  HorizontalAlignment="Stretch"
+                  VerticalContentAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="ID" Width="80">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding DoctorId}" 
+                                           TextWrapping="Wrap" 
+                                           VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
 
-                                    <GridViewColumn
-                                   DisplayMemberBinding="{Binding Address}">
-                                        <GridViewColumn.Header>
-                                            Địa chỉ
-                                        </GridViewColumn.Header>
-                                    </GridViewColumn>
+                                        <GridViewColumn Header="Họ và tên" Width="200">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding FullName}" 
+                                           TextWrapping="Wrap" 
+                                           VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
 
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </ScrollViewer>
+                                        <GridViewColumn Header="Chuyên khoa" Width="150">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Specialty.SpecialtyName}" 
+                                           TextWrapping="Wrap" 
+                                           VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+
+                                        <GridViewColumn Header="Điện thoại" Width="150">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Phone}" 
+                                           TextWrapping="Wrap" 
+                                           VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+
+                                        <GridViewColumn Header="Lịch làm việc" Width="200">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Schedule}" 
+                                           TextWrapping="Wrap" 
+                                           VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+
+                                        <GridViewColumn Header="Địa chỉ" Width="300">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Address}" 
+                                           TextWrapping="Wrap" 
+                                           VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Width="130">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Xem chi tiết"
+                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenDoctorDetailsCommand}"
+                                                         CommandParameter="{Binding}"
+                                                         Style="{StaticResource MaterialDesignRaisedButton}"
+                                                         Width="120" Height="30"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
             </materialDesign:Card>
         </TabItem>

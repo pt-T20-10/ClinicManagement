@@ -184,22 +184,14 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
 
-            OpenDoctorDetailsCommand = new RelayCommand<Button>(
-                (p) =>
-                {
-                    if (p != null)
-                    {
-                        var detailsWindow = new DoctorDetailsWindow();
-                        detailsWindow.ShowDialog();
-                        // Refresh data after potentially updating or deleting
-                        LoadData();
-                    }
-                },
+            OpenDoctorDetailsCommand = new RelayCommand<Doctor>(
+                (p) => OpenDoctorDetails(p),
                 (p) => p != null
             );
 
-            // Specialty Commands
-            AddCommand = new RelayCommand<object>(
+      
+        // Specialty Commands
+        AddCommand = new RelayCommand<object>(
                 (p) => AddSpecialty(),
                 (p) => !string.IsNullOrEmpty(SpecialtyName)
             );
@@ -214,7 +206,16 @@ namespace ClinicManagement.ViewModels
                 (p) => SelectedItem != null
             );
         }
+        private void OpenDoctorDetails(Doctor doctor)
+        {
+            if (doctor == null) return;
 
+            var detailsWindow = new DoctorDetailsWindow
+            {
+                DataContext = new DoctorDetailsWindowViewModel { Doctor = doctor }
+            };
+            detailsWindow.ShowDialog();
+        }
         private void LoadData()
         {
             // Load doctors with their specialties
@@ -268,12 +269,14 @@ namespace ClinicManagement.ViewModels
 
             DoctorList = new ObservableCollection<Doctor>(filteredList);
         }
+
         private int GetSpecialtyIdByName(string specialtyName)
         {
             var specialty = DataProvider.Instance.Context.DoctorSpecialties
                 .FirstOrDefault(s => s.SpecialtyName.Trim().ToLower() == specialtyName.Trim().ToLower() && (bool)!s.IsDeleted);
             return specialty?.SpecialtyId ?? 0;
         }
+
         #region Specialty Methods
         private void AddSpecialty()
         {
@@ -487,6 +490,8 @@ namespace ClinicManagement.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
+       
         #endregion
         #endregion
     }

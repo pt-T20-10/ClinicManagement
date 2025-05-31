@@ -1,15 +1,21 @@
 ﻿using ClinicManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
-    public class PatientDetailsWindowViewModel : BaseViewModel
+    public class PatientDetailsWindowViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
+        private Window _window;
+
         private Patient _patient;
         public Patient Patient
         {
@@ -25,7 +31,7 @@ namespace ClinicManagement.ViewModels
         private ObservableCollection<MedicalRecord> _medicalRecords;
         public ObservableCollection<MedicalRecord> MedicalRecords
         {
-            get => _medicalRecords;
+            get => _medicalRecords ?? (_medicalRecords = new ObservableCollection<MedicalRecord>());
             set
             {
                 _medicalRecords = value;
@@ -36,7 +42,7 @@ namespace ClinicManagement.ViewModels
         private ObservableCollection<Invoice> _invoices;
         public ObservableCollection<Invoice> Invoices
         {
-            get => _invoices;
+            get => _invoices ?? (_invoices = new ObservableCollection<Invoice>());
             set
             {
                 _invoices = value;
@@ -47,10 +53,21 @@ namespace ClinicManagement.ViewModels
         private ObservableCollection<Appointment> _appointments;
         public ObservableCollection<Appointment> Appointments
         {
-            get => _appointments;
+            get => _appointments ?? (_appointments = new ObservableCollection<Appointment>());
             set
             {
                 _appointments = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private List<string> _genderOptions;
+        public List<string> GenderOptions
+        {
+            get => _genderOptions;
+            set
+            {
+                _genderOptions = value;
                 OnPropertyChanged();
             }
         }
@@ -76,6 +93,50 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        // Properties for invoice filtering
+        private DateTime _invoiceStartDate = DateTime.Now.AddMonths(-1);
+        public DateTime InvoiceStartDate
+        {
+            get => _invoiceStartDate;
+            set
+            {
+                _invoiceStartDate = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DateTime _invoiceEndDate = DateTime.Now;
+        public DateTime InvoiceEndDate
+        {
+            get => _invoiceEndDate;
+            set
+            {
+                _invoiceEndDate = value;
+                OnPropertyChanged();
+            }
+        }
+        // Add this to your PatientDetailsWindowViewModel.cs
+private DateTime? _birthDate;
+public DateTime? BirthDate
+{
+    get
+    {
+        if (Patient?.DateOfBirth != null)
+            return new DateTime(Patient.DateOfBirth.Value.Year, Patient.DateOfBirth.Value.Month, Patient.DateOfBirth.Value.Day);
+        return null;
+    }
+    set
+    {
+        if (value.HasValue)
+            Patient.DateOfBirth = DateOnly.FromDateTime(value.Value);
+        else
+            Patient.DateOfBirth = null;
+        
+        OnPropertyChanged();
+    }
+}
+
 
         private string _searchTerm;
         public string SearchTerm
@@ -129,8 +190,14 @@ namespace ClinicManagement.ViewModels
             {
                 _selectedAppointmentStatus = value;
                 OnPropertyChanged();
+                FilterAppointments();  // Auto-filter when status changes
             }
         }
+
+        // For validation
+        public string Error => null;
+        private HashSet<string> _touchedFields = new HashSet<string>();
+        private bool _isValidating = false;
         #endregion
 
         #region Commands
@@ -153,6 +220,12 @@ namespace ClinicManagement.ViewModels
         {
             InitializeCommands();
             InitializeStatusLists();
+            InitializeGenderOptions();
+        }
+
+        private void InitializeGenderOptions()
+        {
+            GenderOptions = new List<string> { "Nam", "Nữ", "Khác" };
         }
 
         private void InitializeStatusLists()
@@ -182,18 +255,18 @@ namespace ClinicManagement.ViewModels
         private void InitializeCommands()
         {
             LoadedWindowCommand = new RelayCommand<Window>(
-                (p) => LoadWindow(p),
+                (p) => { _window = p; LoadWindow(p); },
                 (p) => true
             );
 
             UpdatePatientCommand = new RelayCommand<object>(
                 (p) => UpdatePatient(),
-                (p) => Patient != null
+                (p) => CanUpdatePatient()
             );
 
             DeletePatientCommand = new RelayCommand<object>(
                 (p) => DeletePatient(),
-                (p) => Patient != null
+                (p) => CanDeletePatient()
             );
 
             FilterRecordsCommand = new RelayCommand<object>(
@@ -247,9 +320,112 @@ namespace ClinicManagement.ViewModels
             );
         }
 
+        #region Validation
+        public string this[string columnName]
+        {
+            get
+            {
+                // Don't validate until user has interacted with the form or when submitting
+                if (!_isValidating && !_touchedFields.Contains(columnName))
+                    return null;
+
+                string error = null;
+
+                if (Patient == null)
+                    return null;
+
+                switch (columnName)
+                {
+                    case nameof(Patient.FullName):
+                        if (string.IsNullOrWhiteSpace(Patient.FullName))
+                        {
+                            error = "Họ và tên không được để trống";
+                        }
+                        else if (Patient.FullName.Trim().Length < 2)
+                        {
+                            error = "Họ và tên phải có ít nhất 2 ký tự";
+                        }
+                        break;
+
+                    case nameof(Patient.Phone):
+                        if (!string.IsNullOrWhiteSpace(Patient.Phone) &&
+                                !Regex.IsMatch(Patient.Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                        {
+                            error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
+                        }
+                        break;
+
+                    case nameof(Patient.DateOfBirth):
+                        if (Patient.DateOfBirth.HasValue)
+                        {
+                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            if (Patient.DateOfBirth > today)
+                            {
+                                error = "Ngày sinh không thể lớn hơn ngày hiện tại";
+                            }
+                        }
+                        break;
+
+                    case nameof(Patient.InsuranceCode):
+                        if (!string.IsNullOrWhiteSpace(Patient.InsuranceCode) &&
+                            !Regex.IsMatch(Patient.InsuranceCode, @"^\d{10}$"))
+                        {
+                            error = "Mã bảo hiểm phải có 10 chữ số";
+                        }
+                        break;
+                }
+
+                return error;
+            }
+        }
+
+        private bool ValidatePatient()
+        {
+            if (Patient == null)
+                return false;
+
+            _isValidating = true;
+            _touchedFields.Add(nameof(Patient.FullName));
+            _touchedFields.Add(nameof(Patient.Phone));
+            _touchedFields.Add(nameof(Patient.DateOfBirth));
+            _touchedFields.Add(nameof(Patient.InsuranceCode));
+
+            string fullNameError = this[nameof(Patient.FullName)];
+            string phoneError = this[nameof(Patient.Phone)];
+            string dateOfBirthError = this[nameof(Patient.DateOfBirth)];
+            string insuranceCodeError = this[nameof(Patient.InsuranceCode)];
+
+            if (!string.IsNullOrEmpty(fullNameError))
+            {
+                MessageBox.Show(fullNameError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(phoneError))
+            {
+                MessageBox.Show(phoneError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(dateOfBirthError))
+            {
+                MessageBox.Show(dateOfBirthError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(insuranceCodeError))
+            {
+                MessageBox.Show(insuranceCodeError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
+        }
+        #endregion
+
         private void LoadWindow(Window window)
         {
-            if (window != null)
+            if (window != null && Patient != null)
             {
                 window.Title = $"Thông tin chi tiết - {Patient?.FullName}";
             }
@@ -294,11 +470,55 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private bool CanUpdatePatient()
+        {
+            return Patient != null && !string.IsNullOrWhiteSpace(Patient.FullName);
+        }
+
+        private bool CanDeletePatient()
+        {
+            if (Patient == null)
+                return false;
+
+            // Check if patient has any active appointments
+            bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
+                .Any(a => a.PatientId == Patient.PatientId &&
+                      (a.Status == "Scheduled" || a.Status == "Confirmed" || a.Status == "InProgress") &&
+                      a.IsDeleted != true);
+
+            return !hasActiveAppointments;
+        }
+
         private void UpdatePatient()
         {
             try
             {
-              
+                // Validate patient data
+                if (!ValidatePatient())
+                    return;
+
+                // Find the patient in database
+                var patientToUpdate = DataProvider.Instance.Context.Patients
+                    .FirstOrDefault(p => p.PatientId == Patient.PatientId);
+
+                if (patientToUpdate == null)
+                {
+                    MessageBox.Show("Không tìm thấy thông tin bệnh nhân!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Update patient information
+                patientToUpdate.FullName = Patient.FullName?.Trim();
+                patientToUpdate.DateOfBirth = Patient.DateOfBirth;
+                patientToUpdate.Gender = Patient.Gender;
+                patientToUpdate.Phone = Patient.Phone?.Trim();
+                patientToUpdate.Address = Patient.Address?.Trim();
+                patientToUpdate.InsuranceCode = Patient.InsuranceCode?.Trim();
+
+                // Save changes
+                DataProvider.Instance.Context.SaveChanges();
+
+                // Refresh patient data from database
                 var refreshedPatient = DataProvider.Instance.Context.Patients
                     .Include(p => p.PatientType)
                     .FirstOrDefault(p => p.PatientId == Patient.PatientId);
@@ -320,6 +540,23 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Check if patient has active appointments
+                bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
+                    .Any(a => a.PatientId == Patient.PatientId &&
+                          (a.Status == "Scheduled" || a.Status == "Confirmed" || a.Status == "InProgress") &&
+                          a.IsDeleted != true);
+
+                if (hasActiveAppointments)
+                {
+                    MessageBox.Show(
+                        "Không thể xóa bệnh nhân này vì còn lịch hẹn đang chờ hoặc đang khám.\n" +
+                        "Vui lòng hủy tất cả lịch hẹn trước khi xóa bệnh nhân.",
+                        "Cảnh báo",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
                 MessageBoxResult result = MessageBox.Show(
                     $"Bạn có chắc chắn muốn xóa bệnh nhân {Patient.FullName} không?",
                     "Xác nhận xóa",
@@ -340,7 +577,7 @@ namespace ClinicManagement.ViewModels
                         MessageBox.Show("Đã xóa bệnh nhân thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
 
                         // Close the window after deletion
-                        // You can use a callback or an event to notify the owner window to close
+                        _window?.Close();
                     }
                 }
             }
@@ -354,25 +591,36 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                var filteredRecords = DataProvider.Instance.Context.MedicalRecords
+                if (Patient == null) return;
+
+                var query = DataProvider.Instance.Context.MedicalRecords
                     .Include(m => m.Doctor)
                     .Where(m =>
                         m.PatientId == Patient.PatientId &&
-                        m.IsDeleted != true &&
-                        (m.RecordDate >= StartDate && m.RecordDate <= EndDate.AddDays(1)))
-                    .OrderByDescending(m => m.RecordDate)
-                    .ToList();
+                        m.IsDeleted != true);
 
-                // Filter by search term if provided
-                if (!string.IsNullOrWhiteSpace(SearchTerm))
+                // Apply date range filter
+                if (StartDate != DateTime.MinValue && EndDate != DateTime.MinValue)
                 {
-                    var searchTermLower = SearchTerm.ToLower();
-                    filteredRecords = filteredRecords.Where(m =>
-                        (m.Diagnosis != null && m.Diagnosis.ToLower().Contains(searchTermLower)) ||
-                        (m.Doctor.FullName != null && m.Doctor.FullName.ToLower().Contains(searchTermLower))
-                    ).ToList();
+                    // Add one day to EndDate to include the entire end day
+                    var endDatePlus = EndDate.AddDays(1);
+                    query = query.Where(m => m.RecordDate >= StartDate && m.RecordDate < endDatePlus);
                 }
 
+                // Apply search filter
+                if (!string.IsNullOrWhiteSpace(SearchTerm))
+                {
+                    var searchTerm = SearchTerm.ToLower().Trim();
+                    query = query.Where(m =>
+                        (m.Diagnosis != null && m.Diagnosis.ToLower().Contains(searchTerm)) ||
+                        (m.Doctor.FullName != null && m.Doctor.FullName.ToLower().Contains(searchTerm))
+                    );
+                }
+
+                // Order by date descending
+                var filteredRecords = query.OrderByDescending(m => m.RecordDate).ToList();
+
+                // Update UI
                 MedicalRecords = new ObservableCollection<MedicalRecord>(filteredRecords);
             }
             catch (Exception ex)
@@ -385,10 +633,18 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                if (Patient == null) return;
+
                 var query = DataProvider.Instance.Context.Invoices
-                    .Where(i =>
-                        i.PatientId == Patient.PatientId &&
-                        (i.InvoiceDate >= StartDate && i.InvoiceDate <= EndDate.AddDays(1)));
+                    .Where(i => i.PatientId == Patient.PatientId);
+
+                // Apply date range filter
+                if (InvoiceStartDate != DateTime.MinValue && InvoiceEndDate != DateTime.MinValue)
+                {
+                    // Add one day to EndDate to include the entire end day
+                    var endDatePlus = InvoiceEndDate.AddDays(1);
+                    query = query.Where(i => i.InvoiceDate >= InvoiceStartDate && i.InvoiceDate < endDatePlus);
+                }
 
                 // Filter by status if not "All"
                 if (SelectedInvoiceStatus != null && SelectedInvoiceStatus.Status != "All")
@@ -396,12 +652,43 @@ namespace ClinicManagement.ViewModels
                     query = query.Where(i => i.Status == SelectedInvoiceStatus.Status);
                 }
 
+                // Order by date descending
                 var filteredInvoices = query.OrderByDescending(i => i.InvoiceDate).ToList();
+
+                // Update UI
                 Invoices = new ObservableCollection<Invoice>(filteredInvoices);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi lọc hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void FilterAppointments()
+        {
+            try
+            {
+                if (Patient == null) return;
+
+                var query = DataProvider.Instance.Context.Appointments
+                    .Include(a => a.Doctor)
+                    .Where(a => a.PatientId == Patient.PatientId && a.IsDeleted != true);
+
+                // Filter by status if not "All"
+                if (SelectedAppointmentStatus != null && SelectedAppointmentStatus.Status != "All")
+                {
+                    query = query.Where(a => a.Status == SelectedAppointmentStatus.Status);
+                }
+
+                // Order by date
+                var filteredAppointments = query.OrderByDescending(a => a.AppointmentDate).ToList();
+
+                // Update UI
+                Appointments = new ObservableCollection<Appointment>(filteredAppointments);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi lọc lịch hẹn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -470,14 +757,7 @@ namespace ClinicManagement.ViewModels
                         DataProvider.Instance.Context.SaveChanges();
 
                         // Refresh appointments list
-                        int patientId = Patient.PatientId;
-                        Appointments = new ObservableCollection<Appointment>(
-                            DataProvider.Instance.Context.Appointments
-                                .Include(a => a.Doctor)
-                                .Where(a => a.PatientId == patientId && a.IsDeleted != true)
-                                .OrderByDescending(a => a.AppointmentDate)
-                                .ToList()
-                        );
+                        FilterAppointments();
 
                         MessageBox.Show("Đã hủy lịch hẹn thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
@@ -492,8 +772,7 @@ namespace ClinicManagement.ViewModels
 
     public class StatusItem
     {
-        public string Status { get; set; }
-        public string DisplayName { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
     }
 }
-

@@ -167,35 +167,74 @@
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.ColumnSpan="2">
                         <ListView Grid.Row="1" 
-                              ItemsSource="{Binding PatientList}"
-                              SelectedItem="{Binding SelectedPatient, Mode=TwoWay}">
+              ItemsSource="{Binding PatientList}"
+              SelectedItem="{Binding SelectedPatient, Mode=TwoWay}">
                             <ListView.InputBindings>
                                 <MouseBinding MouseAction="LeftDoubleClick" 
-                                      Command="{Binding OpenPatientDetailsCommand}" 
-                                      CommandParameter="{Binding SelectedPatient}"/>
+                          Command="{Binding OpenPatientDetailsCommand}" 
+                          CommandParameter="{Binding SelectedPatient}"/>
                                 <KeyBinding Key="Enter"
-                                        Command="{Binding OpenPatientDetailsCommand}"
-                                        CommandParameter="{Binding SelectedPatient}"/>
+                        Command="{Binding OpenPatientDetailsCommand}"
+                        CommandParameter="{Binding SelectedPatient}"/>
                             </ListView.InputBindings>
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Width="200" DisplayMemberBinding="{Binding InsuranceCode}">
+                                    <GridViewColumn Width="200">
                                         <GridViewColumn.Header>Bảo hiểm y tế</GridViewColumn.Header>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding InsuranceCode}" 
+                                       TextWrapping="Wrap" 
+                                       VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn DisplayMemberBinding="{Binding FullName}" Width="200">
+
+                                    <GridViewColumn Width="200">
                                         <GridViewColumn.Header>Họ và tên</GridViewColumn.Header>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding FullName}" 
+                                       TextWrapping="Wrap" 
+                                       VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn DisplayMemberBinding="{Binding PatientType.TypeName}" Width="150">
+
+                                    <GridViewColumn Width="150">
                                         <GridViewColumn.Header>Khách hàng</GridViewColumn.Header>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding PatientType.TypeName}" 
+                                       TextWrapping="Wrap" 
+                                       VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Phone}" Width="150">
+
+                                    <GridViewColumn Width="150">
                                         <GridViewColumn.Header>Điện thoại</GridViewColumn.Header>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Phone}" 
+                                       TextWrapping="Wrap" 
+                                       VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Address}" Width="400">
+
+                                    <GridViewColumn Width="400">
                                         <GridViewColumn.Header>Địa chỉ</GridViewColumn.Header>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Address}" 
+                                       TextWrapping="Wrap" 
+                                       VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
+
                                     <GridViewColumn Width="130">
-                                      
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Button Content="Xem chi tiết"
