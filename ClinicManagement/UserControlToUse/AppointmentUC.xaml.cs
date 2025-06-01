@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,22 +25,23 @@ namespace ClinicManagement.UserControlToUse
         {
             InitializeComponent();
         }
-
-        private void TimePickerButton_Click(object sender, RoutedEventArgs e)
-        {
-            TimePickerPopup.IsOpen = true;
-        }
-
         private void ConfirmTimeSelection_Click(object sender, RoutedEventArgs e)
         {
+            // Close the popup
             TimePickerPopup.IsOpen = false;
-            // Time đã được binding tự động với ViewModel
+
+            // Get the selected time from the clock
+            DateTime? selectedTime = AppointmentClock.Time;
+
+            // Pass it to the ViewModel
+            if (DataContext is ViewModels.AppointmentViewModel viewModel && selectedTime.HasValue)
+            {
+                viewModel.SelectedAppointmentTime = selectedTime;
+                System.Diagnostics.Debug.WriteLine($"Time set in code-behind: {selectedTime.Value.ToString("HH:mm")}");
+            }
         }
 
-        private void CancelTimeSelection_Click(object sender, RoutedEventArgs e)
-        {
-            TimePickerPopup.IsOpen = false;
-            // Có thể reset về giá trị cũ nếu cần
-        }
+
+
     }
 }

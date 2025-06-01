@@ -60,20 +60,44 @@
                             </Grid.RowDefinitions>
 
                             <!-- Column 1: Patient -->
+                            <!-- Column 1: Patient -->
                             <StackPanel Grid.Column="0" Margin="0,8,8,0">
                                 <TextBlock 
-                                    Text="Khách hàng *" 
-                                    FontWeight="Medium" 
-                                    FontSize="11"
-                                    Margin="0,0,0,2"/>
-                                <TextBox 
+                                Text="Khách hàng *" 
+                                FontWeight="Medium" 
+                                FontSize="11"
+                                Margin="0,0,0,2"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Patient search textbox -->
+                                    <TextBox 
+                                    Grid.Column="0"
+                                    x:Name="PatientSearchBox"
                                     Text="{Binding PatientSearch, UpdateSourceTrigger=PropertyChanged}"
                                     Padding="4,3"
                                     Height="26"
                                     FontSize="11"
                                     materialDesign:HintAssist.Hint="Tìm theo mã bảo hiểm, họ tên..."
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                                    <!-- Patient search button -->
+                                    <Button
+                                        Grid.Column="1"
+                                        Command="{Binding FindPatientCommand}"
+                                        Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="24"
+                                        Height="24"
+                                        Margin="4,0,0,0"
+                                        ToolTip="Tìm hoặc tạo bệnh nhân từ thông tin đã nhập">
+                                        <materialDesign:PackIcon Kind="AccountSearch" Width="16" Height="16"/>
+                                    </Button>
+                                </Grid>
                             </StackPanel>
+
 
                             <!-- Column 2: Doctor -->
                             <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,8,8,0">
@@ -117,18 +141,19 @@
                                 </StackPanel>
 
                                 <!-- Time -->
+                                <!-- Time -->
                                 <StackPanel Grid.Column="2" Margin="4,0,0,0">
                                     <TextBlock 
-                                        Text="Giờ hẹn *" 
-                                        FontWeight="Medium" 
-                                        FontSize="11"
-                                        Margin="0,0,0,2"/>
+                                            Text="Giờ hẹn *" 
+                                            FontWeight="Medium" 
+                                            FontSize="11"
+                                            Margin="0,0,0,2"/>
                                     <Border 
-                                        BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                        BorderThickness="1"
-                                        CornerRadius="4"
-                                        Height="26"
-                                        Background="Transparent">
+                                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Height="26"
+                                            Background="Transparent">
                                         <Grid>
                                             <Button
                                                 x:Name="TimePickerButton"
@@ -136,8 +161,12 @@
                                                 VerticalAlignment="Stretch"
                                                 Background="Transparent"
                                                 BorderThickness="0"
-                                                Padding="4,0"
-                                                Click="TimePickerButton_Click">
+                                                Padding="4,0">
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="Click">
+                                                        <i:ChangePropertyAction TargetName="TimePickerPopup" PropertyName="IsOpen" Value="True"/>
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
@@ -152,34 +181,34 @@
                                                         Margin="0,0,4,0"
                                                         Foreground="{DynamicResource MaterialDesignBody}"/>
                                                     <TextBlock 
-                                                    Grid.Column="1"
-                                                    x:Name="TimeDisplayText"
-                                                    Text="{Binding SelectedAppointmentTime, StringFormat='HH:mm', TargetNullValue='Chọn giờ'}" 
-                                                    VerticalAlignment="Center"
-                                                    HorizontalAlignment="Left"
-                                                    FontSize="11"
-                                                    Foreground="{DynamicResource MaterialDesignBody}"/>
+                                                        Grid.Column="1"
+                                                        x:Name="TimeDisplayText"
+                                                        Text="{Binding SelectedAppointmentTime, StringFormat='HH:mm', TargetNullValue='Chọn giờ'}" 
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        FontSize="11"
+                                                        Foreground="{DynamicResource MaterialDesignBody}"/>
                                                 </Grid>
-                                                
                                             </Button>
                                         </Grid>
                                     </Border>
-                                    <!-- Time Picker Popup (giữ nguyên) -->
+
+                                    <!-- Time Picker Popup -->
                                     <Popup 
-                            Width="380"
-                            Height="540"
-                            x:Name="TimePickerPopup"
-                            PlacementTarget="{Binding ElementName=TimePickerButton}"
-                            Placement="Bottom"
-                            StaysOpen="False"
-                            AllowsTransparency="True"
-                            PopupAnimation="Fade">
-                                        <Border 
-                                Background="{DynamicResource MaterialDesignPaper}"
-                                BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Effect="{StaticResource MaterialDesignShadowDepth2}">
+                                        Width="380"
+                                        Height="540"
+                                        x:Name="TimePickerPopup"
+                                        PlacementTarget="{Binding ElementName=TimePickerButton}"
+                                        Placement="Bottom"
+                                        StaysOpen="False"
+                                        AllowsTransparency="True"
+                                        PopupAnimation="Fade">
+                                       <Border 
+                                        Background="{DynamicResource MaterialDesignPaper}"
+                                        BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Effect="{StaticResource MaterialDesignShadowDepth2}">
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
@@ -189,45 +218,61 @@
 
                                                 <!-- Header -->
                                                 <materialDesign:ColorZone
-                                        Grid.Row="0"
-                                        Padding="12,8"
-                                        Mode="PrimaryMid">
+                                                    Grid.Row="0"
+                                                    Padding="12,8"
+                                                    Mode="PrimaryMid">
                                                     <TextBlock
-                                            Text="Chọn giờ hẹn"
-                                            FontWeight="Medium"
-                                            Foreground="White"/>
+                                                        Text="Chọn giờ hẹn"
+                                                        FontWeight="Medium"
+                                                        Foreground="White"/>
                                                 </materialDesign:ColorZone>
 
                                                 <!-- Clock -->
                                                 <materialDesign:Clock
-                                        Grid.Row="1"
-                                        x:Name="AppointmentClock"
-                                        Width="280"
-                                        Height="280"
-                                        Margin="16"
-                                        Is24Hours="True"
-                                        Time="{Binding SelectedAppointmentTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    Grid.Row="1"
+                                                    x:Name="AppointmentClock"
+                                                    Width="280"
+                                                    Height="280"
+                                                    Margin="16"
+                                                    Is24Hours="True"
+                                                    Time="{Binding Path=SelectedAppointmentTime, Mode=TwoWay}"
+                                                    DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext}"/>
+
 
                                                 <!-- Action Buttons -->
                                                 <StackPanel 
-                                        Grid.Row="2"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        Margin="12">
+                                                        Grid.Row="2"
+                                                        Orientation="Horizontal"
+                                                        HorizontalAlignment="Right"
+                                                        Margin="12">
                                                     <Button
-                                            Content="Hủy"
-                                            Style="{StaticResource MaterialDesignFlatButton}"
-                                            Margin="0,0,8,0"
-                                            Click="CancelTimeSelection_Click"/>
+                                                        Content="Hủy"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Margin="0,0,8,0">
+                                                        <i:Interaction.Triggers>
+                                                            <i:EventTrigger EventName="Click">
+                                                                <i:ChangePropertyAction TargetName="TimePickerPopup" PropertyName="IsOpen" Value="False"/>
+                                                                <i:InvokeCommandAction Command="{Binding CancelTimeSelectionCommand}"/>
+                                                            </i:EventTrigger>
+                                                        </i:Interaction.Triggers>
+                                                    </Button>
                                                     <Button
-                                            Content="Xác nhận"
-                                            Style="{StaticResource MaterialDesignRaisedButton}"
-                                            Click="ConfirmTimeSelection_Click"/>
+                                                    Content="Xác nhận"
+                                                    Style="{StaticResource MaterialDesignRaisedButton}">
+                                                        <i:Interaction.Triggers>
+                                                            <i:EventTrigger EventName="Click">
+                                                                <i:ChangePropertyAction TargetName="TimePickerPopup" PropertyName="IsOpen" Value="False"/>
+                                                                <i:InvokeCommandAction Command="{Binding ConfirmTimeSelectionCommand}" 
+                                                                      CommandParameter="{Binding ElementName=AppointmentClock, Path=Time}"/>
+                                                            </i:EventTrigger>
+                                                        </i:Interaction.Triggers>
+                                                    </Button>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
                                     </Popup>
                                 </StackPanel>
+
                             </Grid>
 
                             <!-- Column 4: Phone, Type, Note and Buttons -->
