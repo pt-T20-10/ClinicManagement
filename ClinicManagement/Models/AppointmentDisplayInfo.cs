@@ -8,6 +8,7 @@ namespace ClinicManagement.Models
 {
     public class AppointmentDisplayInfo
     {
+    
         public int AppointmentId { get; set; }
         public string PatientName { get; set; } = string.Empty;
         public DateTime AppointmentDate { get; set; }

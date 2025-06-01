@@ -19,279 +19,328 @@
         <TabControl
              materialDesign:ColorZoneAssist.Mode="PrimaryLight"
  Style="{StaticResource MaterialDesignFilledTabControl}">
-            
+
             <TabItem Header="Lịch hẹn">
                 <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <!-- Top Section - Appointment Form -->
-                <Grid Grid.Row="0" Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+                    <!-- Top Section - Appointment Form -->
+                    <Grid Grid.Row="0" Margin="12,12,12,8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- Header -->
-                    <TextBlock 
-                    Grid.Row="0" 
-                    Text="ĐẶT LỊCH HẸN" 
-                    FontSize="20" 
-                    FontWeight="Bold" 
-                    Margin="0,0,0,16" 
-                    HorizontalAlignment="Left"/>
+                        <!-- Header -->
+                        <TextBlock 
+                            Grid.Row="0" 
+                            Text="THÊM LỊCH HẸN" 
+                            FontSize="16" 
+                            FontWeight="Bold" 
+                            Margin="0,0,0,8" 
+                            HorizontalAlignment="Left"/>
 
-                    <!-- Form Fields - Row 1 (Patient, Doctor, Type in one column) -->
-                    <Grid Grid.Row="1" Margin="0,0,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="280"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Left Column - Stacked Fields -->
-                        <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                            <!-- Khách hàng Field -->
-                            <TextBlock 
-                            Text="Khách hàng *" 
-                            FontWeight="Medium" 
-                            Margin="0,0,0,4"/>
-                            <TextBox 
-                            Text="{Binding PatientSearch, UpdateSourceTrigger=PropertyChanged}"
-                            Padding="8,5"
-                            Height="32"
-                            Margin="0,0,0,12"
-                            materialDesign:HintAssist.Hint="Tìm theo mã hồ sơ, họ tên..."
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-
-                            <!-- Bác sĩ Field -->
-                            <TextBlock 
-                            Text="Bác sĩ *" 
-                            FontWeight="Medium" 
-                            Margin="0,0,0,4"/>
-                            <ComboBox 
-                            ItemsSource="{Binding DoctorList}"
-                            DisplayMemberPath="FullName"
-                            SelectedItem="{Binding SelectedDoctor}"
-                            Padding="8,5"
-                            Height="32"
-                            Margin="0,0,0,12"
-                            materialDesign:HintAssist.Hint="Bác sĩ"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-
-                            <!-- Phân loại Field -->
-                            <TextBlock 
-                            Text="Phân loại" 
-                            FontWeight="Medium" 
-                            Margin="0,0,0,4"/>
-                            <ComboBox 
-                            ItemsSource="{Binding AppointmentTypes}"
-                            DisplayMemberPath="TypeName"
-                            SelectedItem="{Binding SelectedAppointmentType}"
-                            Padding="8,5"
-                            Height="32"
-                            materialDesign:HintAssist.Hint="Loại lịch hẹn"
-                            Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-                            <Grid Grid.Row="2" Margin="0,0,0,20">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="140"/>
-                                    <ColumnDefinition Width="140"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Date Picker -->
-                                <StackPanel Margin="0,12,12,0">
-                                    <TextBlock 
-                     Text="Ngày hẹn *" 
-                     FontWeight="Medium" 
-                     Margin="0,0,0,4"/>
-                                    <DatePicker 
-                     SelectedDate="{Binding AppointmentDate}"
-                     Padding="5,0"
-                     Height="32"
-                     materialDesign:HintAssist.Hint="Chọn ngày"
-                     Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
-                                </StackPanel>
-
-                                <!-- Time Picker -->
-                                <StackPanel Grid.Column="1" Margin="0,12,12,0">
-                                    <TextBlock 
-                     Text="Giờ hẹn *" 
-                     FontWeight="Medium" 
-                     Margin="0,0,0,4"/>
-                                    <materialDesign:Flipper 
-                     x:Name="timePickerFlipper"
-                     VerticalAlignment="Center">
-                                        <materialDesign:Flipper.FrontContent>
-                                            <Button
-                             Width="Auto"
-                             Height="32"
-                             Margin="0"
-                             Command="{x:Static materialDesign:Flipper.FlipCommand}"
-                             Style="{StaticResource MaterialDesignOutlinedButton}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <materialDesign:PackIcon 
-                                     Kind="Clock" 
-                                     VerticalAlignment="Center"
-                                     Width="16"
-                                     Height="16"
-                                     Margin="0,0,4,0"/>
-                                                    <TextBlock 
-                                     Text="{Binding AppointmentTime, StringFormat='{}{0:HH:mm}', TargetNullValue='Chọn giờ'}" 
-                                     FontSize="13"
-                                     VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </materialDesign:Flipper.FrontContent>
-
-                                        <materialDesign:Flipper.BackContent>
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="*" />
-                                                </Grid.RowDefinitions>
-                                                <materialDesign:ColorZone
-                                 Padding="6"
-                                 Mode="SecondaryMid">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Button
-                                         HorizontalAlignment="Left"
-                                         Command="{x:Static materialDesign:Flipper.FlipCommand}"
-                                         Style="{StaticResource MaterialDesignToolForegroundButton}">
-                                                            <materialDesign:PackIcon
-                                             HorizontalAlignment="Right"
-                                             Kind="ArrowLeft" />
-                                                        </Button>
-                                                        <TextBlock
-                                         Margin="8,0,0,0"
-                                         VerticalAlignment="Center"
-                                         Text="Trở lại" />
-                                                    </StackPanel>
-                                                </materialDesign:ColorZone>
-
-                                                <materialDesign:Clock
-                                 Grid.Row="1"
-                                 Width="auto"
-                                 DisplayAutomation="ToSeconds"
-                                 Is24Hours="True"
-                                 Style="{StaticResource MaterialDesignClockVerticalThemed}"
-                                 Time="{Binding AppointmentTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                                    <i:Interaction.Triggers>
-                                                        <i:EventTrigger EventName="TimeChanged">
-                                                            <i:InvokeCommandAction Command="{x:Static materialDesign:Flipper.FlipCommand}" 
-                                                CommandParameter="{Binding ElementName=timePickerFlipper}"/>
-                                                        </i:EventTrigger>
-                                                    </i:Interaction.Triggers>
-                                                </materialDesign:Clock>
-                                            </Grid>
-                                        </materialDesign:Flipper.BackContent>
-                                    </materialDesign:Flipper>
-                                </StackPanel>
-
-                                <!-- Số điện thoại -->
-
-                            </Grid>
-                        </StackPanel>
-
-                        <!-- Right Column - Ghi chú -->
-                        <Grid Grid.Column="1">
+                        <!-- Form Fields - Compact Layout -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="260"/>
+                            </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <StackPanel HorizontalAlignment="Left" Width="280" Grid.Row="0">
+
+                            <!-- Column 1: Patient -->
+                            <StackPanel Grid.Column="0" Margin="0,8,8,0">
                                 <TextBlock 
-                                
-                                  Text="Số điện thoại liên hệ" 
-                                  FontWeight="Medium" 
-                                  Margin="0,0,0,4"/>
-                                <TextBox
-                          
-                          Text="{Binding Patient.Phone, UpdateSourceTrigger=PropertyChanged}"
-                          Padding="8,5"
-                          Height="32"
-                          materialDesign:HintAssist.Hint="Số điện thoại"
-                          Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                    Text="Khách hàng *" 
+                                    FontWeight="Medium" 
+                                    FontSize="11"
+                                    Margin="0,0,0,2"/>
+                                <TextBox 
+                                    Text="{Binding PatientSearch, UpdateSourceTrigger=PropertyChanged}"
+                                    Padding="4,3"
+                                    Height="26"
+                                    FontSize="11"
+                                    materialDesign:HintAssist.Hint="Tìm theo mã bảo hiểm, họ tên..."
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                             </StackPanel>
-                            <TextBlock 
-                            
-                            Grid.Row="1"
-                            Text="Ghi chú" 
-                            FontWeight="Medium" 
-                            Margin="5,10,0,4"/>
-                            <TextBox 
-                            Grid.Row="2"
-                            Text="{Binding AppointmentNote, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            VerticalScrollBarVisibility="Auto"
-                            Padding="8,5"
-                            Height="144"
-                            materialDesign:HintAssist.Hint="Ghi chú"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <!-- Column 2: Doctor -->
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,8,8,0">
+                                <TextBlock 
+                                    Text="Bác sĩ *" 
+                                    FontWeight="Medium" 
+                                    FontSize="11"
+                                    Margin="0,0,0,2"/>
+                                <ComboBox 
+                                ItemsSource="{Binding DoctorList}"
+                                DisplayMemberPath="FullName"
+                                SelectedItem="{Binding SelectedDoctor}"
+                                Padding="4,3"
+                                Height="26"
+                                FontSize="11"
+                               
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                            </StackPanel>
+
+                            <!-- Column 3: Date and Time -->
+                            <Grid Grid.Column="2" Grid.Row="0" Margin="0,8,8,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Date -->
+                                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                    <TextBlock 
+                                        Text="Ngày hẹn *" 
+                                        FontWeight="Medium" 
+                                        FontSize="11"
+                                        Margin="0,0,0,2"/>
+                                    <DatePicker 
+                                        SelectedDate="{Binding AppointmentDate}"
+                                        Padding="4,2"
+                                        Height="26"
+                                        FontSize="11"
+                               
+                                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+                                </StackPanel>
+
+                                <!-- Time -->
+                                <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                                    <TextBlock 
+                                        Text="Giờ hẹn *" 
+                                        FontWeight="Medium" 
+                                        FontSize="11"
+                                        Margin="0,0,0,2"/>
+                                    <Border 
+                                        BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Height="26"
+                                        Background="Transparent">
+                                        <Grid>
+                                            <Button
+                                                x:Name="TimePickerButton"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="4,0"
+                                                Click="TimePickerButton_Click">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <materialDesign:PackIcon 
+                                                        Grid.Column="0"
+                                                        Kind="Clock" 
+                                                        VerticalAlignment="Center"
+                                                        Width="12"
+                                                        Height="12"
+                                                        Margin="0,0,4,0"
+                                                        Foreground="{DynamicResource MaterialDesignBody}"/>
+                                                    <TextBlock 
+                                                    Grid.Column="1"
+                                                    x:Name="TimeDisplayText"
+                                                    Text="{Binding SelectedAppointmentTime, StringFormat='HH:mm', TargetNullValue='Chọn giờ'}" 
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Left"
+                                                    FontSize="11"
+                                                    Foreground="{DynamicResource MaterialDesignBody}"/>
+                                                </Grid>
+                                                
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                    <!-- Time Picker Popup (giữ nguyên) -->
+                                    <Popup 
+                            Width="380"
+                            Height="540"
+                            x:Name="TimePickerPopup"
+                            PlacementTarget="{Binding ElementName=TimePickerButton}"
+                            Placement="Bottom"
+                            StaysOpen="False"
+                            AllowsTransparency="True"
+                            PopupAnimation="Fade">
+                                        <Border 
+                                Background="{DynamicResource MaterialDesignPaper}"
+                                BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Effect="{StaticResource MaterialDesignShadowDepth2}">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Header -->
+                                                <materialDesign:ColorZone
+                                        Grid.Row="0"
+                                        Padding="12,8"
+                                        Mode="PrimaryMid">
+                                                    <TextBlock
+                                            Text="Chọn giờ hẹn"
+                                            FontWeight="Medium"
+                                            Foreground="White"/>
+                                                </materialDesign:ColorZone>
+
+                                                <!-- Clock -->
+                                                <materialDesign:Clock
+                                        Grid.Row="1"
+                                        x:Name="AppointmentClock"
+                                        Width="280"
+                                        Height="280"
+                                        Margin="16"
+                                        Is24Hours="True"
+                                        Time="{Binding SelectedAppointmentTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                <!-- Action Buttons -->
+                                                <StackPanel 
+                                        Grid.Row="2"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Margin="12">
+                                                    <Button
+                                            Content="Hủy"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Margin="0,0,8,0"
+                                            Click="CancelTimeSelection_Click"/>
+                                                    <Button
+                                            Content="Xác nhận"
+                                            Style="{StaticResource MaterialDesignRaisedButton}"
+                                            Click="ConfirmTimeSelection_Click"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Popup>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Column 4: Phone, Type, Note and Buttons -->
+                            <Grid Grid.Column="2" Grid.Row="1" Margin="0 8 8 0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Phone and Type in same row -->
+                                <Grid Grid.Row="0"  Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Phone -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                        <TextBlock 
+                                            Text="SĐT" 
+                                            FontWeight="Medium" 
+                                            FontSize="11"
+                                            Margin="0,0,0,2"/>
+                                        <TextBox
+                                            Text="{Binding PatientPhone, UpdateSourceTrigger=PropertyChanged}"
+                                            Padding="4,3"
+                                            Height="26"
+                                            FontSize="11"
+                                          
+                                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                    </StackPanel>
+
+                                    <!-- Type -->
+                                    <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                        <TextBlock 
+                                            Text="Phân loại" 
+                                            FontWeight="Medium" 
+                                            FontSize="11"
+                                            Margin="0,0,0,2"/>
+                                        <ComboBox 
+                                            ItemsSource="{Binding AppointmentTypes}"
+                                            DisplayMemberPath="TypeName"
+                                            SelectedItem="{Binding SelectedAppointmentType}"
+                                            Padding="4,3"
+                                            Height="26"
+                                            FontSize="11"
+                                      
+                                            Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                            </Grid>
+                            <!-- Note - Compact -->
+                            <StackPanel Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Margin="0,0,0,6">
+                                <TextBlock 
+                                    Text="Ghi chú" 
+                                    FontWeight="Medium" 
+                                    FontSize="11"
+                                    Margin="0,0,0,2"/>
+                                <TextBox 
+                                    Text="{Binding AppointmentNote, UpdateSourceTrigger=PropertyChanged}"
+                                    TextWrapping="Wrap"
+                                    AcceptsReturn="True"
+                                    VerticalScrollBarVisibility="Auto"
+                                    Padding="4,3"
+                                    Height="60"
+                                 
+                                    FontSize="11"
+                                    materialDesign:HintAssist.Hint="Ghi chú"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                            </StackPanel>
+
+                            <!-- Buttons -->
+                            <StackPanel Grid.Row="0" Grid.Column="6" Orientation="Vertical" Grid.RowSpan="2" HorizontalAlignment="Left">
+                                <Button 
+                                    Content="Hủy bỏ"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Width="100" 
+                                   
+                                    FontSize="11"
+                                    Margin="0,0,6,0"
+                                    Command="{Binding CancelCommand}"/>
+                                <Button 
+                                    Content="Thêm mới"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Width="100" 
+                                    FontSize="11"
+                                     Margin="0,8,6,0"
+                                    Command="{Binding AddAppointmentCommand}"/>
+                            </StackPanel>
                         </Grid>
                     </Grid>
 
-                    <!-- Form Fields - Row 2 (Date, Time, Phone) -->
+                    <!-- Bottom Section - Appointment List -->
+                    <materialDesign:Card Grid.Row="1" Margin="15,0,15,15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
+                            <!-- Filter Bar -->
+                            <Grid Grid.Row="0" Margin="16,16,16,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                    <!-- Buttons -->
-                    <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="280"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Placeholder for additional buttons or content -->
-                        <StackPanel 
-                        Grid.Column="0" 
-                        Orientation="Horizontal"/>
-
-                        <!-- Cancel Button -->
-                        <Button 
-                        Grid.Column="1"
-                        Content="Hủy bỏ"
-                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                        Width="100"
-                        Height="36"
-                        Margin="0,0,12,0"
-                        Command="{Binding CancelCommand}"/>
-
-                        <!-- Save Button -->
-                        <Button 
-                        Grid.Column="2"
-                        Content="Thêm mới"
-                        Style="{StaticResource MaterialDesignRaisedButton}"
-                        Width="100"
-                        Height="36"
-                        Command="{Binding AddAppointmentCommand}"/>
-                    </Grid>
-                </Grid>
-
-                <!-- Bottom Section - Appointment List -->
-                <materialDesign:Card Grid.Row="1" Margin="15,0,15,15">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Filter Bar -->
-                        <Grid Grid.Row="0" Margin="16,16,16,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Title -->
-                            <TextBlock 
+                                <!-- Title -->
+                                <TextBlock 
                             Grid.Column="0"
                             Text="DANH SÁCH LỊCH HẸN" 
                             FontSize="16"
@@ -299,8 +348,8 @@
                             VerticalAlignment="Center" 
                             Margin="0,0,20,0"/>
 
-                            <!-- Date Filter -->
-                            <DatePicker 
+                                <!-- Date Filter -->
+                                <DatePicker 
                             Grid.Column="1"
                             SelectedDate="{Binding FilterDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             Width="180"
@@ -308,10 +357,18 @@
                             materialDesign:HintAssist.Hint="Lọc theo ngày"
                             Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
 
-                            <!-- Search Box -->
-                            <TextBox 
+                                <ComboBox Width="200"
+                                      Grid.Column="2"
+                                     HorizontalAlignment="Right"
+                                    Margin="15,0,0,0"
+                                    materialDesign:HintAssist.Hint="Trạng thái"
+                                    Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                    ItemsSource="{Binding AppointmentStatusList}"
+                                    SelectedItem="{Binding SelectedAppointmentStatus}"/>
+                                <!-- Search Box -->
+                                <TextBox 
                              Margin="20 0 0 0"
-                             Grid.Column="2"
+                             Grid.Column="3"
                              VerticalAlignment="Center"
                              HorizontalAlignment="Right"
                              Height="42"
@@ -321,101 +378,125 @@
                           
                             materialDesign:HintAssist.Hint="Tìm kiếm theo tên bác sĩ hoặc bệnh nhân"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}">
-                                <TextBox.InputBindings>
-                                    <KeyBinding Key="Return" Command="{Binding SearchAppointmentsCommand}"/>
-                                </TextBox.InputBindings>
-                            </TextBox>
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Key="Return" Command="{Binding SearchAppointmentsCommand}"/>
+                                    </TextBox.InputBindings>
+                                </TextBox>
 
-                            <!-- Search Button -->
-                            <Button
+                                <!-- Search Button -->
+                                <Button
                               HorizontalAlignment="Right"
                              Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
-                             Grid.Column="2"
+                             Grid.Column="3"
                              Width="120"
                              Height="32"
                              ToolTip="Resource name: MaterialDesignRaisedButton"
                               Command="{Binding SearchCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Tìm kiếm"/>
-                                </StackPanel>
-                            </Button>
-                        </Grid>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Tìm kiếm"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
 
-                        <!-- Appointment List -->
-                        <ScrollViewer  Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <ListView Grid.Row="1" 
-                              ItemsSource="{Binding AppointmentList}" 
-                              Margin="8,0,8,8"
-                              BorderThickness="0">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="Ngày" Width="100" DisplayMemberBinding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}"/>
-                                        <GridViewColumn Header="Giờ" Width="100" DisplayMemberBinding="{Binding AppointmentTime, StringFormat='{}{0:HH:mm}'}"/>
-                                        <GridViewColumn Header="Bệnh nhân" Width="180" DisplayMemberBinding="{Binding Patient.FullName}"/>
-                                        <GridViewColumn Header="SĐT" Width="120" DisplayMemberBinding="{Binding Patient.Phone}"/>
-                                        <GridViewColumn Header="Bác sĩ" Width="180" DisplayMemberBinding="{Binding Doctor.FullName}"/>
-                                        <GridViewColumn Header="Phân loại" Width="120" DisplayMemberBinding="{Binding AppointmentType.TypeName}"/>
-                                        <GridViewColumn Header="Trạng thái" Width="150">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Status}">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignTextBlock}">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã xác nhận">
-                                                                        <Setter Property="Foreground" Value="#4CAF50"/>
-                                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Chờ xác nhận">
-                                                                        <Setter Property="Foreground" Value="#FF9800"/>
-                                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
-                                                                        <Setter Property="Foreground" Value="#F44336"/>
-                                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                    </GridView>
-                                </ListView.View>
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                        <Setter Property="Padding" Value="8"/>
-                                        <Setter Property="Margin" Value="0,2"/>
-                                    </Style>
-                                </ListView.ItemContainerStyle>
-                                <ListView.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Xác nhận lịch hẹn" Command="{Binding ConfirmAppointmentCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
-                                            <MenuItem.Icon>
-                                                <materialDesign:PackIcon Kind="Check" />
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem Header="Hủy lịch hẹn" Command="{Binding CancelAppointmentCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
-                                            <MenuItem.Icon>
-                                                <materialDesign:PackIcon Kind="Cancel" />
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem Header="Xem chi tiết" Command="{Binding ViewAppointmentCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
-                                            <MenuItem.Icon>
-                                                <materialDesign:PackIcon Kind="Information" />
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                    </ContextMenu>
-                                </ListView.ContextMenu>
-                            </ListView>
-                        </ScrollViewer>
-                    </Grid>
-                </materialDesign:Card>
+                            <!-- Appointment List -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <ListView Grid.Row="1" 
+                                  ItemsSource="{Binding AppointmentsDisplay}" 
+                                  Margin="8,0,8,8"
+                                  BorderThickness="0">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="Ngày" Width="100" DisplayMemberBinding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}"/>
+                                            <GridViewColumn Header="Giờ" Width="100" DisplayMemberBinding="{Binding AppointmentTimeString}"/>
+                                            <GridViewColumn Header="Bệnh nhân" Width="180" DisplayMemberBinding="{Binding PatientName}"/>
+                                            <GridViewColumn Header="SĐT" Width="120">
+                                                <GridViewColumn.DisplayMemberBinding>
+                                                    <Binding Path="OriginalAppointment.Patient.Phone" FallbackValue="N/A"/>
+                                                </GridViewColumn.DisplayMemberBinding>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="Bác sĩ" Width="180">
+                                                <GridViewColumn.DisplayMemberBinding>
+                                                    <Binding Path="OriginalAppointment.Doctor.FullName" FallbackValue="N/A"/>
+                                                </GridViewColumn.DisplayMemberBinding>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="Phân loại" Width="120">
+                                                <GridViewColumn.DisplayMemberBinding>
+                                                    <Binding Path="OriginalAppointment.AppointmentType.TypeName" FallbackValue="N/A"/>
+                                                </GridViewColumn.DisplayMemberBinding>
+                                            </GridViewColumn>
+                                            <GridViewColumn Header="Trạng thái" Width="130">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Border CornerRadius="6" Padding="10,5">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                            <Setter Property="Background" Value="#E3F2FD"/>
+                                                                            <Setter Property="BorderBrush" Value="#2196F3"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                            <Setter Property="Background" Value="#F3E5F5"/>
+                                                                            <Setter Property="BorderBrush" Value="#9C27B0"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã khám">
+                                                                            <Setter Property="Background" Value="#E8F5E8"/>
+                                                                            <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                            <Setter Property="Background" Value="#FFEBEE"/>
+                                                                            <Setter Property="BorderBrush" Value="#F44336"/>
+                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                                <Setter Property="Text" Value="Đang chờ"/>
+                                                                                <Setter Property="Foreground" Value="#1565C0"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                                <Setter Property="Text" Value="Đang khám"/>
+                                                                                <Setter Property="Foreground" Value="#7B1FA2"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Status}" Value="Đã khám">
+                                                                                <Setter Property="Text" Value="Đã khám"/>
+                                                                                <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                                <Setter Property="Text" Value="Đã hủy"/>
+                                                                                <Setter Property="Foreground" Value="#C62828"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                        </GridView>
+                                    </ListView.View>
+                                    <!-- Phần còn lại giữ nguyên -->
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </materialDesign:Card>
                 </Grid>
             </TabItem>
+
+
+
+
+
             <TabItem Header="Quản lí loại hẹn">
                 <Grid Margin="10">
                     <Grid.ColumnDefinitions>
@@ -598,7 +679,7 @@
 
                                         </GridView>
                                     </ListView.View>
-                                 
+
                                 </ListView>
                             </ScrollViewer>
                         </Grid>
