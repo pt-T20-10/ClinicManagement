@@ -108,77 +108,159 @@
                     </Grid.RowDefinitions>
 
                     <!-- Vital Signs - Top Left -->
+                    <!-- Vital Signs - Top Left -->
                     <GroupBox Grid.Column="0" Grid.Row="0" Header="Khám Bệnh" 
-                              Style="{StaticResource MaterialDesignCardGroupBox}" 
-                              Margin="0,0,8,16">
-                        <Grid Margin="10">
+          Style="{StaticResource MaterialDesignCardGroupBox}" 
+          Margin="0,0,8,16">
+                        <Grid Margin="15">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="100"/>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="Auto" MinWidth="90"/>
+                                <ColumnDefinition Width="*" MinWidth="120"/>
+                                <ColumnDefinition Width="Auto" MinWidth="100"/>
+                                <ColumnDefinition Width="*" MinWidth="120"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="50"/>
-                                <RowDefinition Height="50"/>
-                                <RowDefinition Height="50"/>
+                                <RowDefinition Height="55"/>
+                                <RowDefinition Height="55"/>
+                                <RowDefinition Height="55"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Row 1 -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Mạch:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <Grid Grid.Row="0" Grid.Column="1">
+                            <!-- Row 1: Mạch và Nhịp thở -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                   Text="Mạch:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="0,0,15,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*" MaxWidth="80"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding Pulse}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,4" Height="35"/>
-                                <TextBlock Grid.Column="1" Text="lần/ph" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Pulse}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="lần/ph" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
                             </Grid>
 
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Nhịp thở:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" 
+                   Text="Nhịp thở:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
                             <Grid Grid.Row="0" Grid.Column="3">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*" MaxWidth="80"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding Respiration}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,4" Height="35"/>
-                                <TextBlock Grid.Column="1" Text="lần/ph" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Respiration}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="lần/ph" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
                             </Grid>
 
-                            <!-- Row 2 -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Nhiệt độ:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <Grid Grid.Row="1" Grid.Column="1">
+                            <!-- Row 2: Nhiệt độ và Cân nặng -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                   Text="Nhiệt độ:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
+                            <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,15,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*" MaxWidth="80"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding Temperature}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,4" Height="35"/>
-                                <TextBlock Grid.Column="1" Text="°C" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Temperature}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="°C" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
                             </Grid>
 
-                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Cân nặng:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" 
+                   Text="Cân nặng:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
                             <Grid Grid.Row="1" Grid.Column="3">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*" MaxWidth="80"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding Weight}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,4" Height="35"/>
-                                <TextBlock Grid.Column="1" Text="kg" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Weight}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="kg" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
                             </Grid>
 
-                            <!-- Row 3 -->
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Huyết áp:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <!-- Row 3: Huyết áp -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                   Text="Huyết áp:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
                             <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="80"/>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="80"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding SystolicPressure}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,4" Height="35"/>
-                                <TextBlock Grid.Column="1" Text="/" VerticalAlignment="Center" Margin="5,0" FontWeight="Bold"/>
-                                <TextBox Grid.Column="2" Text="{Binding DiastolicPressure}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="5,4,0,4" Height="35"/>
-                                <TextBlock Grid.Column="3" Text="mmHg" VerticalAlignment="Center" Margin="5,0"/>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding SystolicPressure}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="/" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0" 
+                       FontWeight="Bold"
+                       FontSize="16"/>
+                                <TextBox Grid.Column="2" 
+                     Text="{Binding DiastolicPressure}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="8,5,0,5" 
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="3" 
+                       Text="mmHg" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
                             </Grid>
                         </Grid>
                     </GroupBox>

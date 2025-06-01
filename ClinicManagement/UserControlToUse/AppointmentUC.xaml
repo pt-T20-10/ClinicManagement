@@ -451,21 +451,32 @@
                             <!-- Input Fields -->
                             <TextBox 
                      Grid.Row="1"
-                     Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                     Text="{Binding TypeDisplayName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                      materialDesign:HintAssist.Hint="Tên lịch hẹn"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Margin="0,0,0,15"
                      Width="300"
                      HorizontalAlignment="Center"/>
+                            <TextBox 
+                        Grid.Row="2"
+                        Text="{Binding TypeDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        materialDesign:HintAssist.Hint="Mô tả chi tiết"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        TextWrapping="Wrap"
+                        AcceptsReturn="True"
+                        VerticalScrollBarVisibility="Auto"
+                        Height="80"
+                        Margin="0,0,0,20"
+                        Width="300"
+                        HorizontalAlignment="Center"/>
 
-                          
                             <StackPanel 
                      Grid.Row="3" 
                      Orientation="Horizontal" 
                      HorizontalAlignment="Center"
                      Margin="0,0,0,20">
                                 <Button 
-                         Command="{Binding AddCommand}" 
+                         Command="{Binding AddAppointmentTypeCommand}" 
                          Style="{StaticResource MaterialDesignRaisedButton}"
                          materialDesign:ButtonAssist.CornerRadius="5"
                          Margin="5" 
@@ -477,7 +488,7 @@
                                     </StackPanel>
                                 </Button>
                                 <Button 
-                         Command="{Binding EditCommand}" 
+                         Command="{Binding EditAppointmentTypeCommand}" 
                          Style="{StaticResource MaterialDesignRaisedButton}"
                          materialDesign:ButtonAssist.CornerRadius="5"
                          Background="#FF3F51B5"
@@ -491,7 +502,7 @@
                                     </StackPanel>
                                 </Button>
                                 <Button 
-                         Command="{Binding DeleteCommand}" 
+                         Command="{Binding DeleteAppointmentTypeCommand}" 
                          Style="{StaticResource MaterialDesignRaisedButton}"
                          materialDesign:ButtonAssist.CornerRadius="5"
                          Background="#FFE91E63"
@@ -553,10 +564,10 @@
                      Background="{DynamicResource PrimaryHueMidBrush}" 
                      Height="50">
                                 <TextBlock 
-                         Text="DANH SÁCH ĐƠN VỊ ĐO" 
+                         Text="DANH SÁCH LOẠI LỊCH HẸN" 
                          FontWeight="Medium" 
                          FontSize="16" 
-                         Foreground="White" 
+                         Foreground="Black" 
                          VerticalAlignment="Center" 
                          HorizontalAlignment="Center"/>
                             </Grid>
@@ -567,29 +578,27 @@
                      VerticalScrollBarVisibility="Auto"
                      Margin="0,5,0,0">
                                 <ListView 
-                         ItemsSource="{Binding ListUnit}" 
-                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                         BorderThickness="0">
+                                     ItemsSource="{Binding ListAppointmentType}" 
+                                     SelectedItem="{Binding SelectedAppointmentType, Mode=TwoWay}"
+                                     BorderThickness="0">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn 
-                                     Header="ID" 
-                                     DisplayMemberBinding="{Binding Id}" 
-                                     Width="100"/>
+                                                 Header="ID" 
+                                                 DisplayMemberBinding="{Binding AppointmentTypeId}" 
+                                                 Width="100"/>
                                             <GridViewColumn 
-                                     Header="Tên loại lịch hẹn" 
-                                     DisplayMemberBinding="{Binding DisplayName}" 
-                                     Width="180"/>
-                                            
+                                                 Header="Tên loại lịch hẹn" 
+                                                 DisplayMemberBinding="{Binding TypeName}" 
+                                                 Width="180"/>
+                                            <GridViewColumn 
+                                                Header="Mô tả" 
+                                                DisplayMemberBinding="{Binding Description}" 
+                                                Width="180"/>
+
                                         </GridView>
                                     </ListView.View>
-                                    <ListView.ItemContainerStyle>
-                                        <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                            <Setter Property="Padding" Value="8"/>
-                                            <Setter Property="Margin" Value="0,2"/>
-                                        </Style>
-                                    </ListView.ItemContainerStyle>
+                                 
                                 </ListView>
                             </ScrollViewer>
                         </Grid>
