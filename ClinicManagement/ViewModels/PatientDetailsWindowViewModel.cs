@@ -12,8 +12,21 @@ using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
+
+    public class StatusItem
+    {
+        public string Status { get; set; }
+        public string DisplayName { get; set; }
+
+        public StatusItem(string status, string displayName)
+        {
+            Status = status;
+            DisplayName = displayName;
+        }
+    }
     public class PatientDetailsWindowViewModel : BaseViewModel, IDataErrorInfo
     {
+       
         #region Properties
         private Window _window;
 
@@ -314,6 +327,7 @@ namespace ClinicManagement.ViewModels
             {
                 _selectedInvoiceStatus = value;
                 OnPropertyChanged();
+                FilterInvoices();
             }
         }
 
@@ -373,7 +387,6 @@ namespace ClinicManagement.ViewModels
         {
             GenderOptions = new ObservableCollection<string> { "Nam", "Nữ", "Khác" };
         }
-
 
 
         private void InitializeCommands()
@@ -618,6 +631,23 @@ namespace ClinicManagement.ViewModels
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToList()
             );
+            AppointmentStatusList = new ObservableCollection<StatusItem>
+                {
+                    new StatusItem("", "Tất cả"),
+                    new StatusItem("Đang chờ", "Đang chờ"),
+                    new StatusItem("Đang khám", "Đang khám"),
+                    new StatusItem("Đã khám", "Đã khám"),
+                    new StatusItem("Đã hủy", "Đã hủy")
+                };
+
+            // Khởi tạo InvoiceStatusList
+            InvoiceStatusList = new ObservableCollection<StatusItem>
+                {
+                    new StatusItem("", "Tất cả"),
+                    new StatusItem("Đã thanh toán", "Đã thanh toán"),
+                    new StatusItem("Chưa thanh toán", "Chưa thanh toán")
+                };
+
         }
 
         // Loading indicator property
@@ -812,8 +842,8 @@ namespace ClinicManagement.ViewModels
                     query = query.Where(i => i.InvoiceDate >= InvoiceStartDate && i.InvoiceDate < endDatePlus);
                 }
 
-                // Filter by status if not "All"
-                if (SelectedInvoiceStatus != null && SelectedInvoiceStatus.Status != "All")
+                // Filter by status if not "All" - Fixed: check for empty string instead of "All"
+                if (SelectedInvoiceStatus != null && !string.IsNullOrEmpty(SelectedInvoiceStatus.Status))
                 {
                     query = query.Where(i => i.Status == SelectedInvoiceStatus.Status);
                 }
@@ -829,6 +859,7 @@ namespace ClinicManagement.ViewModels
                 MessageBox.Show($"Lỗi khi lọc hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private int? GetPatientTypeIdByName(string typeName)
         {
@@ -847,8 +878,8 @@ namespace ClinicManagement.ViewModels
                     .Include(a => a.Doctor)
                     .Where(a => a.PatientId == Patient.PatientId && a.IsDeleted != true);
 
-                // Filter by status if not "All"
-                if (SelectedAppointmentStatus != null && SelectedAppointmentStatus.Status != "Tất cả")
+                // Filter by status if not "All" - Fixed: check for empty string instead of "Tất cả"
+                if (SelectedAppointmentStatus != null && !string.IsNullOrEmpty(SelectedAppointmentStatus.Status))
                 {
                     query = query.Where(a => a.Status == SelectedAppointmentStatus.Status);
                 }
@@ -961,9 +992,5 @@ namespace ClinicManagement.ViewModels
 
     
     }
-    public class StatusItem
-    {
-        public string Status { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-    }
+   
 }

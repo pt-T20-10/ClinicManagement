@@ -364,36 +364,39 @@
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
+                                        <!-- Invoice Status Column -->
                                         <GridViewColumn Header="Trạng thái" Width="180">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Border CornerRadius="4" Padding="8,4">
+                                                    <Border CornerRadius="6" Padding="12,6">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đã thanh toán">
-                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                        <Setter Property="Background" Value="#E8F5E8"/>
+                                                                        <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Chờ thanh toán">
-                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Chưa thanh toán">
+                                                                        <Setter Property="Background" Value="#FFF3E0"/>
+                                                                        <Setter Property="BorderBrush" Value="#FF9800"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
                                                                     </DataTrigger>
-                                                                    
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
-                                                        <TextBlock>
+                                                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đã thanh toán">
                                                                             <Setter Property="Text" Value="Đã thanh toán"/>
-                                                                            <Setter Property="Foreground" Value="#1B5E20"/>
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
                                                                         </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="Chờ thanh toán">
-                                                                            <Setter Property="Text" Value="Chờ thanh toán"/>
-                                                                            <Setter Property="Foreground" Value="#E65100"/>
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Chưa thanh toán">
+                                                                            <Setter Property="Text" Value="Chưa thanh toán"/>
+                                                                            <Setter Property="Foreground" Value="#EF6C00"/>
                                                                         </DataTrigger>
-                                                                        
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </TextBlock.Style>
@@ -491,47 +494,53 @@
                                         <GridViewColumn Header="Trạng thái" Width="130">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Border CornerRadius="4" Padding="8,4">
+                                                    <Border CornerRadius="6" Padding="10,5">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
-                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                        <Setter Property="Background" Value="#E3F2FD"/>
+                                                                        <Setter Property="BorderBrush" Value="#2196F3"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đang khám">
-                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                        <Setter Property="Background" Value="#F3E5F5"/>
+                                                                        <Setter Property="BorderBrush" Value="#9C27B0"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đã khám">
-                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                        <Setter Property="Background" Value="#E8F5E8"/>
+                                                                        <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
-                                                                        <Setter Property="Background" Value="AntiqueWhite"/>
+                                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                                        <Setter Property="BorderBrush" Value="#F44336"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
                                                                     </DataTrigger>
-                                                         
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
-                                                        <TextBlock>
+                                                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
                                                                             <Setter Property="Text" Value="Đang chờ"/>
-                                                                            <Setter Property="Foreground" Value="#01579B"/>
+                                                                            <Setter Property="Foreground" Value="#1565C0"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đang khám">
                                                                             <Setter Property="Text" Value="Đang khám"/>
-                                                                            <Setter Property="Foreground" Value="#4A148C"/>
+                                                                            <Setter Property="Foreground" Value="#7B1FA2"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đã khám">
                                                                             <Setter Property="Text" Value="Đã khám"/>
-                                                                            <Setter Property="Foreground" Value="#1B5E20"/>
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
                                                                             <Setter Property="Text" Value="Đã hủy"/>
-                                                                            <Setter Property="Foreground" Value="#B71C1C"/>
+                                                                            <Setter Property="Foreground" Value="#C62828"/>
                                                                         </DataTrigger>
-                                                                        
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </TextBlock.Style>

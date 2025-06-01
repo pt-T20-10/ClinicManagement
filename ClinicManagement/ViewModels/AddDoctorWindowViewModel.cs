@@ -410,7 +410,6 @@ namespace ClinicManagement.ViewModels
             {
                 "Bác sĩ",
                 "Admin",
-                "Nhân viên",
                 "Dược sĩ"
             };
         }

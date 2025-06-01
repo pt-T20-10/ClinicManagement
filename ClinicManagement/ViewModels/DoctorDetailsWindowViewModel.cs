@@ -285,9 +285,8 @@ namespace ClinicManagement.ViewModels
             {
                 "Tất cả",
                 "Đang chờ",
-                "Đã xác nhận",
                 "Đang khám",
-                "Đã hoàn thành",
+                "Đã khám",
                 "Đã hủy"
             };
 
@@ -516,7 +515,7 @@ namespace ClinicManagement.ViewModels
                 // Check if doctor has pending or in-progress appointments
                 bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
                     .Any(a => a.DoctorId == Doctor.DoctorId &&
-                             (a.Status == "Đang chờ" || a.Status == "Đã xác nhận" || a.Status == "Đang khám") &&
+                             (a.Status == "Đang chờ" ||  a.Status == "Đang khám") &&
                              a.IsDeleted != true);
 
                 if (hasActiveAppointments)
