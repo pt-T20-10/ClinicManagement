@@ -306,6 +306,7 @@ private AppointmentType? _SelectedAppointmentType;
         // Appointment List Commands
         public ICommand SearchCommand { get; set; }
         public ICommand SearchAppointmentsCommand { get; set; }
+        public ICommand OpenAppointmentDetailsCommand { get; set; }
         #endregion
 
         #region Validation
@@ -408,18 +409,30 @@ private AppointmentType? _SelectedAppointmentType;
             // Initialize time picker commands
             // Modify the ConfirmTimeSelectionCommand in your InitializeCommands method
             FindPatientCommand = new RelayCommand<object>(
-      (p) => FindOrCreatePatient(),
-      (p) => !string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone)
-  );
-
+              (p) => FindOrCreatePatient(),
+              (p) => !string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone)
+           );
 
             CancelTimeSelectionCommand = new RelayCommand<object>(
-                (p) => { /* No action needed, popup will close */ },
+                (p) => {  },
                 (p) => true
             );
-
+            OpenAppointmentDetailsCommand = new RelayCommand<Appointment>(
+               (p) => OpenAppointmentDetails(),
+               (p) => true
+               );
         }
 
+        
+          private void OpenAppointmentDetails()
+        {
+          
+            var detailsWindow = new AppointmentDetailsWindow();
+            detailsWindow.ShowDialog();
+            LoadAppointments();
+
+
+        }
         private void SelectPatient(Patient patient)
         {
             SelectedPatient = patient;
@@ -618,7 +631,6 @@ private AppointmentType? _SelectedAppointmentType;
             }
         }
 
-
         /// <summary>
         /// Finds a patient based on PatientSearch (name or insurance code) and Phone
         /// </summary>
@@ -656,6 +668,7 @@ private AppointmentType? _SelectedAppointmentType;
 
             return patient;
         }
+
         private void InitializeData()
         {
             // Initialize appointment status list

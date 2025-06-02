@@ -663,6 +663,7 @@ namespace ClinicManagement.ViewModels
         public ICommand SearchStockMedicineCommand { get; set; }
         public ICommand ResetStockFiltersCommand { get; set; }
 
+        
         //StockIn Commands
         public ICommand AddNewMedicineCommand { get; set; }
         public ICommand RestartCommand { get; set; }
@@ -674,16 +675,7 @@ namespace ClinicManagement.ViewModels
 
         public StockMedicineViewModel()
         {
-            ShowMedicineDetailsCommand = new RelayCommand<Medicine>(
-      (medicine) => {
-          if (medicine != null)
-          {
-              var detailsWindow = new MedicineDetailsWindow(medicine);
-              detailsWindow.ShowDialog();
-          }
-      },
-      (medicine) => medicine != null
-  );
+            
             LoadData();
             InitializeCommands();   
         }
@@ -787,10 +779,20 @@ namespace ClinicManagement.ViewModels
             RestartCommand = new RelayCommand<object>(
                 (p) => ExecuteRestart(),
                 (p) => true
-            );
+            ); 
+          
+            ShowMedicineDetailsCommand = new RelayCommand<Medicine>(
+              (medicine) => {
+                  if (medicine != null)
+                  {
+                      var detailsWindow = new MedicineDetailsWindow(medicine);
+                      detailsWindow.ShowDialog();
+                  }
+              },
+              (medicine) => medicine != null
+              );
 
 
-            
 
         }
         #endregion
@@ -1625,6 +1627,8 @@ namespace ClinicManagement.ViewModels
             // Apply filters and update the list
             ListStockMedicine = new ObservableCollection<Stock>(filteredList.ToList());
         }
+    
+
         #endregion
 
         #region StockIn Methods

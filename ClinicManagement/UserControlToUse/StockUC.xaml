@@ -21,8 +21,14 @@
         materialDesign:ColorZoneAssist.Mode="PrimaryLight"
         Style="{StaticResource MaterialDesignFilledTabControl}">
             <TabItem
-       
                 Header="Kho">
+                <TabItem.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="🔄 Làm mới" 
+                            Command="{Binding ResetStockFiltersCommand}"
+                            FontWeight="Bold"/>
+                    </ContextMenu>
+                </TabItem.ContextMenu>
                 <materialDesign:Card>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -219,15 +225,15 @@
                                         <GridViewColumn Width="150" DisplayMemberBinding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" Header="Ngày nhập mới nhất"/>
                                         <GridViewColumn Width="180" DisplayMemberBinding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Header="Đơn giá hiện tại"/>
                                         <GridViewColumn DisplayMemberBinding="{Binding Quantity}" Header="Tổng tồn kho"/>
-                                            <GridViewColumn Width="130" Header="Thao tác">
+                                            <GridViewColumn Width="130" Header=" ">
                                                 <GridViewColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.ShowMedicineDetailsCommand}"
-                    CommandParameter="{Binding Medicine}"
-                    Content="Xem chi tiết"
-                    Style="{StaticResource MaterialDesignRaisedButton}"
-                    Width="120" Height="30"
-                    ToolTip="Xem chi tiết lô thuốc">
+                                                            CommandParameter="{Binding Medicine}"
+                                                            Content="Xem chi tiết"
+                                                            Style="{StaticResource MaterialDesignRaisedButton}"
+                                                            Width="120" Height="30"
+                                                            ToolTip="Xem chi tiết lô thuốc">
                                                         </Button>
                                                     </DataTemplate>
                                                 </GridViewColumn.CellTemplate>

@@ -25,21 +25,21 @@ namespace ClinicManagement.UserControlToUse
         {
             InitializeComponent();
         }
-        private void ConfirmTimeSelection_Click(object sender, RoutedEventArgs e)
-        {
-            // Close the popup
-            TimePickerPopup.IsOpen = false;
+        //private void ConfirmTimeSelection_Click(object sender, RoutedEventArgs e)
+        //{
+        //    // Close the popup
+        //    TimePickerPopup.IsOpen = false;
 
-            // Get the selected time from the clock
-            DateTime? selectedTime = AppointmentClock.Time;
+        //    // Get the selected time from the clock
+        //    DateTime? selectedTime = AppointmentClock.Time;
 
-            // Pass it to the ViewModel
-            if (DataContext is ViewModels.AppointmentViewModel viewModel && selectedTime.HasValue)
-            {
-                viewModel.SelectedAppointmentTime = selectedTime;
-                System.Diagnostics.Debug.WriteLine($"Time set in code-behind: {selectedTime.Value.ToString("HH:mm")}");
-            }
-        }
+        //    // Pass it to the ViewModel
+        //    if (DataContext is ViewModels.AppointmentViewModel viewModel && selectedTime.HasValue)
+        //    {
+        //        viewModel.SelectedAppointmentTime = selectedTime;
+        //        System.Diagnostics.Debug.WriteLine($"Time set in code-behind: {selectedTime.Value.ToString("HH:mm")}");
+        //    }
+        //}
 
 
 

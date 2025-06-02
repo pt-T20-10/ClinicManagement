@@ -26,6 +26,13 @@
             Style="{StaticResource MaterialDesignFilledTabControl}">
 
             <TabItem Header="Bệnh nhân">
+                <TabItem.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="🔄 Làm mới" 
+            Command="{Binding ResetFiltersCommand}"
+            FontWeight="Bold"/>
+                    </ContextMenu>
+                </TabItem.ContextMenu>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="107*"/>
@@ -234,14 +241,15 @@
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
 
-                                    <GridViewColumn Width="130">
+                                    <GridViewColumn Width="130" Header=" ">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Button Content="Xem chi tiết"
-                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenPatientDetailsCommand}"
-                                    CommandParameter="{Binding}"
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Width="120" Height="30"/>
+                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenPatientDetailsCommand}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                Width="120" Height="30"/>
+                                                
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
