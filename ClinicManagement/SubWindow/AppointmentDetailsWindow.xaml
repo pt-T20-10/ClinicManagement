@@ -268,24 +268,24 @@
                                 <!-- Time -->
                                 <StackPanel Grid.Column="1" Margin="15,0,0,0">
                                     <TextBlock 
-                      Text="Giờ hẹn *" 
-                      FontWeight="Medium" 
-                      FontSize="11"
-                      Margin="0,0,0,2"/>
+                                      Text="Giờ hẹn *" 
+                                      FontWeight="Medium" 
+                                      FontSize="11"
+                                      Margin="0,0,0,2"/>
                                     <Border 
-                      BorderBrush="{DynamicResource MaterialDesignDivider}"
-                      BorderThickness="1"
-                      CornerRadius="4"
-                      Height="26"
-                      Background="Transparent">
+                                          BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                          BorderThickness="1"
+                                          CornerRadius="4"
+                                          Height="26"
+                                          Background="Transparent">
                                         <Grid>
                                             <Button
-                          x:Name="TimePickerButton"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          Padding="4,0">
+                                              x:Name="TimePickerButton"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              Padding="4,0">
                                                 <i:Interaction.Triggers>
                                                     <i:EventTrigger EventName="Click">
                                                         <i:ChangePropertyAction TargetName="TimePickerPopup" PropertyName="IsOpen" Value="True"/>
@@ -297,21 +297,21 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <materialDesign:PackIcon 
-                                  Grid.Column="0"
-                                  Kind="Clock" 
-                                  VerticalAlignment="Center"
-                                  Width="12"
-                                  Height="12"
-                                  Margin="0,0,4,0"
-                                  Foreground="{DynamicResource MaterialDesignBody}"/>
+                                                          Grid.Column="0"
+                                                          Kind="Clock" 
+                                                          VerticalAlignment="Center"
+                                                          Width="12"
+                                                          Height="12"
+                                                          Margin="0,0,4,0"
+                                                          Foreground="{DynamicResource MaterialDesignBody}"/>
                                                     <TextBlock 
-                                  Grid.Column="1"
-                                  x:Name="TimeDisplayText"
-                                  Text="{Binding SelectedAppointmentTime, StringFormat='HH:mm', TargetNullValue='Chọn giờ'}" 
-                                  VerticalAlignment="Center"
-                                  HorizontalAlignment="Left"
-                                  FontSize="11"
-                                  Foreground="{DynamicResource MaterialDesignBody}"/>
+                                                          Grid.Column="1"
+                                                          x:Name="TimeDisplayText"
+                                                          Text="{Binding SelectedAppointmentTime, StringFormat='HH:mm', TargetNullValue='Chọn giờ'}" 
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Left"
+                                                          FontSize="11"
+                                                          Foreground="{DynamicResource MaterialDesignBody}"/>
                                                 </Grid>
                                             </Button>
                                         </Grid>
@@ -439,6 +439,7 @@
                 Grid.Column="0" 
                 Content="Hủy lịch hẹn" 
                 Style="{StaticResource MaterialDesignRaisedButton}" 
+                Command="{Binding CancelAppointmentCommand}"
                 Background="#F44336" 
                 BorderBrush="#D32F2F"
                 Foreground="White"
@@ -455,6 +456,7 @@
             <Button 
                 Grid.Column="2" 
                 Content="Chỉnh sửa" 
+                Command="{Binding EditAppointmentCommand}"
                 Style="{StaticResource MaterialDesignRaisedButton}" 
                 Background="#3F51B5" 
                 BorderBrush="#303F9F" 
@@ -473,6 +475,7 @@
             <Button 
                 Grid.Column="3" 
                 Content="Tiến hành khám" 
+                      Command="{Binding AcceptAppointmentCommand}"
                 Style="{StaticResource MaterialDesignRaisedButton}" 
                 Background="#4CAF50" 
                 BorderBrush="#388E3C" 

@@ -407,7 +407,7 @@ private AppointmentType? _SelectedAppointmentType;
                 (p) => true
             );
             // Initialize time picker commands
-            // Modify the ConfirmTimeSelectionCommand in your InitializeCommands method
+          
             FindPatientCommand = new RelayCommand<object>(
               (p) => FindOrCreatePatient(),
               (p) => !string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone)
@@ -423,8 +423,7 @@ private AppointmentType? _SelectedAppointmentType;
                );
         }
 
-        
-          private void OpenAppointmentDetails()
+        private void OpenAppointmentDetails()
         {
           
             var detailsWindow = new AppointmentDetailsWindow();
@@ -433,6 +432,7 @@ private AppointmentType? _SelectedAppointmentType;
 
 
         }
+
         private void SelectPatient(Patient patient)
         {
             SelectedPatient = patient;
@@ -891,20 +891,41 @@ private AppointmentType? _SelectedAppointmentType;
                 if (appointmentTime < startTime || appointmentTime > endTime)
                     return false;
 
-                // Check for overlapping appointments - modified to avoid Math.Abs
+                // Check for overlapping appointments
                 var appointmentDate = appointmentDateTime.Date;
+
                 var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
 
-                // First get appointments for that day
+                // Get doctor's appointments for that day
                 var doctorAppointments = DataProvider.Instance.Context.Appointments
                     .Where(a =>
                         a.DoctorId == SelectedDoctor.DoctorId &&
                         a.IsDeleted != true &&
                         a.Status != "Đã hủy" &&
-                        a.AppointmentDate.Date == appointmentDate)
-                    .ToList(); // Execute query
+                        a.AppointmentDate.Date == appointmentDateTime.Date)
+                    .ToList();
 
-           
+                // Check if any appointment is within 30 minutes of the requested time
+                foreach (var existingAppointment in doctorAppointments)
+                {
+                    // Calculate time difference in minutes
+                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
+                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
+
+                    if (timeDifference < 30) // Within 30 minutes
+                    {
+                        MessageBox.Show(
+                            $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
+                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
+                            $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
+                            "Lỗi - Trùng lịch",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+
+                        return false;
+                    }
+                }
+
             }
 
             return true;
@@ -931,12 +952,11 @@ private AppointmentType? _SelectedAppointmentType;
             List<string> workingDays = new List<string>();
             TimeSpan startTime = TimeSpan.Zero;
             TimeSpan endTime = TimeSpan.Zero;
-
             try
             {
-                // Example format: "T2-T6: 8h-17h" or "T2, T3, T4: 7h-13h"
+                // Example format: "T2-T6: 8h-17h" or "T2, T3, T4: 7h-13h" or "T2, T3, T4, T5,T6: 8h-12h, 13h30-17h"
                 string[] parts = schedule.Split(':');
-                if (parts.Length != 2)
+                if (parts.Length < 2)
                     return (workingDays, startTime, endTime);
 
                 // Parse days
@@ -949,11 +969,9 @@ private AppointmentType? _SelectedAppointmentType;
                     {
                         string startDay = dayRange[0].Trim();
                         string endDay = dayRange[1].Trim();
-
                         // Convert to day numbers
                         int startDayNum = ConvertVietNameseCodeToDayNumber(startDay);
                         int endDayNum = ConvertVietNameseCodeToDayNumber(endDay);
-
                         for (int i = startDayNum; i <= endDayNum; i++)
                         {
                             workingDays.Add(ConvertDayNumberToVietnameseCode(i));
@@ -975,29 +993,72 @@ private AppointmentType? _SelectedAppointmentType;
                     workingDays.Add(daysSection);
                 }
 
-                // Parse hours
-                string timeSection = parts[1].Trim();
-                string[] timeParts = timeSection.Split('-');
-                if (timeParts.Length == 2)
-                {
-                    string startTimeStr = timeParts[0].Trim().Replace("h", "");
-                    string endTimeStr = timeParts[1].Trim().Replace("h", "");
+                // Parse time section - join all parts after the first ':'
+                string timeSection = string.Join(":", parts.Skip(1)).Trim();
 
-                    if (int.TryParse(startTimeStr, out int startHour) && int.TryParse(endTimeStr, out int endHour))
+                // Handle multiple time ranges (e.g., "8h-12h, 13h30-17h")
+                // For now, we'll take the first and last time to get the overall working period
+                var timeRanges = timeSection.Split(',');
+                if (timeRanges.Length > 0)
+                {
+                    // Get first time range for start time
+                    var firstRange = timeRanges[0].Trim();
+                    var firstRangeParts = firstRange.Split('-');
+                    if (firstRangeParts.Length >= 2)
                     {
-                        startTime = new TimeSpan(startHour, 0, 0);
-                        endTime = new TimeSpan(endHour, 0, 0);
+                        startTime = ParseTimeString(firstRangeParts[0].Trim());
+                    }
+
+                    // Get last time range for end time
+                    var lastRange = timeRanges[timeRanges.Length - 1].Trim();
+                    var lastRangeParts = lastRange.Split('-');
+                    if (lastRangeParts.Length >= 2)
+                    {
+                        endTime = ParseTimeString(lastRangeParts[lastRangeParts.Length - 1].Trim());
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                // Log the error for debugging purposes
+                System.Diagnostics.Debug.WriteLine($"Error parsing schedule '{schedule}': {ex.Message}");
                 // In case of parsing errors, return empty results
                 workingDays.Clear();
             }
-
             return (workingDays, startTime, endTime);
         }
+
+        private TimeSpan ParseTimeString(string timeStr)
+        {
+            // Remove 'h' suffix if present
+            timeStr = timeStr.Replace("h", "").Trim();
+
+            // Try to parse as hour:minute format first (e.g., "8:30", "13:30")
+            timeStr = timeStr.Replace('.', ':'); // Replace dots with colons for consistency
+            if (timeStr.Contains(':'))
+            {
+                string[] parts = timeStr.Split(':');
+                if (parts.Length == 2 && int.TryParse(parts[0], out int hrs) && int.TryParse(parts[1], out int mins))
+                {
+                    if (hrs >= 0 && hrs <= 23 && mins >= 0 && mins <= 59)
+                        return new TimeSpan(hrs, mins, 0);
+                }
+            }
+
+            // Try to parse as hour only (e.g., "8" -> 08:00, "17" -> 17:00)
+            if (int.TryParse(timeStr, out int hours))
+            {
+                if (hours >= 0 && hours <= 23)
+                    return new TimeSpan(hours, 0, 0);
+            }
+
+            // Try to parse as standard time format (e.g., "08:00:00")
+            if (TimeSpan.TryParse(timeStr + ":00", out TimeSpan result))
+                return result;
+
+            return TimeSpan.Zero; // Default if parsing fails
+        }
+
 
         private int ConvertVietNameseCodeToDayNumber(string code)
         {
@@ -1151,7 +1212,6 @@ private AppointmentType? _SelectedAppointmentType;
 
             return true;
         }
-
         /// <summary>
         /// Validates appointment type selection and shows specific error if invalid
         /// </summary>
@@ -1306,7 +1366,6 @@ private AppointmentType? _SelectedAppointmentType;
                 _ => string.Empty
             };
         }
-
 
         private bool ValidateForm()
         {

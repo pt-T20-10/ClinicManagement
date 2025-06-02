@@ -230,6 +230,7 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
         private int _patientTypeId;
         public int PatientTypeId
         {
