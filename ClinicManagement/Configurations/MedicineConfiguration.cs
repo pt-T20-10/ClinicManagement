@@ -33,6 +33,9 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("MaVach")
                 .IsUnicode(false);
 
+            builder.Property(e => e.ExpiryDate)
+                .HasColumnName("HanSuDung")
+                .IsUnicode(false);
             builder.Property(e => e.QrCode)
                 .HasColumnName("MaQR")
                 .IsUnicode(false);

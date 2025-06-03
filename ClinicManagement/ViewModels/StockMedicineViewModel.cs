@@ -1672,10 +1672,15 @@ namespace ClinicManagement.ViewModels
                         Medicine medicine;
                         string resultMessage = string.Empty;
 
+                        // After successfully adding the stock-in and committing the transaction:
                         if (existingExactMedicine != null)
                         {
                             // Case 2: Existing medicine with identical fields
                             medicine = existingExactMedicine;
+
+                            // Force refresh of the medicine's cache
+                            var refreshedDetails = medicine.GetDetailedStock();
+
                             resultMessage = $"Đã thêm số lượng cho thuốc '{medicine.Name}' hiện có.";
                         }
                         else if (existingMedicineWithName != null && existingMedicineWithName.SupplierId != StockinSelectedSupplier.SupplierId)
@@ -1801,10 +1806,12 @@ namespace ClinicManagement.ViewModels
             SelectedMedicine = null;
             ImportDate = DateTime.Now;
         }
-
         private void LoadMedicineDetailsForStockIn(Medicine medicine)
         {
             if (medicine == null) return;
+
+            // Clear any cached data to ensure we get the fresh latest import date
+            var freshDetails = medicine.GetDetailedStock(); // This calls _availableStockInsCache = null first
 
             StockinMedicineName = medicine.Name;
             StockinMSHNNB = medicine.Mshnnb;
@@ -1813,7 +1820,10 @@ namespace ClinicManagement.ViewModels
             StockinSelectedUnit = medicine.Unit;
             StockinUnitPrice = medicine.CurrentUnitPrice;
             StockinSellPrice = medicine.CurrentSellPrice;
+
+            // Get the latest import date after refreshing the cache
             ImportDate = medicine.LatestImportDate ?? DateTime.Now;
+
             if (medicine.ExpiryDate.HasValue)
             {
                 try
@@ -1829,6 +1839,7 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+
         #endregion
 
         #region LoadData

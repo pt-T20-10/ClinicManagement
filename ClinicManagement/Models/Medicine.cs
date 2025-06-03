@@ -41,17 +41,26 @@ public partial class Medicine
     {
         get
         {
-            var availableStockIn = GetAvailableStockIns().FirstOrDefault();
-            return availableStockIn?.ImportDate;
+            // Clear the cache to ensure we get fresh data
+            _availableStockInsCache = null;
+
+            // If there are no stock-ins, return null
+            if (StockIns == null || !StockIns.Any())
+                return null;
+
+            // Get the most recent import date directly from StockIns
+            return StockIns.OrderByDescending(si => si.ImportDate).FirstOrDefault()?.ImportDate;
         }
     }
+
 
     public decimal CurrentUnitPrice
     {
         get
         {
-            var availableStockIn = GetAvailableStockIns().FirstOrDefault();
-            return availableStockIn?.UnitPrice ?? 0;
+            // Get the most recent stock-in for price information
+            var latestStockIn = StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
+            return latestStockIn?.UnitPrice ?? 0;
         }
     }
 
@@ -59,8 +68,9 @@ public partial class Medicine
     {
         get
         {
-            var availableStockIn = GetAvailableStockIns().FirstOrDefault();
-            return availableStockIn?.SellPrice ?? 0;
+            // Get the most recent stock-in for price information
+            var latestStockIn = StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
+            return latestStockIn?.SellPrice ?? 0;
         }
     }
 

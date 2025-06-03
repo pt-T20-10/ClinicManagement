@@ -474,7 +474,7 @@
                                         <GridViewColumn Width="150" DisplayMemberBinding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}">
                                             <GridViewColumn.Header>Giá bán</GridViewColumn.Header>
                                         </GridViewColumn>
-                                        <GridViewColumn  DisplayMemberBinding="{Binding Medicine.CalculatedRemainingQuantity}">
+                                        <GridViewColumn  DisplayMemberBinding="{Binding Quantity}">
                                             <GridViewColumn.Header>Còn lại</GridViewColumn.Header>
                                         </GridViewColumn>
                                     </GridView>

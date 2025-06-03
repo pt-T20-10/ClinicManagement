@@ -38,6 +38,10 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("DaXoa")
                 .HasDefaultValue(false);
 
+            builder.Property(e => e.Address)
+                .HasColumnName("DiaChi")
+                .HasDefaultValue(false);
+
             builder.HasOne(d => d.Specialty)
                 .WithMany(p => p.Doctors)
                 .HasForeignKey(d => d.SpecialtyId)

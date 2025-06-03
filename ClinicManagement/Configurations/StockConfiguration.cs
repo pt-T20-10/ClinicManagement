@@ -9,18 +9,18 @@ namespace ClinicManagement.Configurations
     {
         public void Configure(EntityTypeBuilder<Stock> builder)
         {
-            builder.ToTable("KhoThuoc");
+            builder.ToTable("TonKho");
 
-            builder.HasKey(e => e.StockId).HasName("PK_KhoThuoc");
+            builder.HasKey(e => e.StockId).HasName("PK_TonKho");
 
             builder.Property(e => e.StockId)
-                .HasColumnName("MaKho");
+                .HasColumnName("MaTonKho");
 
             builder.Property(e => e.MedicineId)
                 .HasColumnName("MaThuoc");
 
             builder.Property(e => e.Quantity)
-                .HasColumnName("TonKho");
+                .HasColumnName("SoLuong");
 
             builder.Property(e => e.LastUpdated)
                 .HasColumnName("NgayCapNhat")
