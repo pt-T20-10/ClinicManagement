@@ -76,6 +76,7 @@ private AppointmentType? _SelectedAppointmentType;
         #region Appointment Form Properties
         // Patient search
         private string _patientSearch;
+        // Patient search
         public string PatientSearch
         {
             get => _patientSearch;
@@ -84,6 +85,7 @@ private AppointmentType? _SelectedAppointmentType;
                 _patientSearch = value;
                 OnPropertyChanged();
                 SearchPatients();
+                // Remove the auto-find code that caused stack overflow
             }
         }
 
@@ -110,10 +112,12 @@ private AppointmentType? _SelectedAppointmentType;
                 {
                     PatientPhone = value.Phone ?? string.Empty;
                 }
-                // Reset appointment date and time when patient changes
-                ValidateFormSequence();
+                // Remove the call to ValidateFormSequence() to prevent date/time reset
+                // Just update the validation flag
+                _isPatientInfoValid = value != null;
             }
         }
+
 
         // Doctor selection
         private ObservableCollection<Doctor> _doctorList;
@@ -135,16 +139,9 @@ private AppointmentType? _SelectedAppointmentType;
             {
                 _selectedDoctor = value;
                 OnPropertyChanged();
-                // Reset appointment date and time when doctor changes
-                if (value != null)
-                {
-                    ValidateFormSequence();
-                }
-                else
-                {
-                    AppointmentDate = null;
-                    SelectedAppointmentTime = null;
-                }
+                // Remove the date/time reset and ValidateFormSequence call
+                // Just update the validation flag
+                _isDoctorSelected = value != null;
             }
         }
 
@@ -187,6 +184,7 @@ private AppointmentType? _SelectedAppointmentType;
                 _patientPhone = value;
                 OnPropertyChanged();
                 _touchedFields.Add(nameof(PatientPhone));
+                // Remove the auto-find code that caused stack overflow
             }
         }
 
@@ -472,39 +470,53 @@ private AppointmentType? _SelectedAppointmentType;
             }
         }
 
-        private void FindOrCreatePatient()
+        private void FindOrCreatePatient(bool silentMode = false)
         {
             try
             {
                 // Validate input data before proceeding
                 if (string.IsNullOrWhiteSpace(PatientSearch))
                 {
-                    MessageBox.Show(
-                        "Vui lòng nhập tên hoặc mã bảo hiểm của bệnh nhân.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    if (!silentMode)
+                    {
+                        MessageBox.Show(
+                            "Vui lòng nhập tên hoặc mã bảo hiểm của bệnh nhân.",
+                            "Thiếu thông tin",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    }
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(PatientPhone))
+                // Check if it looks like an insurance code (contains digits and no spaces)
+                bool looksLikeInsuranceCode = PatientSearch.Any(char.IsDigit) && !PatientSearch.Contains(" ");
+
+                // Only validate phone if not searching by insurance code
+                if (!looksLikeInsuranceCode && string.IsNullOrWhiteSpace(PatientPhone))
                 {
-                    MessageBox.Show(
-                        "Vui lòng nhập số điện thoại của bệnh nhân.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    if (!silentMode)
+                    {
+                        MessageBox.Show(
+                            "Vui lòng nhập số điện thoại của bệnh nhân.",
+                            "Thiếu thông tin",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    }
                     return;
                 }
 
-                // Validate phone number format
-                if (!Regex.IsMatch(PatientPhone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                // Validate phone number format only if it's provided
+                if (!string.IsNullOrWhiteSpace(PatientPhone) &&
+                    !Regex.IsMatch(PatientPhone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
                 {
-                    MessageBox.Show(
-                        "Số điện thoại không đúng định dạng. Vui lòng nhập số điện thoại hợp lệ (VD: 0901234567).",
-                        "Số điện thoại không hợp lệ",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    if (!silentMode)
+                    {
+                        MessageBox.Show(
+                            "Số điện thoại không đúng định dạng. Vui lòng nhập số điện thoại hợp lệ (VD: 0901234567).",
+                            "Số điện thoại không hợp lệ",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    }
                     return;
                 }
 
@@ -515,23 +527,108 @@ private AppointmentType? _SelectedAppointmentType;
                 {
                     // Patient found, set as selected
                     SelectedPatient = patient;
-                    MessageBox.Show(
-                        $"Đã tìm thấy bệnh nhân: {patient.FullName}",
-                        "Thông báo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    if (!silentMode)
+                    {
+                        MessageBox.Show(
+                            $"Đã tìm thấy bệnh nhân: {patient.FullName}",
+                            "Thông báo",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                    }
                     return;
                 }
 
-                // If no patient found, ask if user wants to create a new one
-                var result = MessageBox.Show(
+                // If no patient found and in silent mode, just return without message or creating patient
+                if (silentMode)
+                    return;
+
+                // Special message for insurance code search
+                if (looksLikeInsuranceCode)
+                {
+                    var result = MessageBox.Show(
+                        $"Không tìm thấy bệnh nhân với mã bảo hiểm '{PatientSearch.Trim()}'.\n" +
+                        "Bạn có muốn tạo hồ sơ bệnh nhân mới không?",
+                        "Mã bảo hiểm không tồn tại",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (result != MessageBoxResult.Yes)
+                        return;
+
+                    // If creating new patient with insurance code, we need to get more info
+                    var nameResult = Microsoft.VisualBasic.Interaction.InputBox(
+                        "Nhập họ tên bệnh nhân:", "Thông tin bệnh nhân", "");
+
+                    if (string.IsNullOrWhiteSpace(nameResult))
+                    {
+                        MessageBox.Show(
+                            "Không thể tạo bệnh nhân mới vì thiếu họ tên.",
+                            "Thiếu thông tin",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Get phone number if it's not provided
+                    string phone = PatientPhone;
+                    if (string.IsNullOrWhiteSpace(phone))
+                    {
+                        var phoneResult = Microsoft.VisualBasic.Interaction.InputBox(
+                            "Nhập số điện thoại bệnh nhân:", "Thông tin bệnh nhân", "");
+
+                        if (string.IsNullOrWhiteSpace(phoneResult) ||
+                            !Regex.IsMatch(phoneResult.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                        {
+                            MessageBox.Show(
+                                "Số điện thoại không hợp lệ. Không thể tạo bệnh nhân mới.",
+                                "Số điện thoại không hợp lệ",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            return;
+                        }
+                        phone = phoneResult.Trim();
+                    }
+
+                    // Create new patient with the insurance code
+                    var newPatient = new Patient
+                    {
+                        FullName = nameResult.Trim(),
+                        Phone = phone,
+                        InsuranceCode = PatientSearch.Trim(),
+                        IsDeleted = false,
+                        CreatedAt = DateTime.Now,
+                        PatientTypeId = 1  // Default patient type
+                    };
+
+                    // Save new patient to database
+                    DataProvider.Instance.Context.Patients.Add(newPatient);
+                    DataProvider.Instance.Context.SaveChanges();
+
+                    // Set as selected patient
+                    SelectedPatient = newPatient;
+                    PatientPhone = phone;
+
+                    MessageBox.Show(
+                        $"Đã tạo bệnh nhân mới: {newPatient.FullName}",
+                        "Thành công",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    return;
+                }
+
+                // Standard patient creation for name search
+                var standardResult = MessageBox.Show(
                     "Không tìm thấy bệnh nhân với thông tin đã nhập. Bạn có muốn tạo mới không?",
                     "Tạo bệnh nhân mới?",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
-                if (result == MessageBoxResult.Yes)
+                if (standardResult == MessageBoxResult.Yes)
                 {
+                    // Rest of the existing patient creation code remains the same
+                    // ...
+
                     // Determine if PatientSearch is a name or insurance code
                     string name = PatientSearch.Trim();
                     string insuranceCode = null;
@@ -636,21 +733,24 @@ private AppointmentType? _SelectedAppointmentType;
         /// </summary>
         private Patient? FindPatient()
         {
-            if (string.IsNullOrWhiteSpace(PatientSearch) || string.IsNullOrWhiteSpace(PatientPhone))
+            if (string.IsNullOrWhiteSpace(PatientSearch))
                 return null;
 
-            // First try to find by exact match of insurance code + phone
-            var patient = DataProvider.Instance.Context.Patients
+            // First try to find by exact match of insurance code only (without requiring phone)
+            var patientByInsurance = DataProvider.Instance.Context.Patients
                 .FirstOrDefault(p =>
                     p.IsDeleted != true &&
-                    p.Phone == PatientPhone.Trim() &&
                     p.InsuranceCode == PatientSearch.Trim());
 
-            if (patient != null)
-                return patient;
+            if (patientByInsurance != null)
+                return patientByInsurance;
 
-            // Then try by name + phone
-            patient = DataProvider.Instance.Context.Patients
+            // If no match by insurance code, require phone number for the rest of the searches
+            if (string.IsNullOrWhiteSpace(PatientPhone))
+                return null;
+
+            // Try by name + phone
+            var patient = DataProvider.Instance.Context.Patients
                 .FirstOrDefault(p =>
                     p.IsDeleted != true &&
                     p.Phone == PatientPhone.Trim() &&
@@ -667,6 +767,30 @@ private AppointmentType? _SelectedAppointmentType;
                     p.FullName.ToLower().Contains(PatientSearch.Trim().ToLower()));
 
             return patient;
+        }
+
+        private void AutoFindPatient()
+        {
+            try
+            {
+                // Skip validation here since we're doing this automatically
+                // We'll just attempt to find the patient with current values
+                
+                // Try to find an existing patient
+                var patient = FindPatient();
+
+                if (patient != null)
+                {
+                    // Patient found, set as selected without showing a message
+                    SelectedPatient = patient;
+                }
+                // Don't show any error message or try to create a new patient automatically
+            }
+            catch (Exception ex)
+            {
+                // Just log the error without showing message box for better UX
+                System.Diagnostics.Debug.WriteLine($"Error in AutoFindPatient: {ex.Message}");
+            }
         }
 
         private void InitializeData()
@@ -789,22 +913,7 @@ private AppointmentType? _SelectedAppointmentType;
             }
         }
 
-        private void ValidateFormSequence()
-        {
-            _isDoctorSelected = SelectedDoctor != null;
-            _isPatientInfoValid = ValidatePatientInfo();
-
-            // Only if doctor and patient are selected, we'll check date/time
-            if (_isDoctorSelected && _isPatientInfoValid)
-            {
-                AppointmentDate = DateTime.Today;
-            }
-            else
-            {
-                AppointmentDate = null;
-                SelectedAppointmentTime = null;
-            }
-        }
+     
 
         private bool ValidatePatientInfo()
         {
@@ -850,14 +959,23 @@ private AppointmentType? _SelectedAppointmentType;
 
         private bool CanAddAppointment()
         {
-            // Validate form sequence (doctor -> patient -> date -> time)
-            return _isDoctorSelected &&
-                   _isPatientInfoValid &&
+            // Check if we're using insurance code search (no phone required)
+            bool usingInsuranceCode = !string.IsNullOrWhiteSpace(PatientSearch) &&
+                                       PatientSearch.Any(char.IsDigit) &&
+                                       !PatientSearch.Contains(" ");
+
+            // If insurance code search, we don't need phone
+            bool hasPatient = SelectedPatient != null ||
+                              (usingInsuranceCode && !string.IsNullOrWhiteSpace(PatientSearch)) ||
+                              (!string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone));
+
+            return SelectedDoctor != null &&
+                   hasPatient &&
                    AppointmentDate.HasValue &&
                    SelectedAppointmentTime.HasValue &&
-                   SelectedAppointmentType != null &&
-                   IsAppointmentTimeValid();
+                   SelectedAppointmentType != null;
         }
+
 
         private bool IsAppointmentTimeValid()
         {
@@ -871,6 +989,36 @@ private AppointmentType? _SelectedAppointmentType;
             // Check if appointment is in the past
             if (appointmentDateTime < DateTime.Now)
                 return false;
+
+            // Check if patient already has an appointment at this time (with any doctor)
+            if (SelectedPatient != null)
+            {
+                var patientAppointments = DataProvider.Instance.Context.Appointments
+                    .Where(a =>
+                        a.PatientId == SelectedPatient.PatientId &&
+                        a.IsDeleted != true &&
+                        a.Status != "Đã hủy" &&
+                        a.AppointmentDate.Date == appointmentDateTime.Date)
+                    .ToList();
+
+                // Check for exact match first (same hour and minute)
+                if (patientAppointments.Any(a =>
+                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
+                    a.AppointmentDate.Minute == appointmentDateTime.Minute))
+                    return false;
+
+                // Check for overlapping appointments within 30 minutes
+                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
+
+                foreach (var existingAppointment in patientAppointments)
+                {
+                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
+                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
+
+                    if (timeDifference < 30 && timeDifference > 0)
+                        return false;
+                }
+            }
 
             // Parse doctor's schedule to check if the appointment time is within working hours
             if (!string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
@@ -891,11 +1039,6 @@ private AppointmentType? _SelectedAppointmentType;
                 if (appointmentTime < startTime || appointmentTime > endTime)
                     return false;
 
-                // Check for overlapping appointments
-                var appointmentDate = appointmentDateTime.Date;
-
-                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
-
                 // Get doctor's appointments for that day
                 var doctorAppointments = DataProvider.Instance.Context.Appointments
                     .Where(a =>
@@ -905,31 +1048,29 @@ private AppointmentType? _SelectedAppointmentType;
                         a.AppointmentDate.Date == appointmentDateTime.Date)
                     .ToList();
 
-                // Check if any appointment is within 30 minutes of the requested time
+                // Check for exact match first (same hour and minute)
+                if (doctorAppointments.Any(a =>
+                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
+                    a.AppointmentDate.Minute == appointmentDateTime.Minute))
+                    return false;
+
+                // Check for overlapping appointments within 30 minutes
+                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
                 foreach (var existingAppointment in doctorAppointments)
                 {
-                    // Calculate time difference in minutes
                     double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
                     double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
 
-                    if (timeDifference < 30) // Within 30 minutes
-                    {
-                        MessageBox.Show(
-                            $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
-                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
-                            $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
-                            "Lỗi - Trùng lịch",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
-
+                    if (timeDifference < 30 && timeDifference % 30 != 0)
                         return false;
-                    }
                 }
-
             }
 
             return true;
         }
+
+
+
 
 
         private string ConvertDayOfWeekToVietnameseCode(DayOfWeek dayOfWeek)
@@ -1090,6 +1231,7 @@ private AppointmentType? _SelectedAppointmentType;
             };
         }
 
+        // Update the AddNewAppointment method to use the silentMode parameter
         private void AddNewAppointment()
         {
             try
@@ -1097,16 +1239,35 @@ private AppointmentType? _SelectedAppointmentType;
                 // Enable validation for required fields
                 _isValidating = true;
 
-                // Check each validation requirement separately and show specific errors
-                if (!ValidatePatientSelection())
-                    return;
+                // Validate patient selection or find/create patient if needed
+                if (SelectedPatient == null &&
+                    !string.IsNullOrWhiteSpace(PatientSearch) &&
+                    !string.IsNullOrWhiteSpace(PatientPhone))
+                {
+                    // Find patient silently (true for silentMode)
+                    FindOrCreatePatient(true);
 
+                    // If patient still not found, show the normal dialog
+                    if (SelectedPatient == null)
+                    {
+                        FindOrCreatePatient(false);
+                        if (SelectedPatient == null) return;
+                    }
+                }
+                else if (!ValidatePatientSelection())
+                {
+                    return;
+                }
+
+                // Validate doctor selection
                 if (!ValidateDoctorSelection())
                     return;
 
+                // Validate appointment type
                 if (!ValidateAppointmentType())
                     return;
 
+                // Validate date/time selection
                 if (!ValidateDateTimeSelection())
                     return;
 
@@ -1120,21 +1281,40 @@ private AppointmentType? _SelectedAppointmentType;
                 if (result != MessageBoxResult.Yes)
                     return;
 
-                // Create appointment
-                DateTime appointmentDateTime = AppointmentDate!.Value.Date
-                    .Add(new TimeSpan(SelectedAppointmentTime!.Value.Hour, SelectedAppointmentTime.Value.Minute, 0));
+                // Fix for correct date/time storage in database
+                // Create appointment - explicitly preserve both date and time components
+                DateTime appointmentDateTime;
+                if (AppointmentDate.HasValue && SelectedAppointmentTime.HasValue)
+                {
+                    // Create a fresh DateTime with proper date components
+                    appointmentDateTime = new DateTime(
+                        AppointmentDate.Value.Year,
+                        AppointmentDate.Value.Month,
+                        AppointmentDate.Value.Day,
+                        SelectedAppointmentTime.Value.Hour,
+                        SelectedAppointmentTime.Value.Minute,
+                        0);
+                }
+                else
+                {
+                    // Fallback if something went wrong
+                    appointmentDateTime = DateTime.Now;
+                }
 
                 Appointment newAppointment = new Appointment
                 {
                     PatientId = SelectedPatient.PatientId,
                     DoctorId = SelectedDoctor.DoctorId,
-                    AppointmentDate = appointmentDateTime,
+                    AppointmentDate = appointmentDateTime,  // Use the properly constructed date/time
                     AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId,
                     Status = "Đang chờ",
                     Notes = AppointmentNote,
                     CreatedAt = DateTime.Now,
                     IsDeleted = false
                 };
+
+                // Debug output to verify the correct date/time is being saved
+                System.Diagnostics.Debug.WriteLine($"Saving appointment date/time: {newAppointment.AppointmentDate:yyyy-MM-dd HH:mm:ss}");
 
                 // Save to database
                 DataProvider.Instance.Context.Appointments.Add(newAppointment);
@@ -1167,6 +1347,7 @@ private AppointmentType? _SelectedAppointmentType;
                     MessageBoxImage.Error);
             }
         }
+
 
         /// <summary>
         /// Validates patient selection and shows specific error if invalid
@@ -1288,8 +1469,61 @@ private AppointmentType? _SelectedAppointmentType;
                 return false;
             }
 
+            // Check if patient already has an appointment at this time (with any doctor)
+            if (SelectedPatient != null)
+            {
+                var patientAppointments = DataProvider.Instance.Context.Appointments
+                    .Where(a =>
+                        a.PatientId == SelectedPatient.PatientId &&
+                        a.IsDeleted != true &&
+                        a.Status != "Đã hủy" &&
+                        a.AppointmentDate.Date == appointmentDateTime.Date)
+                    .ToList();
+
+                // Check for exact match first (same hour and minute)
+                bool hasExactSameTime = patientAppointments.Any(a =>
+                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
+                    a.AppointmentDate.Minute == appointmentDateTime.Minute);
+
+                if (hasExactSameTime)
+                {
+                    MessageBox.Show(
+                        $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn vào lúc " +
+                        $"{appointmentDateTime.ToString("HH:mm")}.\n" +
+                        $"Vui lòng chọn thời gian khác.",
+                        "Lỗi - Trùng lịch",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+
+                    return false;
+                }
+
+                // Check for overlapping appointments within 30 minutes
+                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
+
+                foreach (var existingAppointment in patientAppointments)
+                {
+                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
+                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
+
+                    if (timeDifference < 30 && timeDifference > 0)
+                    {
+                        MessageBox.Show(
+                            $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn khác vào lúc " +
+                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
+                            $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
+                            "Lỗi - Trùng lịch",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+
+                        return false;
+                    }
+                }
+            }
+
+
             // Check doctor's schedule
-            if (!string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
+            if (!string.IsNullOrWhiteSpace(SelectedDoctor?.Schedule))
             {
                 // Get the day of week for the appointment
                 DayOfWeek dayOfWeek = appointmentDateTime.DayOfWeek;
@@ -1316,7 +1550,7 @@ private AppointmentType? _SelectedAppointmentType;
                 {
                     MessageBox.Show(
                         $"Giờ hẹn không nằm trong thời gian làm việc của bác sĩ {SelectedDoctor.FullName}.\n" +
-                        $"Thời gian làm việc: {startTime.Hours}h - {endTime.Hours}h.",
+                        $"Thời gian làm việc: {startTime.ToString("hh\\:mm")} - {endTime.ToString("hh\\:mm")}.",
                         "Lỗi - Giờ làm việc",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
@@ -1324,30 +1558,59 @@ private AppointmentType? _SelectedAppointmentType;
                     return false;
                 }
 
-                // Check for overlapping appointments
-                bool hasOverlappingAppointment = DataProvider.Instance.Context.Appointments
-                    .Any(a =>
+                // Get doctor's appointments for that day
+                var doctorAppointments = DataProvider.Instance.Context.Appointments
+                    .Where(a =>
                         a.DoctorId == SelectedDoctor.DoctorId &&
                         a.IsDeleted != true &&
                         a.Status != "Đã hủy" &&
-                        a.AppointmentDate.Date == appointmentDateTime.Date);
-                     
+                        a.AppointmentDate.Date == appointmentDateTime.Date)
+                    .ToList();
 
-                if (hasOverlappingAppointment)
+                // Check for exact match first (same hour and minute)
+                bool hasExactSameTime = doctorAppointments.Any(a =>
+                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
+                    a.AppointmentDate.Minute == appointmentDateTime.Minute);
+
+                if (hasExactSameTime)
                 {
                     MessageBox.Show(
-                        $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn khác vào thời gian này.\n" +
-                        "Vui lòng chọn thời gian khác.",
+                        $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
+                        $"{appointmentDateTime.ToString("HH:mm")}.\n" +
+                        $"Vui lòng chọn thời gian khác.",
                         "Lỗi - Trùng lịch",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
 
                     return false;
                 }
+
+                // Check for close appointments (less than 30 minutes)
+                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
+
+                foreach (var existingAppointment in doctorAppointments)
+                {
+                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
+                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
+
+                    if (timeDifference < 30 && timeDifference > 0 && timeDifference % 30 != 0)
+                    {
+                        MessageBox.Show(
+                            $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
+                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
+                            $"Vui lòng chọn thời gian cách ít nhất 30 phút hoặc đúng khung giờ 30 phút.",
+                            "Lỗi - Trùng lịch",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+
+                        return false;
+                    }
+                }
             }
 
             return true;
         }
+
 
         /// <summary>
         /// Convert DayOfWeek to Vietnamese day name
