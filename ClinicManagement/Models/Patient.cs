@@ -22,7 +22,7 @@ public partial class Patient
     public int? PatientTypeId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
+    public string Email { get; set; }
     public bool? IsDeleted { get; set; }
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();

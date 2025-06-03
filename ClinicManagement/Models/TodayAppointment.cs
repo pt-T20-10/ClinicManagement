@@ -8,11 +8,10 @@ namespace ClinicManagement.Models
 {
    public class TodayAppointment
     {
-        public Appointment Appointment { get; set; }
+        public Appointment? Appointment { get; set; }
 
         public string? Initials { get; set; }    
         
-
         public string? PatientName { get; set; }
      
         public string? Notes { get; set; }

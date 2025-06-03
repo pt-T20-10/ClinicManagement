@@ -73,9 +73,11 @@ namespace ClinicManagement.ViewModels
             TodayAppointments = new ObservableCollection<TodayAppointment>();
 
             var appointments = DataProvider.Instance.Context.Appointments
-              .Include(a => a.Patient)
-              .Include(a => a.Doctor)
-              .ToList();
+          .Where(a => a.IsDeleted == false || a.IsDeleted == null)
+          .Include(a => a.Patient)
+          .Include(a => a.Doctor)
+          .Include(a => a.AppointmentType)
+          .ToList();
             int waitingCount = appointments.Count(a => a.Status == "Đang chờ");
             foreach (var appointment in appointments)
             {
