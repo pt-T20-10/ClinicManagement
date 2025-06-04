@@ -7,7 +7,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         Title="Chi tiết lịch hẹn" 
-        Height="600" 
+        Height="700" 
         Width="800"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -141,7 +141,7 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Họ và tên:" FontWeight="Medium"/>
@@ -150,7 +150,7 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Mã BHYT:" FontWeight="Medium"/>
@@ -159,7 +159,7 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Số điện thoại:" FontWeight="Medium"/>
@@ -168,7 +168,7 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Loại KH:" FontWeight="Medium"/>
@@ -182,16 +182,16 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Bác sĩ:" FontWeight="Medium"/>
-                            <TextBlock Grid.Column="1" Text="{Binding OriginalAppointment.Doctor.FullName}" TextWrapping="Wrap"/>
+                            <TextBox Grid.Column="1" Text="{Binding OriginalAppointment.Doctor.FullName}" TextWrapping="Wrap"/>
                         </Grid>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Chuyên khoa:" FontWeight="Medium"/>
@@ -200,7 +200,7 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Số điện thoại:" FontWeight="Medium"/>
@@ -222,7 +222,7 @@
                             <StackPanel Grid.Column="0" Margin="0,0,15,0">
                                 <Grid Margin="0,5">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     
@@ -232,17 +232,24 @@
 
                                 <Grid Margin="0,5">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Loại lịch:" FontWeight="Medium"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding OriginalAppointment.AppointmentType.TypeName}" TextWrapping="Wrap"/>
-                                   
+                                    <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="Loại lịch:" FontWeight="Medium"/>
+                                    <ComboBox Grid.Column="1" 
+                                      Height="26"
+                                       Width="200"
+                                      Padding="6 0 4 0"
+                                      ItemsSource="{Binding AppointmentTypes}"
+                                      SelectedItem="{Binding SelectedAppointmentType}"
+                                      DisplayMemberPath="TypeName"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}" 
+                                      Margin="0,0,0,2"/>
                                 </Grid>
                             </StackPanel>
 
                             <!-- Right Column -->
-                            <Grid Grid.Column="2" Grid.Row="0" Margin="0,8,8,0">
+                            <Grid Grid.Column="2" Grid.Row="0" Margin="0,14,8,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
@@ -258,6 +265,7 @@
                                     <DatePicker 
                                       SelectedDate="{Binding AppointmentDate}"
                                       Padding="4,2"
+                                     
                                       Height="26"
                                       FontSize="11"
          
@@ -440,6 +448,7 @@
                 Content="Hủy lịch hẹn" 
                 Style="{StaticResource MaterialDesignRaisedButton}" 
                 Command="{Binding CancelAppointmentCommand}"
+                CommandParameter="{Binding}"
                 Background="#F44336" 
                 BorderBrush="#D32F2F"
                 Foreground="White"
@@ -457,6 +466,7 @@
                 Grid.Column="2" 
                 Content="Chỉnh sửa" 
                 Command="{Binding EditAppointmentCommand}"
+                CommandParameter="{Binding}"
                 Style="{StaticResource MaterialDesignRaisedButton}" 
                 Background="#3F51B5" 
                 BorderBrush="#303F9F" 
@@ -476,6 +486,7 @@
                 Grid.Column="3" 
                 Content="Tiến hành khám" 
                       Command="{Binding AcceptAppointmentCommand}"
+                    CommandParameter="{Binding}"
                 Style="{StaticResource MaterialDesignRaisedButton}" 
                 Background="#4CAF50" 
                 BorderBrush="#388E3C" 

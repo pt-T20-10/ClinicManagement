@@ -528,46 +528,42 @@
                                                     </DataTemplate>
                                                 </GridViewColumn.CellTemplate>
                                             </GridViewColumn>
-                                            <GridViewColumn >
+                                            <GridViewColumn>
                                                 <GridViewColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
-
-                                                            <Button  Content="Xem chi tiết"
-                                                           Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenAppointmentDetailsCommand}"
-                                                           
-                                                           Style="{StaticResource MaterialDesignRaisedButton}"
-                                                           Width="120" Height="30">
+                                                            <Button Content="Xem chi tiết"
+                                                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenAppointmentDetailsCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                                                    Width="120" Height="30">
                                                                 <Button.Resources>
                                                                     <Style TargetType="Border">
                                                                         <Setter Property="CornerRadius" Value="4"/>
                                                                     </Style>
                                                                 </Button.Resources>
                                                             </Button>
-                                                            <Button 
-                                                                Margin="10 0 0 0"
-                                                              Content="Hủy lịch hẹn" 
-                                                              Style="{StaticResource MaterialDesignRaisedButton}" 
-                                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenAppointmentDetailsCommand}"
-                                                            CommandParameter="{Binding}"
-                                                              Background="#F44336" 
-                                                              BorderBrush="#D32F2F"
-                                                              Foreground="White"
-                                                              Width="120"
-                                                              Height="30">
+                                                            <Button Margin="10 0 0 0"
+                                                                Content="Hủy lịch hẹn" 
+                                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.CancelAppointmentCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="#F44336" 
+                                                                BorderBrush="#D32F2F"
+                                                                Foreground="White"
+                                                                Width="120"
+                                                                Height="30"
+                                                                Style="{StaticResource MaterialDesignRaisedButton}">
                                                                 <Button.Resources>
                                                                     <Style TargetType="Border">
                                                                         <Setter Property="CornerRadius" Value="4"/>
                                                                     </Style>
                                                                 </Button.Resources>
                                                             </Button>
-
                                                         </StackPanel>
-                                                        
                                                     </DataTemplate>
-                                                    
                                                 </GridViewColumn.CellTemplate>
                                             </GridViewColumn>
+
                                         </GridView>
                                     </ListView.View>
                                     <!-- Phần còn lại giữ nguyên -->

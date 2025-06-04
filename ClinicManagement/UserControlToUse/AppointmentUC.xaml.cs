@@ -37,7 +37,7 @@ namespace ClinicManagement.UserControlToUse
             if (DataContext is ViewModels.AppointmentViewModel viewModel && selectedTime.HasValue)
             {
                 viewModel.SelectedAppointmentTime = selectedTime;
-                System.Diagnostics.Debug.WriteLine($"Time set in code-behind: {selectedTime.Value.ToString("HH:mm")}");
+              
             }
         }
 

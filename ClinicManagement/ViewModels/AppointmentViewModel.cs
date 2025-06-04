@@ -300,6 +300,7 @@ private AppointmentType? _SelectedAppointmentType;
         public ICommand AddAppointmentCommand { get; set; }
         public ICommand SelectPatientCommand { get; set; }
         public ICommand FindPatientCommand { get; set; }
+        public ICommand CancelAppointmentCommand { get; set; }
 
         // Appointment List Commands
         public ICommand SearchCommand { get; set; }
@@ -415,21 +416,138 @@ private AppointmentType? _SelectedAppointmentType;
                 (p) => {  },
                 (p) => true
             );
-            OpenAppointmentDetailsCommand = new RelayCommand<Appointment>(
-               (p) => OpenAppointmentDetails(),
-               (p) => true
+            OpenAppointmentDetailsCommand = new RelayCommand<AppointmentDisplayInfo>(
+               (p) => OpenAppointmentDetails(p),
+               (p) => p!=null
                );
+            CancelAppointmentCommand = new RelayCommand<AppointmentDisplayInfo>(
+               (p) => CancelAppointmentDirectly(p),
+               (p) => p != null && p.Status != "Đã hủy" && p.Status != "Đã khám" && p.Status != "Đang khám"
+           );
         }
-
-        private void OpenAppointmentDetails()
+        private void CancelAppointmentDirectly(AppointmentDisplayInfo appointmentInfo)
         {
-          
-            var detailsWindow = new AppointmentDetailsWindow();
-            detailsWindow.ShowDialog();
-            LoadAppointments();
+            try
+            {
+                if (appointmentInfo?.OriginalAppointment == null)
+                    return;
 
+                // Hiển thị hộp thoại xác nhận và yêu cầu lý do hủy
+                string reason = Microsoft.VisualBasic.Interaction.InputBox(
+                    "Vui lòng nhập lý do hủy lịch hẹn:",
+                    "Xác nhận hủy",
+                    appointmentInfo.OriginalAppointment.Notes ?? "");
 
+                if (string.IsNullOrWhiteSpace(reason))
+                {
+                    MessageBox.Show(
+                        "Vui lòng nhập lý do hủy lịch hẹn.",
+                        "Thiếu thông tin",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                MessageBoxResult result = MessageBox.Show(
+                    "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
+                    "Xác nhận hủy",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                        .FirstOrDefault(a => a.AppointmentId == appointmentInfo.OriginalAppointment.AppointmentId);
+
+                    if (appointmentToUpdate != null)
+                    {
+                        appointmentToUpdate.Status = "Đã hủy";
+                        appointmentToUpdate.Notes = reason;
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Refresh appointments list
+                        LoadAppointments();
+
+                        MessageBox.Show(
+                            "Đã hủy lịch hẹn thành công!",
+                            "Thông báo",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Đã xảy ra lỗi khi hủy lịch hẹn: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
+        private void OpenAppointmentDetails(AppointmentDisplayInfo appointmentInfo)
+        {
+            try
+            {
+                if (appointmentInfo == null || appointmentInfo.OriginalAppointment == null)
+                {
+                    MessageBox.Show(
+                        "Vui lòng chọn một lịch hẹn để xem chi tiết.",
+                        "Thông báo",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                // Load appointment with all related data
+                var fullAppointment = DataProvider.Instance.Context.Appointments
+                    .Include(a => a.Patient)
+                    .Include(a => a.Doctor)
+                        .ThenInclude(d => d.Specialty)
+                    .Include(a => a.AppointmentType)
+                    .FirstOrDefault(a => a.AppointmentId == appointmentInfo.AppointmentId);
+
+                if (fullAppointment == null)
+                {
+                    MessageBox.Show(
+                        "Không thể tải thông tin chi tiết lịch hẹn.",
+                        "Lỗi",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+
+                // Create and setup details window
+                var detailsWindow = new AppointmentDetailsWindow();
+                var viewModel = detailsWindow.DataContext as AppointmentDetailsViewModel;
+
+                if (viewModel != null)
+                {
+                    viewModel.OriginalAppointment = fullAppointment;
+                    detailsWindow.ShowDialog(); // Show as modal dialog
+
+                    // Refresh appointments list after dialog closes
+                    LoadAppointments();
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Không thể khởi tạo cửa sổ chi tiết lịch hẹn.",
+                        "Lỗi",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Đã xảy ra lỗi khi mở chi tiết lịch hẹn: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
 
         private void SelectPatient(Patient patient)
         {
@@ -769,30 +887,6 @@ private AppointmentType? _SelectedAppointmentType;
             return patient;
         }
 
-        private void AutoFindPatient()
-        {
-            try
-            {
-                // Skip validation here since we're doing this automatically
-                // We'll just attempt to find the patient with current values
-                
-                // Try to find an existing patient
-                var patient = FindPatient();
-
-                if (patient != null)
-                {
-                    // Patient found, set as selected without showing a message
-                    SelectedPatient = patient;
-                }
-                // Don't show any error message or try to create a new patient automatically
-            }
-            catch (Exception ex)
-            {
-                // Just log the error without showing message box for better UX
-                System.Diagnostics.Debug.WriteLine($"Error in AutoFindPatient: {ex.Message}");
-            }
-        }
-
         private void InitializeData()
         {
             // Initialize appointment status list
@@ -912,8 +1006,6 @@ private AppointmentType? _SelectedAppointmentType;
                 AppointmentsDisplay = new ObservableCollection<AppointmentDisplayInfo>();
             }
         }
-
-     
 
         private bool ValidatePatientInfo()
         {
@@ -1069,10 +1161,6 @@ private AppointmentType? _SelectedAppointmentType;
             return true;
         }
 
-
-
-
-
         private string ConvertDayOfWeekToVietnameseCode(DayOfWeek dayOfWeek)
         {
             return dayOfWeek switch
@@ -1199,7 +1287,6 @@ private AppointmentType? _SelectedAppointmentType;
 
             return TimeSpan.Zero; // Default if parsing fails
         }
-
 
         private int ConvertVietNameseCodeToDayNumber(string code)
         {
@@ -1347,7 +1434,6 @@ private AppointmentType? _SelectedAppointmentType;
                     MessageBoxImage.Error);
             }
         }
-
 
         /// <summary>
         /// Validates patient selection and shows specific error if invalid
@@ -1628,24 +1714,6 @@ private AppointmentType? _SelectedAppointmentType;
                 DayOfWeek.Sunday => "Chủ nhật",
                 _ => string.Empty
             };
-        }
-
-        private bool ValidateForm()
-        {
-            _touchedFields.Add(nameof(PatientSearch));
-            _touchedFields.Add(nameof(PatientPhone));
-
-            // Update validation flags
-            _isDoctorSelected = SelectedDoctor != null;
-            _isPatientInfoValid = ValidatePatientInfo();
-            _isDateTimeValid = AppointmentDate.HasValue &&
-                             SelectedAppointmentTime.HasValue &&
-                             IsAppointmentTimeValid();
-
-            return _isDoctorSelected &&
-                   _isPatientInfoValid &&
-                   _isDateTimeValid &&
-                   SelectedAppointmentType != null;
         }
 
         private void ClearAppointmentForm()
