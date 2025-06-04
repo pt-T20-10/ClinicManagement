@@ -15,6 +15,9 @@ public partial class StockIn
 
     public decimal UnitPrice { get; set; }
 
+    public decimal ProfitMargin { get; set; }
+
+
     public decimal? SellPrice { get; set; }
 
     public decimal? TotalCost { get; set; }

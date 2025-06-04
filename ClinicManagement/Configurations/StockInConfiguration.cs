@@ -26,6 +26,10 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("DonGia")
                 .HasColumnType("decimal(18, 2)");
 
+            builder.Property(e => e.ProfitMargin)
+                .HasColumnName("TiLeLoiNhuan")
+                .HasColumnType("decimal(5, 2)");
+
             builder.Property(e => e.SellPrice)
                 .HasColumnName("GiaBan")
                 .HasColumnType("decimal(18, 2)");

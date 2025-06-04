@@ -293,6 +293,8 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -345,15 +347,7 @@
                             materialDesign:HintAssist.Hint="Tên thuốc"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-                            <!-- MSHNNB -->
-                            <TextBox
-                            Grid.Column="1" Grid.Row="1"
-                            Text="{Binding StockinMSHNNB, UpdateSourceTrigger=PropertyChanged}"
-                            Margin="5"
-                            Width="220"
-                            HorizontalAlignment="Left"
-                            materialDesign:HintAssist.Hint="MSHNNB"
-                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        
 
                             <!-- Số lượng -->
                             <materialDesign:NumericUpDown
@@ -375,10 +369,18 @@
                             HorizontalAlignment="Left"
                             materialDesign:HintAssist.Hint="Giá nhập (VNĐ)"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                            <TextBox
+                            Grid.Column="2" Grid.Row="1"
+                             Text="{Binding StockProfitMargin, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged}"
+                             Margin="5"
+                             Width="220"
+                             HorizontalAlignment="Left"
+                             materialDesign:HintAssist.Hint="Tỉ lệ lợi nhuận (%)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                             <!-- Giá xuất -->
                             <TextBox
-                           Grid.Column="2" Grid.Row="1"
+                           Grid.Column="2" Grid.Row="2"
                             Text="{Binding StockinSellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
                             Margin="5"
                             Width="220"
@@ -387,15 +389,18 @@
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                             
 
+
                             <!-- Hạn sử dụng -->
                             <DatePicker
-                              Grid.Column="2" Grid.Row="2"
+                              Grid.Column="1" Grid.Row="1"
                                 SelectedDate="{Binding StockinExpiryDate}"
                                 Margin="5"
                                 Width="220"
                                 HorizontalAlignment="Left"
                                 materialDesign:HintAssist.Hint="Hạn sử dụng"
+                                
                                 Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+                            <!--Ngày nhập-->
                             <DatePicker
                                 Grid.Column="3" Grid.Row="0"
                                   SelectedDate="{Binding ImportDate}"
@@ -405,7 +410,7 @@
                                   materialDesign:HintAssist.Hint="Ngày nhập"
                                   Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
 
-                            <StackPanel Margin="7 10 0 0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Grid.RowSpan="2" Grid.Column="3" Grid.Row="1">
+                            <StackPanel Margin="7 20 0 0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Grid.RowSpan="2" Grid.Column="4" Grid.Row="1">
                                
                                 <Button
                                          Margin="0 0 0 15"
@@ -448,9 +453,7 @@
                                 <ListView.View>
                                     <GridView AllowsColumnReorder="False">
                                         <!-- GridView columns unchanged -->
-                                        <GridViewColumn Width="120" DisplayMemberBinding="{Binding Medicine.Mshnnb}">
-                                            <GridViewColumn.Header>MSHNNB</GridViewColumn.Header>
-                                        </GridViewColumn>
+                                        
                                         <GridViewColumn Width="150" DisplayMemberBinding="{Binding Medicine.Name}">
                                             <GridViewColumn.Header>Tên thuốc</GridViewColumn.Header>
                                         </GridViewColumn>

@@ -21,7 +21,7 @@
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
-        Width="1300" Height="700">
+        Width="1500" Height="900">
     <Window.Resources>
         <local:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
         <local:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
@@ -35,6 +35,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -42,9 +43,18 @@
         <Grid Grid.Row="0" Grid.ColumnSpan="2">
             <uc:ControlBarUC Tag="{Binding Title, ElementName=mainWindow}"></uc:ControlBarUC>
         </Grid>
-
+        <Grid Grid.Row="1">
+            <materialDesign:Card  Padding="16"  Grid.Row="1" Margin="0,20,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="People" Width="32" Height="32" VerticalAlignment="Center" />
+                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="22" FontWeight="Medium">
+                        Thông tin bệnh nhân
+                    </TextBlock>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
         <!-- Main Content -->
-        <materialDesign:Card Grid.Row="1" Margin="16">
+        <materialDesign:Card Grid.Row="2" Margin="16">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -52,13 +62,14 @@
                 </Grid.RowDefinitions>
 
                 <!-- Patient Personal Information -->
-                <Border Grid.Row="0" Background="#F5F5F5" CornerRadius="8" Margin="0,0,0,16" Padding="16">
+                <Border Grid.Row="0" Background="White" CornerRadius="8" Margin="0,0,0,16" Padding="16">
+                    
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        
+
                         <!-- Patient Details -->
                         <Grid Grid.Column="0">
                             <Grid.ColumnDefinitions>
@@ -190,7 +201,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                          
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Date Range -->
@@ -207,13 +218,13 @@
                                 <TextBox Grid.Column="1" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
                                          materialDesign:HintAssist.Hint="Tìm kiếm theo chẩn đoán"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Width="250" Height="36" Margin="16,0,0,0"
+                                         Width="250"  Margin="16,0,0,0"
                                          HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
                                 <!-- Filter Button -->
-                                <Button Grid.Column="2" Command="{Binding FilterRecordsCommand}" 
+                                <Button Grid.Column="1" Command="{Binding FilterRecordsCommand}" 
                                         Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Width="100" Height="36" HorizontalAlignment="Right">
+                                        Width="100" Height="36" HorizontalAlignment="Left" Margin="285,8,0,8">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="FilterOutline" Margin="0,0,8,0"/>
                                         <TextBlock Text="Lọc"/>
@@ -221,64 +232,143 @@
                                 </Button>
                             </Grid>
 
+
                             <!-- Medical Records List -->
-                            <ListView Grid.Row="1" ItemsSource="{Binding MedicalRecords}">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="Mã hồ sơ" DisplayMemberBinding="{Binding RecordId}" Width="120"/>
-                                        <GridViewColumn Header="Ngày khám" Width="150">
-                                            <GridViewColumn.CellTemplate>
+                            <ScrollViewer Grid.Row="1"
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Auto">
+                                <DataGrid ItemsSource="{Binding MedicalRecords}"
+                                     AutoGenerateColumns="False"
+                                     IsReadOnly="True"
+                                     CanUserAddRows="False"
+                                     CanUserDeleteRows="False"
+                                     CanUserReorderColumns="True"
+                                     CanUserResizeColumns="True"
+                                     CanUserSortColumns="True"
+                                     GridLinesVisibility="All"
+                                     RowHeaderWidth="0"
+
+                                     AlternatingRowBackground="#F5F5F5"
+                                     BorderThickness="1"
+                                     BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                     Background="White">
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Mã hồ sơ"  Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text="{Binding RecordDate, StringFormat='dd/MM/yyyy'}"/>
+                                                    <TextBlock Text="{Binding RecordId}"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"
+                                                      TextAlignment="Center"/>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Bác sĩ" DisplayMemberBinding="{Binding Doctor.FullName}" Width="150"/>
-                                        <GridViewColumn Header="Chẩn đoán" DisplayMemberBinding="{Binding Diagnosis}" Width="300"/>
-                                        <GridViewColumn Header="Đơn thuốc" Width="140">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="Ngày khám" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="Xem chi tiết" 
-                                                            Command="{Binding DataContext.ViewPrescriptionCommand, 
-                                                                    RelativeSource={RelativeSource FindAncestor, 
-                                                                    AncestorType={x:Type ListView}}}" 
-                                                            CommandParameter="{Binding}"
-                                                            Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                    <TextBlock Text="{Binding RecordDate, StringFormat='dd/MM/yyyy'}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           TextAlignment="Center"/>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Kết quả xét nghiệm" Width="180">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Bác sĩ" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="Xem chi tiết" 
-                                                            Command="{Binding DataContext.ViewTestResultsCommand, 
-                                                                    RelativeSource={RelativeSource FindAncestor, 
-                                                                    AncestorType={x:Type ListView}}}" 
-                                                            CommandParameter="{Binding}"
-                                                            Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                    <TextBlock Text="{Binding Doctor.FullName}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           TextAlignment="Center"/>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="" Width="100">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                
+
+                                        <DataGridTemplateColumn Header="Chẩn đoán" Width="300">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Command="{Binding DataContext.OpenRecordCommand, 
-                                                                    RelativeSource={RelativeSource FindAncestor, 
-                                                                    AncestorType={x:Type ListView}}}" 
-                                                            CommandParameter="{Binding}"
-                                                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                                                    <TextBlock Text="{Binding Diagnosis}"
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="Đơn thuốc" Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Xem chi tiết"
+                                HorizontalAlignment="Center"
+                                Command="{Binding DataContext.ViewPrescriptionCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}"
+                                CommandParameter="{Binding}"
+                                Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn Header="Kết quả xét nghiệm" Width="180">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Xem chi tiết"
+                                HorizontalAlignment="Center"
+                                Command="{Binding DataContext.ViewTestResultsCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}"
+                                CommandParameter="{Binding}"
+                                Style="{StaticResource MaterialDesignFlatButton}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTemplateColumn>
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Command="{Binding DataContext.OpenRecordCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}"
+                                CommandParameter="{Binding}"
+                                HorizontalAlignment="Center"
+                                Style="{StaticResource MaterialDesignOutlinedButton}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="FileDocumentOutline" Margin="0,0,4,0"/>
                                                             <TextBlock Text="Mở"/>
                                                         </StackPanel>
                                                     </Button>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                    </GridView>
-                                </ListView.View>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
 
-                            </ListView>
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Height" Value="48"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F0F8FF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                    <Setter Property="Foreground" Value="#1565C0"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+                                </DataGrid>
+                            </ScrollViewer>
+
+
                         </Grid>
                     </TabItem>
 
@@ -286,8 +376,9 @@
                     <TabItem Header="Hóa đơn">
                         <Grid Margin="8">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="413*"/>
-                                <ColumnDefinition />
+                                <ColumnDefinition Width="335*"/>
+                                <ColumnDefinition Width="1114*"/>
+                                <ColumnDefinition Width="4*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -295,11 +386,11 @@
                             </Grid.RowDefinitions>
 
                             <!-- Filter & Search -->
-                            <Grid Grid.Row="0" Margin="0,0,0,8" Grid.ColumnSpan="2">
+                            <Grid Grid.Row="0" Margin="0,0,0,8" Grid.ColumnSpan="3">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Date Range -->
@@ -322,9 +413,9 @@
                                          materialDesign:HintAssist.Hint="Trạng thái thanh toán"/>
 
                                 <!-- Filter Button -->
-                                <Button Grid.Column="2" Command="{Binding FilterInvoicesCommand}" 
+                                <Button Grid.Column="1" Command="{Binding FilterInvoicesCommand}" 
                                         Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Width="100" Height="36" HorizontalAlignment="Right">
+                                        Width="100" Height="36" HorizontalAlignment="Left" Margin="315,8,0,8">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="FilterOutline" Margin="0,0,8,0"/>
                                         <TextBlock Text="Lọc"/>
@@ -332,43 +423,66 @@
                                 </Button>
                             </Grid>
 
+
                             <!-- Invoices List -->
-                            <ListView Grid.Row="1" ItemsSource="{Binding Invoices}" Grid.ColumnSpan="2" 
-                                      ScrollViewer.CanContentScroll="True"
-                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                      ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="Mã hóa đơn" DisplayMemberBinding="{Binding InvoiceId}" Width="140"/>
-                                        <GridViewColumn Header="Ngày lập" DisplayMemberBinding="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}" Width="120"/>
-                                        <!--<GridViewColumn Header="Loại" Width="110">
-                                            <GridViewColumn.CellTemplate>
+                            <ScrollViewer Grid.Row="1" Grid.ColumnSpan="3"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Auto">
+                                <DataGrid ItemsSource="{Binding Invoices}"
+                                     AutoGenerateColumns="False"
+                                     IsReadOnly="True"
+                                     CanUserAddRows="False"
+                                     CanUserDeleteRows="False"
+                                     CanUserReorderColumns="True"
+                                     CanUserResizeColumns="True"
+                                     CanUserSortColumns="True"
+                                     GridLinesVisibility="All"
+                                     RowHeaderWidth="0"
+                                     AlternatingRowBackground="#F5F5F5"
+                                     BorderThickness="1"
+                                     BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                     Background="White">
+                                    <DataGrid.Columns>
+                                        <!-- Mã hóa đơn -->
+                                        <DataGridTemplateColumn Header="Mã hóa đơn"  Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock>
-                                                        <TextBlock.Text>
-                                                            <MultiBinding StringFormat="{}{0}">
-                                                                <Binding Path="IsPharmacySale" Converter="{StaticResource BooleanToPharmacyConverter}"/>
-                                                            </MultiBinding>
-                                                        </TextBlock.Text>
-                                                    </TextBlock>
+                                                    <TextBlock Text= "{Binding InvoiceId}"
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Center"
+                                                          TextAlignment="Center"/>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>-->
-                                       
-                                        <GridViewColumn Header="Tổng tiền" Width="120">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Ngày lập -->
+                                        <DataGridTextColumn Header="Ngày lập" Binding="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}" Width="150">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                    <Setter Property="TextAlignment" Value="Center"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+
+                                        <!-- Tổng tiền -->
+                                        <DataGridTemplateColumn Header="Tổng tiền" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" 
-                                                          TextWrapping="Wrap"
-                                                          HorizontalAlignment="Right"/>
+                                                      TextWrapping="Wrap"
+                                                      HorizontalAlignment="Center"
+                                                      TextAlignment="Center"
+                                                      VerticalAlignment="Center"/>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <!-- Invoice Status Column -->
-                                        <GridViewColumn Header="Trạng thái" Width="180">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Trạng thái -->
+                                        <DataGridTemplateColumn Header="Trạng thái" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Border CornerRadius="6" Padding="12,6">
+                                                    <Border CornerRadius="6" Padding="12,6" HorizontalAlignment="Center">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Style.Triggers>
@@ -385,7 +499,7 @@
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
-                                                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12">
+                                                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Style.Triggers>
@@ -403,43 +517,82 @@
                                                         </TextBlock>
                                                     </Border>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header="Ghi chú" DisplayMemberBinding="{Binding Notes}"/>
-                                        <GridViewColumn Header="Thao tâc">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Ghi chú -->
+                                        <DataGridTemplateColumn Header="Ghi chú" Width="200">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Notes}" 
+                                                       TextWrapping="Wrap"
+                                                       TextAlignment="Center"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Hành động -->
+                                        <DataGridTemplateColumn>
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                         <Button Command="{Binding DataContext.ViewInvoiceCommand, 
-                                                                RelativeSource={RelativeSource FindAncestor, 
-                                                                AncestorType={x:Type ListView}}}" 
-                                                                CommandParameter="{Binding}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                Margin="0,0,8,0" Width="90" Height="32">
-                                                            <StackPanel Orientation="Horizontal">
+                                                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}" 
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                                    Margin="0,0,8,0" Width="90" Height="32">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                                 <materialDesign:PackIcon Kind="FileDocumentOutline" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Xem"/>
                                                             </StackPanel>
                                                         </Button>
                                                         <Button Command="{Binding DataContext.PrintInvoiceCommand, 
-                                                                RelativeSource={RelativeSource FindAncestor, 
-                                                                AncestorType={x:Type ListView}}}" 
-                                                                CommandParameter="{Binding}"
-                                                                Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                               Width="90" Height="32">
-                                                            <StackPanel Orientation="Horizontal">
+                                                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}" 
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                                    Width="90" Height="32">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                                 <materialDesign:PackIcon Kind="Printer" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="In"/>
                                                             </StackPanel>
                                                         </Button>
                                                     </StackPanel>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                            
-                                        </GridViewColumn>
-                                    </GridView>
-                                </ListView.View>
-                            </ListView>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Height" Value="48"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F0F8FF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                    <Setter Property="Foreground" Value="#1565C0"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+                                </DataGrid>
+                            </ScrollViewer>
+
+
 
                         </Grid>
                     </TabItem>
@@ -469,7 +622,7 @@
                                          VerticalAlignment="Center"
                                          materialDesign:HintAssist.Hint="Trạng thái lịch hẹn"/>
 
-                                <!-- Add New Appointment -->
+                                <!-- Add New Appointment --><!--
                                 <Button Grid.Column="2" Command="{Binding AddAppointmentCommand}" 
                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                         Width="150" Height="36" HorizontalAlignment="Right">
@@ -477,22 +630,43 @@
                                         <materialDesign:PackIcon Kind="CalendarPlus" Margin="0,0,8,0"/>
                                         <TextBlock Text="Thêm lịch hẹn"/>
                                     </StackPanel>
-                                </Button>
+                                </Button>-->
                             </Grid>
 
                             <!-- Appointments List -->
-                            <ListView Grid.Row="1" ItemsSource="{Binding Appointments}"
-                                  ScrollViewer.CanContentScroll="True"
-                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="Ngày hẹn" DisplayMemberBinding="{Binding AppointmentDate, StringFormat='dd/MM/yyyy HH:mm'}" Width="140"/>
-                                        <GridViewColumn Header="Bác sĩ" DisplayMemberBinding="{Binding Doctor.FullName}" Width="150"/>
-                                        <GridViewColumn Header="Loại hẹn" DisplayMemberBinding="{Binding AppointmentType.TypeName}" Width="150"/>
-                                        <GridViewColumn Header="Ghi chú" DisplayMemberBinding="{Binding Notes}" Width="400"/>
-                                        <GridViewColumn Header="Trạng thái" Width="130">
-                                            <GridViewColumn.CellTemplate>
+                            <ScrollViewer Grid.Row="1" 
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Auto">
+                                <DataGrid ItemsSource="{Binding Appointments}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          CanUserReorderColumns="True"
+                                          CanUserResizeColumns="True"
+                                          CanUserSortColumns="True"
+                                          GridLinesVisibility="All"
+                                          RowHeaderWidth="0"
+                                         
+                                          AlternatingRowBackground="#F5F5F5"
+                                          BorderThickness="1"
+                                          BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                          Background="White">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Ngày hẹn" Binding="{Binding AppointmentDate, StringFormat='dd/MM/yyyy HH:mm'}" Width="150"/>
+                                        <DataGridTextColumn Header="Bác sĩ" Binding="{Binding Doctor.FullName}" Width="160"/>
+                                        <DataGridTextColumn Header="Loại hẹn" Binding="{Binding AppointmentType.TypeName}" Width="160"/>
+                                        <DataGridTemplateColumn Header="Ghi chú" Width="400">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Notes}" 
+                                                       TextWrapping="Wrap" 
+                                                       VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Header="Trạng thái" Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Border CornerRadius="6" Padding="10,5">
                                                         <Border.Style>
@@ -547,18 +721,17 @@
                                                         </TextBlock>
                                                     </Border>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Header=" ">
-                                            <GridViewColumn.CellTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn >
+                                            <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Command="{Binding DataContext.EditAppointmentCommand, 
-                                    RelativeSource={RelativeSource FindAncestor, 
-                                    AncestorType={x:Type ListView}}}" 
-                                    CommandParameter="{Binding}"
-                              
-                                    Margin="0,0,8,0" Width="90" Height="32">
+                                                            RelativeSource={RelativeSource FindAncestor, 
+                                                            AncestorType={x:Type DataGrid}}}" 
+                                                            CommandParameter="{Binding}"
+                                                            Margin="0,0,8,0" Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarEdit" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Sửa"/>
@@ -578,11 +751,10 @@
                                                             </Button.Style>
                                                         </Button>
                                                         <Button Command="{Binding DataContext.CancelAppointmentCommand, 
-                                    RelativeSource={RelativeSource FindAncestor, 
-                                    AncestorType={x:Type ListView}}}" 
-                                    CommandParameter="{Binding}"
-                                
-                                   Width="90" Height="32">
+                                                            RelativeSource={RelativeSource FindAncestor, 
+                                                            AncestorType={x:Type DataGrid}}}" 
+                                                            CommandParameter="{Binding}"
+                                                            Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarRemove" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Hủy"/>
@@ -603,11 +775,38 @@
                                                         </Button>
                                                     </StackPanel>
                                                 </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                    </GridView>
-                                </ListView.View>
-                            </ListView>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+
+                                    <!-- Enhanced Visual Style -->
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Height" Value="48"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F0F8FF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                    <Setter Property="Foreground" Value="#1565C0"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+                                </DataGrid>
+                            </ScrollViewer>
 
                         </Grid>
                     </TabItem>

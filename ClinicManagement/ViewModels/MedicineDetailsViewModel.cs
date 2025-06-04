@@ -247,7 +247,7 @@ namespace ClinicManagement.ViewModels
             if (Medicine == null || refreshedMedicine == null) return;
 
             Medicine.Name = refreshedMedicine.Name;
-            Medicine.Mshnnb = refreshedMedicine.Mshnnb;
+           
             Medicine.CategoryId = refreshedMedicine.CategoryId;
             Medicine.UnitId = refreshedMedicine.UnitId;
             Medicine.SupplierId = refreshedMedicine.SupplierId;
@@ -353,7 +353,6 @@ namespace ClinicManagement.ViewModels
                 {
                     // Cập nhật các trường thuốc
                     medicineToUpdate.Name = Medicine.Name;
-                    medicineToUpdate.Mshnnb = Medicine.Mshnnb;
                     medicineToUpdate.CategoryId = SelectedCategory?.CategoryId;
                     medicineToUpdate.UnitId = SelectedUnit?.UnitId;
                     medicineToUpdate.SupplierId = SelectedSupplier?.SupplierId;

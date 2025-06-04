@@ -547,16 +547,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private string _stockinMSHNNB;
-        public string StockinMSHNNB
-        {
-            get => _stockinMSHNNB;
-            set
-            {
-                _stockinMSHNNB = value;
-                OnPropertyChanged();
-            }
-        }
+   
 
         private int _stockinQuantity = 1;
         public int StockinQuantity
@@ -577,6 +568,44 @@ namespace ClinicManagement.ViewModels
             {
                 _stockinUnitPrice = value;
                 OnPropertyChanged();
+                
+                // If profit margin is set, recalculate sell price
+                if (_StockProfitMargin > 0)
+                {
+                    // Calculate sell price based on unit price and profit margin
+                    _stockinSellPrice = _stockinUnitPrice * (1 + (_StockProfitMargin / 100));
+                    OnPropertyChanged(nameof(StockinSellPrice));
+                }
+                else if (_stockinSellPrice > 0)
+                {
+                    // Calculate profit margin based on unit price and sell price
+                    CalculateProfitMargin();
+                }
+            }
+        }
+
+        private decimal _StockProfitMargin;
+        public decimal StockProfitMargin
+        {
+            get => _StockProfitMargin;
+            set
+            {
+                _StockProfitMargin = value;
+                OnPropertyChanged();
+                
+                // If unit price is set, recalculate sell price
+                if (_stockinUnitPrice > 0)
+                {
+                    // Calculate sell price based on unit price and profit margin
+                    _stockinSellPrice = _stockinUnitPrice * (1 + (_StockProfitMargin / 100));
+                    OnPropertyChanged(nameof(StockinSellPrice));
+                }
+                else if (_stockinSellPrice > 0)
+                {
+                    // Calculate unit price based on sell price and profit margin
+                    _stockinUnitPrice = _stockinSellPrice / (1 + (_StockProfitMargin / 100));
+                    OnPropertyChanged(nameof(StockinUnitPrice));
+                }
             }
         }
 
@@ -588,6 +617,23 @@ namespace ClinicManagement.ViewModels
             {
                 _stockinSellPrice = value;
                 OnPropertyChanged();
+                
+                // If unit price is set, recalculate profit margin
+                if (_stockinUnitPrice > 0)
+                {
+                    CalculateProfitMargin();
+                }
+            }
+        }
+
+        // Helper method to calculate profit margin based on unit price and sell price
+        private void CalculateProfitMargin()
+        {
+            if (_stockinUnitPrice > 0 && _stockinSellPrice > 0)
+            {
+                // Calculate profit margin percentage
+                _StockProfitMargin = ((_stockinSellPrice / _stockinUnitPrice) - 1) * 100;
+                OnPropertyChanged(nameof(StockProfitMargin));
             }
         }
 
@@ -1663,6 +1709,7 @@ namespace ClinicManagement.ViewModels
 
                         // Case 2: Find medicine with exact same details (name, supplier, unit, category)
                         var existingExactMedicine = DataProvider.Instance.Context.Medicines
+                            .Include(m => m.StockIns)
                             .FirstOrDefault(m => m.Name.ToLower() == StockinMedicineName.ToLower().Trim() &&
                                             m.SupplierId == StockinSelectedSupplier.SupplierId &&
                                             m.UnitId == StockinSelectedUnit.UnitId &&
@@ -1671,26 +1718,79 @@ namespace ClinicManagement.ViewModels
 
                         Medicine medicine;
                         string resultMessage = string.Empty;
+                        DateTime importDateTime = ImportDate ?? DateTime.Now;
 
                         // After successfully adding the stock-in and committing the transaction:
                         if (existingExactMedicine != null)
                         {
+                            // Check if the import date matches the existing medicine's latest import date
+                            DateTime? latestImportDate = existingExactMedicine.LatestImportDate;
+                            bool sameImportDate = latestImportDate.HasValue && 
+                                importDateTime.Date == latestImportDate.Value.Date;
+
+                            if (sameImportDate)
+                            {
+                                // If import dates match, ask if user wants to update with current date
+                                MessageBoxResult dateResult = MessageBox.Show(
+                                    $"Ngày nhập hàng hiện tại ({importDateTime:dd/MM/yyyy}) trùng với ngày nhập gần nhất của thuốc này. " +
+                                    $"Bạn có muốn đổi sang ngày hiện tại không?",
+                                    "Xác nhận ngày nhập hàng",
+                                    MessageBoxButton.YesNo,
+                                    MessageBoxImage.Question);
+
+                                if (dateResult == MessageBoxResult.Yes)
+                                {
+                                    // Update to current date if user confirms
+                                    importDateTime = DateTime.Now;
+                                }
+                            }
+
+                            MessageBoxResult result = MessageBox.Show(
+                              $"Bạn có muốn nhập thêm '{StockinQuantity}' '{SelectedStockCategoryName}' cho thuốc '{existingExactMedicine.Name}' hiện có không?",
+                              "Xác nhận",
+                              MessageBoxButton.YesNo,
+                              MessageBoxImage.Question);
+
+                            if (result != MessageBoxResult.Yes)
+                                return;
+                            
                             // Case 2: Existing medicine with identical fields
                             medicine = existingExactMedicine;
 
                             // Force refresh of the medicine's cache
                             var refreshedDetails = medicine.GetDetailedStock();
 
-                            resultMessage = $"Đã thêm số lượng cho thuốc '{medicine.Name}' hiện có.";
+                            resultMessage = $"Đã nhập thêm '{StockinQuantity}' '{SelectedStockCategoryName}' cho thuốc '{medicine.Name}' hiện có.";
                         }
                         else if (existingMedicineWithName != null && existingMedicineWithName.SupplierId != StockinSelectedSupplier.SupplierId)
                         {
+                            // Check if the import date matches the existing medicine's latest import date
+                            DateTime? latestImportDate = existingMedicineWithName.LatestImportDate;
+                            bool sameImportDate = latestImportDate.HasValue && 
+                                importDateTime.Date == latestImportDate.Value.Date;
+
+                            if (sameImportDate)
+                            {
+                                // If import dates match, ask if user wants to update with current date
+                                MessageBoxResult dateResult = MessageBox.Show(
+                                    $"Ngày nhập hàng hiện tại ({importDateTime:dd/MM/yyyy}) trùng với ngày nhập gần nhất của thuốc tương tự. " +
+                                    $"Bạn có muốn đổi sang ngày hiện tại không?",
+                                    "Xác nhận ngày nhập hàng",
+                                    MessageBoxButton.YesNo,
+                                    MessageBoxImage.Question);
+
+                                if (dateResult == MessageBoxResult.Yes)
+                                {
+                                    // Update to current date if user confirms
+                                    importDateTime = DateTime.Now;
+                                }
+                            }
+
                             // Case 3: Medicine with same name but different supplier
                             // Create a new medicine
                             medicine = new Medicine
                             {
                                 Name = StockinMedicineName.Trim(),
-                                Mshnnb = StockinMSHNNB?.Trim(),
                                 CategoryId = StockinSelectedCategory.CategoryId,
                                 UnitId = StockinSelectedUnit.UnitId,
                                 SupplierId = StockinSelectedSupplier.SupplierId,
@@ -1708,7 +1808,6 @@ namespace ClinicManagement.ViewModels
                             medicine = new Medicine
                             {
                                 Name = StockinMedicineName.Trim(),
-                                Mshnnb = StockinMSHNNB?.Trim(),
                                 CategoryId = StockinSelectedCategory.CategoryId,
                                 UnitId = StockinSelectedUnit.UnitId,
                                 SupplierId = StockinSelectedSupplier.SupplierId,
@@ -1721,17 +1820,15 @@ namespace ClinicManagement.ViewModels
                             resultMessage = $"Đã thêm thuốc mới '{medicine.Name}'.";
                         }
 
-                        // Use ImportDate if provided, otherwise use the current date
-                        DateTime importDateTime = ImportDate ?? DateTime.Now;
-
-                        // Add new stock-in entry
+                        // Add new stock-in entry with potentially updated importDateTime
                         var stockIn = new StockIn
                         {
                             MedicineId = medicine.MedicineId,
                             Quantity = StockinQuantity,
-                            ImportDate = importDateTime, // Use the specified or default date
+                            ImportDate = importDateTime, // Use the potentially modified import date
                             UnitPrice = StockinUnitPrice,
                             SellPrice = StockinSellPrice,
+                            ProfitMargin = StockProfitMargin, // Save the profit margin
                             TotalCost = StockinUnitPrice * StockinQuantity
                         };
 
@@ -1746,7 +1843,7 @@ namespace ClinicManagement.ViewModels
                         {
                             // Update existing stock
                             existingStock.Quantity += StockinQuantity;
-                            existingStock.LastUpdated = importDateTime; // Use the same date for consistency
+                            existingStock.LastUpdated = importDateTime; // Use the potentially modified date for consistency
                         }
                         else
                         {
@@ -1755,7 +1852,7 @@ namespace ClinicManagement.ViewModels
                             {
                                 MedicineId = medicine.MedicineId,
                                 Quantity = StockinQuantity,
-                                LastUpdated = importDateTime // Use the same date for consistency
+                                LastUpdated = importDateTime // Use the potentially modified date for consistency
                             };
                             DataProvider.Instance.Context.Stocks.Add(newStock);
                         }
@@ -1790,12 +1887,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         private void ExecuteRestart()
         {
             // Clear all form fields
             StockinMedicineName = string.Empty;
-            StockinMSHNNB = string.Empty;
+           
             StockinQuantity = 0;
             StockinUnitPrice = 0;
             StockinSellPrice = 0;
@@ -1814,12 +1910,16 @@ namespace ClinicManagement.ViewModels
             var freshDetails = medicine.GetDetailedStock(); // This calls _availableStockInsCache = null first
 
             StockinMedicineName = medicine.Name;
-            StockinMSHNNB = medicine.Mshnnb;
+            
             StockinSelectedCategory = medicine.Category;
             StockinSelectedSupplier = medicine.Supplier;
             StockinSelectedUnit = medicine.Unit;
             StockinUnitPrice = medicine.CurrentUnitPrice;
             StockinSellPrice = medicine.CurrentSellPrice;
+            
+            // Get the most recent stock-in for profit margin information
+            var latestStockIn = medicine.StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
+            StockProfitMargin = latestStockIn?.ProfitMargin ?? 0;
 
             // Get the latest import date after refreshing the cache
             ImportDate = medicine.LatestImportDate ?? DateTime.Now;

@@ -40,9 +40,7 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("MaQR")
                 .IsUnicode(false);
 
-            builder.Property(e => e.Mshnnb)
-                .HasColumnName("MSHNNB")
-                .HasMaxLength(50);
+     
 
             builder.Property(e => e.IsDeleted)
                 .HasColumnName("DaXoa")

@@ -1260,7 +1260,7 @@ private AppointmentType? _SelectedAppointmentType;
                 }
 
                 // Validate doctor selection
-                if (!ValidateDoctorSelection())
+                if (!ValidateDoctorSelection()) 
                     return;
 
                 // Validate appointment type

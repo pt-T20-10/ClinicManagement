@@ -65,13 +65,6 @@
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          Margin="0,0,8,8"/>
 
-                <!-- MSHNNB -->
-                <TextBox Grid.Row="1" Grid.Column="1" 
-                         Text="{Binding Medicine.Mshnnb, Mode=TwoWay}" 
-                         materialDesign:HintAssist.Hint="MSHNNB"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Margin="0,0,8,8"/>
-
                 <!-- Expiry Date -->
                 <DatePicker Grid.Row="1" Grid.Column="2" 
                             SelectedDate="{Binding ExpiryDateDateTime, StringFormat='{}{0:dd/MM/yyyy}', Mode=TwoWay}" 
@@ -99,13 +92,13 @@
                           Margin="0,0,8,8"/>
 
                 <!-- Supplier -->
-                <ComboBox Grid.Row="2" Grid.Column="2" 
+                <ComboBox Grid.Row="1" Grid.Column="1" 
                           ItemsSource="{Binding SupplierList}"
                           SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
                           DisplayMemberPath="SupplierName"
                           materialDesign:HintAssist.Hint="Nhà cung cấp"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          Margin="0,0,0,8"/>
+                          Margin="0,0,8,8"/>
             </Grid>
         </materialDesign:Card>
 
@@ -122,35 +115,39 @@
                            FontWeight="Bold" 
                            FontSize="16" 
                            Margin="8,8,8,16"/>
-
-                <DataGrid Grid.Row="1"
-                          ItemsSource="{Binding DetailedStockList}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          CanUserAddRows="False"
-                          materialDesign:DataGridAssist.CellPadding="13 8 8 8"
-                          materialDesign:DataGridAssist.ColumnHeaderPadding="8">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Ngày nhập" 
-                                           Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                           Width="150"/>
-                        <DataGridTextColumn Header="Số lượng nhập" 
-                                           Binding="{Binding StockIn.Quantity}" 
-                                           Width="120"/>
-                        <DataGridTextColumn Header="Giá nhập" 
-                                           Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                           Width="150"/>
-                        <DataGridTextColumn Header="Giá bán" 
-                                           Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                           Width="150"/>
-                        <DataGridTextColumn Header="Hạn sử dụng"
-                                           Binding="{Binding StockIn.Medicine.ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                           Width="120"/>
-                        <DataGridTextColumn Header="Còn lại" 
-                                           Binding="{Binding RemainingQuantity}" 
-                                           Width="100"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <ScrollViewer Grid.Row="1">
+                    <DataGrid Grid.Row="1"
+             ItemsSource="{Binding DetailedStockList}"
+             AutoGenerateColumns="False"
+             IsReadOnly="True"
+             VerticalScrollBarVisibility="Auto" 
+            HorizontalScrollBarVisibility="Auto"
+             CanUserAddRows="False"
+             materialDesign:DataGridAssist.CellPadding="13 8 8 8"
+             materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ngày nhập" 
+                              Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
+                              Width="150"/>
+                            <DataGridTextColumn Header="Số lượng nhập" 
+                              Binding="{Binding StockIn.Quantity}" 
+                              Width="120"/>
+                            <DataGridTextColumn Header="Giá nhập" 
+                              Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                              Width="150"/>
+                            <DataGridTextColumn Header="Giá bán" 
+                              Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                              Width="150"/>
+                            <DataGridTextColumn Header="Hạn sử dụng"
+                              Binding="{Binding StockIn.Medicine.ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                              Width="120"/>
+                            <DataGridTextColumn Header="Còn lại" 
+                              Binding="{Binding RemainingQuantity}" 
+                              Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </ScrollViewer>
+             
             </Grid>
         </materialDesign:Card>
 
