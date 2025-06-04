@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.UserControlToUse;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
@@ -267,12 +269,71 @@ namespace ClinicManagement.ViewModels
         #region Command Methods
         private void AcceptAppointment()
         {
-            // This will be implemented later
-            MessageBox.Show("Chức năng tiến hành khám sẽ được phát triển sau.",
-                         "Thông báo",
-                         MessageBoxButton.OK,
-                         MessageBoxImage.Information);
+            try
+            {
+                if (OriginalAppointment == null)
+                    return;
+
+                // Get the MainWindow instance
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow == null)
+                {
+                    MessageBox.Show("Không thể tìm thấy cửa sổ chính của ứng dụng.",
+                                 "Lỗi",
+                                 MessageBoxButton.OK,
+                                 MessageBoxImage.Error);
+                    return;
+                }
+
+                // Find the TabControl in the MainWindow
+                var mainTabControl = mainWindow.FindName("MainTabControl") as TabControl;
+                if (mainTabControl == null)
+                {
+                    MessageBox.Show("Không thể tìm thấy TabControl trong cửa sổ chính.",
+                                 "Lỗi",
+                                 MessageBoxButton.OK,
+                                 MessageBoxImage.Error);
+                    return;
+                }
+
+                // Select the ExamineUC tab (index 2)
+                mainTabControl.SelectedIndex = 2;
+
+                // Find the ExamineUC user control
+                var examineUC = mainTabControl.SelectedContent as ExamineUC;
+                if (examineUC == null)
+                {
+                    MessageBox.Show("Không thể tìm thấy giao diện khám bệnh.",
+                                 "Lỗi",
+                                 MessageBoxButton.OK,
+                                 MessageBoxImage.Error);
+                    return;
+                }
+
+                // Create a new ExamineViewModel with Patient and Appointment objects
+                var examineViewModel = new ExamineViewModel(OriginalAppointment.Patient, OriginalAppointment);
+
+                // Set the DataContext for the ExamineUC
+                examineUC.DataContext = examineViewModel;
+
+
+               
+
+                MessageBox.Show($"Đã chuyển đến phần khám bệnh cho bệnh nhân {OriginalAppointment.Patient.FullName}.",
+                             "Thành công",
+                             MessageBoxButton.OK,
+                             MessageBoxImage.Information);
+                _window?.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Đã xảy ra lỗi khi tiến hành khám: {ex.Message}",
+                             "Lỗi",
+                             MessageBoxButton.OK,
+                             MessageBoxImage.Error);
+            }
         }
+
 
         private bool CanEditAppointment()
         {
