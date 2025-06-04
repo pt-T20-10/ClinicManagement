@@ -1699,6 +1699,15 @@ namespace ClinicManagement.ViewModels
                 {
                     try
                     {
+                        if (!IsSupplierWorking(StockinSelectedSupplier))
+                        {
+                            MessageBox.Show(
+                                "Nhà cung cấp này không hoạt động. Vui lòng chọn nhà cung cấp khác.",
+                                "Nhà Cung Cấp Không Hoạt Động",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            return;
+                        }
                         // Check for the three different cases
                         DateOnly expiryDateOnly = DateOnly.FromDateTime(StockinExpiryDate.Value);
 
@@ -1939,6 +1948,14 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+        private bool IsSupplierWorking(Supplier supplier)
+        {
+            if (supplier == null)
+                return false;
+
+            return supplier.IsActive == true;
+        }
+
 
         #endregion
 

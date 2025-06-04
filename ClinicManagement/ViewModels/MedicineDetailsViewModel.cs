@@ -4,6 +4,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
@@ -55,7 +56,7 @@ namespace ClinicManagement.ViewModels
             {
                 _medicine = value;
                 OnPropertyChanged();
-                // Chỉ load dữ liệu ban đầu, không refresh liên tục
+                // Only load initial data, not continuous refresh
                 LoadInitialStockData();
             }
         }
@@ -69,10 +70,6 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        public string DialogTitle => Medicine != null
-            ? $"Chi tiết các lô thuốc: {Medicine.Name}"
-            : "Chi tiết lô thuốc";
 
         // Selected items for ComboBoxes
         private MedicineCategory _selectedCategory;
@@ -114,7 +111,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // For DatePicker - convert DateOnly to DateTime and back
+        // For DatePicker - convert DateOnly to DateTime
         private DateTime? _expiryDateDateTime;
         public DateTime? ExpiryDateDateTime
         {
@@ -130,10 +127,224 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // StockIn properties
+        private int _stockinQuantity = 1;
+        public int StockinQuantity
+        {
+            get => _stockinQuantity;
+            set
+            {
+                _stockinQuantity = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _stockinUnitPrice;
+        public decimal StockinUnitPrice
+        {
+            get => _stockinUnitPrice;
+            set
+            {
+                _stockinUnitPrice = value;
+                OnPropertyChanged();
+
+                // If profit margin is set, recalculate sell price
+                if (_StockProfitMargin > 0)
+                {
+                    // Calculate sell price based on unit price and profit margin
+                    _stockinSellPrice = _stockinUnitPrice * (1 + (_StockProfitMargin / 100));
+                    OnPropertyChanged(nameof(StockinSellPrice));
+                }
+                else if (_stockinSellPrice > 0)
+                {
+                    // Calculate profit margin based on unit price and sell price
+                    CalculateProfitMargin();
+                }
+            }
+        }
+
+        private decimal _StockProfitMargin;
+        public decimal StockProfitMargin
+        {
+            get => _StockProfitMargin;
+            set
+            {
+                _StockProfitMargin = value;
+                OnPropertyChanged();
+
+                // If unit price is set, recalculate sell price
+                if (_stockinUnitPrice > 0)
+                {
+                    // Calculate sell price based on unit price and profit margin
+                    _stockinSellPrice = _stockinUnitPrice * (1 + (_StockProfitMargin / 100));
+                    OnPropertyChanged(nameof(StockinSellPrice));
+                }
+                else if (_stockinSellPrice > 0)
+                {
+                    // Calculate unit price based on sell price and profit margin
+                    _stockinUnitPrice = _stockinSellPrice / (1 + (_StockProfitMargin / 100));
+                    OnPropertyChanged(nameof(StockinUnitPrice));
+                }
+            }
+        }
+
+        private decimal _stockinSellPrice;
+        public decimal StockinSellPrice
+        {
+            get => _stockinSellPrice;
+            set
+            {
+                _stockinSellPrice = value;
+                OnPropertyChanged();
+
+                // If unit price is set, recalculate profit margin
+                if (_stockinUnitPrice > 0)
+                {
+                    CalculateProfitMargin();
+                }
+            }
+        }
+
+        // Helper method to calculate profit margin based on unit price and sell price
+        private void CalculateProfitMargin()
+        {
+            if (_stockinUnitPrice > 0 && _stockinSellPrice > 0)
+            {
+                // Calculate profit margin percentage
+                _StockProfitMargin = ((_stockinSellPrice / _stockinUnitPrice) - 1) * 100;
+                OnPropertyChanged(nameof(StockProfitMargin));
+            }
+        }
+
+        private DateTime? _importDate = DateTime.Now; // Default to current date
+        public DateTime? ImportDate
+        {
+            get => _importDate;
+            set
+            {
+                _importDate = value;
+                OnPropertyChanged();
+            }
+        }
+        // Selected stock entry from the DataGrid
+private Medicine.StockInWithRemaining _selectedStockEntry;
+        public Medicine.StockInWithRemaining SelectedStockEntry
+        {
+            get => _selectedStockEntry;
+            set
+            {
+                _selectedStockEntry = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Flag to control visibility of the edit section
+        private bool _isEditingStockEntry;
+        public bool IsEditingStockEntry
+        {
+            get => _isEditingStockEntry;
+            set
+            {
+                _isEditingStockEntry = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Properties for editing selected stock entry
+        private int _editStockQuantity;
+        public int EditStockQuantity
+        {
+            get => _editStockQuantity;
+            set
+            {
+                _editStockQuantity = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _editUnitPrice;
+        public decimal EditUnitPrice
+        {
+            get => _editUnitPrice;
+            set
+            {
+                _editUnitPrice = value;
+                OnPropertyChanged();
+
+                // If profit margin is set, recalculate sell price
+                if (_editProfitMargin > 0)
+                {
+                    _editSellPrice = _editUnitPrice * (1 + (_editProfitMargin / 100));
+                    OnPropertyChanged(nameof(EditSellPrice));
+                }
+                else if (_editSellPrice > 0)
+                {
+                    // Calculate profit margin based on unit price and sell price
+                    CalculateEditProfitMargin();
+                }
+            }
+        }
+
+        private decimal _editProfitMargin;
+        public decimal EditProfitMargin
+        {
+            get => _editProfitMargin;
+            set
+            {
+                _editProfitMargin = value;
+                OnPropertyChanged();
+
+                // If unit price is set, recalculate sell price
+                if (_editUnitPrice > 0)
+                {
+                    _editSellPrice = _editUnitPrice * (1 + (_editProfitMargin / 100));
+                    OnPropertyChanged(nameof(EditSellPrice));
+                }
+                else if (_editSellPrice > 0)
+                {
+                    _editUnitPrice = _editSellPrice / (1 + (_editProfitMargin / 100));
+                    OnPropertyChanged(nameof(EditUnitPrice));
+                }
+            }
+        }
+
+        private decimal _editSellPrice;
+        public decimal EditSellPrice
+        {
+            get => _editSellPrice;
+            set
+            {
+                _editSellPrice = value;
+                OnPropertyChanged();
+
+                // If unit price is set, recalculate profit margin
+                if (_editUnitPrice > 0)
+                {
+                    CalculateEditProfitMargin();
+                }
+            }
+        }
+
+        // Helper method to calculate profit margin for edit mode
+        private void CalculateEditProfitMargin()
+        {
+            if (_editUnitPrice > 0 && _editSellPrice > 0)
+            {
+                _editProfitMargin = ((_editSellPrice / _editUnitPrice) - 1) * 100;
+                OnPropertyChanged(nameof(EditProfitMargin));
+            }
+        }
+
+
         #region Commands
         public ICommand CloseCommand { get; set; }
         public ICommand SaveChangesCommand { get; set; }
         public ICommand RefreshDataCommand { get; set; }
+        // Commands for editing stock entries
+        public ICommand EditStockEntryCommand { get; set; }
+        public ICommand SaveStockEntryCommand { get; set; }
+        public ICommand CancelEditStockEntryCommand { get; set; }
+
         #endregion
         #endregion
 
@@ -143,10 +354,10 @@ namespace ClinicManagement.ViewModels
             Medicine = medicine;
             InitializeCommands();
             LoadDropdownData();
-            UpdateMedicineInfo();
+            LoadMedicineDetailsForEdit(medicine);
         }
 
-        #region InitializateCommands
+        #region InitializeCommands
         public void InitializeCommands()
         {
             CloseCommand = new RelayCommand<object>(
@@ -163,13 +374,27 @@ namespace ClinicManagement.ViewModels
                 parameter => RefreshMedicineData(),
                 parameter => Medicine != null
             );
+            EditStockEntryCommand = new RelayCommand<Medicine.StockInWithRemaining>(
+      parameter => BeginEditStockEntry(parameter),
+      parameter => parameter != null
+  );
+
+            SaveStockEntryCommand = new RelayCommand<object>(
+                parameter => SaveEditedStockEntry(),
+                parameter => CanSaveStockEntry()
+            );
+
+            CancelEditStockEntryCommand = new RelayCommand<object>(
+                parameter => CancelEditStockEntry(),
+                parameter => IsEditingStockEntry
+            );
         }
         #endregion
 
         #region Data Loading Methods
 
         /// <summary>
-        /// Load dữ liệu ban đầu khi khởi tạo Medicine
+        /// Load initial data when Medicine is initialized
         /// </summary>
         private void LoadInitialStockData()
         {
@@ -177,7 +402,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (Medicine != null)
                 {
-                    // Lấy dữ liệu chi tiết kho từ Medicine hiện tại
+                    // Get stock details from current Medicine
                     var details = Medicine.GetDetailedStock();
                     DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>(
                         details.OrderByDescending(d => d.ImportDate));
@@ -189,13 +414,13 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu ban đầu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading initial data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
             }
         }
 
         /// <summary>
-        /// Refresh dữ liệu từ database mà không gây vòng lặp
+        /// Refresh data from database without causing loops
         /// </summary>
         private void RefreshMedicineData()
         {
@@ -203,7 +428,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (Medicine == null) return;
 
-                // Lấy dữ liệu mới nhất từ database
+                // Get latest data from database
                 var refreshedMedicine = DataProvider.Instance.Context.Medicines
                     .Include(m => m.StockIns)
                     .Include(m => m.InvoiceDetails)
@@ -214,40 +439,37 @@ namespace ClinicManagement.ViewModels
 
                 if (refreshedMedicine != null)
                 {
-                    // Cập nhật các thuộc tính của Medicine hiện tại
+                    // Update current Medicine properties
                     UpdateMedicineProperties(refreshedMedicine);
 
-                    // Cập nhật DetailedStockList
+                    // Update DetailedStockList
                     var details = refreshedMedicine.GetDetailedStock();
                     DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>(
                         details.OrderByDescending(d => d.ImportDate));
 
-                    // Cập nhật các dropdown selection
+                    // Update dropdown selections
                     UpdateDropdownSelections();
-
-                    OnPropertyChanged(nameof(DialogTitle));
                 }
                 else
                 {
-                    MessageBox.Show("Không tìm thấy thông tin thuốc trong cơ sở dữ liệu.", "Thông báo",
+                    MessageBox.Show("Medicine information not found in database.", "Notice",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi làm mới dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error refreshing data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         /// <summary>
-        /// Cập nhật các thuộc tính của Medicine mà không kích hoạt setter
+        /// Update Medicine properties without triggering setter
         /// </summary>
         private void UpdateMedicineProperties(Medicine refreshedMedicine)
         {
             if (Medicine == null || refreshedMedicine == null) return;
 
             Medicine.Name = refreshedMedicine.Name;
-           
             Medicine.CategoryId = refreshedMedicine.CategoryId;
             Medicine.UnitId = refreshedMedicine.UnitId;
             Medicine.SupplierId = refreshedMedicine.SupplierId;
@@ -258,12 +480,12 @@ namespace ClinicManagement.ViewModels
             Medicine.Unit = refreshedMedicine.Unit;
             Medicine.Supplier = refreshedMedicine.Supplier;
 
-            // Notify UI về thay đổi
+            // Notify UI about changes
             OnPropertyChanged(nameof(Medicine));
         }
 
         /// <summary>
-        /// Load dữ liệu cho các dropdown
+        /// Load data for dropdowns
         /// </summary>
         private void LoadDropdownData()
         {
@@ -272,33 +494,24 @@ namespace ClinicManagement.ViewModels
                 var context = DataProvider.Instance.Context;
 
                 CategoryList = new ObservableCollection<MedicineCategory>(
-                    context.MedicineCategories);
+                    context.MedicineCategories.Where(c => !(bool)c.IsDeleted));
 
                 UnitList = new ObservableCollection<Unit>(
-                    context.Units);
+                    context.Units.Where(u => !(bool)u.IsDeleted));
 
+                // Only include suppliers that are both not deleted AND active
                 SupplierList = new ObservableCollection<Supplier>(
-                    context.Suppliers);
+                    context.Suppliers.Where(s => !(bool)s.IsDeleted && (bool)s.IsActive));
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu dropdown: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading dropdown data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        /// <summary>
-        /// Cập nhật thông tin Medicine và các dropdown selection
-        /// </summary>
-        private void UpdateMedicineInfo()
-        {
-            if (Medicine == null) return;
-
-            UpdateDropdownSelections();
-            UpdateExpiryDateTime();
-        }
 
         /// <summary>
-        /// Cập nhật các lựa chọn trong dropdown
+        /// Update dropdown selections
         /// </summary>
         private void UpdateDropdownSelections()
         {
@@ -310,7 +523,7 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Cập nhật ExpiryDateDateTime từ Medicine.ExpiryDate
+        /// Update ExpiryDateDateTime from Medicine.ExpiryDate
         /// </summary>
         private void UpdateExpiryDateTime()
         {
@@ -325,6 +538,29 @@ namespace ClinicManagement.ViewModels
             {
                 ExpiryDateDateTime = null;
             }
+        }
+
+        /// <summary>
+        /// Load medicine details for editing
+        /// </summary>
+        private void LoadMedicineDetailsForEdit(Medicine medicine)
+        {
+            if (medicine == null) return;
+
+            // Update dropdown selections
+            UpdateDropdownSelections();
+            UpdateExpiryDateTime();
+
+            // Load additional details for StockIn
+            StockinUnitPrice = medicine.CurrentUnitPrice;
+            StockinSellPrice = medicine.CurrentSellPrice;
+
+            // Get profit margin information from most recent StockIn
+            var latestStockIn = medicine.StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
+            StockProfitMargin = latestStockIn?.ProfitMargin ?? 0;
+
+            // Get latest import date
+            ImportDate = medicine.LatestImportDate ?? DateTime.Now;
         }
 
         #endregion
@@ -346,12 +582,12 @@ namespace ClinicManagement.ViewModels
             {
                 var dbContext = DataProvider.Instance.Context;
 
-                // Lấy thuốc từ cơ sở dữ liệu
+                // Get medicine from database
                 var medicineToUpdate = dbContext.Medicines.Find(Medicine.MedicineId);
 
                 if (medicineToUpdate != null)
                 {
-                    // Cập nhật các trường thuốc
+                    // Update medicine fields
                     medicineToUpdate.Name = Medicine.Name;
                     medicineToUpdate.CategoryId = SelectedCategory?.CategoryId;
                     medicineToUpdate.UnitId = SelectedUnit?.UnitId;
@@ -366,21 +602,148 @@ namespace ClinicManagement.ViewModels
                         medicineToUpdate.ExpiryDate = null;
                     }
 
+                    // Check if we need to add a new StockIn entry
+                    if (StockinQuantity > 0 && StockinUnitPrice > 0)
+                    {
+                        var newStockIn = new StockIn
+                        {
+                            MedicineId = Medicine.MedicineId,
+                            Quantity = StockinQuantity,
+                            ImportDate = ImportDate ?? DateTime.Now,
+                            UnitPrice = StockinUnitPrice,
+                            SellPrice = StockinSellPrice,
+                            ProfitMargin = StockProfitMargin,
+                            TotalCost = StockinUnitPrice * StockinQuantity
+                        };
+
+                        dbContext.StockIns.Add(newStockIn);
+
+                        // Update or create stock entry
+                        var existingStock = dbContext.Stocks
+                            .FirstOrDefault(s => s.MedicineId == Medicine.MedicineId);
+
+                        if (existingStock != null)
+                        {
+                            // Update existing stock
+                            existingStock.Quantity += StockinQuantity;
+                            existingStock.LastUpdated = ImportDate ?? DateTime.Now;
+                        }
+                        else
+                        {
+                            // Create new stock entry
+                            var newStock = new Stock
+                            {
+                                MedicineId = Medicine.MedicineId,
+                                Quantity = StockinQuantity,
+                                LastUpdated = ImportDate ?? DateTime.Now
+                            };
+                            dbContext.Stocks.Add(newStock);
+                        }
+                    }
+
                     dbContext.SaveChanges();
 
                     MessageBox.Show(
-                        "Thông tin thuốc đã được cập nhật thành công!",
-                        "Thành công",
+                        "Medicine information has been updated successfully!",
+                        "Success",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
 
-                    // Làm mới dữ liệu sau khi lưu
+                    // Refresh data after saving
                     RefreshMedicineData();
                 }
                 else
                 {
                     MessageBox.Show(
-                        "Không tìm thấy thuốc trong cơ sở dữ liệu để cập nhật.",
+                        "Medicine not found in database.",
+                        "Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error saving medicine information: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void BeginEditStockEntry(Medicine.StockInWithRemaining stockEntry)
+        {
+            if (stockEntry == null) return;
+
+            // Load data from the selected stock entry
+            EditStockQuantity = stockEntry.StockIn.Quantity;
+            EditUnitPrice = stockEntry.UnitPrice;
+            EditSellPrice = stockEntry.SellPrice ?? 0;
+            EditProfitMargin = stockEntry.StockIn.ProfitMargin;
+
+            IsEditingStockEntry = true;
+        }
+
+        private bool CanSaveStockEntry()
+        {
+            return IsEditingStockEntry &&
+                   SelectedStockEntry != null &&
+                   EditStockQuantity > 0 &&
+                   EditUnitPrice > 0 &&
+                   EditSellPrice > 0;
+        }
+
+        private void SaveEditedStockEntry()
+        {
+            if (SelectedStockEntry == null || !IsEditingStockEntry) return;
+
+            try
+            {
+                var dbContext = DataProvider.Instance.Context;
+
+                var stockInToUpdate = dbContext.StockIns.Find(SelectedStockEntry.StockIn.StockInId);
+
+                if (stockInToUpdate != null)
+                {
+                    // Calculate the quantity difference
+                    int quantityDiff = EditStockQuantity - stockInToUpdate.Quantity;
+
+                    // Update StockIn record
+                    stockInToUpdate.Quantity = EditStockQuantity;
+                    stockInToUpdate.UnitPrice = EditUnitPrice;
+                    stockInToUpdate.SellPrice = EditSellPrice;
+                    stockInToUpdate.ProfitMargin = EditProfitMargin;
+                    stockInToUpdate.TotalCost = EditUnitPrice * EditStockQuantity;
+
+                    // Update Stock record if quantity changed
+                    if (quantityDiff != 0)
+                    {
+                        var stockToUpdate = dbContext.Stocks
+                            .FirstOrDefault(s => s.MedicineId == stockInToUpdate.MedicineId);
+
+                        if (stockToUpdate != null)
+                        {
+                            stockToUpdate.Quantity += quantityDiff;
+                            stockToUpdate.LastUpdated = DateTime.Now;
+                        }
+                    }
+
+                    dbContext.SaveChanges();
+
+                    MessageBox.Show(
+                        "Thông tin lô nhập kho đã được cập nhật thành công!",
+                        "Thành công",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    // Refresh data after saving
+                    RefreshMedicineData();
+                    IsEditingStockEntry = false;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Không tìm thấy lô nhập kho trong cơ sở dữ liệu.",
                         "Lỗi",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
@@ -389,13 +752,17 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Lỗi khi lưu thông tin thuốc: {ex.Message}",
+                    $"Lỗi khi lưu thông tin lô nhập kho: {ex.Message}",
                     "Lỗi",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
         }
 
+        private void CancelEditStockEntry()
+        {
+            IsEditingStockEntry = false;
+        }
         #endregion
     }
 }

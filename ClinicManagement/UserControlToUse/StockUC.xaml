@@ -272,21 +272,6 @@
                         FontSize="18" 
                         Margin="20,15,0,15" 
                         HorizontalAlignment="Left"/>
-                        <Button
-                            HorizontalAlignment="Right"
-                                Margin="50 5 5 5 "
-                              Grid.Row="0"
-                              IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-                              Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
-                                Command="{Binding AddPatientCommand}"
-                              ToolTip="MaterialDesignFloatingActionDarkButton"
-                                 >
-                            <materialDesign:PackIcon
-                            Width="30"
-                            Height="40"
-                            Kind="PlusThick"
-                            />
-                        </Button>
                         <Grid Grid.Row="1" Margin="15,0,15,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -377,7 +362,6 @@
                              HorizontalAlignment="Left"
                              materialDesign:HintAssist.Hint="Tỉ lệ lợi nhuận (%)"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-
                             <!-- Giá xuất -->
                             <TextBox
                            Grid.Column="2" Grid.Row="2"
