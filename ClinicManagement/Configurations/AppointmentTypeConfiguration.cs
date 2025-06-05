@@ -18,7 +18,9 @@ namespace ClinicManagement.Configurations
             builder.Property(e => e.TypeName)
                 .HasColumnName("TenLoai")
                 .HasMaxLength(50);
-
+            builder.Property(e => e.Price)
+             .HasColumnName("GiaTien")
+             .HasColumnType("decimal(18, 2)");
             builder.Property(e => e.Description)
                 .HasColumnName("MoTa")
                 .HasMaxLength(255);

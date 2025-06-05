@@ -23,6 +23,7 @@ namespace ClinicManagement.UserControlToUse
         public ExamineUC()
         {
             InitializeComponent();
+            DataContext = new ViewModels.ExamineViewModel();
         }
     }
 }

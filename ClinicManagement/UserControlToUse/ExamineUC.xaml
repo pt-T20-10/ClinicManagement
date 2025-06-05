@@ -39,40 +39,92 @@
                     </Grid.RowDefinitions>
 
                     <!-- Patient search - Row 0 -->
+                    <!-- Patient search - Row 0 -->
                     <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
                         <!-- Patient name search -->
-                        <TextBlock Grid.Column="0" 
-                       Text="Bệnh nhân:" 
-                       VerticalAlignment="Center" 
-                       Margin="0,0,8,0"/>
-                        <TextBox Grid.Column="1"
-                     Width="220"
-                     materialDesign:HintAssist.Hint="Nhập tên bệnh nhân"
-                     Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,8,16,8"
-                     HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" 
+               Text="Bệnh nhân:" 
+               VerticalAlignment="Center" 
+               Margin="0,0,8,0"/>
+                        <TextBox Grid.Row="0" Grid.Column="1"
+             Width="220"
+             materialDesign:HintAssist.Hint="Nhập tên bệnh nhân"
+             Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
+             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+             Margin="0,8,16,8"
+             HorizontalAlignment="Left"/>
 
                         <!-- Phone number search -->
-                        <TextBlock Grid.Column="2" 
-                       Text="Số điện thoại:" 
-                       VerticalAlignment="Center" 
-                       Margin="16,0,8,0"/>
-                        <TextBox Grid.Column="3"
-                     Width="220"
-                     materialDesign:HintAssist.Hint="Nhập số điện thoại"
-                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,8,0,8"
-                     HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" 
+               Text="Số điện thoại:" 
+               VerticalAlignment="Center" 
+               Margin="16,0,8,0"/>
+                        <TextBox Grid.Row="0" Grid.Column="3"
+             Width="220"
+             materialDesign:HintAssist.Hint="Nhập số điện thoại"
+             Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
+             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+             Margin="0,8,0,8"
+             HorizontalAlignment="Left"/>
+
+                        <!-- Insurance code search (added) -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" 
+               Text="BHYT:" 
+               VerticalAlignment="Center" 
+               Margin="0,0,8,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+             Width="220"
+             materialDesign:HintAssist.Hint="Nhập mã BHYT"
+             Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged}"  
+             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+             Margin="0,8,16,8"
+             HorizontalAlignment="Left"/>
+
+                        <!-- Search button (added) -->
+                        <Button Grid.Row="1" Grid.Column="3"
+            Command="{Binding SearchPatientCommand}"
+            Style="{StaticResource MaterialDesignOutlinedButton}"
+            
+            HorizontalAlignment="Left"
+            Width="150" Margin="0,17,0,17">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Tìm kiếm"/>
+                            </StackPanel>
+                        </Button>
+
+
+
+                        <Button
+                            Grid.Row="1" Grid.Column="3"
+                           Margin="170,6,0,10"
+                           IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+                           Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
+                           materialDesign:HintAssist.Hint="Thêm bệnh nhân mới"
+                           Command="{Binding AddPatientCommand}"
+                            Width="50"
+                            Height="50"
+                           HorizontalAlignment="Left"
+                           ToolTip="Thêm bệnh nhân mới" Grid.ColumnSpan="2">
+                            <materialDesign:PackIcon
+                               Width="25"
+                               Height="35"
+                               Kind="PlusThick"/>
+                        </Button>
                     </Grid>
+
 
                     <!-- Patient details - Row 1 -->
                     <materialDesign:Card Grid.Row="1" 
@@ -95,12 +147,12 @@
                             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
                                     <TextBlock Text="Mã BN:" FontWeight="Medium" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding SelectedPatient.PatientCode}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding SelectedPatient.PatientId}" FontWeight="SemiBold"/>
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
                                     <TextBlock Text="Năm sinh:" FontWeight="Medium" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding SelectedPatient.BirthYear}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding SelectedPatient.DateOfBirth}" FontWeight="SemiBold"/>
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal">
@@ -211,7 +263,9 @@
                                 <TextBox Grid.Column="0" 
                      Text="{Binding Pulse}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Foreground="Black"                         
                      Margin="0,5" 
+                     Padding="0"
                      Height="35"
                      HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Column="1" 
@@ -236,6 +290,7 @@
                      Text="{Binding Respiration}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
+                     Padding="0"
                      Height="35"
                      HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Column="1" 
@@ -261,6 +316,7 @@
                      Text="{Binding Temperature}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
+                     Padding="0"
                      Height="35"
                      HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Column="1" 
@@ -286,6 +342,7 @@
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
+                                         Padding="0"
                      HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Column="1" 
                        Text="kg" 
@@ -314,6 +371,7 @@
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
+                                         Padding="0"
                      HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Column="1" 
                        Text="/" 
@@ -326,6 +384,7 @@
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="8,5,0,5" 
                      Height="35"
+                                         Padding="0"
                      HorizontalAlignment="Stretch"/>
                                 <TextBlock Grid.Column="3" 
                        Text="mmHg" 

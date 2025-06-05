@@ -23,6 +23,7 @@ namespace ClinicManagement.ViewModels
             {
                 _selectedPatient = value;
                 OnPropertyChanged();
+             
             }
         }
 
@@ -37,7 +38,7 @@ namespace ClinicManagement.ViewModels
                 SearchPatient();
             }
         }
-
+  
         private string _phone;
         public string Phone
         {
@@ -47,6 +48,16 @@ namespace ClinicManagement.ViewModels
                 _phone = value;
                 OnPropertyChanged();
                 SearchPatient();
+            }
+        }
+        private string _insuranceCode;
+        public string InsuranceCode
+        {
+            get => _insuranceCode;
+            set
+            {
+                _insuranceCode = value;
+                OnPropertyChanged();
             }
         }
 
@@ -216,6 +227,8 @@ namespace ClinicManagement.ViewModels
         public ICommand SaveRecordCommand { get; set; }
         public ICommand PrintRecordCommand { get; set; }
         public ICommand ResetRecordCommand { get; set; }
+        public ICommand SearchPatientCommand { get; set; }
+
         #endregion
 
         #region Constructors
@@ -265,7 +278,135 @@ namespace ClinicManagement.ViewModels
                 (p) => ResetForm(),
                 (p) => true
             );
+
+            // Add this new command
+            SearchPatientCommand = new RelayCommand<object>(
+                (p) => SearchPatientExplicit(),
+                (p) => true
+            );
         }
+        private void SearchPatientExplicit()
+        {
+            try
+            {
+                // Validate search criteria
+                if (string.IsNullOrWhiteSpace(InsuranceCode) &&
+                   (string.IsNullOrWhiteSpace(PatienName) || string.IsNullOrWhiteSpace(Phone)))
+                {
+                    MessageBox.Show(
+                        "Vui lòng nhập mã BHYT hoặc cả tên và số điện thoại để tìm kiếm.",
+                        "Thiếu thông tin",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Check minimum length for search fields
+                if (!string.IsNullOrWhiteSpace(PatienName) && PatienName.Length < 2)
+                {
+                    MessageBox.Show(
+                        "Tên bệnh nhân cần có ít nhất 2 ký tự.",
+                        "Thiếu thông tin",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length < 5)
+                {
+                    MessageBox.Show(
+                        "Số điện thoại cần có ít nhất 5 ký tự.",
+                        "Thiếu thông tin",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(InsuranceCode) && InsuranceCode.Length < 5)
+                {
+                    MessageBox.Show(
+                        "Mã BHYT cần có ít nhất 5 ký tự.",
+                        "Thiếu thông tin",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                var query = DataProvider.Instance.Context.Patients.Where(p => p.IsDeleted != true);
+
+                // Apply search filters
+                if (!string.IsNullOrWhiteSpace(InsuranceCode))
+                {
+                    query = query.Where(p => p.InsuranceCode.Contains(InsuranceCode));
+                }
+                else
+                {
+                    // If not searching by insurance, then require both name and phone
+                    query = query.Where(p => p.FullName.Contains(PatienName) && p.Phone.Contains(Phone));
+                }
+
+                var patient = query.FirstOrDefault();
+
+                if (patient != null)
+                {
+                    SelectedPatient = patient;
+
+                    // Set the UI fields to match the found patient
+                    PatienName = patient.FullName;
+                    Phone = patient.Phone;
+                    InsuranceCode = patient.InsuranceCode;
+
+                    // Check if there's a pending appointment for this patient
+                    var pendingAppointment = DataProvider.Instance.Context.Appointments
+                        .Include(a => a.Doctor)
+                        .FirstOrDefault(a => a.PatientId == patient.PatientId &&
+                                            a.Status == "Đang chờ" &&
+                                            a.IsDeleted != true &&
+                                            a.AppointmentDate.Date == DateTime.Today);
+
+                    if (pendingAppointment != null && RelatedAppointment == null)
+                    {
+                        RelatedAppointment = pendingAppointment;
+                        SelectedDoctor = pendingAppointment.Doctor;
+
+                        // Ask if the user wants to proceed with this appointment
+                        MessageBoxResult result = MessageBox.Show(
+                            $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Doctor.FullName}.\n" +
+                            $"Bạn có muốn tiến hành khám với lịch hẹn này không?",
+                            "Tìm thấy lịch hẹn",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question);
+
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            UpdateAppointmentStatus(pendingAppointment, "Đang khám");
+                        }
+                        else
+                        {
+                            RelatedAppointment = null;
+                        }
+                    }
+                }
+                else
+                {
+                    SelectedPatient = null;
+                    MessageBox.Show(
+                        "Không tìm thấy bệnh nhân với thông tin đã nhập. Vui lòng kiểm tra lại thông tin tìm kiếm.",
+                        "Không tìm thấy",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Đã xảy ra lỗi khi tìm kiếm bệnh nhân: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
 
         private void LoadDoctors()
         {
@@ -296,31 +437,27 @@ namespace ClinicManagement.ViewModels
 
         private void SearchPatient()
         {
+            // Only auto-search when both name and phone have sufficient characters
+            if (string.IsNullOrWhiteSpace(PatienName) || PatienName.Length < 2 ||
+                string.IsNullOrWhiteSpace(Phone) || Phone.Length < 5)
+            {
+                SelectedPatient = null;
+                return;
+            }
+
             try
             {
-                if (string.IsNullOrWhiteSpace(PatienName) && string.IsNullOrWhiteSpace(Phone))
-                {
-                    SelectedPatient = null;
-                    return;
-                }
-
-                var query = DataProvider.Instance.Context.Patients.Where(p => p.IsDeleted != true);
-
-                if (!string.IsNullOrWhiteSpace(PatienName))
-                {
-                    query = query.Where(p => p.FullName.Contains(PatienName));
-                }
-
-                if (!string.IsNullOrWhiteSpace(Phone))
-                {
-                    query = query.Where(p => p.Phone.Contains(Phone));
-                }
+                var query = DataProvider.Instance.Context.Patients
+                    .Where(p => p.IsDeleted != true &&
+                            p.FullName.Contains(PatienName) &&
+                            p.Phone.Contains(Phone));
 
                 var patient = query.FirstOrDefault();
 
                 if (patient != null)
                 {
                     SelectedPatient = patient;
+                    InsuranceCode = patient.InsuranceCode;
 
                     // Check if there's a pending appointment for this patient
                     var pendingAppointment = DataProvider.Instance.Context.Appointments
@@ -367,6 +504,7 @@ namespace ClinicManagement.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
 
         private bool CanSaveRecord()
         {
@@ -529,6 +667,7 @@ namespace ClinicManagement.ViewModels
                 SelectedPatient = null;
                 PatienName = string.Empty;
                 Phone = string.Empty;
+                InsuranceCode = string.Empty; // Add this line
                 SelectedDoctor = DoctorList.FirstOrDefault();
             }
 
