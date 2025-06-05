@@ -216,6 +216,47 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+        // For appointment type selection
+        private ObservableCollection<AppointmentType> _appointmentTypeList;
+        public ObservableCollection<AppointmentType> AppointmentTypeList
+        {
+            get => _appointmentTypeList;
+            set
+            {
+                _appointmentTypeList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private AppointmentType _selectedAppointmentType;
+        public AppointmentType SelectedAppointmentType
+        {
+            get => _selectedAppointmentType;
+            set
+            {
+                _selectedAppointmentType = value;
+                OnPropertyChanged();
+
+                // When appointment type changes, update the fee
+                if (_selectedAppointmentType != null && _selectedAppointmentType.Price.HasValue)
+                {
+                    ExaminationFee = _selectedAppointmentType.Price.Value;
+                }
+            }
+        }
+
+        // For examination fee
+        private decimal _examinationFee;
+        public decimal ExaminationFee
+        {
+            get => _examinationFee;
+            set
+            {
+                _examinationFee = value;
+                OnPropertyChanged();
+            }
+        }
+
 
         // Validation
         public string Error => null;
@@ -237,6 +278,7 @@ namespace ClinicManagement.ViewModels
         {
             InitializeCommands();
             LoadDoctors();
+            LoadAppointmentTypes();
         }
 
         // Constructor for starting examination from an appointment
@@ -244,7 +286,7 @@ namespace ClinicManagement.ViewModels
         {
             InitializeCommands();
             LoadDoctors();
-
+            LoadAppointmentTypes();
             SelectedPatient = patient;
             PatienName = patient?.FullName;
             Phone = patient?.Phone;
@@ -707,6 +749,33 @@ namespace ClinicManagement.ViewModels
             {
                 MessageBox.Show(
                     $"Đã xảy ra lỗi khi cập nhật trạng thái lịch hẹn: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void LoadAppointmentTypes()
+        {
+            try
+            {
+                var appointmentTypes = DataProvider.Instance.Context.AppointmentTypes
+                    .Where(at => at.IsDeleted != true)
+                    .OrderBy(at => at.TypeName)
+                    .ToList();
+
+                AppointmentTypeList = new ObservableCollection<AppointmentType>(appointmentTypes);
+
+                // Set default appointment type if available
+                if (AppointmentTypeList.Count > 0 && SelectedAppointmentType == null)
+                {
+                    SelectedAppointmentType = AppointmentTypeList.First();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Đã xảy ra lỗi khi tải danh sách loại khám: {ex.Message}",
                     "Lỗi",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

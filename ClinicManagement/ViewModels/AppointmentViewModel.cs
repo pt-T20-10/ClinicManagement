@@ -34,7 +34,7 @@ namespace ClinicManagement.ViewModels
         }
 
         // Change property declarations to be nullable
-private AppointmentType? _SelectedAppointmentType;
+        private AppointmentType? _SelectedAppointmentType;
         public AppointmentType? SelectedAppointmentType
         {
             get => _SelectedAppointmentType;
@@ -46,6 +46,7 @@ private AppointmentType? _SelectedAppointmentType;
                 {
                     TypeDisplayName = value.TypeName;
                     TypeDescription = value.Description;
+                    TypePrice = value.Price;
                 }
             }
         }
@@ -71,10 +72,21 @@ private AppointmentType? _SelectedAppointmentType;
                 OnPropertyChanged();
             }
         }
+        private decimal? _TypePrice;
+        public decimal? TypePrice
+        {
+            get => _TypePrice;
+            set
+            {
+                _TypePrice = value;
+                OnPropertyChanged();
+            }
+        }
+
         #endregion
 
-        #region Appointment Form Properties
-        // Patient search
+                #region Appointment Form Properties
+                // Patient search
         private string _patientSearch;
         // Patient search
         public string PatientSearch
@@ -294,6 +306,7 @@ private AppointmentType? _SelectedAppointmentType;
         public ICommand AddAppointmentTypeCommand { get; set; }
         public ICommand EditAppointmentTypeCommand { get; set; }
         public ICommand DeleteAppointmentTypeCommand { get; set; }
+        public ICommand RefreshTypeCommand { get; set; }
 
         // Appointment Form Commands
         public ICommand CancelCommand { get; set; }
@@ -378,6 +391,12 @@ private AppointmentType? _SelectedAppointmentType;
                 (p) => DeleteAppointmentType(),
                 (p) => SelectedAppointmentType != null
             );
+            RefreshTypeCommand = new RelayCommand<object>
+          ((p) => ExecuteRefreshType(),
+              (p) => true
+          );
+
+
 
             // Initialize form commands
             CancelCommand = new RelayCommand<object>(
@@ -1814,6 +1833,7 @@ private AppointmentType? _SelectedAppointmentType;
                 {
                     TypeName = TypeDisplayName,
                     Description = TypeDescription ?? "",
+                    Price = TypePrice ?? 0,
                     IsDeleted = false
                 };
 
@@ -1830,9 +1850,7 @@ private AppointmentType? _SelectedAppointmentType;
                 // Also update AppointmentTypes collection
                 AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
 
-                // Clear fields
-                TypeDisplayName = "";
-                TypeDescription = "";
+                ExecuteRefreshType();
 
                 MessageBox.Show(
                     "Đã thêm loại lịch hẹn thành công!",
@@ -1895,6 +1913,7 @@ private AppointmentType? _SelectedAppointmentType;
                 }
 
                 appointmenttypeToUpdate.TypeName = TypeDisplayName;
+                appointmenttypeToUpdate.Price = TypePrice ?? 0;  
                 appointmenttypeToUpdate.Description = TypeDescription ?? "";
                 DataProvider.Instance.Context.SaveChanges();
 
@@ -1910,6 +1929,7 @@ private AppointmentType? _SelectedAppointmentType;
 
                 // Update doctor list as specialty names may have changed
                 LoadAppointmentTypeData();
+                ExecuteRefreshType();
 
                 MessageBox.Show(
                     "Đã cập nhật loại lịch hẹn thành công!",
@@ -1973,10 +1993,7 @@ private AppointmentType? _SelectedAppointmentType;
                 // Also update AppointmentTypes collection
                 AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
 
-                // Clear selection and fields
-                SelectedAppointmentType = null;
-                TypeDisplayName = "";
-                TypeDescription = "";
+                  ExecuteRefreshType();
 
                 MessageBox.Show(
                     "Đã xóa loại lịch hẹn thành công.",
@@ -1992,6 +2009,13 @@ private AppointmentType? _SelectedAppointmentType;
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+        }
+        private void ExecuteRefreshType()
+        {
+            SelectedAppointmentType = null;
+            TypeDisplayName = string.Empty;
+            TypeDescription = string.Empty;
+            TypePrice = null;
         }
         #endregion
     }

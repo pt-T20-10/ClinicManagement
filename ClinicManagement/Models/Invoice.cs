@@ -15,7 +15,7 @@ public partial class Invoice
 
     public string? Status { get; set; }
 
-    public bool IsPharmacySale { get; set; }
+    public string InvoiceType { get; set; }
 
     public int? MedicalRecordId { get; set; }
 

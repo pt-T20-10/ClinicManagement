@@ -9,13 +9,13 @@ public partial class InvoiceDetail
 
     public int InvoiceId { get; set; }
 
-    public int MedicineId { get; set; }
+    public int? MedicineId { get; set; }
 
-    public int StockInId { get; set; }
+    public int? StockInId { get; set; }
 
-    public int Quantity { get; set; }
+    public int? Quantity { get; set; }
 
-    public decimal SalePrice { get; set; }
+    public decimal? SalePrice { get; set; }
 
     public decimal? Discount { get; set; }
 

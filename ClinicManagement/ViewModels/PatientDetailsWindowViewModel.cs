@@ -620,8 +620,29 @@ namespace ClinicManagement.ViewModels
                 .Where(i => i.PatientId == PatientId)
                 .OrderByDescending(i => i.InvoiceDate)
                 .ToList()
+                .Select(i => {
+                    // Ensure InvoiceType is never null and trim any whitespace
+                    if (i.InvoiceType == null)
+                    {
+                        i.InvoiceType = "Unknown";
+                    }
+                    else
+                    {
+                        i.InvoiceType = i.InvoiceType.Trim();
+                    }
+
+                    // Also trim Status if present
+                    if (i.Status != null)
+                    {
+                        i.Status = i.Status.Trim();
+                    }
+
+                    return i;
+                })
             );
         }
+
+
 
         private void LoadAppointments()
         {
@@ -631,24 +652,33 @@ namespace ClinicManagement.ViewModels
                 .Where(a => a.PatientId == PatientId && a.IsDeleted != true)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToList()
+                .Select(a => {
+                    // Trim Status if present
+                    if (a.Status != null)
+                    {
+                        a.Status = a.Status.Trim();
+                    }
+                    return a;
+                })
             );
+
+            // Create status items with trimmed values
             AppointmentStatusList = new ObservableCollection<StatusItem>
-                {
-                    new StatusItem("", "Tất cả"),
-                    new StatusItem("Đang chờ", "Đang chờ"),
-                    new StatusItem("Đang khám", "Đang khám"),
-                    new StatusItem("Đã khám", "Đã khám"),
-                    new StatusItem("Đã hủy", "Đã hủy")
-                };
+    {
+        new StatusItem("", "Tất cả"),
+        new StatusItem("Đang chờ", "Đang chờ"),
+        new StatusItem("Đang khám", "Đang khám"),
+        new StatusItem("Đã khám", "Đã khám"),
+        new StatusItem("Đã hủy", "Đã hủy")
+    }; 
 
-            // Khởi tạo InvoiceStatusList
+            // Create invoice status items with trimmed values
             InvoiceStatusList = new ObservableCollection<StatusItem>
-                {
-                    new StatusItem("", "Tất cả"),
-                    new StatusItem("Đã thanh toán", "Đã thanh toán"),
-                    new StatusItem("Chưa thanh toán", "Chưa thanh toán")
-                };
-
+    {
+        new StatusItem("", "Tất cả"),
+        new StatusItem("Đã thanh toán", "Đã thanh toán"),
+        new StatusItem("Chưa thanh toán", "Chưa thanh toán")
+    };
         }
 
         // Loading indicator property
@@ -833,7 +863,7 @@ namespace ClinicManagement.ViewModels
                 if (Patient == null) return;
 
                 var query = DataProvider.Instance.Context.Invoices
-                    .Where(i => i.PatientId == Patient.PatientId);
+                    .Where(i => i.PatientId == PatientId);
 
                 // Apply date range filter
                 if (InvoiceStartDate != DateTime.MinValue && InvoiceEndDate != DateTime.MinValue)
@@ -843,17 +873,25 @@ namespace ClinicManagement.ViewModels
                     query = query.Where(i => i.InvoiceDate >= InvoiceStartDate && i.InvoiceDate < endDatePlus);
                 }
 
-                // Filter by status if not "All" - Fixed: check for empty string instead of "All"
+                // Filter by status - Add trim comparison
                 if (SelectedInvoiceStatus != null && !string.IsNullOrEmpty(SelectedInvoiceStatus.Status))
                 {
-                    query = query.Where(i => i.Status == SelectedInvoiceStatus.Status);
+                    var statusToFilter = SelectedInvoiceStatus.Status.Trim();
+                    // Use EF's string comparison methods
+                    query = query.Where(i => i.Status.Trim() == statusToFilter);
                 }
 
                 // Order by date descending
                 var filteredInvoices = query.OrderByDescending(i => i.InvoiceDate).ToList();
 
-                // Update UI
-                Invoices = new ObservableCollection<Invoice>(filteredInvoices);
+                // Apply additional processing and trimming
+                Invoices = new ObservableCollection<Invoice>(
+                    filteredInvoices.Select(i => {
+                        if (i.InvoiceType != null) i.InvoiceType = i.InvoiceType.Trim();
+                        if (i.Status != null) i.Status = i.Status.Trim();
+                        return i;
+                    })
+                );
             }
             catch (Exception ex)
             {
@@ -862,12 +900,7 @@ namespace ClinicManagement.ViewModels
         }
 
 
-        private int? GetPatientTypeIdByName(string typeName)
-        {
-            var patientType = PatientTypes?.FirstOrDefault(pt =>
-                pt.TypeName?.Trim().Equals(typeName.Trim(), StringComparison.OrdinalIgnoreCase) == true);
-            return patientType?.PatientTypeId;
-        }
+
 
         private void FilterAppointments()
         {
@@ -877,19 +910,25 @@ namespace ClinicManagement.ViewModels
 
                 var query = DataProvider.Instance.Context.Appointments
                     .Include(a => a.Doctor)
-                    .Where(a => a.PatientId == Patient.PatientId && a.IsDeleted != true);
+                    .Where(a => a.PatientId == PatientId && a.IsDeleted != true);
 
-                // Filter by status if not "All" - Fixed: check for empty string instead of "Tất cả"
+                // Filter by status with trimming
                 if (SelectedAppointmentStatus != null && !string.IsNullOrEmpty(SelectedAppointmentStatus.Status))
                 {
-                    query = query.Where(a => a.Status == SelectedAppointmentStatus.Status);
+                    var statusToFilter = SelectedAppointmentStatus.Status.Trim();
+                    query = query.Where(a => a.Status.Trim() == statusToFilter);
                 }
 
                 // Order by date
                 var filteredAppointments = query.OrderByDescending(a => a.AppointmentDate).ToList();
 
-                // Update UI
-                Appointments = new ObservableCollection<Appointment>(filteredAppointments);
+                // Process and trim Status values
+                Appointments = new ObservableCollection<Appointment>(
+                    filteredAppointments.Select(a => {
+                        if (a.Status != null) a.Status = a.Status.Trim();
+                        return a;
+                    })
+                );
             }
             catch (Exception ex)
             {
@@ -975,22 +1014,7 @@ namespace ClinicManagement.ViewModels
 
         }
 
-        private void LoadPatientTypesList()
-        {
-            PatientTypes = new ObservableCollection<PatientType>(
-                DataProvider.Instance.Context.PatientTypes
-                .Where(pt => pt.IsDeleted != true)
-                .ToList()
-            );
-
-            if (Patient?.PatientTypeId != null)
-            {
-                SelectedPatientType = PatientTypes.FirstOrDefault(pt => pt.PatientTypeId == Patient.PatientTypeId);
-            }
-
-
-        }
-
+     
     
     }
    

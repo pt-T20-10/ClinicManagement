@@ -37,7 +37,11 @@ namespace ClinicManagement.Configurations
 
             builder.Property(e => e.Notes)
                 .HasColumnName("GhiChu")
-                .HasMaxLength(500);
+                .HasMaxLength(500);  
+            
+            builder.Property(e => e.InvoiceType)
+                .HasColumnName("LoaiHoaDon")
+                .HasMaxLength(20);
 
             builder.HasOne(d => d.Patient)
                 .WithMany(p => p.Invoices)

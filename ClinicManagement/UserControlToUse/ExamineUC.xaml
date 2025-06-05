@@ -29,16 +29,15 @@
             <Border Grid.Row="0" Padding="8" Margin="0,0,0,12" Background="#F5F5F5" CornerRadius="6">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
+                    
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Patient search - Row 0 -->
                     <!-- Patient search - Row 0 -->
                     <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
@@ -55,50 +54,48 @@
 
                         <!-- Patient name search -->
                         <TextBlock Grid.Row="0" Grid.Column="0" 
-               Text="Bệnh nhân:" 
-               VerticalAlignment="Center" 
-               Margin="0,0,8,0"/>
+                           Text="Bệnh nhân:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,8,0"/>
                         <TextBox Grid.Row="0" Grid.Column="1"
-             Width="220"
-             materialDesign:HintAssist.Hint="Nhập tên bệnh nhân"
-             Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
-             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-             Margin="0,8,16,8"
-             HorizontalAlignment="Left"/>
+                             Width="220"
+                             materialDesign:HintAssist.Hint="Nhập tên bệnh nhân"
+                             Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Margin="0,8,16,8"
+                             HorizontalAlignment="Left"/>
 
                         <!-- Phone number search -->
                         <TextBlock Grid.Row="0" Grid.Column="2" 
-               Text="Số điện thoại:" 
-               VerticalAlignment="Center" 
-               Margin="16,0,8,0"/>
+                           Text="Số điện thoại:" 
+                           VerticalAlignment="Center" 
+                           Margin="16,0,8,0"/>
                         <TextBox Grid.Row="0" Grid.Column="3"
-             Width="220"
-             materialDesign:HintAssist.Hint="Nhập số điện thoại"
-             Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
-             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-             Margin="0,8,0,8"
-             HorizontalAlignment="Left"/>
-
+                             Width="220"
+                             materialDesign:HintAssist.Hint="Nhập số điện thoại"
+                             Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Margin="0,8,0,8"
+                             HorizontalAlignment="Left"/>
                         <!-- Insurance code search (added) -->
                         <TextBlock Grid.Row="1" Grid.Column="0" 
-               Text="BHYT:" 
-               VerticalAlignment="Center" 
-               Margin="0,0,8,0"/>
+                           Text="BHYT:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,8,0"/>
                         <TextBox Grid.Row="1" Grid.Column="1"
-             Width="220"
-             materialDesign:HintAssist.Hint="Nhập mã BHYT"
-             Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged}"  
-             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-             Margin="0,8,16,8"
-             HorizontalAlignment="Left"/>
+                             Width="220"
+                             materialDesign:HintAssist.Hint="Nhập mã BHYT"
+                             Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged}"  
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Margin="0,8,16,8"
+                             HorizontalAlignment="Left"/>
 
                         <!-- Search button (added) -->
                         <Button Grid.Row="1" Grid.Column="3"
-            Command="{Binding SearchPatientCommand}"
-            Style="{StaticResource MaterialDesignOutlinedButton}"
-            
-            HorizontalAlignment="Left"
-            Width="150" Margin="0,17,0,17">
+                            Command="{Binding SearchPatientCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                                HorizontalAlignment="Left"
+                                Width="150" Margin="0,17,0,17">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="Tìm kiếm"/>
@@ -124,8 +121,6 @@
                                Kind="PlusThick"/>
                         </Button>
                     </Grid>
-
-
                     <!-- Patient details - Row 1 -->
                     <materialDesign:Card Grid.Row="1" 
                               Grid.Column="0" 
@@ -144,39 +139,102 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- First row of patient info -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,8">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
-                                    <TextBlock Text="Mã BN:" FontWeight="Medium" Margin="0,0,4,0"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,24,0" Grid.Row="0">
+                                    <TextBlock Text="Mã BN:" FontWeight="Medium" Margin="5"/>
                                     <TextBlock Text="{Binding SelectedPatient.PatientId}" FontWeight="SemiBold"/>
                                 </StackPanel>
 
-                                <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
-                                    <TextBlock Text="Năm sinh:" FontWeight="Medium" Margin="0,0,4,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,24,0" Grid.Row="1">
+                                    <TextBlock Text="Năm sinh:" FontWeight="Medium" Margin="5" />
                                     <TextBlock Text="{Binding SelectedPatient.DateOfBirth}" FontWeight="SemiBold"/>
                                 </StackPanel>
 
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Giới tính:" FontWeight="Medium" Margin="0,0,4,0"/>
+                                <StackPanel Orientation="Horizontal" Grid.Row="2" >
+                                    <TextBlock Text="Giới tính:" FontWeight="Medium" Margin="5"/>
                                     <TextBlock Text="{Binding SelectedPatient.Gender}" FontWeight="SemiBold"/>
                                 </StackPanel>
-                            </StackPanel>
-
-                            <!-- Second row of patient info -->
-                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,24,0">
-                                    <TextBlock Text="Địa chỉ:" FontWeight="Medium" Margin="0,0,4,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,24,8" Grid.Row="3">
+                                    <TextBlock Text="Địa chỉ:" FontWeight="Medium" Margin="5"/>
                                     <TextBlock Text="{Binding SelectedPatient.Address}" 
                                    TextTrimming="CharacterEllipsis" 
                                    MaxWidth="200" 
                                    FontWeight="SemiBold"/>
                                 </StackPanel>
 
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="BHYT:" FontWeight="Medium" Margin="0,0,4,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,24,8" Grid.Row="4">
+                                    <TextBlock Text="BHYT:" FontWeight="Medium" Margin="5"/>
                                     <TextBlock Text="{Binding SelectedPatient.InsuranceCode}" 
-                                   FontWeight="SemiBold"/>
+                                     FontWeight="SemiBold"/>
                                 </StackPanel>
-                            </StackPanel>
+                            </Grid>
+                               
+                      
+
+                         
+                          <!-- Second row of patient info -->
+<StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical" Margin="60,0,0,8">
+    <!-- Appointment Type Selection -->
+    <Grid  Margin="0,4,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Grid.Row="0" Grid.Column="0" 
+                   Text="Loại khám:" 
+                   FontWeight="Medium" 
+                   VerticalAlignment="Center"
+                   Margin="0,0,8,0"/>
+        <ComboBox Grid.Row="0" Grid.Column="1"
+                    Width="170" 
+                       Height="50"
+                        Padding="5"
+                 ItemsSource="{Binding AppointmentTypeList}"
+                 DisplayMemberPath="TypeName"
+                 SelectedItem="{Binding SelectedAppointmentType}"
+                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                 HorizontalAlignment="Left"/>
+        
+        <TextBlock Grid.Row="1" Grid.Column="0" 
+                   Text="Phí khám:" 
+                   FontWeight="Medium" 
+                   VerticalAlignment="Center"
+                   Margin="0,8,8,0"/>
+        <Grid Grid.Row="1" Grid.Column="1" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="130"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0"
+                     Text="{Binding ExaminationFee, StringFormat='{}{0:N0}'}"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Height="35"
+                     Padding="3"
+                     HorizontalAlignment="Left"
+                     Width="130"/>
+            <TextBlock Grid.Column="1"
+                       Text="VNĐ"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
+        </Grid>
+    </Grid>
+</StackPanel>
+
 
                             <!-- Third row: Doctor and examination date -->
                             <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
@@ -194,10 +252,13 @@
                               Margin="0,0,8,0"/>
                                 <DatePicker Grid.Column="1"
                                Width="170" 
+                               Height="50"
+                                Padding="5"
                                SelectedDate="{Binding RecordDate}" 
                                Style="{StaticResource MaterialDesignOutlinedDatePicker}" 
                                Margin="0,0,24,0"
-                               HorizontalAlignment="Left"/>
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Center"/>
 
                                 <TextBlock Grid.Column="2" 
                               Text="Bác sĩ khám:" 
@@ -205,7 +266,10 @@
                               VerticalAlignment="Center" 
                               Margin="0,0,8,0"/>
                                 <ComboBox Grid.Column="3"
-                             Width="220" 
+                             Width="170" 
+                               Height="50"
+                                Padding="5"
+                                          
                              ItemsSource="{Binding DoctorList}" 
                              DisplayMemberPath="FullName" 
                              SelectedItem="{Binding SelectedDoctor}" 

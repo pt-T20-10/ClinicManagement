@@ -25,7 +25,9 @@
     <Window.Resources>
         <local:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
         <local:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
+        <local:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
     </Window.Resources>
+
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=patientdetailsWindow}"/>
@@ -474,6 +476,57 @@
                                                       HorizontalAlignment="Center"
                                                       TextAlignment="Center"
                                                       VerticalAlignment="Center"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Loại hóa đơn -->
+                                        <DataGridTemplateColumn Header="Loại hóa đơn" Width="180">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border CornerRadius="6" Padding="12,6" HorizontalAlignment="Center">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám bệnh">
+                                                                        <Setter Property="Background" Value="#E3F2FD"/>
+                                                                        <Setter Property="BorderBrush" Value="#2196F3"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Bán thuốc">
+                                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                                        <Setter Property="BorderBrush" Value="#43A047"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám và bán thuốc">
+                                                                        <Setter Property="Background" Value="#F3E5F5"/>
+                                                                        <Setter Property="BorderBrush" Value="#9C27B0"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding InvoiceType,Converter={StaticResource StringTrimmingConverter}}" Value="Khám bệnh">
+                                                                            <Setter Property="Text" Value="Khám bệnh"/>
+                                                                            <Setter Property="Foreground" Value="#1565C0"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Bán thuốc">
+                                                                            <Setter Property="Text" Value="Bán thuốc"/>
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám và bán thuốc">
+                                                                            <Setter Property="Text" Value="Khám và bán thuốc"/>
+                                                                            <Setter Property="Foreground" Value="#7B1FA2"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>

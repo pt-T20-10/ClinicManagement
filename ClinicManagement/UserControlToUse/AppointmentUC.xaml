@@ -579,7 +579,16 @@
 
 
             <TabItem Header="Quản lí loại hẹn">
-                <Grid Margin="10">
+           
+                    <TabItem.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="🔄 Làm mới" 
+                          Command="{Binding RefreshTypeCommand}"
+                          FontWeight="Bold"/>
+                        </ContextMenu>
+                    </TabItem.ContextMenu>
+                    
+                    <Grid Margin="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="350"/>
                         <ColumnDefinition Width="*"/>
@@ -597,6 +606,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <!-- For Description -->
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
@@ -619,8 +629,16 @@
                      Margin="0,0,0,15"
                      Width="300"
                      HorizontalAlignment="Center"/>
-                            <TextBox 
+                                   <TextBox 
                         Grid.Row="2"
+                        Text="{Binding TypePrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        materialDesign:HintAssist.Hint="Giá tiền"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                        Margin="0,0,0,15"
+                        Width="300"
+                        HorizontalAlignment="Center"/>
+                            <TextBox 
+                        Grid.Row="3"
                         Text="{Binding TypeDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         materialDesign:HintAssist.Hint="Mô tả chi tiết"
                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -633,7 +651,7 @@
                         HorizontalAlignment="Center"/>
 
                             <StackPanel 
-                     Grid.Row="3" 
+                     Grid.Row="4" 
                      Orientation="Horizontal" 
                      HorizontalAlignment="Center"
                      Margin="0,0,0,20">
@@ -683,7 +701,7 @@
                             <materialDesign:Card 
                      Height="200"
                      VerticalAlignment="Top"
-                     Grid.Row="4" 
+                     Grid.Row="5" 
                      Margin="0,10,0,0"
                      UniformCornerRadius="5"
                      Background="#FFF5F5F5">
@@ -753,6 +771,10 @@
                                                  Header="Tên loại lịch hẹn" 
                                                  DisplayMemberBinding="{Binding TypeName}" 
                                                  Width="180"/>
+                                            <GridViewColumn 
+                                                  Header="Giá tiền" 
+                                                  DisplayMemberBinding="{Binding Price, StringFormat='{}{0:N0} VNĐ'}" 
+                                                  Width="180"/>
                                             <GridViewColumn 
                                                 Header="Mô tả" 
                                                 DisplayMemberBinding="{Binding Description}" 

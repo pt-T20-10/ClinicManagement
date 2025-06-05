@@ -500,9 +500,7 @@ namespace ClinicManagement.ViewModels
         public string DialogTitle => CurrentMedicine != null
             ? $"Chi tiết các lô thuốc: {CurrentMedicine.Name}"
             : "Chi tiết lô thuốc";
-        #endregion
-
-        #region StockInProperties
+      
         private MedicineCategory _stockinSelectedCategory;
         public MedicineCategory StockinSelectedCategory
         {
