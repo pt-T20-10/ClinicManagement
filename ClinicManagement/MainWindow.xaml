@@ -192,6 +192,23 @@
                                     <RowDefinition Height="auto"></RowDefinition>
                                 </Grid.RowDefinitions>
                                 <Grid Grid.Row="0">
+                                    <TextBlock Text="Hóa đơn" HorizontalAlignment="Center"></TextBlock>
+                                </Grid>
+                                <Grid Grid.Row="1">
+                                    <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="InvoiceList" VerticalAlignment="Center" />
+                                </Grid>
+                            </Grid>
+                        </TabItem.Header>
+                        <uc:InvoiceUC DataContext="{StaticResource InvoiceVM}" ></uc:InvoiceUC>
+                    </TabItem>
+                    <TabItem Width="150" Height="80"  Padding="0">
+                        <TabItem.Header >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0">
                                     <TextBlock Text="Bán thuốc" HorizontalAlignment="Center"></TextBlock>
                                 </Grid>
                                 <Grid Grid.Row="1">
@@ -201,6 +218,7 @@
                         </TabItem.Header>
                         <uc:MedicincSellUC Margin="0,17,0,-17"></uc:MedicincSellUC>
                     </TabItem>
+                    
                     <TabItem Width="150" Height="80" Padding="0">
                         <TabItem.Header >
                             <Grid>

@@ -11,6 +11,7 @@
     <viewmodel:StockMedicineViewModel x:Key="StockMedicineVM"/>
     <viewmodel:AddPatientViewModel x:Key="AddPatientVM"/>
     <viewmodel:AddDoctorWindowViewModel x:Key="AddDoctorVM"/>
-    
+    <viewmodel:InvoiceViewModel x:Key="InvoiceVM"/>
+
 
 </ResourceDictionary> 
