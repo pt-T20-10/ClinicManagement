@@ -16,54 +16,59 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="InvoiceUc">
+    
+   <!-- Strigger để thực hiện Load UserControl-->
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" CommandParameter="{Binding ElementName=InvoiceUc}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
+    
+    
+    <!-- Tạo UC Resouces để sử dụng Converter hổ trỗ UI-->
     <UserControl.Resources>
-
         <sub:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
         <local:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
-
     </UserControl.Resources>
 
+<!--ContextMenu cho nút làm mới-->
+    <UserControl.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="🔄 Làm mới" 
+                  Command="{Binding ResetFiltersCommand}"
+                  FontWeight="Bold"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
+
+    <!-- Main Card-->
     <materialDesign:Card>
-        <TabControl
-            materialDesign:ColorZoneAssist.Mode="PrimaryLight"
-            Style="{StaticResource MaterialDesignFilledTabControl}">
-
-            <TabItem Header="Hóa đơn">
-                <TabItem.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="🔄 Làm mới" 
-                          Command="{Binding ResetFiltersCommand}"
-                          FontWeight="Bold"/>
-                    </ContextMenu>
-                </TabItem.ContextMenu>
-
+                
+        <!--Main Grid có 3 Row-->
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
+                       <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Filter Section -->
+                    <!-- Row 0 - Row của bộ lọc -->
                     <materialDesign:Card Grid.Row="0" Margin="8" Padding="16" UniformCornerRadius="8">
+                        
+                        <!--Grid có có 2 Row -->
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Title -->
+                            <!-- Tiêu đề -->
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                                 <materialDesign:PackIcon Kind="InvoiceOutline" Width="24" Height="24" VerticalAlignment="Center"/>
                                 <TextBlock Text="DANH SÁCH HÓA ĐƠN" FontSize="18" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
 
-                            <!-- Filters -->
+                            <!-- Bộ lọc -->
+                            <!--Dùng 6 Column -->
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -74,34 +79,67 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Date Range -->
+                                
+                               
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                                    <TextBlock Text="Từ:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                            <!-- Phần để chọn móc thời gian để lọc hóa đơn
+                                 Ngày bắt đầu Binding từ StartDate
+                                 Ngày kết thúc Binding từ EndDate 
+                                 Mắc định là sẽ chọn từ ngày hiện tại đến 1 tháng trước
+                                 
+                                  UpdateSourceTrigger mặc định của DatePicker là LostFocus
+                                  nên ở đây phải gán thành PropertyChanged để truyền xuống VM lọc được ngay sau khi chọn xong giờ
+                             -->
+
+                            <TextBlock Text="Từ:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <DatePicker 
                                         SelectedDate="{Binding StartDate, UpdateSourceTrigger=PropertyChanged}" 
                                         Width="140"
                                         Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                         materialDesign:HintAssist.Hint="Ngày bắt đầu"/>
                                     <TextBlock Text="đến:" VerticalAlignment="Center" Margin="8,0,8,0"/>
+                                    
                                     <DatePicker 
                                         SelectedDate="{Binding EndDate, UpdateSourceTrigger=PropertyChanged}" 
                                         Width="140"
                                         Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                         materialDesign:HintAssist.Hint="Ngày kết thúc"/>
+                                    
                                 </StackPanel>
 
-                                <!-- Invoice Status -->
+                                <!-- ComboBox để chọn lọc theo Trạng thái hóa đơn
+                                     Vì không có Table trạng thái riêng trong database nên 
+                                     trong VM tạo 1 class Status Item dùng chung,
+                                     Và dùng ObservableCollection <InvoiceStatusList> để Binding.
+                                     3 trạng thái mặc định là: Đã thanh toán, chưa thanh toán, và "" là Tất cả 
+                                    
+                                      SelectedItem sẽ Binding đến SelectedInvoiceStatus để từ đó lấy được Status rồi 
+                                      truyền vào phương thức lọc
+                                
+                                        ComboBox.SelectedItem thì UpdateSourceTrigger mặc định là PropertyChanged 
+                                        nên không gán thêm ở Binding 
+                                -->
                                 <ComboBox 
                                     Grid.Column="1" 
                                     Width="180" 
-                                    ItemsSource="{Binding InvoiceStatusList}"
+                                    ItemsSource="{Binding InvoiceStatusList}"             
                                     SelectedItem="{Binding SelectedInvoiceStatus}"
                                     DisplayMemberPath="DisplayName"
                                     Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                     materialDesign:HintAssist.Hint="Trạng thái thanh toán"
-                                    Margin="0,0,16,0"/>
+                                    Margin="0,0,16,0" >
+                                    </ComboBox>
 
-                                <!-- Invoice Type -->
+                                <!-- ComboBox để chọn lọc theo Loại hóa đơn
+                                     Vì không có Table loại hóa đơn riêng trong database nên 
+                                     trong VM tạo 1 class InvoiceType Item dùng chung,
+                                     Và dùng ObservableCollection <InvoiceTypeList> để Binding.
+                                     3 loại hóa đơn mặc định là: Khám bệnh, Bán thuốc, Khám và bán thuốc
+                                
+                                     SelectedItem sẽ Binding đến SelectedInvoiceType để từ đó lấy được InvoiceType rồi
+                                      truyền vào phương thức lọc  
+                                -->
                                 <ComboBox 
                                     Grid.Column="2" 
                                     Width="180" 
@@ -112,7 +150,9 @@
                                     materialDesign:HintAssist.Hint="Loại hóa đơn"
                                     Margin="0,0,16,0"/>
 
-                                <!-- Search Box -->
+                                <!-- Search Box nhập tên BN, mã BH, SĐT để thực hiện lọc, 
+                                     lọc gần đúng kiểm tra từng ký tự nhập vào có nằm trong tên, mã BH, SĐT hay không
+                                -->
                                 <TextBox 
                                     Grid.Column="3"
                                     Width="300"
@@ -125,7 +165,10 @@
                                     </TextBox.InputBindings>
                                 </TextBox>
 
-                                <!-- Search Button -->
+                                <!-- Search Button để thực hiện SearchCommand Lọc theo nhiều tiêu chí
+                                     Nhưng phương thức lọc bên dưới đã được tự động nên nhấn nút cũng được hoặc không
+                                -->
+                                
                                 <StackPanel Grid.Column="5" Orientation="Horizontal">
                                     <Button
                                         Command="{Binding SearchCommand}"
@@ -137,6 +180,8 @@
                                             <TextBlock Text="Tìm kiếm"/>
                                         </StackPanel>
                                     </Button>
+                                    
+                                    <!-- Nút đặt lại để đặt lại các tiêu chí lọc về trạng thái ban đâu-->
                                     <Button
                                         Command="{Binding ResetFiltersCommand}"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
@@ -150,8 +195,20 @@
                             </Grid>
                         </Grid>
                     </materialDesign:Card>
+                    
 
-                    <!-- Datagrid with Invoices -->
+                    <!-- Datagrid hiện thị danh sách hóa đơn
+                        ItemSource Binding đến ObservableCollection<Invoice> Invoices trong VM 
+                        SelectedItem Binding đến SelectedInvoice kiểu Invoice trong VM để lấy thông tin chi tiết hóa đơn 
+                        đê truyền vào các Command xử lý sự kiện mở các trang như chi tiết hóa đơn, thanh toán, in hóa đơn...
+                    
+                        AutoGenerateColumns="False" để không tự động sinh cột mà sẽ tự định nghĩa các cột cần thiết
+                         CanUserSortColumns="True" để có thể sắp xếp các cột theo thứ tự tăng dần hoặc giảm dần
+                         CanUserResizeColumns="True" để có thể thay đổi kích thước các cột
+                         CanUserReorderColumns="True" để có thể kéo thả các cột để thay đổi vị trí
+                         VerticalScrollBarVisibility="Auto" thanh cuộn dọc xuất hiện khi cần thiết
+                         HorizontalScrollBarVisibility="Auto" thanh cuộn ngang xuất hiện khi cần thiết
+                    -->
                     <materialDesign:Card Grid.Row="1" Margin="8" UniformCornerRadius="8">
                         <Grid>
                             <DataGrid 
@@ -170,7 +227,9 @@
                                 HorizontalScrollBarVisibility="Auto"
                                 Margin="0,0,0,8">
                                 <DataGrid.Columns>
-                                    <!-- Mã hóa đơn -->
+
+
+                            <!-- TextColumn Mã hóa đơn Binding từ InvoiceId  -->
                                     <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="120">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -180,7 +239,9 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- Ngày lập -->
+                            <!-- TextColumn Ngày lập InvoiceDate 
+                                    tringFormat='{}{0:dd/MM/yyyy} để lấy định dạng ngày tháng là dd/MM/yyyy, ngày tháng năm không lấy giờ 
+                                    -->
                                     <DataGridTextColumn Header="Ngày lập" Binding="{Binding InvoiceDate, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -190,7 +251,9 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- Tên khách hàng -->
+                                    <!--  Text Column Tên khách hàng Binding từ FullName của Patient 
+                                            Cho phép xuống dòng nếu cần thiết
+                                    -->
                                     <DataGridTextColumn Header="Khách hàng" Binding="{Binding Patient.FullName}" Width="150">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -200,7 +263,7 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- SĐT -->
+                            <!-- Text Column SĐT Binding từ Phone của Patient -->
                                     <DataGridTextColumn Header="SĐT" Binding="{Binding Patient.Phone}" Width="120">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -209,7 +272,7 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- Mã BHYT -->
+                                    <!--Text  Column Mã BHYT Binding từ InsuranceCode của Patient -->
                                     <DataGridTextColumn Header="Mã BHYT" Binding="{Binding Patient.InsuranceCode}" Width="120">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -218,7 +281,10 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- Tổng tiền -->
+                            <!--    Text Column Tổng tiền Binding từ TotalAmount
+                                    StringFormat='{}{0:N0} VNĐ' để định dạng số tiền là số nguyên không có dấu phẩy và có đuôi VNĐ
+                                    
+                                    -->
                                     <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" Width="120">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -229,12 +295,21 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- Loại hóa đơn -->
+                                    <!-- Loại hóa đơn
+                                        Sử dụng DataGridTemplateColumn để tạo kiểu hiển thị đặc biệt cho loại hóa đơn
+                                        Với Border và TextBlock để hiển thị màu sắc và kiểu dáng khác nhau tùy theo loại hóa đơn
+                                      -->
                                     <DataGridTemplateColumn Header="Loại hóa đơn" Width="180">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
                                                     <Border.Style>
+                                                   <!-- 
+                                                        DataTrigger sẽ kiểm tra giá trị của InvoiceType và áp dụng các thuộc tính được set trong setter tùy theo loại hóa đơn cho Border
+                                                        Sử dụng Converter StringTrimmingConverter để loại bỏ khoảng trắng thừa trong giá trị Binding đảm bảo nhận đúng giá trị
+                                                        Converter đã được định nghĩa trong UserControl.Resources
+                                                        ConverterStrimmingConverter sẽ lấy giá trị được Binding và loại bỏ khoảng trắng thừa trước và sau giá trị đó rồi trả về giá trị đã được trim
+                                                    -->
                                                         <Style TargetType="Border">
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám bệnh">
@@ -255,6 +330,7 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
+                                                    <!-- Text Block để hiển thị Loại hóa đơn và cũng sử dụng Converter như trên -->
                                                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
@@ -280,7 +356,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
 
-                                    <!-- Trạng thái -->
+                            <!-- TemplateColumn Trạng thái để hiển trị trạng thái của hóa đơn -->
                                     <DataGridTemplateColumn Header="Trạng thái" Width="150">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -322,7 +398,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
 
-                                    <!-- Ghi chú -->
+                                    <!-- TextCoulumn Ghi chú hiển thị ghi chú của hóa đơn  -->
                                     <DataGridTextColumn Header="Ghi chú" Binding="{Binding Notes}" Width="400">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
@@ -332,12 +408,22 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 
-                                    <!-- Action Buttons -->
+                                    <!-- Các nút chức năng cho mỗi hóa đơn -->
                                     <DataGridTemplateColumn  Width="*">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                    <!-- Standard View button for all invoice types -->
+                                                    <!-- 
+                                                        Nút xem chi tiết hóa đơn tất cả các hóa đơn đều có 
+                                                        
+                                                    Button này nằm trong một cell của DataGrid, nhưng command lại được định nghĩa ở ViewModel của DataGrid (không phải ở item level),
+                                                    nên cần phải "nhảy lên" DataGrid cha để lấy command.
+                                                    Sử dụng RelativeSource để tìm kiếm DataGrid cha gần nhất
+                                                    AncestorType={x:Type DataGrid} có nghĩa là tìm lên cây visual để tìm control có kiểu DataGrid
+                                                    Path=DataContext.ViewInvoiceDetailsCommand trỏ đến property ViewInvoiceDetailsCommand trong DataContext của DataGrid đó
+                                                    CommandParameter là tham số được truyền cho command khi execute
+                                                    {Binding} sẽ truyền toàn bộ thông tin của dòng hiện tại cho Command xử lí ở VM
+                                                    -->
                                                     <Button 
                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.ViewInvoiceDetailsCommand}" 
                                                         CommandParameter="{Binding}"
@@ -351,7 +437,7 @@
                                                         </StackPanel>
                                                     </Button>
 
-                                                    <!-- Print button for all invoices -->
+                                            <!-- Nút xem in hóa hóa đơn tất cả các hóa đơn đều có  -->
                                                     <Button 
                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.PrintInvoiceCommand}" 
                                                         CommandParameter="{Binding}"
@@ -365,7 +451,11 @@
                                                         </StackPanel>
                                                     </Button>
 
-                                                    <!-- Pay button for unpaid invoices -->
+                                            <!-- Nút thanh toán với strigger set Visibility theo Status của hóa đơn 
+                                                    Nếu đã thanh toán thì nút này sẽ ẩn đi 
+                                                    với Value="Collapsed" để ẩn nút và không chiếm chổ trong layout
+                                                    
+                                                    -->
                                                     <Button 
                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.ProcessPaymentCommand}" 
                                                         CommandParameter="{Binding}"
@@ -389,7 +479,12 @@
                                                         </StackPanel>
                                                     </Button>
 
-                                                    <!-- Sell Medicine button for "Khám và bán thuốc" type -->
+                                                    <!-- Nút bán thuốc cho hóa đơn có loại là  "Khám và bán thuốc" 
+                                                         Vì logic xử lí sẽ là khi khám bệnh lưu hồ sơ bệnh án cho bệnh nhân 
+                                                        cũng như tạo 1 hóa đơn chưa thanh và chi tiết hóa đơn cho bệnh nhân đó
+                                                        và nếu có đơn thuốc trong hồ sơ bệnh án thì hóa đơn sẽ là "khám và bán thuốc" 
+                                                        thì sẽ thực hiện thêm việc bán thuốc rồi mới thanh toán
+                                                    -->
                                                     <Button 
                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.SellMedicineCommand}" 
                                                         CommandParameter="{Binding}"
@@ -446,8 +541,9 @@
                             </DataGrid>
                         </Grid>
                     </materialDesign:Card>
+                    
 
-                    <!-- Pagination Controls -->
+                    <!-- Phần phân trang và chuyển trang  -->
                     <Grid Grid.Row="2" Margin="8,0,8,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -455,88 +551,86 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Items Per Page -->
+                        <!-- ComboBox để chọn số lượng hóa đơn hiển thị của 1 trang như 10, 50, 100 -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Hiển thị:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox 
-            Width="80"
-            ItemsSource="{Binding ItemsPerPageOptions}"
-            SelectedItem="{Binding SelectedItemsPerPage}"
-            Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                                Width="80"
+                                ItemsSource="{Binding ItemsPerPageOptions}"
+                                SelectedItem="{Binding SelectedItemsPerPage}"
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
                         </StackPanel>
 
-                        <!-- Page Navigation -->
+                        <!-- Phần để chuyển trang và hiển thị trang hiện tại  -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Button 
-    Command="{Binding FirstPageCommand}" 
-    Style="{StaticResource MaterialDesignIconButton}" 
-    Width="36" Height="36" 
-    Margin="4,0"
-    IsEnabled="{Binding CanNavigateBackward}"
-    ToolTip="Trang đầu">
+                    <!-- Nút chuyển đến trang đầu tiên -->
+                                <Button 
+                                Command="{Binding FirstPageCommand}" 
+                                Style="{StaticResource MaterialDesignIconButton}" 
+                                Width="36" Height="36" 
+                                Margin="4,0"
+                                IsEnabled="{Binding CanNavigateBackward}"
+                                ToolTip="Trang đầu">
                                 <materialDesign:PackIcon Kind="PageFirst" Width="24" Height="24"/>
                             </Button>
+                            <!--Nút chuyển về trang trước đó-->
                             <Button 
-    Command="{Binding PreviousPageCommand}" 
-    Style="{StaticResource MaterialDesignIconButton}" 
-    Width="36" Height="36" 
-    Margin="4,0"
-    IsEnabled="{Binding CanNavigateBackward}"
-    ToolTip="Trang trước">
+                                Command="{Binding PreviousPageCommand}" 
+                                Style="{StaticResource MaterialDesignIconButton}" 
+                                Width="36" Height="36" 
+                                Margin="4,0"
+                                IsEnabled="{Binding CanNavigateBackward}"
+                                ToolTip="Trang trước">
                                 <materialDesign:PackIcon Kind="ChevronLeft" Width="24" Height="24"/>
                             </Button>
+                            
                             <!-- Hiển thị chỉ số trang hiện tại -->
                             <Border 
-            Background="#E3F2FD" 
-            CornerRadius="4" 
-            Width="42" Height="42" 
-            Margin="8,0">
+                                Background="#E3F2FD" 
+                                CornerRadius="4" 
+                                Width="42" Height="42" 
+                                Margin="8,0">
                                 <TextBlock 
-                Text="{Binding CurrentPage}" 
-                HorizontalAlignment="Center" 
-                VerticalAlignment="Center"
-                FontWeight="Bold"
-                FontSize="16"/>
+                                    Text="{Binding CurrentPage}" 
+                                    HorizontalAlignment="Center" 
+                                    VerticalAlignment="Center"
+                                    FontWeight="Bold"
+                                    FontSize="16"/>
                             </Border>
-
+                            
+                            <!-- Nút chuyển đến trang tiếp theo -->
                             <Button 
-    Command="{Binding NextPageCommand}" 
-    Style="{StaticResource MaterialDesignIconButton}" 
-    Width="36" Height="36" 
-    Margin="4,0"
-    IsEnabled="{Binding CanNavigateForward}"
-    ToolTip="Trang sau">
+                                Command="{Binding NextPageCommand}" 
+                                Style="{StaticResource MaterialDesignIconButton}" 
+                                Width="36" Height="36" 
+                                Margin="4,0"
+                                IsEnabled="{Binding CanNavigateForward}"
+                                ToolTip="Trang sau">
                                 <materialDesign:PackIcon Kind="ChevronRight" Width="24" Height="24"/>
                             </Button>
+                            
+                            <!--Nút chuyển đến trang cuối cùng-->
                             <Button 
-    Command="{Binding LastPageCommand}" 
-    Style="{StaticResource MaterialDesignIconButton}" 
-    Width="36" Height="36" 
-    Margin="4,0"
-    IsEnabled="{Binding CanNavigateForward}"
-    ToolTip="Trang cuối">
+                                Command="{Binding LastPageCommand}" 
+                                Style="{StaticResource MaterialDesignIconButton}" 
+                                Width="36" Height="36" 
+                                Margin="4,0"
+                                IsEnabled="{Binding CanNavigateForward}"
+                                ToolTip="Trang cuối">
                                 <materialDesign:PackIcon Kind="PageLast" Width="24" Height="24"/>
                             </Button>
                         </StackPanel>
 
-                        <!-- Page Info -->
+                        <!-- Thông tin trang 
+                            Hiển thị trang hiện tại và tổng số trang theo được tính toán dựa trên số lượng hóa đơn/trang được chọn ở trên
+                        -->
                         <TextBlock 
                         Grid.Column="2" 
                         Text="{Binding PageInfoText}" 
                         VerticalAlignment="Center"/>
                     </Grid>
                 </Grid>
-            </TabItem>
-
-            <TabItem Header="Thống kê hóa đơn">
-                <Grid>
-                    <TextBlock Text="Thống kê hóa đơn sẽ được phát triển sau" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center"
-                               FontSize="16"
-                               Foreground="Gray"/>
-                </Grid>
-            </TabItem>
-        </TabControl>
+  
     </materialDesign:Card>
+    
 </UserControl>

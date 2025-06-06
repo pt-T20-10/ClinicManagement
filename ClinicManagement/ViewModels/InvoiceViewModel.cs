@@ -411,13 +411,13 @@ namespace ClinicManagement.ViewModels
 
             // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(SearchText))
-            {
-                string searchLower = SearchText.ToLower().Trim();
-                query = query.Where(i =>
-                    (i.Patient.FullName != null && i.Patient.FullName.ToLower().Contains(searchLower)) ||
-                    (i.Patient.InsuranceCode != null && i.Patient.InsuranceCode.ToLower().Contains(searchLower)) ||
-                    (i.Patient.Phone != null && i.Patient.Phone.ToLower().Contains(searchLower))
-                );
+                {
+                    string searchLower = SearchText.ToLower().Trim();
+                    query = query.Where(i =>
+                        (i.Patient.FullName != null && i.Patient.FullName.ToLower().Contains(searchLower)) ||
+                        (i.Patient.InsuranceCode != null && i.Patient.InsuranceCode.ToLower().Contains(searchLower)) ||
+                        (i.Patient.Phone != null && i.Patient.Phone.ToLower().Contains(searchLower))
+                    );
             }
 
             return query;
