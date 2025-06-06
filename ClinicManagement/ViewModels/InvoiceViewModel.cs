@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -494,16 +495,11 @@ namespace ClinicManagement.ViewModels
         {
             if (invoice == null) return;
 
-            MessageBox.Show($"Xem chi tiết hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName}",
-                           "Thông tin hóa đơn",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
 
-            // TODO: Implement actual invoice details view
-            // Example:
-            // var invoiceDetailsWindow = new InvoiceDetailsWindow();
-            // invoiceDetailsWindow.DataContext = new InvoiceDetailsViewModel(invoice);
-            // invoiceDetailsWindow.ShowDialog();
+
+            var invoiceDetailsWindow = new InvoiceDetailsWindow();
+            invoiceDetailsWindow.DataContext = new InvoiceDetailsViewModel(invoice);
+            invoiceDetailsWindow.ShowDialog();
         }
 
         private void PrintInvoice(Invoice invoice)
@@ -518,41 +514,25 @@ namespace ClinicManagement.ViewModels
             // TODO: Implement actual printing functionality
         }
 
-        private void ProcessPayment(Invoice invoice)
+             private void ProcessPayment(Invoice invoice)
         {
             if (invoice == null) return;
-
-            MessageBoxResult result = MessageBox.Show(
-                $"Xác nhận thanh toán hóa đơn #{invoice.InvoiceId} cho khách hàng {invoice.Patient?.FullName}?\n\nSố tiền: {invoice.TotalAmount:N0} VNĐ",
-                "Xác nhận thanh toán",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+    
+            // Create the view model with the invoice
+            var invoiceDetailsViewModel = new InvoiceDetailsViewModel(invoice);
+    
+            // Create the window and set its DataContext
+            var invoiceDetailsWindow = new InvoiceDetailsWindow
             {
-                try
-                {
-                    // Update invoice status in database
-                    var invoiceToUpdate = DataProvider.Instance.Context.Invoices
-                        .FirstOrDefault(i => i.InvoiceId == invoice.InvoiceId);
-
-                    if (invoiceToUpdate != null)
-                    {
-                        invoiceToUpdate.Status = "Đã thanh toán";
-                        DataProvider.Instance.Context.SaveChanges();
-
-                        // Refresh the invoice list
-                        LoadInvoices();
-
-                        MessageBox.Show("Thanh toán hóa đơn thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Lỗi khi thanh toán hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
+                DataContext = invoiceDetailsViewModel
+            };
+    
+            invoiceDetailsWindow.ShowDialog();
+    
+            // Reload invoices after dialog is closed to reflect any payment changes
+            LoadInvoices();
         }
+
 
         private void SellMedicine(Invoice invoice)
         {
@@ -576,6 +556,5 @@ namespace ClinicManagement.ViewModels
         #endregion
     }
 
-    // Define StatusItem class if not already defined elsewhere
 
 }
