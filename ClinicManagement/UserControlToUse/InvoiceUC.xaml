@@ -22,9 +22,12 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <UserControl.Resources>
+
         <sub:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
+        <local:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
+
     </UserControl.Resources>
-    
+
     <materialDesign:Card>
         <TabControl
             materialDesign:ColorZoneAssist.Mode="PrimaryLight"
@@ -159,7 +162,7 @@
                                 CanUserSortColumns="True"
                                 CanUserResizeColumns="True"
                                 CanUserReorderColumns="True"
-                                RowHeight="56"
+                                RowHeight="58"
                                 HeadersVisibility="Column"
                                 BorderThickness="0"
                                 Background="White"
@@ -252,7 +255,7 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center">
+                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Style.Triggers>
@@ -281,7 +284,7 @@
                                     <DataGridTemplateColumn Header="Trạng thái" Width="150">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
+                                                <Border CornerRadius="6" Padding="8,4" VerticalAlignment="Center" HorizontalAlignment="Center">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Style.Triggers>
@@ -344,7 +347,7 @@
                                                         >
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="FileDocumentOutline" Margin="0,0,4,0"/>
-                                                          
+
                                                         </StackPanel>
                                                     </Button>
 
@@ -355,10 +358,10 @@
                                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                                         Margin="0,0,8,0" Width="50" Height="32"
                                                         ToolTip="In">
-                                                        
+
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="Printer" Margin="0,0,4,0"/>
-                                                            
+
                                                         </StackPanel>
                                                     </Button>
 
@@ -382,7 +385,7 @@
                                                         </Button.Style>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="CreditCardOutline" Margin="0,0,4,0"/>
-                                                           
+
                                                         </StackPanel>
                                                     </Button>
 
@@ -393,7 +396,8 @@
                                                         ToolTip="Bán thuốc"    
                                                         Background="#3F51B5"
                                                         BorderBrush="#303F9F"
-                                                        Width="10" Height="32">
+                                                        Margin="8 0 0 0"
+                                                        Width="50" Height="32">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -455,85 +459,71 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Hiển thị:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox 
-                                Width="80"
-                                ItemsSource="{Binding ItemsPerPageOptions}"
-                                SelectedItem="{Binding SelectedItemsPerPage}"
-                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+            Width="80"
+            ItemsSource="{Binding ItemsPerPageOptions}"
+            SelectedItem="{Binding SelectedItemsPerPage}"
+            Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
                         </StackPanel>
 
                         <!-- Page Navigation -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Button 
-                                Command="{Binding FirstPageCommand}" 
-                                Style="{StaticResource MaterialDesignIconButton}" 
-                                Width="36" Height="36" 
-                                Margin="4,0"
-                                ToolTip="Trang đầu">
+    Command="{Binding FirstPageCommand}" 
+    Style="{StaticResource MaterialDesignIconButton}" 
+    Width="36" Height="36" 
+    Margin="4,0"
+    IsEnabled="{Binding CanNavigateBackward}"
+    ToolTip="Trang đầu">
                                 <materialDesign:PackIcon Kind="PageFirst" Width="24" Height="24"/>
                             </Button>
                             <Button 
-                                Command="{Binding PreviousPageCommand}" 
-                                Style="{StaticResource MaterialDesignIconButton}" 
-                                Width="36" Height="36" 
-                                Margin="4,0"
-                                ToolTip="Trang trước">
+    Command="{Binding PreviousPageCommand}" 
+    Style="{StaticResource MaterialDesignIconButton}" 
+    Width="36" Height="36" 
+    Margin="4,0"
+    IsEnabled="{Binding CanNavigateBackward}"
+    ToolTip="Trang trước">
                                 <materialDesign:PackIcon Kind="ChevronLeft" Width="24" Height="24"/>
                             </Button>
-
-                            <!-- Page Numbers -->
-                            <ItemsControl ItemsSource="{Binding PageNumbers}" Margin="8,0">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button 
-                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.GoToPageCommand}" 
-                                        CommandParameter="{Binding}" 
-                                        Content="{Binding}" 
-                                        Width="42" Height="42" 
-                                        Margin="2,0">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.CurrentPage}" Value="True">
-                                                            <Setter Property="Background" Value="#E3F2FD"/>
-                                                            <Setter Property="FontWeight" Value="Bold"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
-
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <!-- Hiển thị chỉ số trang hiện tại -->
+                            <Border 
+            Background="#E3F2FD" 
+            CornerRadius="4" 
+            Width="42" Height="42" 
+            Margin="8,0">
+                                <TextBlock 
+                Text="{Binding CurrentPage}" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                FontWeight="Bold"
+                FontSize="16"/>
+                            </Border>
 
                             <Button 
-                                Command="{Binding NextPageCommand}" 
-                                Style="{StaticResource MaterialDesignIconButton}" 
-                                Width="36" Height="36" 
-                                Margin="4,0"
-                                ToolTip="Trang sau">
+    Command="{Binding NextPageCommand}" 
+    Style="{StaticResource MaterialDesignIconButton}" 
+    Width="36" Height="36" 
+    Margin="4,0"
+    IsEnabled="{Binding CanNavigateForward}"
+    ToolTip="Trang sau">
                                 <materialDesign:PackIcon Kind="ChevronRight" Width="24" Height="24"/>
                             </Button>
                             <Button 
-                                Command="{Binding LastPageCommand}" 
-                                Style="{StaticResource MaterialDesignIconButton}" 
-                                Width="36" Height="36" 
-                                Margin="4,0"
-                                ToolTip="Trang cuối">
+    Command="{Binding LastPageCommand}" 
+    Style="{StaticResource MaterialDesignIconButton}" 
+    Width="36" Height="36" 
+    Margin="4,0"
+    IsEnabled="{Binding CanNavigateForward}"
+    ToolTip="Trang cuối">
                                 <materialDesign:PackIcon Kind="PageLast" Width="24" Height="24"/>
                             </Button>
                         </StackPanel>
 
                         <!-- Page Info -->
                         <TextBlock 
-                            Grid.Column="2" 
-                            Text="{Binding PageInfoText}" 
-                            VerticalAlignment="Center"/>
+                        Grid.Column="2" 
+                        Text="{Binding PageInfoText}" 
+                        VerticalAlignment="Center"/>
                     </Grid>
                 </Grid>
             </TabItem>

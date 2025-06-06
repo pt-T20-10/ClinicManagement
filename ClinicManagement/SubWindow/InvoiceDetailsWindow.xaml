@@ -12,15 +12,16 @@
         TextOptions.TextRenderingMode="Auto"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-           xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
-                xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
-         WindowStyle="None"
-         ResizeMode="NoResize"
-         Height="1000" Width="950"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Height="1000" Width="950"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <local:ItemNameConverter x:Key="ItemNameConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -30,7 +31,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0">
-            <uc:ControlBarUC ></uc:ControlBarUC>
+            <uc:ControlBarUC></uc:ControlBarUC>
         </Grid>
         <Grid Margin="20" Grid.Row="1">
             <Grid.RowDefinitions>
@@ -124,6 +125,11 @@
                                 <TextBlock Text="Mã BHYT:" FontWeight="SemiBold" Width="100"/>
                                 <TextBlock Text="{Binding Invoice.Patient.InsuranceCode}"/>
                             </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="Loại khách hàng:" FontWeight="SemiBold" Width="100"/>
+                                <TextBlock Text="{Binding Invoice.Patient.PatientType.TypeName}"/>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Notes for the invoice -->
@@ -165,30 +171,37 @@
 
                         <!-- DataGrid -->
                         <DataGrid 
-                    Grid.Row="1"
-                    ItemsSource="{Binding InvoiceDetails}" 
-                    AutoGenerateColumns="False"
-                    IsReadOnly="True"
-                    CanUserSortColumns="True"
-                    CanUserResizeColumns="True"
-                    HeadersVisibility="Column"
-                    BorderThickness="0"
-                    RowHeight="40"
-                    Margin="8,0,8,8">
+                            Grid.Row="1"
+                            ItemsSource="{Binding InvoiceDetails}" 
+                            AutoGenerateColumns="False"
+                            IsReadOnly="True"
+                            CanUserSortColumns="True"
+                            CanUserResizeColumns="True"
+                            HeadersVisibility="Column"
+                            BorderThickness="0"
+                            RowHeight="40"
+                            Margin="8,0,8,8">
                             <DataGrid.Columns>
                                 <!-- STT -->
                                 <DataGridTemplateColumn Header="#" Width="40">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=GetIndex}" 
-                                               HorizontalAlignment="Center" 
-                                               VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Header}" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
                                 <!-- Tên thuốc/dịch vụ -->
-                                <DataGridTextColumn Header="Tên thuốc/dịch vụ" Binding="{Binding Medicine.Name}" Width="*">
+                                <DataGridTextColumn Header="Tên thuốc/dịch vụ" Width="*">
+                                    <DataGridTextColumn.Binding>
+                                        <MultiBinding Converter="{StaticResource ItemNameConverter}">
+                                            <Binding Path="ServiceName"/>
+                                            <Binding Path="Medicine.Name"/>
+                                            <Binding Path="MedicineId"/>
+                                        </MultiBinding>
+                                    </DataGridTextColumn.Binding>
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="TextWrapping" Value="Wrap"/>
@@ -198,24 +211,26 @@
                                 </DataGridTextColumn>
 
                                 <!-- Đơn vị -->
-                                <DataGridTextColumn Header="Đơn vị" Binding="{Binding Medicine.Unit.Name}" Width="80">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="Đơn vị" Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Medicine.Unit.Name, TargetNullValue='Dịch vụ'}"  
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <!-- Số lượng -->
-                                <DataGridTextColumn Header="Số lượng" Binding="{Binding Quantity}" Width="80">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="Số lượng" Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Quantity, TargetNullValue=1}" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <!-- Đơn giá -->
                                 <DataGridTextColumn Header="Đơn giá" Binding="{Binding SalePrice, StringFormat='{}{0:N0} VNĐ'}" Width="120">
@@ -227,24 +242,23 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <!-- Giảm giá % -->
-                                <DataGridTextColumn Header="Giảm giá" Binding="{Binding Discount, StringFormat='{}{0:N1}%'}" Width="80">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
                                 <!-- Thành tiền -->
                                 <DataGridTemplateColumn Header="Thành tiền" Width="130">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding LineTotal, StringFormat='{}{0:N0} VNĐ'}" 
-                                               HorizontalAlignment="Right" 
-                                               VerticalAlignment="Center"
-                                               FontWeight="SemiBold"/>
+                                            <TextBlock HorizontalAlignment="Right" 
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="SemiBold">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0:N0} VNĐ">
+                                                        <Binding Path="SalePrice" />
+                                                        <Binding Path="Quantity" />
+                                                        <MultiBinding.Converter>
+                                                            <local:SimpleMultiplicationConverter />
+                                                        </MultiBinding.Converter>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -278,61 +292,46 @@
                 </materialDesign:Card>
 
                 <!-- Medical Record & Doctor's Advice (If applicable) -->
+                <!-- Medical Record & Doctor's Advice (If applicable) -->
                 <materialDesign:Card Grid.Row="1" Margin="0,0,0,16" Padding="16" UniformCornerRadius="4"
-                             Visibility="{Binding HasMedicalRecord, Converter={StaticResource BooleanToVisibilityConverter}}">
+                     Visibility="{Binding HasMedicalRecord, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <materialDesign:PackIcon Kind="NoteTextOutline" Width="24" Height="24" VerticalAlignment="Center"/>
-                            <TextBlock Text="HỒ SƠ KHÁM BỆNH VÀ LỜI DẶN" FontSize="18" FontWeight="Medium" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="LỜI DẶN CỦA BÁC SĨ" FontSize="18" FontWeight="Medium" Margin="8,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Diagnose Information -->
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBlock Text="CHẨN ĐOÁN" FontWeight="Medium" Margin="0,0,0,4"/>
-                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
-                                    <TextBlock Text="{Binding MedicalRecord.Diagnosis}" TextWrapping="Wrap" MinHeight="60"/>
-                                </Border>
-
-                                <TextBlock Text="TRIỆU CHỨNG" FontWeight="Medium" Margin="0,0,0,4"/>
-                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
-                                    <TextBlock Text="{Binding MedicalRecord.Symptoms}" TextWrapping="Wrap" MinHeight="60"/>
+                            <!-- Doctor's Advice -->
+                            <StackPanel Grid.Column="0" Margin="0,18,16,0">
+                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,0">
+                                    <TextBlock Text="{Binding MedicalRecord.DoctorNotes, TargetNullValue='Không có lời dặn'}" 
+                               TextWrapping="Wrap" MinHeight="60"/>
                                 </Border>
                             </StackPanel>
 
-                            <!-- Doctor's Advice -->
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBlock Text="LỜI DẶN CỦA BÁC SĨ" FontWeight="Medium" Margin="0,0,0,4"/>
-                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
-                                    <TextBlock Text="{Binding MedicalRecord.DoctorNotes}" TextWrapping="Wrap" MinHeight="60"/>
-                                </Border>
-
+                            <!-- Doctor Information -->
+                            <StackPanel Grid.Column="1" MinWidth="200">
                                 <TextBlock Text="BÁC SĨ KHÁM" FontWeight="Medium" Margin="0,0,0,4"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Border Grid.Column="0" Width="80" Height="80" BorderBrush="#DDDDDD" BorderThickness="1" Margin="0,0,8,0">
-                                        <Image Source="{Binding MedicalRecord.Doctor.ImagePath}" Stretch="Uniform"/>
-                                    </Border>
-
-                                    <StackPanel Grid.Column="1">
+                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
+                                    <StackPanel>
                                         <TextBlock Text="{Binding MedicalRecord.Doctor.FullName}" FontWeight="SemiBold" FontSize="14"/>
-                                        <TextBlock Text="{Binding MedicalRecord.Doctor.Specialty}" FontStyle="Italic" Margin="0,4,0,0"/>
-                                        <TextBlock Text="{Binding MedicalRecord.RecordDate, StringFormat='Ngày khám: {0:dd/MM/yyyy}'}" Margin="0,4,0,0"/>
+                                        <TextBlock Text="{Binding MedicalRecord.Doctor.Specialty, TargetNullValue='Bác sĩ đa khoa'}" 
+                                   FontStyle="Italic" Margin="0,4,0,0"/>
+                                        <TextBlock Text="{Binding MedicalRecord.RecordDate, StringFormat='Ngày khám: {0:dd/MM/yyyy}'}" 
+                                   Margin="0,4,0,0"/>
                                     </StackPanel>
-                                </Grid>
+                                </Border>
                             </StackPanel>
                         </Grid>
                     </StackPanel>
                 </materialDesign:Card>
+
             </Grid>
 
             <!-- ROW 3: TOTALS, DISCOUNTS, TAXES -->
@@ -346,29 +345,102 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
+
                     <!-- Payment method info -->
-                    <StackPanel Grid.Column="0" Visibility="{Binding IsPaid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Grid.Column="0" Grid.Row="0" Visibility="{Binding IsPaid, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="THÔNG TIN THANH TOÁN" FontWeight="Medium" Margin="0,0,0,8"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <TextBlock Text="Phương thức thanh toán:" Width="160"/>
                             <TextBlock Text="{Binding PaymentMethod}" FontWeight="SemiBold"/>
                         </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="Ngày thanh toán:" Width="160"/>
+                            <TextBlock Text="{Binding PaymentDate, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" FontWeight="SemiBold"/>
+                        </StackPanel>
                     </StackPanel>
-                    <StackPanel Grid.Row="1"   VerticalAlignment="Bottom" Grid.RowSpan="2" Orientation="Horizontal" Margin="16,0,0,0">
+
+                    <!-- Discount & Tax controls (Visible only when not paid) -->
+                    <Grid Grid.Column="0" Grid.Row="0" Visibility="{Binding IsNotPaid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <TextBlock Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" 
+                               Text="ĐIỀU CHỈNH HÓA ĐƠN" FontWeight="Medium" Margin="0,0,0,8"/>
+
+                        <!-- Patient Type Discount -->
+                        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8" 
+                                Visibility="{Binding HasPatient, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="Giảm giá theo loại KH:" Width="160"/>
+                            <TextBlock Text="{Binding PatientTypeDiscount, StringFormat='{}{0:N1}%'}" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Grid.Row="1" 
+                            Command="{Binding ApplyPatientDiscountCommand}" 
+                            Margin="16,0,0,0"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            ToolTip="Áp dụng giảm giá theo loại khách hàng"
+                            Visibility="{Binding HasPatient, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="Check" />
+                        </Button>
+
+                        <!-- Custom Discount -->
+                        <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Giảm giá (%):" Width="160" VerticalAlignment="Center"/>
+                            <TextBox Width="80" 
+                                 Text="{Binding Invoice.Discount, StringFormat='{}{0:N1}'}" 
+                                 materialDesign:HintAssist.Hint="0-100%"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Custom Tax -->
+                        <StackPanel Grid.Column="0" Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Thuế VAT (%):" Width="160" VerticalAlignment="Center"/>
+                            <TextBox Width="80" 
+                                 Text="{Binding Invoice.Tax, StringFormat='{}{0:N1}'}"
+                                 materialDesign:HintAssist.Hint="0-100%"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+
+                        <!-- Recalculate Button -->
+                        <Button Grid.Column="1" Grid.Row="2" 
+                            Command="{Binding RecalculateTotalsCommand}" 
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            HorizontalAlignment="Center" 
+                            Margin="16,8,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Calculator" Margin="0,0,8,0"/>
+                                <TextBlock Text="Tính lại tổng tiền"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Grid.RowSpan="2" Orientation="Horizontal" Margin="16,20,0,0">
                         <Button
-                  Command="{Binding CloseWindow}"
-                  Style="{StaticResource MaterialDesignOutlinedButton}"
-                  Margin="10,0,40,0" Width="150" Height="40">
+                          Command="{Binding CloseWindow}"
+                          Style="{StaticResource MaterialDesignOutlinedButton}"
+                          Margin="10,0,40,0" Width="150" Height="40">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ExitToApp" Margin="0,0,8,0"/>
                                 <TextBlock Text="Đóng"/>
                             </StackPanel>
                         </Button>
                         <Button
-            Command="{Binding PrintInvoiceCommand}"
-            Style="{StaticResource MaterialDesignOutlinedButton}"
-            Margin="10,0,40,0" Width="150" Height="40">
+                        Command="{Binding PrintInvoiceCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="10,0,40,0" Width="150" Height="40">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0"/>
                                 <TextBlock Text="In hóa đơn"/>
@@ -377,11 +449,10 @@
 
                         <!-- Conditionally show Pay button -->
                         <Button
-            Command="{Binding ProcessPaymentCommand}"
-     
-            Width="140" Height="40"
-            Background="#4CAF50"
-            BorderBrush="#388E3C">
+                        Command="{Binding ProcessPaymentCommand}"
+                        Width="140" Height="40"
+                        Background="#4CAF50"
+                        BorderBrush="#388E3C">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                                     <Style.Triggers>
@@ -406,7 +477,6 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="140"/>
@@ -420,14 +490,17 @@
                         <!-- Discount -->
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Giảm giá:" FontWeight="Medium" HorizontalAlignment="Right" Margin="0,0,16,8"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" 
-                           Text="{Binding TotalDiscount, StringFormat='{}{0:N0} VNĐ'}" 
-                           Foreground="#1B5E20" 
-                           HorizontalAlignment="Right" 
-                           Margin="0,0,0,8"/>
+                               Text="{Binding DiscountAmount, StringFormat='{}{0:N0} VNĐ'}" 
+                               Foreground="#1B5E20" 
+                               HorizontalAlignment="Right" 
+                               Margin="0,0,0,8"/>
 
                         <!-- Tax -->
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Thuế VAT (10%):" FontWeight="Medium" HorizontalAlignment="Right" Margin="0,0,16,8"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TaxAmount, StringFormat='{}{0:N0} VNĐ'}" HorizontalAlignment="Right" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Thuế VAT:" FontWeight="Medium" HorizontalAlignment="Right" Margin="0,0,16,8"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" 
+                               Text="{Binding TaxAmount, StringFormat='{}{0:N0} VNĐ'}" 
+                               HorizontalAlignment="Right" 
+                               Margin="0,0,0,8"/>
 
                         <!-- Divider -->
                         <Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#DDDDDD" BorderThickness="0,1,0,0" Margin="0,4,0,8"/>
@@ -435,17 +508,14 @@
                         <!-- Total -->
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="TỔNG CỘNG:" FontWeight="Bold" FontSize="16" HorizontalAlignment="Right" Margin="0,0,16,0"/>
                         <TextBlock Grid.Row="4" Grid.Column="1" 
-                           Text="{Binding Invoice.TotalAmount, StringFormat='{}{0:N0} VNĐ'}" 
-                           FontWeight="Bold" 
-                           FontSize="16" 
-                           Foreground="#C62828" 
-                           HorizontalAlignment="Right"/>
-
-
+                               Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" 
+                               FontWeight="Bold" 
+                               FontSize="16" 
+                               Foreground="#C62828" 
+                               HorizontalAlignment="Right"/>
                     </Grid>
                 </Grid>
             </materialDesign:Card>
         </Grid>
     </Grid>
-    
 </Window>

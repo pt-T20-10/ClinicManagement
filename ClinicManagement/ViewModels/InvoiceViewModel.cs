@@ -134,7 +134,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Pagination properties
         private int _currentPage = 1;
         public int CurrentPage
         {
@@ -146,10 +145,15 @@ namespace ClinicManagement.ViewModels
                     _currentPage = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(PageInfoText));
+                    OnPropertyChanged(nameof(CanNavigateForward)); // Thêm dòng này
+                    OnPropertyChanged(nameof(CanNavigateBackward)); // Thêm dòng này
+                    UpdatePageNumbers();
                     LoadInvoices();
                 }
             }
         }
+
+
 
         private int _totalPages;
         public int TotalPages
@@ -160,6 +164,8 @@ namespace ClinicManagement.ViewModels
                 _totalPages = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(PageInfoText));
+                OnPropertyChanged(nameof(CanNavigateForward)); // Thêm dòng này
+                OnPropertyChanged(nameof(CanNavigateBackward)); // Thêm dòng này
                 UpdatePageNumbers();
             }
         }
@@ -204,6 +210,12 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+        // Thuộc tính mới để kiểm tra khả năng điều hướng tiến
+        public bool CanNavigateForward => TotalPages > 1 && CurrentPage < TotalPages;
+
+        // Thuộc tính mới để kiểm tra khả năng điều hướng lùi
+        public bool CanNavigateBackward => CurrentPage > 1;
+
 
         public string PageInfoText => $"Trang {CurrentPage}/{TotalPages} (Tổng {TotalItems} hóa đơn)";
 
@@ -217,6 +229,16 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        public bool IsCurrentPageNumber(int pageNumber)
+        {
+            return CurrentPage == pageNumber;
+        }
+
+        public bool IsFirstPage => CurrentPage <= 1;
+
+        public bool IsLastPage => TotalPages > 0 && CurrentPage >= TotalPages;
+
         #endregion
 
         #region Commands
@@ -277,19 +299,19 @@ namespace ClinicManagement.ViewModels
             // Pagination commands
             FirstPageCommand = new RelayCommand<object>(
                 p => CurrentPage = 1,
-                p => CurrentPage > 1);
+                p => CanNavigateBackward);
 
             PreviousPageCommand = new RelayCommand<object>(
                 p => CurrentPage--,
-                p => CurrentPage > 1);
+                p => CanNavigateBackward);
 
             NextPageCommand = new RelayCommand<object>(
                 p => CurrentPage++,
-                p => CurrentPage < TotalPages);
+                p => CanNavigateForward);
 
             LastPageCommand = new RelayCommand<object>(
                 p => CurrentPage = TotalPages,
-                p => CurrentPage < TotalPages);
+                p => CanNavigateForward);
 
             GoToPageCommand = new RelayCommand<int>(
                 p => CurrentPage = p,
@@ -342,6 +364,9 @@ namespace ClinicManagement.ViewModels
                 TotalItems = query.Count();
                 TotalPages = (int)Math.Ceiling(TotalItems / (double)SelectedItemsPerPage);
 
+                // Thêm dòng này để cập nhật trạng thái các command
+                CommandManager.InvalidateRequerySuggested();
+
                 // Apply pagination
                 var paginatedInvoices = query
                     .OrderByDescending(i => i.InvoiceDate)
@@ -361,6 +386,7 @@ namespace ClinicManagement.ViewModels
                 IsLoading = false;
             }
         }
+
 
         private IQueryable<Invoice> ApplyFilters(IQueryable<Invoice> query)
         {
@@ -427,11 +453,11 @@ namespace ClinicManagement.ViewModels
                 // Adjust range for edge cases
                 if (CurrentPage <= 4)
                 {
-                    endPage = 5;
+                    endPage = Math.Min(5, TotalPages - 1);
                 }
                 else if (CurrentPage >= TotalPages - 3)
                 {
-                    startPage = TotalPages - 4;
+                    startPage = Math.Max(TotalPages - 4, 2);
                 }
 
                 // Add range around current page
@@ -446,9 +472,15 @@ namespace ClinicManagement.ViewModels
                     PageNumbers.Add(-1); // Use -1 as ellipsis indicator
                 }
 
-                // Always show last page
-                PageNumbers.Add(TotalPages);
+                // Always show last page if it's not already included
+                if (TotalPages > 1)
+                {
+                    PageNumbers.Add(TotalPages);
+                }
             }
+
+            // Force update of commands that depend on CurrentPage
+            CommandManager.InvalidateRequerySuggested();
         }
         #endregion
 
@@ -514,7 +546,7 @@ namespace ClinicManagement.ViewModels
             // TODO: Implement actual printing functionality
         }
 
-             private void ProcessPayment(Invoice invoice)
+        private void ProcessPayment(Invoice invoice)
         {
             if (invoice == null) return;
     

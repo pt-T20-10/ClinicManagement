@@ -43,6 +43,16 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("LoaiHoaDon")
                 .HasMaxLength(20);
 
+            builder.Property(e => e.Discount)
+            .HasColumnName("GiamGia")
+            .HasDefaultValue(0m)
+            .HasColumnType("decimal(5, 2)");
+
+            builder.Property(e => e.Tax)
+            .HasColumnName("Thue")
+            .HasDefaultValue(0m)
+            .HasColumnType("decimal(5, 2)");
+
             builder.HasOne(d => d.Patient)
                 .WithMany(p => p.Invoices)
                 .HasForeignKey(d => d.PatientId)

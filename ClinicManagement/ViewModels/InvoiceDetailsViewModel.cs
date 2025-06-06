@@ -86,6 +86,8 @@ namespace ClinicManagement.ViewModels
             {
                 _isPaid = value;
                 OnPropertyChanged();
+                // Also update IsNotPaid to ensure they are always opposite
+                IsNotPaid = !value;
             }
         }
 
@@ -192,6 +194,52 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        public decimal TotalAmount
+        {
+            get
+            {
+                // Calculate the total from components:
+                // Subtotal - Discount + Tax
+                return SubTotal - DiscountAmount + TaxAmount;
+            }
+        }
+
+        // Properties needed for the updated XAML
+        private bool _isNotPaid;
+        public bool IsNotPaid
+        {
+            get => _isNotPaid;
+            set
+            {
+                _isNotPaid = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal? _patientTypeDiscount;
+        public decimal? PatientTypeDiscount
+        {
+            get => _patientTypeDiscount;
+            set
+            {
+                _patientTypeDiscount = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _discountAmount;
+        public decimal DiscountAmount
+        {
+            get => _discountAmount;
+            set
+            {
+                _discountAmount = value;
+                OnPropertyChanged();
+                // Update TotalAmount when DiscountAmount changes
+                OnPropertyChanged(nameof(TotalAmount));
+            }
+        }
+
         #endregion
 
         #region Commands
@@ -201,16 +249,14 @@ namespace ClinicManagement.ViewModels
         public ICommand CloseWindow { get; set; }
         public ICommand GenerateQRCodeCommand { get; set; }
         public ICommand ConfirmPaymentCommand { get; set; }
-        
-
+        public ICommand ApplyPatientDiscountCommand { get; set; }
+        public ICommand RecalculateTotalsCommand { get; set; }
 
         #endregion
 
         // Constructor
         public InvoiceDetailsViewModel(Invoice invoice = null)
         {
-
-
             InitializeCommands();
 
             if (invoice != null)
@@ -230,34 +276,34 @@ namespace ClinicManagement.ViewModels
                 p => Invoice != null && Invoice.Status == "Chưa thanh toán");
 
             CloseWindow = new RelayCommand<object>(
-     p =>
-     {
-         // Try to find the window through different methods
-         Window window = null;
+                p =>
+                {
+                    // Try to find the window through different methods
+                    Window window = null;
 
-         // Method 1: If parameter is a Button or other UIElement
-         if (p is UIElement element)
-         {
-             window = Window.GetWindow(element);
-         }
-         // Method 2: If parameter is already a Window
-         else if (p is Window w)
-         {
-             window = w;
-         }
-         // Method 3: Find active window through Application
-         else if (Application.Current.Windows.Count > 0)
-         {
-             // Try to get the window with focus first, otherwise get the main window
-             window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                 ?? Application.Current.MainWindow;
-         }
+                    // Method 1: If parameter is a Button or other UIElement
+                    if (p is UIElement element)
+                    {
+                        window = Window.GetWindow(element);
+                    }
+                    // Method 2: If parameter is already a Window
+                    else if (p is Window w)
+                    {
+                        window = w;
+                    }
+                    // Method 3: Find active window through Application
+                    else if (Application.Current.Windows.Count > 0)
+                    {
+                        // Try to get the window with focus first, otherwise get the main window
+                        window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                            ?? Application.Current.MainWindow;
+                    }
 
-         // Close the window if found
-         window?.Close();
-     },
-     p => true
- );
+                    // Close the window if found
+                    window?.Close();
+                },
+                p => true
+            );
 
             GenerateQRCodeCommand = new RelayCommand<object>(
                 p => GenerateQRCode(),
@@ -265,6 +311,14 @@ namespace ClinicManagement.ViewModels
 
             ConfirmPaymentCommand = new RelayCommand<Window>(
                 p => ConfirmPayment(p),
+                p => Invoice != null);
+
+            ApplyPatientDiscountCommand = new RelayCommand<object>(
+                p => ApplyPatientDiscount(),
+                p => Invoice != null && Invoice.Patient?.PatientType != null && PatientTypeDiscount.HasValue);
+
+            RecalculateTotalsCommand = new RelayCommand<object>(
+                p => RecalculateTotals(),
                 p => Invoice != null);
         }
 
@@ -283,6 +337,14 @@ namespace ClinicManagement.ViewModels
 
                 // Check if invoice is already paid
                 IsPaid = Invoice.Status == "Đã thanh toán";
+                IsNotPaid = !IsPaid;
+
+                // Ensure discount and tax values are initialized
+                if (Invoice.Discount == null) Invoice.Discount = 0;
+                if (Invoice.Tax == null) Invoice.Tax = 10; // Default 10%
+
+                // Calculate totals initially
+                CalculateInvoiceTotals();
                 if (IsPaid)
                 {
                     // Store payment information in the Notes field of Invoice
@@ -338,7 +400,27 @@ namespace ClinicManagement.ViewModels
         private void CheckPatient()
         {
             if (Invoice == null) return;
+
             HasPatient = Invoice.Patient != null;
+
+            // Lấy thông tin giảm giá từ loại khách hàng nếu có
+            if (HasPatient && Invoice.Patient?.PatientType != null)
+            {
+                PatientTypeDiscount = Invoice.Patient.PatientType.Discount;
+            }
+            else
+            {
+                PatientTypeDiscount = null;
+            }
+        }
+
+        private void ApplyPatientDiscount()
+        {
+            if (Invoice != null && PatientTypeDiscount.HasValue)
+            {
+                Invoice.Discount = PatientTypeDiscount;
+                RecalculateTotals();
+            }
         }
 
         private void CheckMedicalRecord()
@@ -389,20 +471,36 @@ namespace ClinicManagement.ViewModels
             if (InvoiceDetails == null || !InvoiceDetails.Any())
             {
                 SubTotal = 0;
-                TotalDiscount = 0;
+                DiscountAmount = 0;
                 TaxAmount = 0;
+                OnPropertyChanged(nameof(TotalAmount));
                 return;
             }
 
             // Calculate subtotal (before discounts)
-            SubTotal = InvoiceDetails.Sum(d => d.SalePrice * d.Quantity) ?? 0;
+            SubTotal = InvoiceDetails.Sum(d => d.SalePrice * (d.Quantity ?? 1)) ?? 0;
 
-            // Calculate total discounts
-            TotalDiscount = InvoiceDetails.Sum(d => d.SalePrice * d.Quantity * (decimal)(d.Discount / (decimal)100.0)) ?? 0;
+            // Calculate discount amount from invoice level discount
+            decimal discountPercent = Invoice?.Discount ?? 0;
+            DiscountAmount = SubTotal * (discountPercent / 100m);
 
-            // Calculate tax (10% of amount after discounts)
-            decimal amountAfterDiscount = SubTotal - TotalDiscount;
-            TaxAmount = amountAfterDiscount * 0.1m;
+            // Calculate tax amount from invoice level tax
+            decimal taxPercent = Invoice?.Tax ?? 10; // Default to 10% if not set
+            decimal amountAfterDiscount = SubTotal - DiscountAmount;
+            TaxAmount = amountAfterDiscount * (taxPercent / 100m);
+
+            OnPropertyChanged(nameof(TotalAmount));
+
+            // If we are recalculating, update the invoice totalAmount
+            if (!IsPaid && Invoice != null)
+            {
+                Invoice.TotalAmount = TotalAmount;
+            }
+        }
+
+        private void RecalculateTotals()
+        {
+            CalculateInvoiceTotals();
         }
 
         private void PrintInvoice()
@@ -524,7 +622,7 @@ namespace ClinicManagement.ViewModels
                 FontWeight = FontWeights.Bold,
                 FontSize = 16
             };
-            amountText.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("Invoice.TotalAmount")
+            amountText.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding("TotalAmount")
             {
                 StringFormat = "Số tiền cần thanh toán: {0:N0} VNĐ"
             });
@@ -579,8 +677,14 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                // Update invoice status
+                // Ensure discount and tax have values and recalculate totals one final time
+                if (Invoice.Discount == null) Invoice.Discount = 0;
+                if (Invoice.Tax == null) Invoice.Tax = 10;
+                RecalculateTotals();
+
+                // Update invoice status and total amount
                 Invoice.Status = "Đã thanh toán";
+                Invoice.TotalAmount = TotalAmount; // Set the calculated total amount
 
                 // Store payment information in the Notes field
                 string paymentMethod = IsCashPayment ? "Tiền mặt" : "Chuyển khoản";
@@ -597,6 +701,7 @@ namespace ClinicManagement.ViewModels
 
                 // Update view model properties
                 IsPaid = true;
+                IsNotPaid = false;
                 PaymentMethod = paymentMethod;
                 PaymentDate = DateTime.Now;
 

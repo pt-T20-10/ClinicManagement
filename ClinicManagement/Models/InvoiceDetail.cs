@@ -9,6 +9,8 @@ public partial class InvoiceDetail
 
     public int InvoiceId { get; set; }
 
+    public string? ServiceName { get; set; }
+
     public int? MedicineId { get; set; }
 
     public int? StockInId { get; set; }
@@ -17,7 +19,7 @@ public partial class InvoiceDetail
 
     public decimal? SalePrice { get; set; }
 
-    public decimal? Discount { get; set; }
+  
 
     public virtual Invoice Invoice { get; set; } = null!;
 

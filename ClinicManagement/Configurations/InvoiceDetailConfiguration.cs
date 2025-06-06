@@ -32,10 +32,10 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("GiaBan")
                 .HasColumnType("decimal(18, 2)");
 
-            builder.Property(e => e.Discount)
-                .HasColumnName("GiamGia")
-                .HasDefaultValue(0m)
-                .HasColumnType("decimal(5, 2)");
+    
+            builder.Property(e => e.ServiceName)
+                    .HasColumnName("TenDichVu")
+                    .HasMaxLength(100);
 
             builder.HasOne(d => d.Invoice)
                 .WithMany(p => p.InvoiceDetails)

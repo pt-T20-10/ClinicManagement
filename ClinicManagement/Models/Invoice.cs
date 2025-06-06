@@ -17,6 +17,11 @@ public partial class Invoice
 
     public string InvoiceType { get; set; }
 
+
+    public decimal? Discount { get; set; }
+
+    public decimal? Tax { get; set; }
+
     public int? MedicalRecordId { get; set; }
 
     public string? Notes { get; set; }
