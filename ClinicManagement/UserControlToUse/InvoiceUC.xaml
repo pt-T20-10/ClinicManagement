@@ -16,15 +16,7 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="InvoiceUc">
-    
-   <!-- Strigger để thực hiện Load UserControl-->
-    <i:Interaction.Triggers>
-        <i:EventTrigger EventName="Loaded">
-            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" CommandParameter="{Binding ElementName=InvoiceUc}"/>
-        </i:EventTrigger>
-    </i:Interaction.Triggers>
-    
-    
+     
     <!-- Tạo UC Resouces để sử dụng Converter hổ trỗ UI-->
     <UserControl.Resources>
         <sub:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
