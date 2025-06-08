@@ -831,6 +831,7 @@ namespace ClinicManagement.ViewModels
                   {
                       var detailsWindow = new MedicineDetailsWindow(medicine);
                       detailsWindow.ShowDialog();
+                      LoadData(); // Reload data after closing the details window   
                   }
               },
               (medicine) => medicine != null

@@ -233,12 +233,12 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region Commands
-        public ICommand LoadedWindowCommand { get; private set; }
-        public ICommand UpdateDoctorInfoCommand { get; private set; }
-        public ICommand DeleteDoctorCommand { get; private set; }
-        public ICommand ChangePasswordCommand { get; private set; }
-        public ICommand SearchAppointmentsCommand { get; private set; }
-        public ICommand ViewAppointmentDetailsCommand { get; private set; }
+        public ICommand LoadedWindowCommand { get;  set; }
+        public ICommand UpdateDoctorInfoCommand { get;  set; }
+        public ICommand DeleteDoctorCommand { get; set; }
+        public ICommand ChangePasswordCommand { get; set; }
+        public ICommand SearchAppointmentsCommand { get; set; }
+        public ICommand ViewAppointmentDetailsCommand { get; set; }
         #endregion
 
         public DoctorDetailsWindowViewModel()

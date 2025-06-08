@@ -41,7 +41,7 @@ public partial class Medicine
     {
         get
         {
-            // Clear the cache to ensure we get fresh data
+            // Clear the cache để make sure clean data 
             _availableStockInsCache = null;
 
             // If there are no stock-ins, return null
@@ -52,13 +52,28 @@ public partial class Medicine
             return StockIns.OrderByDescending(si => si.ImportDate).FirstOrDefault()?.ImportDate;
         }
     }
-
-
+    //Get Current Unit Price based on the most recent stock-in that has remaining stock
     public decimal CurrentUnitPrice
     {
         get
         {
-            // Get the most recent stock-in for price information
+            // Lấy danh sách các lô nhập kho có thông tin số lượng còn lại
+            var stockWithRemaining = GetAvailableStockIns().ToList();
+
+            // Sắp xếp theo ngày nhập mới nhất
+            var orderedStock = stockWithRemaining
+                .OrderByDescending(s => s.ImportDate)
+                .ToList();
+
+            // Tìm lô gần đây nhất còn hàng
+            var firstAvailableStock = orderedStock
+                .FirstOrDefault(s => s.RemainingQuantity > 0);
+
+            // Nếu có lô còn hàng, trả về giá nhập của lô đó
+            if (firstAvailableStock != null)
+                return firstAvailableStock.UnitPrice;
+
+            // Nếu không có lô nào còn hàng, lấy giá của lô mới nhất (theo logic cũ)
             var latestStockIn = StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
             return latestStockIn?.UnitPrice ?? 0;
         }
@@ -68,7 +83,23 @@ public partial class Medicine
     {
         get
         {
-            // Get the most recent stock-in for price information
+            // Lấy danh sách các lô nhập kho có thông tin số lượng còn lại
+            var stockWithRemaining = GetAvailableStockIns().ToList();
+
+            // Sắp xếp theo ngày nhập mới nhất
+            var orderedStock = stockWithRemaining
+                .OrderByDescending(s => s.ImportDate)
+                .ToList();
+
+            // Tìm lô gần đây nhất còn hàng
+            var firstAvailableStock = orderedStock
+                .FirstOrDefault(s => s.RemainingQuantity > 0);
+
+            // Nếu có lô còn hàng, trả về giá bán của lô đó
+            if (firstAvailableStock != null)
+                return firstAvailableStock.SellPrice ?? 0;
+
+            // Nếu không có lô nào còn hàng, lấy giá của lô mới nhất (theo logic cũ)
             var latestStockIn = StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
             return latestStockIn?.SellPrice ?? 0;
         }
@@ -79,7 +110,9 @@ public partial class Medicine
     /// Lấy danh sách các lô nhập kho, bao gồm cả các lô có cùng ngày nhập nhưng khác giá
     /// </summary>
     private List<StockInWithRemaining> _availableStockInsCache;
+
     private bool _isCalculatingStockIns = false;
+
     private IEnumerable<StockInWithRemaining> GetAvailableStockIns()
     {
         // Return cache if available to prevent recursive calls

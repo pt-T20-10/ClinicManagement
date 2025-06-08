@@ -15,14 +15,13 @@ using System.Windows.Shapes;
 
 namespace ClinicManagement.UserControlToUse
 {
-    /// <summary>
-    /// Interaction logic for MedicincSellUC.xaml
-    /// </summary>
+  
     public partial class MedicincSellUC : UserControl
     {
         public MedicincSellUC()
         {
             InitializeComponent();
+       
         }
     }
 }
