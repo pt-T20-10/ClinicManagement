@@ -80,6 +80,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        public int TempQuantity { get; set; }
+
         private string _TotalQuantity;
         public string TotalQuantity
         {

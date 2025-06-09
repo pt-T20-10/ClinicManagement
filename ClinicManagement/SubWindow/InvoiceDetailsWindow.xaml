@@ -19,57 +19,63 @@
         ResizeMode="NoResize"
         Height="1000" Width="950"
         WindowStartupLocation="CenterScreen">
+    
+    <!-- Khởi tạo Window Resouces để sử dụng Converter -->
     <Window.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <local:ItemNameConverter x:Key="ItemNameConverter"/>
     </Window.Resources>
+    <!--Main grid có 2 Row-->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+ 
         </Grid.RowDefinitions>
 
+        <!-- Row 0 cho Control Bar -->
         <Grid Grid.Row="0">
             <uc:ControlBarUC></uc:ControlBarUC>
         </Grid>
+        
+        <!-- Row 1: Main content area -->
+        <!-- Có 3 R-->
         <Grid Margin="20" Grid.Row="1">
             <Grid.RowDefinitions>
+                <!-- Row 1: Thông tin hóa đơn -->
                 <RowDefinition Height="Auto" />
-                <!-- Row 1: Invoice Information -->
+                
+                <!-- Row 2: Chi tiết hóa đơn có thông tin thuốc hoặc dịch vụ, Lời dặn của bác sĩ (nếu có) -->
                 <RowDefinition Height="*" />
-                <!-- Row 2: Invoice Details DataGrid -->
+                
+                <!-- Row 3: Thông tin thanh toán và điều chỉnh giảm giá, thuế -->
                 <RowDefinition Height="Auto" />
-                <!-- Row 3: Totals, Discounts, Taxes -->
+              
             </Grid.RowDefinitions>
 
-            <!-- ROW 1: INVOICE INFORMATION -->
+            <!-- ROW 1: Card Thông tin hóa đơn -->
             <materialDesign:Card Grid.Row="0" Margin="0,0,0,16" Padding="16" UniformCornerRadius="4">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Left side: Invoice details -->
-                    <Grid Grid.Column="0">
+                    <!--3 Row, 2 Column-->
+                    <Grid >
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Title -->
+                        <!-- Row 0: Title -->
                         <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,16">
                             <materialDesign:PackIcon Kind="ReceiptText" Width="32" Height="32" VerticalAlignment="Center"/>
                             <TextBlock Text="THÔNG TIN HÓA ĐƠN" FontSize="24" FontWeight="Medium" Margin="8,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <!-- Invoice Information Column 1 -->
+                        <!-- Column 0 Row 1: Thông tin hóa đơn
+                              Gồm mã hóa đơn, loại hóa đơn, ngày lập, trạng thái                        
+                        -->
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,24,0">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Mã hóa đơn:" FontWeight="SemiBold" Width="120"/>
@@ -85,7 +91,7 @@
                                 <TextBlock Text="Ngày lập:" FontWeight="SemiBold" Width="120"/>
                                 <TextBlock Text="{Binding Invoice.InvoiceDate, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"/>
                             </StackPanel>
-
+                        <!--Trạng thái hóa đơn có style strigger để hiển thị màu tùy theo Status-->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Trạng thái:" FontWeight="SemiBold" Width="120"/>
                                 <TextBlock Text="{Binding Invoice.Status}">
@@ -107,7 +113,9 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- Invoice Information Column 2 (Patient Info if available) -->
+                        <!-- Column 1 Row 1: Thông tin khách hàng (nếu có)
+                             Gồm họ tên, số điện thoại, mã BHYT, loại khách hàng   
+                        -->
                         <StackPanel Grid.Row="1" Grid.Column="1" Visibility="{Binding HasPatient, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="THÔNG TIN KHÁCH HÀNG" FontWeight="Medium" FontSize="16" Margin="0,0,0,8"/>
 
@@ -132,7 +140,7 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- Notes for the invoice -->
+                        <!-- Ghi chú cho hóa đơn -->
                         <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,8,0,0">
                             <TextBlock Text="Ghi chú:" FontWeight="SemiBold"/>
                             <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,4,0,0">
@@ -143,9 +151,6 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Right side: Controls -->
-
-                </Grid>
             </materialDesign:Card>
 
             <!-- ROW 2: INVOICE DETAILS TABLE AND MEDICAL ADVICE (IF APPLICABLE) -->

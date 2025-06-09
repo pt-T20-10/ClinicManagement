@@ -535,17 +535,67 @@ namespace ClinicManagement.ViewModels
         }
 
         // Phương thức SellMedicine để bán thuốc cho hóa đơn do SellMedicineCommand gọi
+        // Phương thức SellMedicine để bán thuốc cho hóa đơn do SellMedicineCommand gọi
         private void SellMedicine(Invoice invoice)
         {
             if (invoice == null) return;
 
-            MessageBox.Show($"Bán thuốc cho hóa đơn #{invoice.InvoiceId} - Bệnh nhân {invoice.Patient?.FullName}",
-                           "Bán thuốc",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
+            try
+            {
+                // Lấy MainWindow
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow == null) return;
 
-        
+                // Tìm TabControl chính
+                var tabControl = LogicalTreeHelper.FindLogicalNode(mainWindow, "MainTabControl") as TabControl;
+                if (tabControl == null) return;
+
+                // Tìm tab "Bán thuốc" và chuyển đến đó
+                foreach (var item in tabControl.Items)
+                {
+                    if (item is TabItem tabItem)
+                    {
+                        // Kiểm tra header của tab
+                        var header = tabItem.Header as Grid;
+                        if (header != null)
+                        {
+                            foreach (var child in LogicalTreeHelper.GetChildren(header))
+                            {
+                                if (child is Grid childGrid && (int)childGrid.GetValue(Grid.RowProperty) == 0)
+                                {
+                                    foreach (var textBlockElement in LogicalTreeHelper.GetChildren(childGrid))
+                                    {
+                                        if (textBlockElement is TextBlock textBlock && textBlock.Text == "Bán thuốc")
+                                        {
+                                            // Truyền hóa đơn vào MedicineSellViewModel từ Resources
+                                            var medicineSellVM = Application.Current.Resources["MedicineSellVM"] as MedicineSellViewModel;
+                                            if (medicineSellVM != null)
+                                            {
+                                                medicineSellVM.CurrentInvoice = invoice;
+                                            }
+
+                                            // Chuyển đến tab bán thuốc
+                                            tabControl.SelectedItem = tabItem;
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Không tìm thấy tab
+                MessageBox.Show($"Đã chọn hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName} nhưng không thể chuyển đến tab Bán thuốc",
+                              "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
+                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
         #endregion
     }
 

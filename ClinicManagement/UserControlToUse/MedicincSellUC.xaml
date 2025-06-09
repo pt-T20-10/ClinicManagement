@@ -16,256 +16,339 @@
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="MedicineUc">
     <materialDesign:Card>
-        
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <!-- Header Section with Search & Filter -->
-        <Grid Grid.Row="0" Margin="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-            <TextBox
+            <!-- Header Section with Search & Filter -->
+            <Grid Grid.Row="0" Margin="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox
                   Grid.Column="0"
                   Margin="20 0 0 0"
                   VerticalAlignment="Center"
                   HorizontalAlignment="Left"
                   Height="42"
                   Width="500"
-                  Padding="15 0 0 0 "
+                  Padding="15 0 0 0"
+                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                   materialDesign:HintAssist.Hint="Tên thuốc"
-                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                />
-            <Button
+                  materialDesign:TextFieldAssist.HasClearButton="True"
+                  Style="{StaticResource MaterialDesignOutlinedTextBox}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding SearchCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+
+                <Button
                 HorizontalAlignment="Right"
-                    Grid.Column="0"
-                   Style="{StaticResource MaterialDesignRaisedButton}"
-                   Width="120"
-                   Height="32"
-                   ToolTip="Resource name: MaterialDesignRaisedButton"
-                    Command="{Binding SearchCommand}"
-                    Margin="0 0 5 0"
-                >
-                <StackPanel Orientation="Horizontal">
-                    <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
-                    <TextBlock Text="Tìm kiếm"/>
-                </StackPanel>
-            </Button>
-            <ComboBox
-                   Margin="50 5 50 5"
-                     Grid.Column="1"
-                    Width="170"
-                    materialDesign:HintAssist.Hint="Loại thuốc"
-                    ItemsSource="{Binding CategoryList}"
-                    DisplayMemberPath="CategoryName"
-                    Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-            <!-- Invoice Number -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock 
+                Grid.Column="0"
+                Style="{StaticResource MaterialDesignRaisedButton}"
+                Width="120"
+                Height="32"
+                ToolTip="Tìm kiếm thuốc"
+                Command="{Binding SearchCommand}"
+                Margin="0 0 5 0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                        <TextBlock Text="Tìm kiếm"/>
+                    </StackPanel>
+                </Button>
+
+                <ComboBox
+                Margin="50 5 50 5"
+                Grid.Column="1"
+                Width="170"
+                materialDesign:HintAssist.Hint="Loại thuốc"
+                ItemsSource="{Binding CategoryList}"
+                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                DisplayMemberPath="CategoryName"
+                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+
+                <!-- Invoice Number -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock 
                     Text="Hóa đơn #:" 
                     FontWeight="Medium"
                     VerticalAlignment="Center"
                     Margin="0,0,8,0"/>
-                <TextBlock 
+                    <TextBlock 
                     Text="{Binding InvoiceNumber}"
                     FontWeight="Bold"
                     FontSize="16"
                     VerticalAlignment="Center"/>
-            </StackPanel>
-        </Grid>
+                </StackPanel>
+            </Grid>
 
-        <!-- Main Content: Left - Product List, Right - Cart -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="7*"/>
-                <ColumnDefinition Width="3*"/>
-            </Grid.ColumnDefinitions>
+            <!-- Main Content: Left - Product List, Right - Cart -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="7*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Product List -->
-            <materialDesign:Card Grid.Column="0" Margin="16,0,8,16">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <ListView ItemsSource="{Binding MedicineList}" SelectedItem="{Binding SelectedMedicine, Mode=TwoWay}">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Width="120" DisplayMemberBinding="{Binding Code}" Header="Mã thuốc"/>
-                                <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}" Header="Tên thuốc"/>
-                             
-                                <GridViewColumn Width="120" DisplayMemberBinding="{Binding Category.CategoryName}" Header="Loại"/>
-                                <GridViewColumn Width="120" DisplayMemberBinding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" Header="Đơn giá"/>
-                                <GridViewColumn Width="120" DisplayMemberBinding="{Binding Quantity}" Header="Tồn kho"/>
-                                <GridViewColumn Width="160">
-                                    <GridViewColumn.Header>
-                                        <TextBlock Text="Thêm vào giỏ"/>
-                                    </GridViewColumn.Header>
-                                    <GridViewColumn.CellTemplate>
+                <!-- Product List -->
+                <materialDesign:Card Grid.Column="0" Margin="16,0,8,16" UniformCornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header for product list -->
+                        <TextBlock Grid.Row="0" 
+                               Text="DANH SÁCH THUỐC" 
+                               Margin="16,12,0,12" 
+                               FontSize="14" 
+                               FontWeight="Medium"/>
+
+                        <!-- Product DataGrid -->
+                        <DataGrid Grid.Row="1" 
+                              ItemsSource="{Binding MedicineList}" 
+                              SelectedItem="{Binding SelectedMedicine, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserSortColumns="True"
+                              CanUserResizeColumns="True"
+                              CanUserReorderColumns="True"
+                              RowHeight="48"
+                              HeadersVisibility="Column"
+                              BorderThickness="0"
+                              Background="White"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Tên thuốc" Binding="{Binding Name}" Width="200">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Loại" Binding="{Binding Category.CategoryName}" Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Đơn giá" Binding="{Binding CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Width="120">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Tồn kho" Binding="{Binding TotalStockQuantity}" Width="80">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTemplateColumn Header="Thêm vào giỏ" >
+                                    <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <materialDesign:NumericUpDown
-                                                    Minimum="1"
-                                                    Maximum="{Binding Quantity}"
-                                                    Value="{Binding TempQuantity}"
-                                                    Width="80"
-                                                    Margin="0,0,8,0"
-                                                    VerticalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Button
-                                                    Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource MaterialDesignIconButton}"
-                                                    ToolTip="Thêm vào giỏ">
+                                                Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignIconButton}"
+                                                ToolTip="Thêm vào giỏ">
                                                     <materialDesign:PackIcon Kind="CartPlus" Width="24" Height="24"/>
                                                 </Button>
+
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="Loaded">
+                                                        <i:ChangePropertyAction TargetObject="{Binding}"
+                                                                          PropertyName="TempQuantity"
+                                                                          Value="{Binding ElementName=QuantitySelector, Path=Value}"/>
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
                                             </StackPanel>
                                         </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                <Setter Property="Padding" Value="8"/>
-                                <Setter Property="Margin" Value="0,1"/>
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                    </ListView>
-                </ScrollViewer>
-            </materialDesign:Card>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
 
-            <!-- Shopping Cart -->
-            <materialDesign:Card Grid.Column="1" Margin="8,0,16,16">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Cart Header -->
-                    <Grid Grid.Row="0" Background="{DynamicResource PrimaryHueMidBrush}">
-                        <TextBlock 
-                            Text="GIỎ HÀNG" 
-                            FontWeight="Medium" 
-                            FontSize="16" 
-                            Foreground="White" 
-                            HorizontalAlignment="Center"/>
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#E3F2FD"/>
+                                            <Setter Property="Foreground" Value="#1565C0"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#ECEFF1"/>
+                                    <Setter Property="Foreground" Value="#37474F"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Height" Value="40"/>
+                                    <Setter Property="Padding" Value="8,0"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                </Style>
+                            </DataGrid.Resources>
+                        </DataGrid>
                     </Grid>
+                </materialDesign:Card>
 
-                    <!-- Cart Items -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8">
-                        <ListView ItemsSource="{Binding CartItems}" BorderThickness="0">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
+                <!-- Shopping Cart -->
+                <materialDesign:Card Grid.Column="1" Margin="8,0,16,16" UniformCornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                                        <!-- Medicine Name -->
-                                        <TextBlock 
-                                            Grid.Row="0" Grid.Column="0"
-                                            Text="{Binding Medicine.Name}" 
-                                            FontWeight="Medium"/>
+                        <!-- Cart Header -->
+                        <Grid Grid.Row="0" Background="{DynamicResource PrimaryHueMidBrush}" Height="48">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Cart" Width="20" Height="20" VerticalAlignment="Center" Foreground="White"/>
+                                <TextBlock 
+                                Text="GIỎ HÀNG" 
+                                FontWeight="Medium" 
+                                FontSize="16" 
+                                Foreground="White" 
+                                Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
 
-                                        <!-- Unit Price -->
-                                        <TextBlock 
-                                            Grid.Row="1" Grid.Column="0"
-                                            Text="{Binding Medicine.SellPrice, StringFormat='{}{0:N0} VNĐ/đơn vị'}" 
-                                            Foreground="#616161"
-                                            FontSize="12"/>
+                        <!-- Cart Items -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8">
+                            <ItemsControl ItemsSource="{Binding CartItems}" BorderThickness="0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <materialDesign:Card Margin="8,4" UniformCornerRadius="4" Background="#FAFAFA">
+                                            <Grid Margin="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
 
-                                        <!-- Quantity -->
-                                        <materialDesign:NumericUpDown
-                                            Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
-                                            Minimum="1"
-                                            Maximum="{Binding Medicine.Quantity}"
-                                            Value="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            Width="80" 
-                                            Margin="8,0"/>
+                                                <!-- Medicine Name -->
+                                                <TextBlock 
+                                                Grid.Row="0" Grid.Column="0"
+                                                Text="{Binding Medicine.Name}" 
+                                                FontWeight="Medium"/>
 
-                                        <!-- Remove Button & Total -->
-                                        <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="2">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
+                                                <!-- Unit Price -->
+                                                <TextBlock 
+                                                Grid.Row="1" Grid.Column="0"
+                                                Text="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ/đơn vị'}" 
+                                                Foreground="#616161"
+                                                FontSize="12"/>
 
-                                            <!-- Remove Button -->
-                                            <Button 
-                                                Grid.Row="0" 
-                                                Style="{StaticResource MaterialDesignIconButton}" 
-                                                Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=ListView}}" 
-                                                CommandParameter="{Binding}">
-                                                <materialDesign:PackIcon Kind="Delete" Foreground="#F44336"/>
-                                            </Button>
+                                                <!-- Quantity -->
+                                                <materialDesign:NumericUpDown
+                                                Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                                                Minimum="1"
+                                                Maximum="{Binding Medicine.TotalStockQuantity}"
+                                                Value="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Width="80" 
+                                                Margin="0,0"/>
 
-                                            <!-- Item Total -->
-                                            <TextBlock 
-                                                Grid.Row="1" 
-                                                Text="{Binding LineTotal, StringFormat='{}{0:N0} VNĐ'}" 
-                                                FontWeight="Medium" 
-                                                Foreground="#1976D2"
-                                                HorizontalAlignment="Right"/>
-                                        </Grid>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </ScrollViewer>
+                                                <!-- Remove Button & Total -->
+                                                <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="2">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
 
-                    <!-- Cart Summary -->
-                    <materialDesign:Card Grid.Row="2" Margin="8" UniformCornerRadius="4">
-                        <Grid Margin="16">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                                                    <!-- Remove Button -->
+                                                    <Button 
+                                                    Grid.Row="0" 
+                                                    Style="{StaticResource MaterialDesignIconButton}" 
+                                                    Command="{Binding DataContext.RemoveFromCartCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Xóa khỏi giỏ hàng">
+                                                        <materialDesign:PackIcon Kind="Delete" Foreground="#F44336"/>
+                                                    </Button>
 
-                            <!-- Total Items -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Tổng số sản phẩm:" Margin="0,4"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalItems}" FontWeight="Medium" Margin="0,4"/>
+                                                    <!-- Item Total -->
+                                                    <TextBlock 
+                                                    Grid.Row="1" 
+                                                    Text="{Binding LineTotal, StringFormat='{}{0:N0} VNĐ'}" 
+                                                    FontWeight="Medium" 
+                                                    Foreground="#1976D2"
+                                                    HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </Grid>
+                                        </materialDesign:Card>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
 
-                            <!-- Discount -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Giảm giá:" Margin="0,4"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Discount, StringFormat='{}{0:N0} VNĐ'}" FontWeight="Medium" Margin="0,4"/>
+                           
+                            </ItemsControl>
+                        </ScrollViewer>
 
-                            <!-- Total -->
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Thành tiền:" FontSize="16" FontWeight="Medium" Margin="0,8,0,16"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" FontSize="16" FontWeight="Bold" Foreground="#4CAF50" Margin="0,8,0,16"/>
-
-                            <!-- Buttons -->
-                            <Grid Grid.Row="3" Grid.ColumnSpan="2">
+                        <!-- Cart Summary -->
+                        <materialDesign:Card Grid.Row="2" Margin="8" UniformCornerRadius="4">
+                            <Grid Margin="16">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Button Grid.Column="0"
+                                <!-- Total Items -->
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Tổng số sản phẩm:" Margin="0,4"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalItems}" FontWeight="Medium" Margin="0,4"/>
+
+
+                                <!-- Total -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Thành tiền:" FontSize="16" FontWeight="Medium" Margin="0,8,0,16"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" FontSize="16" FontWeight="Bold" Foreground="#4CAF50" Margin="0,8,0,16"/>
+
+                                <!-- Buttons -->
+                                <Grid Grid.Row="3" Grid.ColumnSpan="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
                                         Content="Xóa giỏ hàng"
                                         Command="{Binding ClearCartCommand}"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         Margin="0,0,4,0"
                                         Height="40"/>
 
-                                <Button Grid.Column="1"
+                                    <Button Grid.Column="1"
                                         Content="Thanh toán"
                                         Command="{Binding CheckoutCommand}"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
@@ -273,49 +356,49 @@
                                         BorderBrush="#4CAF50"
                                         Margin="4,0,0,0"
                                         Height="40">
-                                    <Button.Effect>
-                                        <DropShadowEffect BlurRadius="5" ShadowDepth="2" Direction="270" Color="#DDDDDD"/>
-                                    </Button.Effect>
-                                </Button>
+                                        <Button.Effect>
+                                            <DropShadowEffect BlurRadius="5" ShadowDepth="2" Direction="270" Color="#DDDDDD"/>
+                                        </Button.Effect>
+                                    </Button>
+                                </Grid>
                             </Grid>
-                        </Grid>
-                    </materialDesign:Card>
-                </Grid>
-            </materialDesign:Card>
-        </Grid>
+                        </materialDesign:Card>
+                    </Grid>
+                </materialDesign:Card>
+            </Grid>
 
-        <!-- Footer Section for Customer Selection -->
-        <materialDesign:Card Grid.Row="2" Margin="16,0,16,16">
-            <Grid Margin="16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <!-- Footer Section for Customer Selection -->
+            <materialDesign:Card Grid.Row="2" Margin="16,0,16,16" UniformCornerRadius="8">
+                <Grid Margin="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Bệnh nhân:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBox
-                           Width="220"
-                           materialDesign:HintAssist.Hint="Nhập tên khách hàng"
-                           Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
-                           Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        Width="220"
+                        materialDesign:HintAssist.Hint="Nhập tên khách hàng"
+                        Text="{Binding PatientName, UpdateSourceTrigger=PropertyChanged}"   
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="15,0,20,0">
                         <TextBlock Text="Số điện thoại:" VerticalAlignment="Center" Margin="15,0,8,0"/>
                         <TextBox
-                           Width="220"
-                           Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
-                           materialDesign:HintAssist.Hint="Nhập số điện thoại"
-                           Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        Width="220"
+                        Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
+                        materialDesign:HintAssist.Hint="Nhập số điện thoại"
+                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
                     <Button
-                        Grid.Column="2"
-                        Style="{StaticResource MaterialDesignFlatButton}"
-                        Content="+ Thêm khách hàng mới"
-                        Command="{Binding AddNewPatientCommand}"/>
-            </Grid>
-        </materialDesign:Card>
-    </Grid>
+                    Grid.Column="2"
+                    Style="{StaticResource MaterialDesignFlatButton}"
+                    Content="+ Thêm khách hàng mới"
+                    Command="{Binding AddNewPatientCommand}"/>
+                </Grid>
+            </materialDesign:Card>
+        </Grid>
     </materialDesign:Card>
 </UserControl>

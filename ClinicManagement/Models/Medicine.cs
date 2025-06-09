@@ -1,13 +1,16 @@
-﻿using System;
+﻿using ClinicManagement.ViewModels;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ClinicManagement.Models;
 
-public partial class Medicine
+public partial class Medicine : BaseViewModel
 {
-    public int MedicineId { get; set; }
+    private int _tempQuantity = 1;
 
-   
+    public int MedicineId { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -24,6 +27,24 @@ public partial class Medicine
     public string? BarCode { get; set; }
 
     public string? QrCode { get; set; }
+
+    // Thêm thuộc tính TempQuantity để sử dụng khi thêm vào giỏ hàng
+    [NotMapped]
+    public int TempQuantity
+    {
+        get => _tempQuantity;
+        set
+        {
+            if (_tempQuantity != value)
+            {
+                _tempQuantity = value;
+                OnPropertyChanged(nameof(TempQuantity));
+            }
+        }
+    }
+
+    // Thêm thuộc tính Code để hiển thị trong danh sách
+    public string Code => $"M{MedicineId}";
 
     public virtual MedicineCategory? Category { get; set; }
 
@@ -105,8 +126,7 @@ public partial class Medicine
         }
     }
 
-
-
+    /// <summary>
     /// Lấy danh sách các lô nhập kho, bao gồm cả các lô có cùng ngày nhập nhưng khác giá
     /// </summary>
     private List<StockInWithRemaining> _availableStockInsCache;
@@ -165,7 +185,6 @@ public partial class Medicine
     /// <summary>
     /// Lấy thông tin chi tiết về các lô hàng
     /// </summary>
- // Modify the public method to clear the cache before recalculating
     public IEnumerable<StockInWithRemaining> GetDetailedStock()
     {
         // Clear the cache to ensure we get fresh data
@@ -208,4 +227,6 @@ public partial class Medicine
         public DateTime? ImportDate => StockIn.ImportDate;
     }
 
+
+ 
 }
