@@ -126,66 +126,6 @@
                               Background="White"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tên thuốc" Binding="{Binding Name}" Width="200">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="TextWrapping" Value="Wrap"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Header="Loại" Binding="{Binding Category.CategoryName}" Width="120">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Header="Đơn giá" Binding="{Binding CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Width="120">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="HorizontalAlignment" Value="Right"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Header="Tồn kho" Binding="{Binding TotalStockQuantity}" Width="80">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-
-                                <DataGridTemplateColumn Header="Thêm vào giỏ" >
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Button
-                                                Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{StaticResource MaterialDesignIconButton}"
-                                                ToolTip="Thêm vào giỏ">
-                                                    <materialDesign:PackIcon Kind="CartPlus" Width="24" Height="24"/>
-                                                </Button>
-
-                                                <i:Interaction.Triggers>
-                                                    <i:EventTrigger EventName="Loaded">
-                                                        <i:ChangePropertyAction TargetObject="{Binding}"
-                                                                          PropertyName="TempQuantity"
-                                                                          Value="{Binding ElementName=QuantitySelector, Path=Value}"/>
-                                                    </i:EventTrigger>
-                                                </i:Interaction.Triggers>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
 
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridRow">
@@ -211,7 +151,52 @@
                                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
                                     <Setter Property="VerticalContentAlignment" Value="Center"/>
                                 </Style>
-                            </DataGrid.Resources>
+                      
+                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                        <Setter Property="Padding" Value="4,0"/>
+                                    </Style>
+                                </DataGrid.Resources>
+                            <DataGrid.Columns>
+
+                                <DataGridTextColumn Header="Tên thuốc" Binding="{Binding Name}" Width="200" ElementStyle="{StaticResource CenteredCellStyle}"/>
+
+
+                                <DataGridTextColumn Header="Loại" Binding="{Binding Category.CategoryName}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
+
+                                <DataGridTextColumn Header="Đơn giá" Binding="{Binding CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
+
+                                <DataGridTextColumn Header="Tồn kho" Binding="{Binding TotalStockQuantity}" Width="80" ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     
+
+                                <DataGridTemplateColumn Header="Thêm vào giỏ" Width="200" >
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button
+                                                Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignIconButton}"
+                                                ToolTip="Thêm vào giỏ">
+                                                    <materialDesign:PackIcon Kind="CartPlus" Width="24" Height="24"/>
+                                                </Button>
+
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="Loaded">
+                                                        <i:ChangePropertyAction TargetObject="{Binding}"
+                                                                          PropertyName="TempQuantity"
+                                                                          Value="{Binding ElementName=QuantitySelector, Path=Value}"/>
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+
+                         
                         </DataGrid>
                     </Grid>
                 </materialDesign:Card>

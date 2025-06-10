@@ -165,7 +165,7 @@
                             </Grid>
                         </GroupBox>
 
-                        <!-- Action Buttons -->
+                      
                         <!-- Action Buttons -->
                         <Grid Grid.Row="2">
                             <Grid.ColumnDefinitions>
@@ -175,16 +175,16 @@
 
                             <!-- Personal Info Buttons -->
                             <StackPanel Grid.Column="0"
-                Orientation="Horizontal"
-                HorizontalAlignment="Center"
-                Margin="0,20,0,0">
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0,20,0,0">
 
                                 <Button Command="{Binding UpdateDoctorInfoCommand}"
-                Style="{StaticResource MaterialDesignRaisedButton}"
-                materialDesign:ButtonAssist.CornerRadius="5"
-                Width="180"
-                Height="45"
-                Margin="0,0,15,0">
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    materialDesign:ButtonAssist.CornerRadius="5"
+                                    Width="180"
+                                    Height="45"
+                                    Margin="0,0,15,0">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="Update" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <TextBlock Text="Cập nhật thông tin"/>
@@ -192,12 +192,12 @@
                                 </Button>
 
                                 <Button Command="{Binding DeleteDoctorCommand}"
-                Style="{StaticResource MaterialDesignRaisedButton}"
-                materialDesign:ButtonAssist.CornerRadius="5"
-                Background="#F44336"
-                BorderBrush="#F44336"
-                Width="180"
-                Height="45">
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    materialDesign:ButtonAssist.CornerRadius="5"
+                                    Background="#F44336"
+                                    BorderBrush="#F44336"
+                                    Width="180"
+                                    Height="45">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <TextBlock Text="Xóa bác sĩ"/>

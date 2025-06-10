@@ -16,7 +16,7 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         DataContext="{StaticResource MainVM}"
         WindowStyle="None"
-        ResizeMode="NoResize"
+    
         Name="mainWindow"
         Style="{StaticResource MaterialDesignWindow}"
         Height="1000" Width="1400" 

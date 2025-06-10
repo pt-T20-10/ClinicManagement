@@ -140,40 +140,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private string _password;
-        public string Password
-        {
-            get => _password;
-            set
-            {
-                _password = value;
-                OnPropertyChanged();
-         
-                ValidatePasswords();
-            }
-        }
-
-        private string _confirmPassword;
-        public string ConfirmPassword
-        {
-            get => _confirmPassword;
-            set
-            {
-                _confirmPassword = value;
-                OnPropertyChanged();
-                ValidatePasswords();
-            }
-        }
-        private bool _showPasswordMismatchError;
-        public bool ShowPasswordMismatchError
-        {
-            get => _showPasswordMismatchError;
-            set
-            {
-                _showPasswordMismatchError = value;
-                OnPropertyChanged();
-            }
-        }
+        // Remove password and confirmPassword properties since we'll use a default password
 
         private string _selectedRole;
         public string SelectedRole
@@ -197,25 +164,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private bool _passwordsMatch = true;
-        public bool PasswordsMatch
-        {
-            get => _passwordsMatch;
-            set
-            {
-                _passwordsMatch = value;
-                OnPropertyChanged();
-            }
-        }
-
         // Added schedule format example for user reference
         public string ScheduleFormatExample => "Ví dụ: T2, T3, T4: 7h-13h";
 
         public ICommand LoadedWindowCommand { get; private set; }
         public ICommand SaveCommand { get; private set; }
         public ICommand CancelCommand { get; private set; }
-        public ICommand PasswordChangedCommand { get; private set; }
-        public ICommand ConfirmPasswordChangedCommand { get; private set; }
         #endregion
 
         public AddDoctorWindowViewModel()
@@ -223,8 +177,6 @@ namespace ClinicManagement.ViewModels
             InitializeCommands();
             LoadData();
             ResetForm();
-
-       
         }
 
         #region Validation
@@ -284,23 +236,6 @@ namespace ClinicManagement.ViewModels
                             error = "Tên đăng nhập phải có ít nhất 4 ký tự";
                         }
                         break;
-
-                    case nameof(Password):
-                        if (!string.IsNullOrWhiteSpace(Password) && Password.Length < 6)
-                        {
-                            error = "Mật khẩu phải có ít nhất 6 ký tự";
-                        }
-                        break;
-
-                    case nameof(ConfirmPassword):
-                        // Only validate confirm password if password has been entered
-                        if (!string.IsNullOrWhiteSpace(Password) &&
-                            !string.IsNullOrWhiteSpace(ConfirmPassword) &&
-                            Password != ConfirmPassword)
-                        {
-                            error = "Mật khẩu xác nhận không khớp";
-                        }
-                        break;
                 }
 
                 return error;
@@ -315,26 +250,7 @@ namespace ClinicManagement.ViewModels
                        !string.IsNullOrEmpty(this[nameof(Phone)]) ||
                        !string.IsNullOrEmpty(this[nameof(Email)]) ||
                        !string.IsNullOrEmpty(this[nameof(Schedule)]) ||
-                       !string.IsNullOrEmpty(this[nameof(UserName)]) ||
-                       !string.IsNullOrEmpty(this[nameof(Password)]) ||
-                       !string.IsNullOrEmpty(this[nameof(ConfirmPassword)]) ||
-                       !PasswordsMatch;
-            }
-        }
-
-        private void ValidatePasswords()
-        {
-            // Only show error when both fields have values AND they don't match
-            if (!string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(ConfirmPassword))
-            {
-                PasswordsMatch = Password == ConfirmPassword;
-                ShowPasswordMismatchError = !PasswordsMatch;
-            }
-            else
-            {
-                // Don't show error if either field is empty
-                PasswordsMatch = true;
-                ShowPasswordMismatchError = false;
+                       !string.IsNullOrEmpty(this[nameof(UserName)]);
             }
         }
 
@@ -374,24 +290,6 @@ namespace ClinicManagement.ViewModels
                 (p) => ExecuteCancel(),
                 (p) => true
             );
-
-            PasswordChangedCommand = new RelayCommand<PasswordBox>(
-                (p) =>
-                {
-                    Password = p.Password;
-                    ValidatePasswords();
-                },
-                (p) => true
-            );
-
-            ConfirmPasswordChangedCommand = new RelayCommand<PasswordBox>(
-                (p) =>
-                {
-                    ConfirmPassword = p.Password;
-                    ValidatePasswords();
-                },
-                (p) => true
-            );
         }
         #endregion
 
@@ -409,7 +307,6 @@ namespace ClinicManagement.ViewModels
             RoleList = new ObservableCollection<string>
             {
                 "Bác sĩ",
-                "Admin",
                 "Dược sĩ"
             };
         }
@@ -476,8 +373,8 @@ namespace ClinicManagement.ViewModels
                 DataProvider.Instance.Context.Doctors.Add(newDoctor);
                 DataProvider.Instance.Context.SaveChanges();
 
-                // Create account if username and password provided
-                if (!string.IsNullOrWhiteSpace(UserName) && !string.IsNullOrWhiteSpace(Password))
+                // Create account if username is provided
+                if (!string.IsNullOrWhiteSpace(UserName))
                 {
                     // Check if username already exists
                     bool usernameExists = DataProvider.Instance.Context.Accounts
@@ -493,11 +390,12 @@ namespace ClinicManagement.ViewModels
                     }
                     else
                     {
-                        // Create account
+                        // Create account with default password "1111"
+                        var defaultPassword = "1111";
                         var newAccount = new Account
                         {
                             Username = UserName.Trim(),
-                            Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(Password)), // Hash password
+                            Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)), // Hash default password
                             DoctorId = newDoctor.DoctorId,
                             Role = SelectedRole,
                             IsLogined = false,
@@ -506,6 +404,12 @@ namespace ClinicManagement.ViewModels
 
                         DataProvider.Instance.Context.Accounts.Add(newAccount);
                         DataProvider.Instance.Context.SaveChanges();
+
+                        MessageBox.Show(
+                            "Tài khoản được tạo thành công với mật khẩu mặc định là \"1111\".",
+                            "Thông Báo",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
                     }
                 }
 
@@ -546,9 +450,7 @@ namespace ClinicManagement.ViewModels
             Address = string.Empty;
             CertificateLink = string.Empty;
             UserName = string.Empty;
-            Password = string.Empty;
-            ConfirmPassword = string.Empty;
-            SelectedRole = "Doctor";
+            SelectedRole = "Bác sĩ";
 
             // Set default value for specialty if available
             if (SpecialtyList != null && SpecialtyList.Count > 0)
@@ -559,9 +461,7 @@ namespace ClinicManagement.ViewModels
             // Reset validation state
             _touchedFields.Clear();
             _isValidating = false;
-            PasswordsMatch = true;
         }
         #endregion
     }
 }
-

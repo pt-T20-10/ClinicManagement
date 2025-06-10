@@ -100,86 +100,74 @@
 
                     <Grid Grid.Row="1">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <ListView ItemsSource="{Binding DoctorList}" 
-                  HorizontalContentAlignment="Stretch"
-                  HorizontalAlignment="Stretch"
-                  VerticalContentAlignment="Stretch"
-                  VerticalAlignment="Stretch">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="ID" Width="80">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding DoctorId}" 
-                                           TextWrapping="Wrap" 
-                                           VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
+                            <DataGrid 
+                            ItemsSource="{Binding DoctorList}" 
+                            SelectedItem="{Binding SelectedDoctor, Mode=TwoWay}"
+                            AutoGenerateColumns="False"
+                            IsReadOnly="True"
+                            SelectionMode="Single"
+                            SelectionUnit="FullRow"
+                            CanUserAddRows="False"
+                            CanUserDeleteRows="False"
+                            Background="White">
+                                <DataGrid.Resources>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="#ECEFF1"/>
+                                        <Setter Property="Foreground" Value="#37474F"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Height" Value="40"/>
+                                        <Setter Property="Padding" Value="8,0"/>
+                                    </Style>
 
-                                        <GridViewColumn Header="Họ và tên" Width="200">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding FullName}" 
-                                           TextWrapping="Wrap" 
-                                           VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
+                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                        <Setter Property="Padding" Value="4,0"/>
+                                    </Style>
+                                </DataGrid.Resources>
 
-                                        <GridViewColumn Header="Chuyên khoa" Width="150">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Specialty.SpecialtyName}" 
-                                           TextWrapping="Wrap" 
-                                           VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" 
+                            Binding="{Binding DoctorId}" 
+                            Width="80"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Họ và tên" 
+                            Binding="{Binding FullName}" 
+                            Width="200"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Chuyên khoa" 
+                            Binding="{Binding Specialty.SpecialtyName}" 
+                            Width="150"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Điện thoại" 
+                            Binding="{Binding Phone}" 
+                            Width="150"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Lịch làm việc" 
+                            Binding="{Binding Schedule}" 
+                            Width="200"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Địa chỉ" 
+                            Binding="{Binding Address}" 
+                            Width="300"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTemplateColumn Width="250">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Xem chi tiết"
+                            Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.OpenDoctorDetailsCommand}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            Width="120" Height="30"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
 
-                                        <GridViewColumn Header="Điện thoại" Width="150">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Phone}" 
-                                           TextWrapping="Wrap" 
-                                           VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-
-                                        <GridViewColumn Header="Lịch làm việc" Width="200">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Schedule}" 
-                                           TextWrapping="Wrap" 
-                                           VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-
-                                        <GridViewColumn Header="Địa chỉ" Width="300">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Address}" 
-                                           TextWrapping="Wrap" 
-                                           VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                        <GridViewColumn Width="130">
-                                            <GridViewColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Button Content="Xem chi tiết"
-                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenDoctorDetailsCommand}"
-                                                         CommandParameter="{Binding}"
-                                                         Style="{StaticResource MaterialDesignRaisedButton}"
-                                                         Width="120" Height="30"/>
-                                                </DataTemplate>
-                                            </GridViewColumn.CellTemplate>
-                                        </GridViewColumn>
-                                    </GridView>
-                                </ListView.View>
-                            </ListView>
                         </ScrollViewer>
                     </Grid>
                 </Grid>
@@ -351,28 +339,51 @@
                  Grid.Row="1" 
                  VerticalScrollBarVisibility="Auto"
                  Margin="0,5,0,0">
-                            <ListView 
-                     ItemsSource="{Binding ListSpecialty}" 
-                     SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                     BorderThickness="0">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn 
-                                 Header="ID" 
-                                 DisplayMemberBinding="{Binding SpecialtyId}" 
-                                 Width="100"/>
-                                        <GridViewColumn 
-                                 Header="Tên chuyên khoa" 
-                                 DisplayMemberBinding="{Binding SpecialtyName}" 
-                                 Width="180"/>
-                                        <GridViewColumn 
-                                 Header="Mô tả" 
-                                 DisplayMemberBinding="{Binding Description}" 
-                                 />
-                                    </GridView>
-                                </ListView.View>
+                            <DataGrid 
+    ItemsSource="{Binding ListSpecialty}" 
+    SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+    AutoGenerateColumns="False"
+    IsReadOnly="True"
+    SelectionMode="Single"
+    SelectionUnit="FullRow"
+    CanUserAddRows="False"
+    CanUserDeleteRows="False"
+    Background="White">
+                                <DataGrid.Resources>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="#ECEFF1"/>
+                                        <Setter Property="Foreground" Value="#37474F"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Height" Value="40"/>
+                                        <Setter Property="Padding" Value="8,0"/>
+                                    </Style>
 
-                            </ListView>
+                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                        <Setter Property="Padding" Value="4,0"/>
+                                    </Style>
+                                </DataGrid.Resources>
+
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" 
+                            Binding="{Binding SpecialtyId}" 
+                            Width="100"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Tên chuyên khoa" 
+                            Binding="{Binding SpecialtyName}" 
+                            Width="180"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Mô tả" 
+                            Binding="{Binding Description}" 
+                            Width="*"
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
                         </ScrollViewer>
                     </Grid>
                 </materialDesign:Card>

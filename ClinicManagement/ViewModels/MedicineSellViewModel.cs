@@ -651,13 +651,30 @@ namespace ClinicManagement.ViewModels
                     Discount = 0;
                     CurrentInvoice = null;
 
+                    // Cập nhật số hóa đơn mới sau khi thanh toán thành công
+                    UpdateInvoiceNumber();
+
                     // Cập nhật lại danh sách thuốc để có số lượng chính xác
-                    LoadData();
+                    LoadMedicines();
 
                     MessageBox.Show("Thanh toán thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-                else
+                else if (refreshedInvoice.Status == "Chưa thanh toán")
                 {
+                    // Cập nhật lại Stock nếu cần
+                    UpdateStockAfterSale(refreshedInvoice);
+
+                    ClearCart();
+                    PatientName = null;
+                    Phone = null;
+                    Discount = 0;
+                    CurrentInvoice = null;
+
+                    // Cập nhật số hóa đơn mới sau khi thanh toán thành công
+                    UpdateInvoiceNumber();
+
+                    // Cập nhật lại danh sách thuốc để có số lượng chính xác
+                    LoadMedicines();
                     // Hóa đơn vẫn chưa thanh toán
                     MessageBox.Show($"Hóa đơn #{refreshedInvoice.InvoiceId} đã được tạo nhưng chưa thanh toán.",
                                     "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -787,6 +804,24 @@ namespace ClinicManagement.ViewModels
             {
                 MessageBox.Show($"Lỗi khi xử lý thông tin bệnh nhân: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 return null;
+            }
+        }
+
+        // Thêm phương thức mới để cập nhật số hóa đơn
+        private void UpdateInvoiceNumber()
+        {
+            try
+            {
+                var lastInvoiceId = DataProvider.Instance.Context.Invoices
+                    .OrderByDescending(i => i.InvoiceId)
+                    .Select(i => i.InvoiceId)
+                    .FirstOrDefault();
+
+                InvoiceNumber = $"#{lastInvoiceId + 1} (Mới)";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi cập nhật số hóa đơn mới: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

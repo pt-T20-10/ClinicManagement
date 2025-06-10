@@ -445,107 +445,138 @@
                             </Grid>
 
                             <!-- Appointment List -->
+                            <!-- Appointment List -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                <ListView Grid.Row="1" 
+                                <DataGrid Grid.Row="1" 
                                   ItemsSource="{Binding AppointmentsDisplay}" 
                                   Margin="8,0,8,8"
-                                  BorderThickness="0">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn Header="Ngày" Width="100" DisplayMemberBinding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}"/>
-                                            <GridViewColumn Header="Giờ" Width="100" DisplayMemberBinding="{Binding AppointmentTimeString}"/>
-                                            <GridViewColumn Header="Bệnh nhân" Width="180" DisplayMemberBinding="{Binding PatientName}"/>
-                                            <GridViewColumn Header="SĐT" Width="120">
-                                                <GridViewColumn.DisplayMemberBinding>
-                                                    <Binding Path="OriginalAppointment.Patient.Phone" FallbackValue="N/A"/>
-                                                </GridViewColumn.DisplayMemberBinding>
-                                            </GridViewColumn>
-                                            <GridViewColumn Header="Bác sĩ" Width="180">
-                                                <GridViewColumn.DisplayMemberBinding>
-                                                    <Binding Path="OriginalAppointment.Doctor.FullName" FallbackValue="N/A"/>
-                                                </GridViewColumn.DisplayMemberBinding>
-                                            </GridViewColumn>
-                                            <GridViewColumn Header="Phân loại" Width="120">
-                                                <GridViewColumn.DisplayMemberBinding>
-                                                    <Binding Path="OriginalAppointment.AppointmentType.TypeName" FallbackValue="N/A"/>
-                                                </GridViewColumn.DisplayMemberBinding>
-                                            </GridViewColumn>
-                                            <GridViewColumn Header="Trạng thái" Width="130">
-                                                <GridViewColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <Border CornerRadius="6" Padding="10,5">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
+                                  Background="White"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
+
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Ngày" 
+                              Width="120" 
+                              Binding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Giờ" 
+                              Width="120" 
+                              Binding="{Binding AppointmentTimeString}"
+                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Bệnh nhân" 
+                              Width="180" 
+                              Binding="{Binding PatientName}"
+                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="SĐT" 
+                              Width="130"
+                              Binding="{Binding OriginalAppointment.Patient.Phone, FallbackValue=N/A}"
+                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Bác sĩ" 
+                              Width="190"
+                              Binding="{Binding OriginalAppointment.Doctor.FullName, FallbackValue=N/A}"
+                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Phân loại" 
+                              Width="130"
+                              Binding="{Binding OriginalAppointment.AppointmentType.TypeName, FallbackValue=N/A}"
+                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTemplateColumn Header="Trạng thái" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border CornerRadius="6" Padding="10,5">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
+                                                                        <Setter Property="Background" Value="#E3F2FD"/>
+                                                                        <Setter Property="BorderBrush" Value="#2196F3"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đang khám">
+                                                                        <Setter Property="Background" Value="#F3E5F5"/>
+                                                                        <Setter Property="BorderBrush" Value="#9C27B0"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã khám">
+                                                                        <Setter Property="Background" Value="#E8F5E8"/>
+                                                                        <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
+                                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                                        <Setter Property="BorderBrush" Value="#F44336"/>
+                                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
-                                                                            <Setter Property="Background" Value="#E3F2FD"/>
-                                                                            <Setter Property="BorderBrush" Value="#2196F3"/>
-                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                            <Setter Property="Text" Value="Đang chờ"/>
+                                                                            <Setter Property="Foreground" Value="#1565C0"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đang khám">
-                                                                            <Setter Property="Background" Value="#F3E5F5"/>
-                                                                            <Setter Property="BorderBrush" Value="#9C27B0"/>
-                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                            <Setter Property="Text" Value="Đang khám"/>
+                                                                            <Setter Property="Foreground" Value="#7B1FA2"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đã khám">
-                                                                            <Setter Property="Background" Value="#E8F5E8"/>
-                                                                            <Setter Property="BorderBrush" Value="#4CAF50"/>
-                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                            <Setter Property="Text" Value="Đã khám"/>
+                                                                            <Setter Property="Foreground" Value="#2E7D32"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
-                                                                            <Setter Property="Background" Value="#FFEBEE"/>
-                                                                            <Setter Property="BorderBrush" Value="#F44336"/>
-                                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                                            <Setter Property="Text" Value="Đã hủy"/>
+                                                                            <Setter Property="Foreground" Value="#C62828"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
-                                                            </Border.Style>
-                                                            <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
-                                                                                <Setter Property="Text" Value="Đang chờ"/>
-                                                                                <Setter Property="Foreground" Value="#1565C0"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Status}" Value="Đang khám">
-                                                                                <Setter Property="Text" Value="Đang khám"/>
-                                                                                <Setter Property="Foreground" Value="#7B1FA2"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Status}" Value="Đã khám">
-                                                                                <Setter Property="Text" Value="Đã khám"/>
-                                                                                <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                            </DataTrigger>
-                                                                            <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
-                                                                                <Setter Property="Text" Value="Đã hủy"/>
-                                                                                <Setter Property="Foreground" Value="#C62828"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </GridViewColumn.CellTemplate>
-                                            </GridViewColumn>
-                                            <GridViewColumn>
-                                                <GridViewColumn.CellTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Button Content="Xem chi tiết"
-                                                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.OpenAppointmentDetailsCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                                                    Width="120" Height="30">
-                                                                <Button.Resources>
-                                                                    <Style TargetType="Border">
-                                                                        <Setter Property="CornerRadius" Value="4"/>
-                                                                    </Style>
-                                                                </Button.Resources>
-                                                            </Button>
-                                                            <Button Margin="10 0 0 0"
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Width="400">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Content="Xem chi tiết"
+                                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.OpenAppointmentDetailsCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                                Width="120" Height="30">
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                        </Button>
+                                                        <Button Margin="10 0 0 0"
                                                                 Content="Hủy lịch hẹn" 
-                                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type ListView}}, Path=DataContext.CancelAppointmentCommand}"
+                                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.CancelAppointmentCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 Background="#F44336" 
                                                                 BorderBrush="#D32F2F"
@@ -553,22 +584,20 @@
                                                                 Width="120"
                                                                 Height="30"
                                                                 Style="{StaticResource MaterialDesignRaisedButton}">
-                                                                <Button.Resources>
-                                                                    <Style TargetType="Border">
-                                                                        <Setter Property="CornerRadius" Value="4"/>
-                                                                    </Style>
-                                                                </Button.Resources>
-                                                            </Button>
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </GridViewColumn.CellTemplate>
-                                            </GridViewColumn>
-
-                                        </GridView>
-                                    </ListView.View>
-                                    <!-- Phần còn lại giữ nguyên -->
-                                </ListView>
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
                             </ScrollViewer>
+
                         </Grid>
                     </materialDesign:Card>
                 </Grid>
@@ -757,33 +786,57 @@
                      Grid.Row="1" 
                      VerticalScrollBarVisibility="Auto"
                      Margin="0,5,0,0">
-                                <ListView 
-                                     ItemsSource="{Binding ListAppointmentType}" 
-                                     SelectedItem="{Binding SelectedAppointmentType, Mode=TwoWay}"
-                                     BorderThickness="0">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn 
-                                                 Header="ID" 
-                                                 DisplayMemberBinding="{Binding AppointmentTypeId}" 
-                                                 Width="100"/>
-                                            <GridViewColumn 
-                                                 Header="Tên loại lịch hẹn" 
-                                                 DisplayMemberBinding="{Binding TypeName}" 
-                                                 Width="180"/>
-                                            <GridViewColumn 
-                                                  Header="Giá tiền" 
-                                                  DisplayMemberBinding="{Binding Price, StringFormat='{}{0:N0} VNĐ'}" 
-                                                  Width="180"/>
-                                            <GridViewColumn 
-                                                Header="Mô tả" 
-                                                DisplayMemberBinding="{Binding Description}" 
-                                                Width="180"/>
+                                <!-- List View -->
+                                <DataGrid Grid.Row="1"
+          Background="White"
+          ItemsSource="{Binding ListAppointmentType}" 
+          SelectedItem="{Binding SelectedAppointmentType, Mode=TwoWay}"
+          AutoGenerateColumns="False"
+          IsReadOnly="True"
+          SelectionMode="Single"
+          SelectionUnit="FullRow"
+          CanUserAddRows="False"
+          CanUserDeleteRows="False"
+          Margin="0,5,0,0">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
 
-                                        </GridView>
-                                    </ListView.View>
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
 
-                                </ListView>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="ID" 
+                          Binding="{Binding AppointmentTypeId}" 
+                          Width="100"
+                          ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Tên loại lịch hẹn" 
+                          Binding="{Binding TypeName}" 
+                          Width="180"
+                          ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Giá tiền" 
+                          Binding="{Binding Price, StringFormat='{}{0:N0} VNĐ'}" 
+                          Width="180"
+                          ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Mô tả" 
+                          Binding="{Binding Description}" 
+                          Width="*"
+                          ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
                             </ScrollViewer>
                         </Grid>
                     </materialDesign:Card>

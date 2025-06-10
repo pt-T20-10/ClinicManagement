@@ -211,7 +211,7 @@
                                 CanUserSortColumns="True"
                                 CanUserResizeColumns="True"
                                 CanUserReorderColumns="True"
-                                RowHeight="58"
+                                RowHeight="80"
                                 HeadersVisibility="Column"
                                 BorderThickness="0"
                                 Background="White"
@@ -222,7 +222,7 @@
 
 
                             <!-- TextColumn Mã hóa đơn Binding từ InvoiceId  -->
-                                    <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="120">
+                                    <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="90">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -256,7 +256,7 @@
                                     </DataGridTextColumn>
 
                             <!-- Text Column SĐT Binding từ Phone của Patient -->
-                                    <DataGridTextColumn Header="SĐT" Binding="{Binding Patient.Phone}" Width="120">
+                                    <DataGridTextColumn Header="SĐT" Binding="{Binding Patient.Phone}" Width="115">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -277,7 +277,7 @@
                                     StringFormat='{}{0:N0} VNĐ' để định dạng số tiền là số nguyên không có dấu phẩy và có đuôi VNĐ
                                     
                                     -->
-                                    <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" Width="120">
+                                    <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" Width="130">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -291,10 +291,10 @@
                                         Sử dụng DataGridTemplateColumn để tạo kiểu hiển thị đặc biệt cho loại hóa đơn
                                         Với Border và TextBlock để hiển thị màu sắc và kiểu dáng khác nhau tùy theo loại hóa đơn
                                       -->
-                                    <DataGridTemplateColumn Header="Loại hóa đơn" Width="180">
+                                    <DataGridTemplateColumn Header="Loại hóa đơn" Width="170">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Border CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
+                                        <Border Height="30"  CornerRadius="6" Padding="8,4" HorizontalAlignment="Center">
                                                     <Border.Style>
                                                    <!-- 
                                                         DataTrigger sẽ kiểm tra giá trị của InvoiceType và áp dụng các thuộc tính được set trong setter tùy theo loại hóa đơn cho Border
@@ -323,33 +323,35 @@
                                                         </Style>
                                                     </Border.Style>
                                                     <!-- Text Block để hiển thị Loại hóa đơn và cũng sử dụng Converter như trên -->
-                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám bệnh">
-                                                                        <Setter Property="Text" Value="Khám bệnh"/>
-                                                                        <Setter Property="Foreground" Value="#1565C0"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding InvoiceType , Converter={StaticResource StringTrimmingConverter}}" Value="Bán thuốc">
-                                                                        <Setter Property="Text" Value="Bán thuốc"/>
-                                                                        <Setter Property="Foreground" Value="#2E7D32"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám và bán thuốc">
-                                                                        <Setter Property="Text" Value="Khám và bán thuốc"/>
-                                                                        <Setter Property="Foreground" Value="#7B1FA2"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </Border>
+                                            <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                                <TextBlock  Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextAlignment="Center" TextWrapping="Wrap">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám bệnh">
+                                                                    <Setter Property="Text" Value="Khám bệnh"/>
+                                                                    <Setter Property="Foreground" Value="#1565C0"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding InvoiceType , Converter={StaticResource StringTrimmingConverter}}" Value="Bán thuốc">
+                                                                    <Setter Property="Text" Value="Bán thuốc"/>
+                                                                    <Setter Property="Foreground" Value="#2E7D32"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding InvoiceType, Converter={StaticResource StringTrimmingConverter}}" Value="Khám và bán thuốc">
+                                                                    <Setter Property="Text" Value="Khám và bán thuốc"/>
+                                                                    <Setter Property="Foreground" Value="#7B1FA2"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </ScrollViewer>
+                                        </Border>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
 
                             <!-- TemplateColumn Trạng thái để hiển trị trạng thái của hóa đơn -->
-                                    <DataGridTemplateColumn Header="Trạng thái" Width="150">
+                                    <DataGridTemplateColumn Header="Trạng thái" Width="155">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="6" Padding="8,4" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -396,7 +398,8 @@
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="TextWrapping" Value="Wrap"/>
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
-                                            </Style>
+                                                 <Setter Property="Padding" Value="0"/>
+                                    </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
 

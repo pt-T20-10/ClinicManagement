@@ -16,8 +16,8 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         WindowStyle="None"
-        ResizeMode="NoResize"
-        Height="1000" Width="950"
+       
+        Height="1100" Width="950"
         WindowStartupLocation="CenterScreen">
     
     <!-- Khởi tạo Window Resouces để sử dụng Converter -->
@@ -184,7 +184,7 @@
                             CanUserResizeColumns="True"
                             HeadersVisibility="Column"
                             BorderThickness="0"
-                            RowHeight="40"
+                            RowHeight="54"
                             Margin="8,0,8,8">
                             <DataGrid.Columns>
                                 <!-- STT -->
@@ -214,18 +214,6 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-
-                                <!-- Đơn vị -->
-                                <DataGridTemplateColumn Header="Đơn vị" Width="80">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Medicine.Unit.Name, TargetNullValue='Dịch vụ'}"  
-                                                       HorizontalAlignment="Center" 
-                                                       VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
                                 <!-- Số lượng -->
                                 <DataGridTemplateColumn Header="Số lượng" Width="80">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -314,7 +302,7 @@
 
                             <!-- Doctor's Advice -->
                             <StackPanel Grid.Column="0" Margin="0,18,16,0">
-                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,0">
+                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="2" Margin="0,0,0,0">
                                     <TextBlock Text="{Binding MedicalRecord.DoctorNotes, TargetNullValue='Không có lời dặn'}" 
                                TextWrapping="Wrap" MinHeight="60"/>
                                 </Border>
@@ -323,10 +311,10 @@
                             <!-- Doctor Information -->
                             <StackPanel Grid.Column="1" MinWidth="200">
                                 <TextBlock Text="BÁC SĨ KHÁM" FontWeight="Medium" Margin="0,0,0,4"/>
-                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
+                                <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="2">
                                     <StackPanel>
                                         <TextBlock Text="{Binding MedicalRecord.Doctor.FullName}" FontWeight="SemiBold" FontSize="14"/>
-                                        <TextBlock Text="{Binding MedicalRecord.Doctor.Specialty, TargetNullValue='Bác sĩ đa khoa'}" 
+                                        <TextBlock Text="{Binding MedicalRecord.Doctor.DoctorSpecialty, TargetNullValue='Bác sĩ đa khoa'}" 
                                    FontStyle="Italic" Margin="0,4,0,0"/>
                                         <TextBlock Text="{Binding MedicalRecord.RecordDate, StringFormat='Ngày khám: {0:dd/MM/yyyy}'}" 
                                    Margin="0,4,0,0"/>

@@ -123,40 +123,15 @@
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
 
-                    <!-- Password -->
-                    <StackPanel Margin="0,0,0,16">
-                        <PasswordBox x:Name="PasswordBox"
-                 materialDesign:HintAssist.Hint="Mật khẩu"
-                 materialDesign:PasswordBoxAssist.Password="{Binding Password, Mode=TwoWay}"
-                 Style="{StaticResource MaterialDesignFloatingHintRevealPasswordBox}">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="PasswordChanged">
-                                    <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" 
-                                       CommandParameter="{Binding ElementName=PasswordBox}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </PasswordBox>
-                    </StackPanel>
+                 
+                    <!-- Add informational text about default password: -->
+                    <TextBlock 
 
-                    <!-- Confirm Password -->
-                    <StackPanel Margin="0,0,0,16">
-                        <PasswordBox x:Name="ConfirmPasswordBox"
-                 materialDesign:HintAssist.Hint="Xác nhận mật khẩu"
-                 materialDesign:PasswordBoxAssist.Password="{Binding ConfirmPassword, Mode=TwoWay}"
-                 Style="{StaticResource MaterialDesignFloatingHintRevealPasswordBox}">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="PasswordChanged">
-                                    <i:InvokeCommandAction Command="{Binding ConfirmPasswordChangedCommand}" 
-                                       CommandParameter="{Binding ElementName=ConfirmPasswordBox}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </PasswordBox>
-                        <TextBlock Text="Mật khẩu không khớp"
-               Foreground="Red"
-               Margin="4,4,0,0"
-               FontSize="11"
-               Visibility="{Binding ShowPasswordMismatchError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </StackPanel>
+                    Text="Tài khoản sẽ được tạo với mật khẩu mặc định là '1111'"
+                    Foreground="Gray"
+                    Margin="0,5,0,10"
+                  />
+
 
                     <!-- Role -->
                     <StackPanel Margin="0,0,0,16">
