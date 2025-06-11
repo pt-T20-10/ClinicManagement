@@ -146,15 +146,42 @@
                             Binding="{Binding Phone}" 
                             Width="150"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
+
                                     <DataGridTextColumn Header="Lịch làm việc" 
                             Binding="{Binding Schedule}" 
-                            Width="200"
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                            Width="300"
+                            >
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                                <Setter Property="Padding" Value="4,0"/>
+                                                <Setter Property="FontSize" Value="14"/>
+
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+
+
                                     <DataGridTextColumn Header="Địa chỉ" 
                             Binding="{Binding Address}" 
                             Width="300"
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTemplateColumn Width="250">
+                         >
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                                <Setter Property="Padding" Value="4,0"/>
+                                                <Setter Property="FontSize" Value="14"/>
+
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+
+                                    <DataGridTemplateColumn Width="300">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Button Content="Xem chi tiết"

@@ -215,6 +215,7 @@ namespace ClinicManagement.ViewModels
                 DataContext = new DoctorDetailsWindowViewModel { Doctor = doctor }
             };
             detailsWindow.ShowDialog();
+            LoadData(); // Refresh data after closing details window
         }
         private void LoadData()
         {
