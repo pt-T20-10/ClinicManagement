@@ -1,4 +1,5 @@
 ﻿
+using ClinicManagement.Models;
 using ClinicManagement.SubWindow;
 using ClinicManagement.ViewModels;
 using System;
@@ -16,13 +17,40 @@ namespace ClinicManagement.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
-        //private ObservableCollection<Stock> _StockList;
-        //public ObservableCollection<Stock> StockList
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+                // When CurrentAccount changes, update tab visibility
+                UpdateTabVisibility();
+            }
+        }
+
+        // Collection of tabs that should be visible to the current user
+        private ObservableCollection<string> _AllowedTabs = new ObservableCollection<string>();
+        public ObservableCollection<string> AllowedTabs
+        {
+            get => _AllowedTabs;
+            set
+            {
+                _AllowedTabs = value;
+                OnPropertyChanged();
+            }
+        }
+        // Thêm flag để hiển thị tất cả tab trong quá trình phát triển
+        //private bool _showAllTabsForDevelopment = true;
+        //public bool ShowAllTabsForDevelopment
         //{
-        //    get => _StockList;
+        //    get => _showAllTabsForDevelopment;
         //    set
         //    {
-        //        _StockList = value; OnPropertyChanged();
+        //        _showAllTabsForDevelopment = value;
+        //        OnPropertyChanged();
+        //        UpdateTabVisibility();
         //    }
         //}
 
@@ -62,6 +90,7 @@ namespace ClinicManagement.ViewModels
                      else
                      {
                          p.Close();
+                         CurrentAccount = null;
                      }
                  },
                  (p) => true
@@ -92,6 +121,91 @@ namespace ClinicManagement.ViewModels
         (p) => true
     );
         }
-    
+        // Add this method to your MainViewModel
+        public void EnsureValidTabSelected(System.Windows.Controls.TabControl tabControl)
+        {
+            if (tabControl == null || AllowedTabs.Count == 0)
+                return;
+
+            // Check if current tab is allowed
+            var currentTabItem = tabControl.SelectedItem as TabItem;
+            if (currentTabItem != null)
+            {
+                string tabName = GetTabName(currentTabItem);
+                if (AllowedTabs.Contains(tabName))
+                    return; // Current tab is valid
+            }
+
+            // Find first visible tab and select it
+            foreach (TabItem item in tabControl.Items)
+            {
+                string tabName = GetTabName(item);
+                if (AllowedTabs.Contains(tabName))
+                {
+                    tabControl.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+        // Update tab visibility based on current user's role
+
+        // Rồi sửa UpdateTabVisibility
+        // Trong file MainViewModel.cs
+        private void UpdateTabVisibility()
+        {
+            AllowedTabs.Clear();
+
+            // Hiển thị tất cả tab trong quá trình phát triển
+            AllowedTabs.Add("DashboardTab");
+            AllowedTabs.Add("PatientTab");
+            AllowedTabs.Add("ExamineTab");
+            AllowedTabs.Add("AppointmentTab");
+            AllowedTabs.Add("InventoryTab");
+            AllowedTabs.Add("InvoiceTab");
+            AllowedTabs.Add("MedicineSellTab");
+            AllowedTabs.Add("DoctorTab");
+            AllowedTabs.Add("StatisticsTab");
+            AllowedTabs.Add("SettingsTab");
+
+
+            // Phần phân quyền thực tế
+            if (CurrentAccount != null && !string.IsNullOrEmpty(CurrentAccount.Role))
+            {
+                string role = CurrentAccount.Role.Trim(); // Loại bỏ khoảng trắng
+
+           
+
+                if (UserRoles.RoleTabPermissions.ContainsKey(role))
+                {
+                    foreach (var tab in UserRoles.RoleTabPermissions[role])
+                    {
+                        string cleanTabName = tab.Trim(); // Loại bỏ khoảng trắng
+                        AllowedTabs.Add(cleanTabName);
+                     
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Role '{role}' not found in permissions");
+
+                    // Hiển thị thông báo lỗi
+                    MessageBox.Show($"Không tìm thấy quyền cho vai trò: '{role}'", "Lỗi phân quyền");
+                }
+            }
+            else
+            {
+                Console.WriteLine("CurrentAccount is null or Role is empty");
+            }
+
+        }
+        // Helper to get tab name from TabItem
+        private string GetTabName(TabItem tabItem)
+        {
+            // Return TabItem's Name directly
+            return tabItem.Name;
+        }
+
+
+
     }
 }       

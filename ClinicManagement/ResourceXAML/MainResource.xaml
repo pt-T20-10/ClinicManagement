@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:conver="clr-namespace:ClinicManagement.Converter"
                     xmlns:viewmodel="clr-namespace:ClinicManagement.ViewModels">
 
     <viewmodel:MainViewModel x:Key="MainVM"/>
@@ -13,5 +14,5 @@
     <viewmodel:AddDoctorWindowViewModel x:Key="AddDoctorVM"/>
     <viewmodel:InvoiceViewModel x:Key="InvoiceVM"/>
     <viewmodel:MedicineSellViewModel x:Key="MedicineSellVM"/>
-
+    <conver:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
 </ResourceDictionary> 
