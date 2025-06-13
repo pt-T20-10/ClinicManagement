@@ -1,4 +1,5 @@
 using ClinicManagement.Models;
+using ClinicManagement.SubWindow;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -457,12 +458,19 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Trong SettingViewModel
         private void ChangePassword()
         {
-            // This functionality will be implemented later
-            MessageBox.Show("Tính năng đổi mật khẩu sẽ được phát triển sau.", 
-                           "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            var viewModel = new ChangeDoctorPasswordViewModel();
+            viewModel.SetAccount(_currentAccount);
+
+            var changePasswordWindow = new ChangePasswordWindow();
+            changePasswordWindow.DataContext = viewModel; // Gán DataContext trực tiếp
+
+            changePasswordWindow.ShowDialog();
         }
+
+
 
         private void SaveSettings()
         {

@@ -32,6 +32,10 @@ namespace ClinicManagement.Configurations
 
             builder.Property(e => e.CertificateLink)
                 .HasColumnName("LinkChungChi")
+                .HasMaxLength(255);   
+            
+            builder.Property(e => e.Email)
+                .HasColumnName("Email")
                 .HasMaxLength(255);
 
             builder.Property(e => e.IsDeleted)

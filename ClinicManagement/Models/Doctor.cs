@@ -21,6 +21,10 @@ public partial class Doctor
 
     public string? Address { get; set; }
 
+    public string? Email { get; set; }
+
+
+
     public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();

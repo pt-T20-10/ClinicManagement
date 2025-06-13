@@ -148,6 +148,23 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private string _email = string.Empty;
+        public string Email
+        {
+            get => _email;
+            set
+            {
+                if (_email != value)
+                {
+                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_email))
+                        _touchedFields.Add(nameof(Email));
+
+                    _email = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         private string _certificateLink = string.Empty;
         public string CertificateLink
         {
@@ -391,6 +408,7 @@ namespace ClinicManagement.ViewModels
             DoctorID = Doctor.DoctorId;
             FullName = Doctor.FullName;
             Phone = Doctor.Phone ?? string.Empty;
+            Email = Doctor.Email ?? string.Empty;   
             Schedule = Doctor.Schedule ?? string.Empty;
             Address = Doctor.Address ?? string.Empty;
             CertificateLink = Doctor.CertificateLink ?? string.Empty;
@@ -503,6 +521,17 @@ namespace ClinicManagement.ViewModels
                         }
                         // Có thể thêm validation kiểm tra ký tự đặc biệt nếu cần
                         break;
+                    case nameof(Email):
+      
+                       if(_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(Email))
+                        {
+                            error = "Email không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(Email) && !Regex.IsMatch(Email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                        {
+                            error = "Email không đúng định dạng";
+                        }
+                        break;
                 }
 
                 return error;
@@ -515,6 +544,7 @@ namespace ClinicManagement.ViewModels
             {
                 return !string.IsNullOrEmpty(this[nameof(FullName)]) ||
                        !string.IsNullOrEmpty(this[nameof(Phone)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Email)]) ||
                        !string.IsNullOrEmpty(this[nameof(Schedule)]) ||
                        !string.IsNullOrEmpty(this[nameof(CertificateLink)]);
             }
@@ -598,12 +628,14 @@ namespace ClinicManagement.ViewModels
                 _isValidating = true;
                 _touchedFields.Add(nameof(FullName));
                 _touchedFields.Add(nameof(Phone));
+                _touchedFields.Add(nameof(Email));
                 _touchedFields.Add(nameof(Schedule));
                 _touchedFields.Add(nameof(CertificateLink));
 
                 // Trigger validation for required fields
                 OnPropertyChanged(nameof(FullName));
                 OnPropertyChanged(nameof(Phone));
+                OnPropertyChanged(nameof(Email));
                 OnPropertyChanged(nameof(Schedule));
                 OnPropertyChanged(nameof(CertificateLink));
 
@@ -617,7 +649,17 @@ namespace ClinicManagement.ViewModels
                         MessageBoxImage.Warning);
                     return;
                 }
-
+                bool emailExits = DataProvider.Instance.Context.Doctors
+                                 .Any(d => d.Email == Email.Trim() && d.DoctorId != Doctor.DoctorId && d.IsDeleted == false);
+                if(emailExits)
+                {
+                    MessageBox.Show(
+                                "Email đã tồn tại. Vui lòng sử dụng email khác.",
+                                "Lỗi Dữ Liệu",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                    return;
+                }    
                 // Check if phone number already exists (excluding current doctor)
                 bool phoneExists = DataProvider.Instance.Context.Doctors
                     .Any(d => d.Phone == Phone.Trim() && d.DoctorId != Doctor.DoctorId && d.IsDeleted == false);
@@ -642,6 +684,7 @@ namespace ClinicManagement.ViewModels
                     doctorToUpdate.FullName = FullName.Trim();
                     doctorToUpdate.SpecialtyId = SelectedSpecialty?.SpecialtyId;
                     doctorToUpdate.CertificateLink = CertificateLink.Trim();
+                    doctorToUpdate.Email = Email.Trim();
                     doctorToUpdate.Schedule = Schedule.Trim();
                     doctorToUpdate.Phone = Phone.Trim();
                     doctorToUpdate.Address = Address.Trim();

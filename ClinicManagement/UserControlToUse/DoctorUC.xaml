@@ -140,11 +140,15 @@
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
                                     <DataGridTextColumn Header="Chuyên khoa" 
                             Binding="{Binding Specialty.SpecialtyName}" 
-                            Width="150"
+                            Width="180"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
                                     <DataGridTextColumn Header="Điện thoại" 
                             Binding="{Binding Phone}" 
-                            Width="150"
+                            Width="150"/>
+
+                                    <DataGridTextColumn Header="Email" 
+                            Binding="{Binding Email}" 
+                            Width="180"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
 
                                     <DataGridTextColumn Header="Lịch làm việc" 
