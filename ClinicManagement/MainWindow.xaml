@@ -293,7 +293,7 @@
                             </Grid>
 
                         </TabItem.Header>
-                        <uc:SettingUC></uc:SettingUC>
+                        <uc:SettingUC DataContext="{StaticResource SettingVM}"></uc:SettingUC>
                     </TabItem>
 
                 </TabControl>

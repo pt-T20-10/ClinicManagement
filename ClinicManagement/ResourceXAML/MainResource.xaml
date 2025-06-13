@@ -18,6 +18,6 @@
     <viewmodel:StatisticsViewModel x:Key="StatisticsVM"/>
     <conver:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
     <conver:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter"/>
+    <viewmodel:SettingViewModel x:Key="SettingVM" />
 
-    
 </ResourceDictionary> 
