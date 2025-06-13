@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClinicManagement"
+        xmlns:sub="clr-namespace:ClinicManagement.SubWindow"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
@@ -23,6 +24,9 @@
         WindowState="Maximized"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <sub:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=mainWindow}"/>
@@ -89,7 +93,7 @@
                          TabStripPlacement="Left"
                            x:Name="MainTabControl" Grid.RowSpan="2">
                     <TabItem x:Name="DashboardTab" Width="150" Height="80" Padding="0"
-       >
+                             Visibility="{Binding CanViewDashboard, Converter={StaticResource BoolToVisibilityConverter}}">
                             
                         <TabItem.Header >
                             <Grid>
@@ -112,8 +116,7 @@
 
                     <TabItem x:Name="PatientTab"
                         Width="150" Height="80" Padding="0"
-                             
-                             >
+                             Visibility="{Binding CanViewPatient, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header>
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -135,8 +138,7 @@
 
 
                     <TabItem Width="150" Height="80" x:Name="ExamineTab"
-                             
-                             >
+                             Visibility="{Binding CanViewExamine, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -157,8 +159,7 @@
 
 
                     <TabItem x:Name="AppointmentTab" Width="150" Height="80"  Padding="0"
-                           
-                             >
+                             Visibility="{Binding CanViewAppointment, Converter={StaticResource BoolToVisibilityConverter}}">
 
                         <TabItem.Header>
                             <Grid>
@@ -177,9 +178,8 @@
                         </TabItem.Header>
                         <uc:AppointmentUC DataContext="{StaticResource AppointmentVM}"></uc:AppointmentUC>
                     </TabItem>
-                    <TabItem Width="150" Height="80" Padding="0" x:Name="InventoryTab">
-                        <!--Visibility="{Binding AllowedTabs, Converter={StaticResource TabVisibilityConverter}, ConverterParameter='InventoryTab'}"-->
-                             
+                    <TabItem Width="150" Height="80" Padding="0" x:Name="InventoryTab"
+                             Visibility="{Binding CanViewInventory, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -199,8 +199,7 @@
                     </TabItem>
 
                     <TabItem Width="150" Height="80"  Padding="0" x:Name="InvoiceTab"
-       
-                             >
+                             Visibility="{Binding CanViewInvoice, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -218,9 +217,8 @@
                         <uc:InvoiceUC DataContext="{StaticResource InvoiceVM}" ></uc:InvoiceUC>
                     </TabItem>
 
-                    <TabItem Width="150" Height="80"  Padding="0" x:Name="MedicineSellTab"
-           
-                             >
+                    <TabItem Width="150" Height="80" Padding="0" x:Name="MedicineSellTab"
+                             Visibility="{Binding CanViewMedicineSell, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -239,8 +237,7 @@
                     </TabItem>
 
                     <TabItem Width="150" Height="80" Padding="0" x:Name="DoctorTab"
-                             Visibility="{Binding AllowedTabs, Converter={StaticResource TabVisibilityConverter}, ConverterParameter='DoctorTab'}"
-                             >
+                             Visibility="{Binding CanViewDoctor, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -260,7 +257,7 @@
                     </TabItem>
 
                     <TabItem Width="150" Height="80" x:Name="StatisticsTab"
-                             >
+                             Visibility="{Binding CanViewStatistics, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -280,9 +277,7 @@
                     </TabItem>
 
                     <TabItem Width="150" Height="80" x:Name="SettingsTab"
- 
-                             
-                             >
+                             Visibility="{Binding CanViewSettings, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
                                 <Grid.RowDefinitions>
