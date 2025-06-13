@@ -14,5 +14,7 @@
     <viewmodel:AddDoctorWindowViewModel x:Key="AddDoctorVM"/>
     <viewmodel:InvoiceViewModel x:Key="InvoiceVM"/>
     <viewmodel:MedicineSellViewModel x:Key="MedicineSellVM"/>
+    <viewmodel:StatisticsViewModel x:Key="StatisticsVM"/>
     <conver:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
+    <conver:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter"/>
 </ResourceDictionary> 

@@ -195,7 +195,7 @@
                             </Grid>
 
                         </TabItem.Header>
-                        <uc:StockUC DataContext="{StaticResource StockMedicineVM}"></uc:StockUC>
+                        <uc:StockUC DataContext="{StaticResource StockMedicineVM}"/>
                     </TabItem>
 
                     <TabItem Width="150" Height="80"  Padding="0" x:Name="InvoiceTab"
@@ -260,7 +260,6 @@
                     </TabItem>
 
                     <TabItem Width="150" Height="80" x:Name="StatisticsTab"
-                             
                              >
                         <TabItem.Header >
                             <Grid>
@@ -277,7 +276,7 @@
                             </Grid>
 
                         </TabItem.Header>
-
+                        <uc:StatisticUC DataContext="{StaticResource StatisticsVM}"></uc:StatisticUC>
                     </TabItem>
 
                     <TabItem Width="150" Height="80" x:Name="SettingsTab"

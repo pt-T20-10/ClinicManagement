@@ -4,9 +4,829 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ClinicManagement.UserControlToUse"
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+           
+          >
+    <materialDesign:Card>
+        
     <Grid>
-            
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header with filters -->
+        <Grid Grid.Row="0" Margin="20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Date range picker -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <DatePicker Width="120" SelectedDate="{Binding StartDate}" materialDesign:HintAssist.Hint="Từ ngày"/>
+                <TextBlock Text="đến" Margin="10,0" VerticalAlignment="Center"/>
+                <DatePicker Width="120" SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="Đến ngày"/>
+            </StackPanel>
+
+            <!-- Filter buttons -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Content="Hôm nay" Margin="5,0" Command="{Binding FilterByDayCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                <Button Content="Tháng này" Margin="5,0" Command="{Binding FilterByMonthCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                <Button Content="Quý này" Margin="5,0" Command="{Binding FilterByQuarterCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                <Button Content="Năm này" Margin="5,0" Command="{Binding FilterByYearCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                <Button Content="Làm mới" Margin="5,0" Command="{Binding RefreshCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Key Performance Indicators -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Doanh thu hôm nay/tháng này KPI -->
+            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                <StackPanel Margin="15">
+                    <TextBlock Text="Doanh thu hôm nay/tháng này" 
+                             FontWeight="Medium" Opacity="0.8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding TodayRevenue, StringFormat={}{0:N0}đ}" 
+                                 FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text=" / " FontSize="18" Margin="2,0"/>
+                        <TextBlock Text="{Binding MonthRevenue, StringFormat={}{0:N0}đ}" 
+                                 FontSize="18" Opacity="0.8"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding RevenueGrowth}" 
+                             Foreground="#4CAF50" Margin="0,4,0,0"/>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Số bệnh nhân mới KPI -->
+            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                <StackPanel Margin="15">
+                    <TextBlock Text="Số bệnh nhân mới" 
+                             FontWeight="Medium" Opacity="0.8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding NewPatients}" 
+                                 FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text=" / tháng" 
+                                 FontSize="18" Opacity="0.8"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding PatientGrowth}" 
+                             Foreground="#2196F3" Margin="0,4,0,0"/>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Tỷ lệ tăng trưởng KPI -->
+            <materialDesign:Card Grid.Column="2" Margin="8" UniformCornerRadius="8">
+                <StackPanel Margin="15">
+                    <TextBlock Text="Tỷ lệ tăng trưởng" 
+                             FontWeight="Medium" Opacity="0.8"/>
+                    <TextBlock Text="{Binding GrowthPercentage, StringFormat={}{0:+0.0;-0.0}%}" 
+                             FontSize="20" FontWeight="Bold" Margin="0,8,0,0"/>
+                    <ProgressBar Value="{Binding GrowthPercentage, Mode=OneWay}" 
+                               Minimum="-100" Maximum="100" 
+                               Height="4" Margin="0,8,0,0">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar" BasedOn="{StaticResource MaterialDesignLinearProgressBar}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GrowthPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="True">
+                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding GrowthPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="False">
+                                        <Setter Property="Foreground" Value="#F44336"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Cảnh báo tồn kho KPI -->
+            <materialDesign:Card Grid.Column="3" Margin="8" UniformCornerRadius="8">
+                <StackPanel Margin="15">
+                    <TextBlock Text="Cảnh báo tồn kho" 
+                             FontWeight="Medium" Opacity="0.8"/>
+                    <TextBlock Text="{Binding LowStockCount}" 
+                             FontSize="20" FontWeight="Bold" Margin="0,8,0,0"
+                             Foreground="#FF9800"/>
+                    <Button Content="Xem chi tiết" 
+                          Style="{StaticResource MaterialDesignOutlinedButton}"
+                          Command="{Binding ViewLowStockCommand}"
+                          Margin="0,8,0,0" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
+
+        <!-- Main Tab Control for Statistics Sections -->
+        <TabControl Grid.Row="2" Style="{StaticResource MaterialDesignTabControl}" 
+                  Background="Transparent" BorderThickness="0" Margin="8">
+            <!-- 1. Doanh thu tổng quan Tab -->
+            <TabItem Header="Doanh thu tổng quan">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Tổng doanh thu theo ngày/tháng/quý/năm -->
+                        <materialDesign:Card Grid.Row="0" Margin="8" UniformCornerRadius="8">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="400"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Tổng doanh thu theo thời gian" 
+                                         FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueByTimeSeries}" 
+                                                  LegendLocation="Top" DisableAnimations="False">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Thời gian" Labels="{Binding RevenueByTimeLabels}" 
+                                               LabelsRotation="0"/>
+                                    </lvc:CartesianChart.AxisX>
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Doanh thu (VNĐ)" 
+                                               LabelFormatter="{Binding YFormatter}"/>
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+
+                        <!-- Doanh thu theo loại hóa đơn và Tỷ lệ doanh thu -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Doanh thu theo loại hóa đơn -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Doanh thu theo loại hóa đơn" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding InvoiceTypeSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Loại hóa đơn" Labels="{Binding InvoiceTypeLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Tỷ lệ doanh thu giữa các dịch vụ -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Tỷ lệ doanh thu theo dịch vụ" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:PieChart Grid.Row="1" Series="{Binding ServiceRevenueSeries}" 
+                                               LegendLocation="Right" InnerRadius="0" Hoverable="True">
+                                    </lvc:PieChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <!-- Doanh thu bình quân và So sánh doanh thu -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Doanh thu bình quân trên mỗi bệnh nhân -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Doanh thu bình quân trên mỗi bệnh nhân" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding AvgRevenuePerPatientSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Tháng" 
+                                                   Labels="{Binding RevenueByMonthLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- So sánh doanh thu các kỳ -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="So sánh doanh thu các kỳ" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueComparisonSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Tháng" 
+                                                   Labels="{Binding RevenueComparisonLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- 2. Phân tích doanh thu chi tiết Tab -->
+            <TabItem Header="Phân tích doanh thu chi tiết">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top 10 ngày có doanh thu cao nhất -->
+                        <materialDesign:Card Grid.Row="0" Margin="8" UniformCornerRadius="8">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="350"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Top 10 ngày có doanh thu cao nhất" 
+                                         FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                <lvc:CartesianChart Grid.Row="1" Series="{Binding TopRevenueDaysSeries}" 
+                                                  LegendLocation="Top" DisableAnimations="False">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Ngày" Labels="{Binding TopRevenueDaysLabels}" 
+                                               LabelsRotation="45"/>
+                                    </lvc:CartesianChart.AxisX>
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Doanh thu (VNĐ)" 
+                                               LabelFormatter="{Binding YFormatter}"/>
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+
+                        <!-- Biểu đồ xu hướng và Doanh thu theo giờ -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Biểu đồ xu hướng doanh thu theo thời gian -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Xu hướng doanh thu theo thời gian" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueTrendSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Thời gian" Labels="{Binding RevenueTrendLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Doanh thu theo giờ trong ngày -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Doanh thu theo giờ trong ngày (peak hours)" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueByHourSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Giờ" Labels="{Binding HourLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- 3. Thống kê bệnh nhân Tab -->
+            <TabItem Header="Thống kê bệnh nhân">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Tổng số bệnh nhân đăng ký và theo ngày/tháng -->
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Tổng số bệnh nhân đăng ký -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Tổng số bệnh nhân đăng ký" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding TotalPatientsRegisteredSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Tháng" Labels="{Binding MonthLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Số bệnh nhân mới theo ngày/tháng -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Số bệnh nhân mới theo ngày/tháng" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding NewPatientsByTimeSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Thời gian" Labels="{Binding NewPatientsTimeLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <!-- Top bệnh nhân VIP và Phân tích theo loại -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Top bệnh nhân VIP -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Top bệnh nhân VIP (chi tiêu nhiều nhất)" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <ListView Grid.Row="1" ItemsSource="{Binding TopVIPPatients}"
+                                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,5">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <materialDesign:PackIcon Grid.Column="0" 
+                                                                        Kind="AccountCircle" Width="36" Height="36"
+                                                                        VerticalAlignment="Center"
+                                                                        Margin="0,0,15,0"/>
+
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding FullName}" 
+                                                                 FontWeight="Medium" FontSize="14"/>
+                                                        <TextBlock Text="{Binding Phone}" 
+                                                                 FontSize="12" Opacity="0.7"/>
+                                                    </StackPanel>
+
+                                                    <TextBlock Grid.Column="2" 
+                                                             Text="{Binding TotalSpending, StringFormat={}{0:N0} đ}"
+                                                             FontWeight="Bold" VerticalAlignment="Center"
+                                                             Foreground="#4CAF50"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Phân tích theo loại bệnh nhân -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Phân tích theo loại bệnh nhân" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:PieChart Grid.Row="1" Series="{Binding PatientTypeSeries}" 
+                                               LegendLocation="Right" InnerRadius="0" Hoverable="True">
+                                    </lvc:PieChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <!-- Tỷ lệ bệnh nhân tái khám -->
+                        <materialDesign:Card Grid.Row="2" Margin="8" UniformCornerRadius="8">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="300"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Tỷ lệ bệnh nhân tái khám" 
+                                         FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                <lvc:CartesianChart Grid.Row="1" Series="{Binding ReturningPatientsSeries}" 
+                                                  LegendLocation="Top" DisableAnimations="False">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Tháng" Labels="{Binding MonthLabels}"/>
+                                    </lvc:CartesianChart.AxisX>
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Tỷ lệ (%)" MinValue="0" MaxValue="100"/>
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- 4. Thống kê lịch hẹn Tab -->
+            <TabItem Header="Thống kê lịch hẹn">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Tổng số lịch hẹn theo trạng thái -->
+                        <materialDesign:Card Grid.Row="0" Margin="8" UniformCornerRadius="8">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="300"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Tổng số lịch hẹn theo trạng thái" 
+                                         FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentStatusSeries}" 
+                                                  LegendLocation="Top" DisableAnimations="False">
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Trạng thái" Labels="{Binding AppointmentStatusLabels}"/>
+                                    </lvc:CartesianChart.AxisX>
+                                </lvc:CartesianChart>
+                            </Grid>
+                        </materialDesign:Card>
+
+                        <!-- Tỷ lệ hủy lịch hẹn và Peak hours -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Tỷ lệ hủy lịch hẹn -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Tỷ lệ hủy lịch hẹn (%)" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding CancellationRateSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Tháng" Labels="{Binding MonthLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis Title="Tỷ lệ (%)" MinValue="0" MaxValue="100"/>
+                                        </lvc:CartesianChart.AxisY>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Peak hours đặt lịch nhiều nhất -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Peak hours đặt lịch nhiều nhất" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentPeakHoursSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Giờ" Labels="{Binding HourLabels}"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <!-- Số lượng bệnh nhân và Tỷ lệ hoàn thành -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Số lượng bệnh nhân của từng bác sĩ -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Số lượng bệnh nhân của từng bác sĩ" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding PatientsByDoctorSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Bác sĩ" Labels="{Binding DoctorLabels}" 
+                                                   LabelsRotation="45"/>
+                                        </lvc:CartesianChart.AxisX>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Tỷ lệ lịch hẹn hoàn thành theo bác sĩ -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Tỷ lệ lịch hẹn hoàn thành theo bác sĩ" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding CompletionRateByDoctorSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Bác sĩ" Labels="{Binding DoctorLabels}" 
+                                                   LabelsRotation="45"/>
+                                        </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis Title="Tỷ lệ (%)" MinValue="0" MaxValue="100"/>
+                                        </lvc:CartesianChart.AxisY>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- 5. Thống kê thuốc Tab -->
+            <TabItem Header="Thống kê thuốc">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top 10 thuốc bán chạy nhất -->
+                        <materialDesign:Card Grid.Row="0" Margin="8" UniformCornerRadius="8">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Top 10 thuốc bán chạy nhất" 
+                                         FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                <ListView Grid.Row="1" ItemsSource="{Binding TopSellingProducts}"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto" MaxHeight="350">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <materialDesign:PackIcon Grid.Column="0" 
+                                                                    Kind="Pill" Width="24" Height="24"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="0,0,15,0"/>
+
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding Category}" FontSize="11" 
+                                                             Foreground="{StaticResource MaterialDesignBodyLight}"/>
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Column="2" Text="{Binding Sales, StringFormat={}{0:N0} đ}"
+                                                         VerticalAlignment="Center"/>
+
+                                                <ProgressBar Grid.Column="3" Minimum="0" Maximum="100" 
+                                                          Value="{Binding Percentage, Mode=OneWay}" Height="6"
+                                                          VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </Grid>
+                        </materialDesign:Card>
+
+                        <!-- Doanh thu và phân bố theo danh mục -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Doanh thu theo danh mục thuốc -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Doanh thu theo danh mục thuốc" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueByCategorySeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Danh mục" Labels="{Binding CategoryLabels}" 
+                                                   LabelsRotation="45"/>
+                                        </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis Title="Doanh thu (VNĐ)" 
+                                                   LabelFormatter="{Binding YFormatter}"/>
+                                        </lvc:CartesianChart.AxisY>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Phân bố theo danh mục (Pie chart) -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Phân bố theo danh mục thuốc" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:PieChart Grid.Row="1" Series="{Binding ProductDistributionSeries}" 
+                                               LegendLocation="Right" InnerRadius="0" Hoverable="True">
+                                    </lvc:PieChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <!-- Các cảnh báo và phân tích tồn kho -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Thuốc cần chú ý (ít bán/sắp hết hạn) -->
+                            <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Thuốc cần chú ý (ít bán/sắp hết hạn)" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <ListView Grid.Row="1" ItemsSource="{Binding WarningMedicines}"
+                                            ScrollViewer.VerticalScrollBarVisibility="Auto" MaxHeight="350">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,5">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <materialDesign:PackIcon Grid.Column="0" 
+                                                                        Kind="AlertCircle" Width="24" Height="24"
+                                                                        Foreground="#F44336"
+                                                                        VerticalAlignment="Center"
+                                                                        Margin="0,0,15,0"/>
+
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+                                                        <TextBlock Text="{Binding WarningMessage}" FontSize="11" 
+                                                                 Foreground="#FF9800"/>
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="2" Content="Chi tiết" 
+                                                          Style="{StaticResource MaterialDesignOutlinedButton}"
+                                                          Margin="10,0,0,0" Padding="8,0"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </Grid>
+                            </materialDesign:Card>
+
+                            <!-- Phân tích lợi nhuận thuốc -->
+                            <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="300"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="So sánh giá nhập - giá bán" 
+                                             FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding ProfitMarginSeries}" 
+                                                      LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Top thuốc" Labels="{Binding TopMedicineLabels}" 
+                                                   LabelsRotation="45"/>
+                                        </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis Title="Giá (VNĐ)" 
+                                                   LabelFormatter="{Binding YFormatter}"/>
+                                        </lvc:CartesianChart.AxisY>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
+                        </Grid>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </Grid>
+    </materialDesign:Card>
 </UserControl>
