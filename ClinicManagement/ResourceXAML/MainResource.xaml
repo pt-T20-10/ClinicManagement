@@ -7,7 +7,7 @@
     <viewmodel:MainViewModel x:Key="MainVM"/>
     <viewmodel:LoginViewModel x:Key="LoginVM"/>
     <viewmodel:PatientViewModel x:Key="PatientVM"/>
-    <viewmodel:DashBoardViewModel x:Key="DashboardVM"/>
+   
     <viewmodel:DoctorViewModel x:Key="DoctorVM"/>
     <viewmodel:AppointmentViewModel x:Key="AppointmentVM"/>
     <viewmodel:StockMedicineViewModel x:Key="StockMedicineVM"/>

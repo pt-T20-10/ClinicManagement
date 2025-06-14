@@ -19,12 +19,12 @@ namespace ClinicManagement.Models
 {
     // Admin và Manager có quyền truy cập tất cả
     {Admin, new List<string>{
-        "DashboardTab", "PatientTab", "ExamineTab", "AppointmentTab",
+        "PatientTab", "ExamineTab", "AppointmentTab",
         "InventoryTab", "InvoiceTab", "MedicineSellTab", "DoctorTab",
         "StatisticsTab", "SettingsTab"
     }},
     {Manager, new List<string>{
-        "DashboardTab", "PatientTab", "ExamineTab", "AppointmentTab",
+        "PatientTab", "ExamineTab", "AppointmentTab",
         "InventoryTab", "InvoiceTab", "MedicineSellTab", "DoctorTab",
         "StatisticsTab", "SettingsTab"
     }},
