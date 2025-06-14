@@ -1,4 +1,5 @@
-﻿using ClinicManagement.UserControlToUse;
+﻿using ClinicManagement;
+using ClinicManagement.UserControlToUse;
 using ClinicManagement.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -24,14 +25,25 @@ namespace StorageManagement.ViewModels
         public ControlBarVM()
         {
 
-            ClosingWindowCommand = new RelayCommand<ControlBarUC>(
+              ClosingWindowCommand = new RelayCommand<ControlBarUC>(
+            (controlBar) =>
+            {
+                var window = Window.GetWindow(controlBar);
+                if (window == null) return;
 
-               (controlBar) =>
-               {
-                   var window = Window.GetWindow(controlBar);
-                   window?.Close();  // Kiểm tra null trước khi đóng
-               },
-            (controlBar) => controlBar != null  // Chỉ thực thi khi controlBar tồn tại
+                // Nếu là MainWindow, gọi Close() để kích hoạt sự kiện Closing
+                if (window is MainWindow)
+                {
+                    MessageBox.Show("Bạn có chắc chắn muốn đăng xuất và thoát chương trình?", "Xác nhận thoát", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                    window.Close();
+                }
+                // Nếu là cửa sổ khác, đóng trực tiếp
+                else
+                {
+                    window.Close();
+                }
+            },
+            (controlBar) => controlBar != null
         );
             MaximizingWindowCommand = new RelayCommand<ControlBarUC>(
 

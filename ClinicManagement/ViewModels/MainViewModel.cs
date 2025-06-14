@@ -4,6 +4,7 @@ using ClinicManagement.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -118,6 +119,8 @@ namespace ClinicManagement.ViewModels
         public ICommand LoadedWindowCommand { get; set; }
         public ICommand AddPatientCommand { get; set; }
         public ICommand AddAppointmentCommand { get; set; }
+        public ICommand SignOutCommand { get; set; }
+        public ICommand WindowClosingCommand { get; set; }
 
         // mọi thứ xử lý sẽ nằm trong này
         public MainViewModel()
@@ -129,6 +132,9 @@ namespace ClinicManagement.ViewModels
                      if (p == null)
                          return;
 
+                     // Đăng ký sự kiện Closing cho window
+                     p.Closing += MainWindow_Closing;
+
                      p.Hide();
                      LoginWindow loginWindow = new LoginWindow();
                      loginWindow.ShowDialog();
@@ -139,7 +145,7 @@ namespace ClinicManagement.ViewModels
                      if (loginVM.IsLogin)
                      {
                          p.Show();
-                    
+
                      }
                      else
                      {
@@ -148,6 +154,64 @@ namespace ClinicManagement.ViewModels
                  },
                  (p) => true
             );
+
+            // Xử lý khi cửa sổ đóng
+            WindowClosingCommand = new RelayCommand<CancelEventArgs>(
+                (e) =>
+                {
+                    // Xác định xem có đang đăng xuất không
+                    if (CurrentAccount != null)
+                    {
+                        // Hiển thị hộp thoại xác nhận
+                        MessageBoxResult result = MessageBox.Show(
+                            "Bạn có chắc chắn muốn đăng xuất?",
+                            "Xác nhận",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question);
+
+                        if (result == MessageBoxResult.No)
+                        {
+                            // Người dùng không muốn đăng xuất, hủy sự kiện
+                            if (e != null)
+                                e.Cancel = true;
+                        }
+                        else
+                        {
+                            // Người dùng đồng ý đăng xuất
+                            SignOut();
+                        }
+                    }
+                },
+                (e) => true
+            );
+
+            // Cập nhật SignOutCommand để gọi phương thức SignOut
+            SignOutCommand = new RelayCommand<Window>(
+                (window) =>
+                {
+                    SignOut();
+
+                    if (window == null)
+                        return;
+
+                    window.Hide();
+
+                    // Show login window again
+                    LoginWindow loginWindow = new LoginWindow();
+                    loginWindow.ShowDialog();
+
+                    if (loginWindow.DataContext is LoginViewModel loginVM && loginVM.IsLogin)
+                    {
+                        window.Show();
+                    }
+                    else
+                    {
+                        window.Close();
+                    }
+                },
+                (p) => CurrentAccount != null // Chỉ cho phép đăng xuất khi đã đăng nhập
+            );
+
             AddPatientCommand = new RelayCommand<Window>(
                 (p) =>
                 {
@@ -156,6 +220,7 @@ namespace ClinicManagement.ViewModels
                 },
                 (p) => true
             );
+
             AddAppointmentCommand = new RelayCommand<System.Windows.Controls.TabControl>(
                 (tabControl) =>
                 {
@@ -173,6 +238,43 @@ namespace ClinicManagement.ViewModels
                 },
                 (p) => true
             );
+        }
+
+        // Xử lý sự kiện đóng cửa sổ chính
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            // Sử dụng WindowClosingCommand để xử lý
+            WindowClosingCommand.Execute(e);
+        }
+
+        // Phương thức đăng xuất tập trung
+        private void SignOut()
+        {
+            try
+            {
+                // Đăng xuất người dùng khỏi hệ thống
+                if (CurrentAccount != null)
+                {
+                    // Cập nhật trạng thái đăng nhập trong database nếu cần
+                    var accountToUpdate = DataProvider.Instance.Context.Accounts
+                        .FirstOrDefault(a => a.Username == CurrentAccount.Username);
+
+                    if (accountToUpdate != null)
+                    {
+                        accountToUpdate.IsLogined = false;
+                        DataProvider.Instance.Context.SaveChanges();
+                    }
+
+                    // Reset current account và danh sách tab được phép
+                    CurrentAccount = null;
+                    AllowedTabs.Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi đăng xuất: {ex.Message}",
+                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         // Updated to use boolean properties

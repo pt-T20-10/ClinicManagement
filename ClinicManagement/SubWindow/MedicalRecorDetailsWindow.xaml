@@ -1,0 +1,400 @@
+﻿<Window x:Class="ClinicManagement.SubWindow.MedicalRecorDetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClinicManagement.SubWindow"
+        mc:Ignorable="d"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+       TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+       TextElement.FontWeight="Regular"
+       TextElement.FontSize="13"
+       TextOptions.TextFormattingMode="Ideal"
+       TextOptions.TextRenderingMode="Auto"
+       Background="{DynamicResource MaterialDesignPaper}"
+       FontFamily="{DynamicResource MaterialDesignFont}"
+       xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
+       WindowStyle="None"
+       ResizeMode="NoResize"
+       Name="medicalRecordWindow"
+       Style="{StaticResource MaterialDesignWindow}"
+       xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
+       WindowStartupLocation="CenterScreen"
+       Width="900" Height="1000">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=medicalRecordWindow}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
+
+    <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Control Bar -->
+            <Grid Grid.Row="0">
+                <uc:ControlBarUC Tag="{Binding Title, ElementName=changepasswordWindow}"/>
+            </Grid>
+
+            <materialDesign:Card Grid.Row="1"  
+                             
+                              Margin="8">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="HỒ SƠ BỆNH ÁN" 
+                               Grid.Row="0" Grid.ColumnSpan="2"
+                        FontSize="20" FontWeight="Bold" 
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,12"/>
+
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,24,0" Grid.Row="1">
+                            <TextBlock Text="Mã BN:" FontWeight="Medium" Margin="5 0  0 0"/>
+                            <TextBlock Text="{Binding SelectedPatient.PatientId}" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,24,0" Grid.Row="2">
+                            <TextBlock Text="Năm sinh:" FontWeight="Medium" Margin="5 0 0 0 " />
+                            <TextBlock Text="{Binding SelectedPatient.DateOfBirth}" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"  Margin="0,12,24,0" Grid.Row="3" >
+                            <TextBlock Text="Giới tính:" FontWeight="Medium" Margin="5 0 0 0 "/>
+                            <TextBlock Text="{Binding SelectedPatient.Gender}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,24,8" Grid.Row="4">
+                            <TextBlock Text="Địa chỉ:" FontWeight="Medium" Margin="5 0 0 0 "/>
+                            <TextBlock Text="{Binding SelectedPatient.Address}" 
+                                   TextTrimming="CharacterEllipsis" 
+                                   MaxWidth="200" 
+                                   FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,24,8" Grid.Row="0">
+                            <TextBlock Text="BHYT:" FontWeight="Medium" Margin="5 0 0 0 "/>
+                            <TextBlock Text="{Binding SelectedPatient.InsuranceCode}" 
+                                     FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Grid.Column="1" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+
+
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                              Text="Ngày khám:" 
+                              FontWeight="Medium"
+                              VerticalAlignment="Center" 
+                              Margin="0,0,8,0"/>
+                        <DatePicker Grid.Column="1"
+                               Width="190" 
+                               Height="30"
+                                Padding="5"
+                               SelectedDate="{Binding RecordDate, Mode=OneWay}" 
+                               Style="{StaticResource MaterialDesignDatePicker}" 
+                              
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Center"/>
+
+                        <TextBlock Grid.Column="0" Grid.Row="1"
+                              Text="Bác sĩ khám:" 
+                              FontWeight="Medium"
+                              VerticalAlignment="Center" 
+                              Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="1" Grid.Row="1"
+                                Width="190" 
+                                Height="30"
+                                Padding="5"
+                                Text="{Binding Doctor.FullName}"
+                             Style="{StaticResource MaterialDesignTextBlock}" 
+                             HorizontalAlignment="Left"/>
+                    </Grid>
+                </Grid>
+            </materialDesign:Card>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+
+                    <!-- Vital Signs - Top Left -->
+                    <GroupBox Grid.Column="0" Grid.Row="0" Header="Khám Bệnh" 
+          Style="{StaticResource MaterialDesignCardGroupBox}" 
+          Margin="8,0,8,16">
+                        <Grid Margin="15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="70"/>
+                                <ColumnDefinition Width="*" MinWidth="120"/>
+                                <ColumnDefinition Width="Auto" MinWidth="70"/>
+                                <ColumnDefinition Width="*" MinWidth="120"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="55"/>
+                                <RowDefinition Height="55"/>
+                                <RowDefinition Height="55"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Row 1: Mạch và Nhịp thở -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                   Text="Mạch:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,5,0"/>
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="0,0,15,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MaxWidth="80"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Pulse}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Foreground="Black"                         
+                     Margin="0,5" 
+                     Padding="0"
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="lần/ph" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
+                            </Grid>
+
+                            <TextBlock Grid.Row="0" Grid.Column="2" 
+                   Text="Nhịp thở:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,5,0"/>
+                            <Grid Grid.Row="0" Grid.Column="3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MaxWidth="70"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Respiration}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Padding="0"
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="lần/ph" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
+                            </Grid>
+
+                            <!-- Row 2: Nhiệt độ và Cân nặng -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                   Text="Nhiệt độ:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
+                            <Grid Grid.Row="1" Grid.Column="1" Margin="0,0,15,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MaxWidth="80"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Temperature}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Padding="0"
+                     Height="35"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="°C" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
+                            </Grid>
+
+                            <TextBlock Grid.Row="1" Grid.Column="2" 
+                   Text="Cân nặng:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
+                            <Grid Grid.Row="1" Grid.Column="3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70*" MaxWidth="70"/>
+                                    <ColumnDefinition Width="13*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding Weight}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                                         Padding="0"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="kg" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
+                            </Grid>
+
+                            <!-- Row 3: Huyết áp -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                   Text="Huyết áp:" 
+                   VerticalAlignment="Center" 
+                   FontWeight="Medium"
+                   Margin="0,0,10,0"/>
+                            <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" 
+                     Text="{Binding SystolicPressure}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5" 
+                     Height="35"
+                                         Padding="0"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="1" 
+                       Text="/" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0" 
+                       FontWeight="Bold"
+                       FontSize="16"/>
+                                <TextBox Grid.Column="2" 
+                     Text="{Binding DiastolicPressure}" 
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                     Margin="0,5,5,5" 
+                     Height="35"
+                                         Padding="0"
+                     HorizontalAlignment="Stretch"/>
+                                <TextBlock Grid.Column="3" 
+                       Text="mmHg" 
+                       VerticalAlignment="Center" 
+                       Margin="8,0,0,0"
+                       FontSize="12"
+                       Foreground="#666"/>
+                            </Grid>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Diagnosis - Top Right -->
+                    <GroupBox Grid.Column="1" Grid.Row="0" Header="Chẩn đoán" 
+                              Style="{StaticResource MaterialDesignCardGroupBox}" 
+                              Margin="8,0,8,16">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                       
+                        <TextBox Text="{Binding Diagnosis}" TextWrapping="Wrap" AcceptsReturn="True" 
+                                 MinHeight="150" Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                 Margin="10" VerticalAlignment="Stretch"/>
+                    </ScrollViewer>
+                    </GroupBox>
+
+                    <!-- Doctor Advice - Middle Left -->
+                    <GroupBox Grid.Column="0" Grid.Row="1" Header="Hướng dẫn điều trị" 
+                              Style="{StaticResource MaterialDesignCardGroupBox}" 
+                              Margin="8,0,8,16">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+
+                        <TextBox Text="{Binding DoctorAdvice}" TextWrapping="Wrap" AcceptsReturn="True" 
+                                 MinHeight="100" Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                 Margin="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+
+                    <!-- Test Results - Middle Right -->
+                    <GroupBox Grid.Column="1" Grid.Row="1" Header="Kết quả xét nghiệm" 
+                              Style="{StaticResource MaterialDesignCardGroupBox}" 
+                              Margin="8,0,8,16">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+
+                        <TextBox Text="{Binding TestResults}" TextWrapping="Wrap" AcceptsReturn="True" 
+                                 MinHeight="100" Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                 Margin="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+
+                    <!-- Prescription - Bottom Left -->
+                    <GroupBox Grid.Column="0" Grid.Row="2" Header="Đơn thuốc" 
+                              Style="{StaticResource MaterialDesignCardGroupBox}" 
+                              Margin="8,0,8,16">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+
+                        <TextBox Text="{Binding Prescription}" TextWrapping="Wrap" AcceptsReturn="True" 
+                                 MinHeight="100" Style="{StaticResource MaterialDesignOutlinedTextBox}" 
+                                 Margin="10"/>
+                    </ScrollViewer>
+                </GroupBox>
+
+                    <!-- Action Buttons - Bottom -->
+                    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" 
+                                HorizontalAlignment="Center" Margin="0,10,0,10">
+                        <Button Command="{Binding SaveRecordCommand}" Style="{StaticResource MaterialDesignRaisedButton}"
+                                Width="180" Height="45" Margin="10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Lưu hồ sơ" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Width="180" Height="45" Margin="10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="In hồ sơ" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding ResetRecordCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Width="180" Height="45" Margin="10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Làm mới" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+        </Grid>
+
+</Window>

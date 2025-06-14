@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -948,10 +949,22 @@ namespace ClinicManagement.ViewModels
 
         private void OpenMedicalRecord(MedicalRecord record)
         {
-            // Open medical record details window
-            // You would need to implement this window
-            MessageBox.Show("Chức năng mở hồ sơ chi tiết đang được phát triển.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (record == null) return;
+
+            // First create the window
+            var medicalRecordWindow = new MedicalRecorDetailsWindow();
+
+            // Create the view model with the record
+            var viewModel = new MedicalRecordDetailsViewModel(record);
+
+            // Set the DataContext
+            medicalRecordWindow.DataContext = viewModel;
+
+            // Show dialog
+            medicalRecordWindow.ShowDialog();
         }
+
+
 
         private void ViewInvoice(Invoice invoice)
         {

@@ -131,6 +131,7 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region Application Settings Properties
+        private MainViewModel _mainViewModel; 
 
         private ObservableCollection<FontFamily> _fontFamilies;
         public ObservableCollection<FontFamily> FontFamilies
@@ -239,6 +240,7 @@ namespace ClinicManagement.ViewModels
         public ICommand SaveSettingsCommand { get; set; }
         public ICommand ResetSettingsCommand { get; set; }
         public ICommand LoadedCommand { get; set; }
+        public ICommand SignOutCommand { get; set; }
 
         #endregion
 
@@ -247,6 +249,7 @@ namespace ClinicManagement.ViewModels
 
         public SettingViewModel()
         {
+            _mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
             // Initialize commands
             InitializeCommands();
             
@@ -308,6 +311,88 @@ namespace ClinicManagement.ViewModels
                 },
                 p => true
             );
+            // Tạo SignOutCommand mới từ RelayCommand để chuyển tiếp đến MainViewModel.SignOutCommand
+            SignOutCommand = new RelayCommand<object>(
+                p => ExecuteSignOut(),
+                p => CanExecuteSignOut()
+            );
+        }
+
+        private bool CanExecuteSignOut()
+        {
+            return _mainViewModel != null && _mainViewModel.CurrentAccount != null;
+        }
+
+        // Thực hiện đăng xuất
+        // Thực hiện đăng xuất
+        private void ExecuteSignOut()
+        {
+            try
+            {
+                if (_mainViewModel == null || _mainViewModel.CurrentAccount == null)
+                {
+                    MessageBox.Show("Không thể đăng xuất vào lúc này.",
+                        "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Hiển thị hộp thoại xác nhận
+                MessageBoxResult result = MessageBox.Show(
+                    "Bạn có chắc chắn muốn đăng xuất?",
+                    "Xác nhận đăng xuất",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Cập nhật trạng thái đăng nhập trong CSDL
+                    var accountToUpdate = DataProvider.Instance.Context.Accounts
+                        .FirstOrDefault(a => a.Username == _mainViewModel.CurrentAccount.Username);
+
+                    if (accountToUpdate != null)
+                    {
+                        accountToUpdate.IsLogined = false;
+                        DataProvider.Instance.Context.SaveChanges();
+                    }
+
+                    // Lấy MainWindow
+                    var mainWindow = Application.Current.MainWindow;
+                    if (mainWindow != null)
+                    {
+                        // Ẩn MainWindow
+                        mainWindow.Hide();
+
+                        // Reset CurrentAccount trong MainViewModel
+                        var oldAccount = _mainViewModel.CurrentAccount; // Lưu lại để kiểm tra sau này
+                        _mainViewModel.CurrentAccount = null;
+
+                        // Hiển thị màn hình đăng nhập
+                        LoginWindow loginWindow = new LoginWindow();
+                        loginWindow.ShowDialog();
+
+                        // Kiểm tra kết quả đăng nhập
+                        var loginVM = loginWindow.DataContext as LoginViewModel;
+
+                        // Nếu đăng nhập thành công (IsLogin = true và CurrentAccount khác null), hiển thị lại MainWindow
+                        if (loginVM != null && loginVM.IsLogin && _mainViewModel.CurrentAccount != null)
+                        {
+                            mainWindow.Show();
+                        }
+                        else
+                        {
+                            // Nếu đã ấn Cancel hoặc đóng cửa sổ đăng nhập mà không đăng nhập lại thành công
+                            // QUAN TRỌNG: Đảm bảo rằng chúng ta đóng MainWindow và thoát ứng dụng
+                            mainWindow.Close(); // Đóng cửa sổ chính
+                            Application.Current.Shutdown(); // Đảm bảo ứng dụng thoát hẳn
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi đăng xuất: {ex.Message}",
+                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void InitializeFontFamilies()

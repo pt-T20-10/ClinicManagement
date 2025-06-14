@@ -66,7 +66,7 @@ namespace ClinicManagement.ViewModels
             var account = DataProvider.Instance.Context.Accounts
                 .FirstOrDefault(u => u.Username == UserName && u.Password == password && u.IsDeleted != true);
 
-            // In your LoginViewModel's Login method:
+
             if (account != null)
             {
                 IsLogin = true;
@@ -91,9 +91,10 @@ namespace ClinicManagement.ViewModels
 
                 p.Close();
             }
-
-
-
+            else
+            {
+                MessageBox.Show("Tên đăng nhập hoặc mật khẩu không đúng!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
     }
 }

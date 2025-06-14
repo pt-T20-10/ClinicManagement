@@ -327,6 +327,7 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
         }
+
         private void SearchPatientExplicit()
         {
             try
