@@ -251,6 +251,7 @@ namespace ClinicManagement.ViewModels
         public ICommand ConfirmPaymentCommand { get; set; }
         public ICommand ApplyPatientDiscountCommand { get; set; }
         public ICommand RecalculateTotalsCommand { get; set; }
+        public ICommand EditSaleCommand { get; set; }
 
         #endregion
 
@@ -320,6 +321,11 @@ namespace ClinicManagement.ViewModels
             RecalculateTotalsCommand = new RelayCommand<object>(
                 p => RecalculateTotals(),
                 p => Invoice != null);
+
+            EditSaleCommand = new RelayCommand<Window>(
+           parameter => EditSale(parameter),
+           parameter => CanEditMedicineSale
+       );
         }
 
         private void LoadInvoiceDetails()
@@ -394,6 +400,72 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi tải chi tiết hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Method to handle editing the sale
+        private void EditSale(Window window)
+        {
+            try
+            {
+                // Access the MedicineSellViewModel from App resources
+                var medicineSellVM = Application.Current.Resources["MedicineSellVM"] as MedicineSellViewModel;
+
+                if (medicineSellVM == null)
+                {
+                    MessageBox.Show("Không thể khởi tạo màn hình bán thuốc.",
+                                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Set the current invoice for editing
+                medicineSellVM.CurrentInvoice = Invoice;
+
+                // Find and activate the Medicine Sale tab
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow == null) return;
+
+                var tabControl = LogicalTreeHelper.FindLogicalNode(mainWindow, "MainTabControl") as TabControl;
+                if (tabControl == null) return;
+
+                // Find the "Bán thuốc" tab
+                foreach (var item in tabControl.Items)
+                {
+                    if (item is TabItem tabItem)
+                    {
+                        var header = tabItem.Header as Grid;
+                        if (header != null)
+                        {
+                            foreach (var child in LogicalTreeHelper.GetChildren(header))
+                            {
+                                if (child is Grid childGrid && (int)childGrid.GetValue(Grid.RowProperty) == 0)
+                                {
+                                    foreach (var textBlockElement in LogicalTreeHelper.GetChildren(childGrid))
+                                    {
+                                        if (textBlockElement is TextBlock textBlock && textBlock.Text == "Bán thuốc")
+                                        {
+                                            // Switch to medicine sales tab
+                                            tabControl.SelectedItem = tabItem;
+
+                                            // Close the current window
+                                            window?.Close();
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // If we couldn't find the tab
+                MessageBox.Show("Không tìm thấy tab Bán thuốc.",
+                              "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
+                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -716,5 +788,9 @@ namespace ClinicManagement.ViewModels
                 MessageBox.Show($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        public bool CanEditMedicineSale => Invoice != null &&
+                                    Invoice.Status == "Chưa thanh toán" &&
+                                    (Invoice.InvoiceType == "Bán thuốc" || Invoice.InvoiceType == "Khám và bán thuốc");
     }
 }

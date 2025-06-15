@@ -438,8 +438,29 @@ namespace ClinicManagement.ViewModels
                 // Thêm các item từ hóa đơn vào giỏ
                 foreach (var detail in invoiceWithDetails.InvoiceDetails.Where(d => d.MedicineId.HasValue))
                 {
-                    var cartItem = new CartItem(detail);
-                    CartItems.Add(cartItem);
+                    // Load full medicine data to ensure stock info is available
+                    var medicine = DataProvider.Instance.Context.Medicines
+                        .Include(m => m.StockIns)
+                        .Include(m => m.InvoiceDetails)
+                        .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
+
+                    if (medicine != null)
+                    {
+                        var cartItem = new CartItem(detail);
+
+                        // Check if quantity in cart exceeds current stock + original quantity
+                        int originalQty = detail.Quantity ?? 0;
+                        int availableStock = medicine.TotalStockQuantity + originalQty;
+
+                        if (cartItem.Quantity > availableStock)
+                        {
+                            cartItem.Quantity = availableStock;
+                            MessageBox.Show($"Số lượng của {medicine.Name} đã được điều chỉnh xuống {availableStock} do hạn chế tồn kho.",
+                                          "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+
+                        CartItems.Add(cartItem);
+                    }
                 }
             }
             catch (Exception ex)
@@ -447,6 +468,7 @@ namespace ClinicManagement.ViewModels
                 MessageBox.Show($"Không thể tải thông tin chi tiết hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private bool FilterMedicine(Medicine medicine)
         {
@@ -550,13 +572,13 @@ namespace ClinicManagement.ViewModels
                     patient = FindOrCreatePatient();
                 }
 
-                // 2. Tạo hoặc cập nhật hóa đơn
+                // 2. Tạo hoặc cập nhật hóa đơn mới 
                 Invoice invoice;
                 var context = DataProvider.Instance.Context;
 
                 if (CurrentInvoice != null)
                 {
-                    // Cập nhật hóa đơn hiện có
+                    // Load hóa đơn có sẳn 
                     invoice = context.Invoices.Find(CurrentInvoice.InvoiceId);
                     if (invoice == null)
                     {
@@ -565,21 +587,31 @@ namespace ClinicManagement.ViewModels
                         return;
                     }
 
-                    // Cập nhật thông tin hóa đơn
+                    // Lấy chi tiết hóa đơn gốc để xóa sau này
+                    var originalDetails = context.InvoiceDetails
+                        .Where(d => d.InvoiceId == invoice.InvoiceId && d.MedicineId != null)
+                        .ToList();
+
+                    // Update invoice details
                     invoice.PatientId = patient?.PatientId;
                     invoice.TotalAmount = TotalAmount - Discount;
                     invoice.Discount = Discount;
                     invoice.Status = "Chưa thanh toán";
 
-                    // Xóa chi tiết hóa đơn cũ (chỉ xóa các mục thuốc)
-                    var existingDetails = context.InvoiceDetails
-                        .Where(d => d.InvoiceId == invoice.InvoiceId && d.MedicineId != null)
-                        .ToList();
+                    // Update invoice type if needed
+                    if (invoice.InvoiceType == "Khám bệnh")
+                    {
+                        invoice.InvoiceType = "Khám và bán thuốc";
+                    }
 
-                    foreach (var detail in existingDetails)
+                    // Remove all existing medicine invoice details
+                    foreach (var detail in originalDetails)
                     {
                         context.InvoiceDetails.Remove(detail);
                     }
+
+                    // Save changes to remove old items
+                    context.SaveChanges();
                 }
                 else
                 {

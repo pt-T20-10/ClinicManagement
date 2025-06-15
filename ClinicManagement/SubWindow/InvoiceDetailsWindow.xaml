@@ -84,7 +84,7 @@
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Loại hóa đơn:" FontWeight="SemiBold" Width="120"/>
-                                <TextBlock Text="{Binding Invoice.InvoiceType}"/>
+                                <TextBlock Text="{Binding Invoice.InvoiceType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -284,7 +284,7 @@
                     </Grid>
                 </materialDesign:Card>
 
-                <!-- Medical Record & Doctor's Advice (If applicable) -->
+       
                 <!-- Medical Record & Doctor's Advice (If applicable) -->
                 <materialDesign:Card Grid.Row="1" Margin="0,0,0,16" Padding="16" UniformCornerRadius="4"
                      Visibility="{Binding HasMedicalRecord, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -328,7 +328,7 @@
             </Grid>
 
             <!-- ROW 3: TOTALS, DISCOUNTS, TAXES -->
-            <materialDesign:Card Grid.Row="2" Padding="16" UniformCornerRadius="4">
+            <materialDesign:Card Grid.Row="2" Grid.ColumnSpan="2" Padding="16" UniformCornerRadius="4">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -420,11 +420,11 @@
                     </Grid>
 
                     <!-- Action Buttons -->
-                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Grid.RowSpan="2" Orientation="Horizontal" Margin="16,20,0,0">
+                    <StackPanel Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom" Grid.ColumnSpan="2" Grid.RowSpan="2" Orientation="Horizontal" Margin="0,20,0,0">
                         <Button
                           Command="{Binding CloseWindow}"
                           Style="{StaticResource MaterialDesignOutlinedButton}"
-                          Margin="10,0,40,0" Width="150" Height="40">
+                          Margin="10,0,20,0" Width="150" Height="40">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ExitToApp" Margin="0,0,8,0"/>
                                 <TextBlock Text="Đóng"/>
@@ -433,7 +433,7 @@
                         <Button
                         Command="{Binding PrintInvoiceCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                        Margin="10,0,40,0" Width="150" Height="40">
+                        Margin="10,0,20,0" Width="150" Height="40">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0"/>
                                 <TextBlock Text="In hóa đơn"/>
@@ -444,6 +444,7 @@
                         <Button
                         Command="{Binding ProcessPaymentCommand}"
                         Width="140" Height="40"
+                            Margin="10,0,20,0"
                         Background="#4CAF50"
                         BorderBrush="#388E3C">
                             <Button.Style>
@@ -459,7 +460,29 @@
                                 <materialDesign:PackIcon Kind="CreditCardOutline" Margin="0,0,8,0"/>
                                 <TextBlock Text="Thanh toán"/>
                             </StackPanel>
+                            
                         </Button>
+                        <!-- Add this button to the button group in the bottom section -->
+                        <Button
+                            Command="{Binding EditSaleCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+   
+                            Margin="10,0,20,0"    Width="140" Height="40">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CanEditMedicineSale}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Edit" Margin="0,0,8,0"/>
+                                <TextBlock Text="Chỉnh sửa"/>
+                            </StackPanel>
+                        </Button>
+
                     </StackPanel>
 
                     <!-- Total calculations -->

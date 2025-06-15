@@ -486,7 +486,7 @@
                                                         ToolTip="Bán thuốc"    
                                                         Background="#3F51B5"
                                                         BorderBrush="#303F9F"
-                                                        Margin="8 0 0 0"
+                                                        
                                                         Width="50" Height="32">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
@@ -494,8 +494,12 @@
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding InvoiceType}" Value="Khám và bán thuốc">
                                                                         <Setter Property="Visibility" Value="Visible"/>
+                                                                        
                                                                     </DataTrigger>
-                                                                </Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding InvoiceType}" Value="Khám bệnh">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                        </Style.Triggers>
                                                             </Style>
                                                         </Button.Style>
                                                         <StackPanel Orientation="Horizontal">
