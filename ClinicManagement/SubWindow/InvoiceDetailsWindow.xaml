@@ -17,7 +17,7 @@
         mc:Ignorable="d"
         WindowStyle="None"
        
-        Height="1100" Width="950"
+        Height="1000" Width="950"
         WindowStartupLocation="CenterScreen">
     
     <!-- Khởi tạo Window Resouces để sử dụng Converter -->
@@ -40,7 +40,7 @@
         
         <!-- Row 1: Main content area -->
         <!-- Có 3 R-->
-        <Grid Margin="20" Grid.Row="1">
+        <Grid Margin="10" Grid.Row="1">
             <Grid.RowDefinitions>
                 <!-- Row 1: Thông tin hóa đơn -->
                 <RowDefinition Height="Auto" />
@@ -54,7 +54,7 @@
             </Grid.RowDefinitions>
 
             <!-- ROW 1: Card Thông tin hóa đơn -->
-            <materialDesign:Card Grid.Row="0" Margin="0,0,0,16" Padding="16" UniformCornerRadius="4">
+            <materialDesign:Card Grid.Row="0" Margin="0,0,0,8" Padding="16" UniformCornerRadius="4">
                     <!--3 Row, 2 Column-->
                     <Grid >
                         <Grid.RowDefinitions>
@@ -169,7 +169,7 @@
                         </Grid.RowDefinitions>
 
                         <!-- Title -->
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,8">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,8,16,8">
                             <materialDesign:PackIcon Kind="ClipboardListOutline" Width="24" Height="24" VerticalAlignment="Center"/>
                             <TextBlock Text="CHI TIẾT HÓA ĐƠN" FontSize="18" FontWeight="Medium" Margin="8,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
@@ -391,7 +391,7 @@
                         <!-- Custom Discount -->
                         <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="Giảm giá (%):" Width="160" VerticalAlignment="Center"/>
-                            <TextBox Width="80" 
+                            <TextBox Width="100" Padding="10 5 5 5"  Height="45"
                                  Text="{Binding Invoice.Discount, StringFormat='{}{0:N1}'}" 
                                  materialDesign:HintAssist.Hint="0-100%"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
@@ -400,7 +400,7 @@
                         <!-- Custom Tax -->
                         <StackPanel Grid.Column="0" Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="Thuế VAT (%):" Width="160" VerticalAlignment="Center"/>
-                            <TextBox Width="80" 
+                            <TextBox Width="100" Height="45" Padding="10 5 5 5"
                                  Text="{Binding Invoice.Tax, StringFormat='{}{0:N1}'}"
                                  materialDesign:HintAssist.Hint="0-100%"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>

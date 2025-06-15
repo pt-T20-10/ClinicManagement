@@ -1,17 +1,12 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.SubWindow;
-using ClinicManagement.ViewModels;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using static MaterialDesignThemes.Wpf.Theme;
+using ClinicManagement.Converter;
+using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
@@ -29,6 +24,7 @@ namespace ClinicManagement.ViewModels
                 UpdateTabVisibility();
             }
         }
+
 
         // Collection of tabs that should be visible to the current user
         private ObservableCollection<string> _AllowedTabs = new ObservableCollection<string>();
@@ -114,13 +110,17 @@ namespace ClinicManagement.ViewModels
         }
 
         public bool Isloaded = false;
+
         public string _TotalStock;
         public string TotalStock { get => _TotalStock; set { _TotalStock = value; OnPropertyChanged(); } }
+
+
         public ICommand LoadedWindowCommand { get; set; }
         public ICommand AddPatientCommand { get; set; }
         public ICommand AddAppointmentCommand { get; set; }
         public ICommand SignOutCommand { get; set; }
         public ICommand WindowClosingCommand { get; set; }
+        public ICommand TabSelectedCommand { get; set; }
 
         // mọi thứ xử lý sẽ nằm trong này
         public MainViewModel()
@@ -238,6 +238,7 @@ namespace ClinicManagement.ViewModels
                 },
                 (p) => true
             );
+            InitializeTabSelectionSystem();
         }
 
         // Xử lý sự kiện đóng cửa sổ chính
@@ -313,7 +314,7 @@ namespace ClinicManagement.ViewModels
                 case "PatientTab": return CanViewPatient;
                 case "ExamineTab": return CanViewExamine;
                 case "AppointmentTab": return CanViewAppointment;
-                case "InventoryTab": return CanViewInventory;
+                case "StockTab": return CanViewInventory;
                 case "InvoiceTab": return CanViewInvoice;
                 case "MedicineSellTab": return CanViewMedicineSell;
                 case "DoctorTab": return CanViewDoctor;
@@ -385,7 +386,7 @@ namespace ClinicManagement.ViewModels
                 case "PatientTab": CanViewPatient = isAllowed; break;
                 case "ExamineTab": CanViewExamine = isAllowed; break;
                 case "AppointmentTab": CanViewAppointment = isAllowed; break;
-                case "InventoryTab": CanViewInventory = isAllowed; break;
+                case "StockTab": CanViewInventory = isAllowed; break;
                 case "InvoiceTab": CanViewInvoice = isAllowed; break;
                 case "MedicineSellTab": CanViewMedicineSell = isAllowed; break;
                 case "DoctorTab": CanViewDoctor = isAllowed; break;
@@ -399,6 +400,36 @@ namespace ClinicManagement.ViewModels
         {
             // Return TabItem's Name directly
             return tabItem.Name;
+        }
+
+        private void InitializeTabSelectionSystem()
+        {
+            // Initialize the command
+            TabSelectedCommand = new RelayCommand<string>(
+                (tabName) =>
+                {
+                    if (string.IsNullOrEmpty(tabName))
+                        return;
+
+                    TabSelectionManager.Instance.TabSelected(tabName);
+                },
+                (tabName) => true
+            );
+
+            // Register refresh actions for tabs that need updating
+            TabSelectionManager.Instance.RegisterTabReloadAction("StatisticsTab", () =>
+            {
+                var statisticsVM = Application.Current.Resources["StatisticsVM"] as StatisticsViewModel;
+                statisticsVM?.LoadStatisticsAsync();
+            });
+
+            TabSelectionManager.Instance.RegisterTabReloadAction("Stock", () =>
+            {
+                var inventoryVM = Application.Current.Resources["StockVM"] as StockMedicineViewModel;
+                inventoryVM?.LoadData();
+            });
+
+            // Add other tabs as nee
         }
     }
 }

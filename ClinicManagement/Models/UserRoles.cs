@@ -20,12 +20,12 @@ namespace ClinicManagement.Models
     // Admin và Manager có quyền truy cập tất cả
     {Admin, new List<string>{
         "PatientTab", "ExamineTab", "AppointmentTab",
-        "InventoryTab", "InvoiceTab", "MedicineSellTab", "DoctorTab",
+        "StockTab", "InvoiceTab", "MedicineSellTab", "DoctorTab",
         "StatisticsTab", "SettingsTab"
     }},
     {Manager, new List<string>{
         "PatientTab", "ExamineTab", "AppointmentTab",
-        "InventoryTab", "InvoiceTab", "MedicineSellTab", "DoctorTab",
+        "StockTab", "InvoiceTab", "MedicineSellTab", "DoctorTab",
         "StatisticsTab", "SettingsTab"
     }},
     
@@ -33,7 +33,7 @@ namespace ClinicManagement.Models
     {Doctor, new List<string>{"PatientTab", "ExamineTab", "AppointmentTab", "SettingsTab"}},
     
     // Dược sĩ có quyền truy cập các tab này
-    {Pharmacist, new List<string>{"InventoryTab", "MedicineSellTab", "InvoiceTab", "SettingsTab"}}
+    {Pharmacist, new List<string>{"StockTab", "MedicineSellTab", "InvoiceTab", "SettingsTab"}}
 };
 
     }

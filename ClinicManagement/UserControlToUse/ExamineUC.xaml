@@ -219,7 +219,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0"
-                     Text="{Binding ExaminationFee, StringFormat='{}{0:N0}'}"
+                     Text="{Binding ExaminationFee, StringFormat='{}{0:N0}', Mode=TwoWay}"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Height="35"
                      Padding="3"

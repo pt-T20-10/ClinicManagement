@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -269,6 +270,7 @@ namespace ClinicManagement.ViewModels
         public ICommand PrintRecordCommand { get; set; }
         public ICommand ResetRecordCommand { get; set; }
         public ICommand SearchPatientCommand { get; set; }
+        public ICommand AddPatientCommand { get; set; }
 
         #endregion
 
@@ -324,6 +326,32 @@ namespace ClinicManagement.ViewModels
             // Add this new command
             SearchPatientCommand = new RelayCommand<object>(
                 (p) => SearchPatientExplicit(),
+                (p) => true
+            );
+            AddPatientCommand = new RelayCommand<object>(
+                (p) =>
+                {
+                    // Open a new window to add a new patient
+                    var addPatientWindow = new AddPatientWindow();
+                    var viewModel = new AddPatientViewModel();
+                    addPatientWindow.DataContext = viewModel;
+
+                    addPatientWindow.ShowDialog();
+
+                    // After window closes, check if a new patient was created
+                    if (viewModel.NewPatient != null)
+                    {
+                        // Do something with the newly created patient
+                        var createdPatient = viewModel.NewPatient;
+                        SelectedPatient = createdPatient;
+                        PatienName = createdPatient.FullName;
+                        Phone = createdPatient.Phone;
+                        InsuranceCode = createdPatient.InsuranceCode; // Add this line
+                        // For example, select this patient in another view
+                    }
+    
+
+                },
                 (p) => true
             );
         }
@@ -617,6 +645,32 @@ namespace ClinicManagement.ViewModels
                 DataProvider.Instance.Context.MedicalRecords.Add(newRecord);
                 DataProvider.Instance.Context.SaveChanges();
 
+                // Create invoice for examination
+                var invoice = new Invoice
+                {
+                    PatientId = SelectedPatient.PatientId,
+                    MedicalRecordId = newRecord.RecordId,
+                    InvoiceDate = DateTime.Now,
+                    Status = "Chưa thanh toán",
+                    InvoiceType = "Khám bệnh",
+                    TotalAmount = ExaminationFee,
+                    Discount = SelectedPatient.PatientType.Discount,
+                    Tax = 0
+                };
+                DataProvider.Instance.Context.Invoices.Add(invoice);
+                DataProvider.Instance.Context.SaveChanges();
+
+                // Add invoice detail for examination fee
+                var invoiceDetail = new InvoiceDetail
+                {
+                    InvoiceId = invoice.InvoiceId,
+                    ServiceName = SelectedAppointmentType?.TypeName ?? "Khám bệnh",
+                    SalePrice = ExaminationFee,
+                    Quantity = 1
+                };
+                DataProvider.Instance.Context.InvoiceDetails.Add(invoiceDetail);
+                DataProvider.Instance.Context.SaveChanges();
+
                 // Update related appointment if exists
                 if (RelatedAppointment != null)
                 {
@@ -624,7 +678,7 @@ namespace ClinicManagement.ViewModels
                 }
 
                 MessageBox.Show(
-                    "Đã lưu hồ sơ khám bệnh thành công!",
+                    "Đã lưu hồ sơ khám bệnh và tạo hóa đơn thành công!",
                     "Thành công",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -641,6 +695,7 @@ namespace ClinicManagement.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
 
         private string FormatVitalSigns()
         {

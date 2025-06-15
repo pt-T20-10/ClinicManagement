@@ -1522,7 +1522,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private void LoadWarningMedicines(ClinicDbContext context)
+        // Change from private to public
+        public void LoadWarningMedicines(ClinicDbContext context)
         {
             try
             {
@@ -1610,6 +1611,7 @@ namespace ClinicManagement.ViewModels
                 });
             }
         }
+
 
         private void CalculateGrowthRates(ClinicDbContext context)
         {

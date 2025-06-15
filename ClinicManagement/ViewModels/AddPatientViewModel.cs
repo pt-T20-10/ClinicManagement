@@ -180,6 +180,16 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private Patient _newPatient;
+        public Patient NewPatient
+        {
+            get => _newPatient;
+            set
+            {
+                _newPatient = value;
+                OnPropertyChanged();
+            }
+        }
         // Commands
         public ICommand LoadedWindowCommand { get; }
         public ICommand SaveCommand { get; }
@@ -290,6 +300,7 @@ namespace ClinicManagement.ViewModels
                    !string.IsNullOrWhiteSpace(Phone);
         }
 
+        // Then modify your ExecuteSave method to set this property
         private void ExecuteSave()
         {
             try
@@ -327,7 +338,7 @@ namespace ClinicManagement.ViewModels
                     DateOfBirth = birthDate,
                     Gender = Gender,
                     Phone = Phone?.Trim(),
-                  
+
                     Address = Address?.Trim(),
                     InsuranceCode = InsuranceNumber?.Trim(),
                     PatientTypeId = SelectedPatientType?.PatientTypeId,
@@ -338,6 +349,10 @@ namespace ClinicManagement.ViewModels
                 // Save to database
                 DataProvider.Instance.Context.Patients.Add(newPatient);
                 DataProvider.Instance.Context.SaveChanges();
+
+                // Set the NewPatient property with the newly created patient
+                // This ensures the Patient object has the ID assigned by the database
+                NewPatient = newPatient;
 
                 // Success message
                 MessageBox.Show(
@@ -358,6 +373,7 @@ namespace ClinicManagement.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
 
         private void ExecuteCancel()
         {

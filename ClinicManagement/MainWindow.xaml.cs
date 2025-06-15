@@ -33,10 +33,18 @@ namespace ClinicManagement
         {
             var mainViewModel = this.DataContext as MainViewModel;
 
-            // Nếu có người dùng đang đăng nhập, hiển thị hộp thoại xác nhận
-            if (mainViewModel != null && mainViewModel.CurrentAccount != null)
+        }
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is TabItem selectedTab)
             {
-                
+                string tabName = selectedTab.Name;
+
+                // Execute the command in MainViewModel
+                if (DataContext is MainViewModel mainVM && mainVM.TabSelectedCommand != null)
+                {
+                    mainVM.TabSelectedCommand.Execute(tabName);
+                }
             }
         }
     }
