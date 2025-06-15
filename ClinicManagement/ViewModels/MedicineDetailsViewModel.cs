@@ -4,7 +4,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
@@ -61,6 +60,18 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Thêm property cho nhà cung cấp gần nhất
+        private string _latestSupplierName;
+        public string LatestSupplierName
+        {
+            get => _latestSupplierName;
+            set
+            {
+                _latestSupplierName = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ObservableCollection<Medicine.StockInWithRemaining> DetailedStockList
         {
             get => _detailedStockList;
@@ -95,19 +106,6 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
                 if (value != null && Medicine != null)
                     Medicine.UnitId = value.UnitId;
-            }
-        }
-
-        private Supplier _selectedSupplier;
-        public Supplier SelectedSupplier
-        {
-            get => _selectedSupplier;
-            set
-            {
-                _selectedSupplier = value;
-                OnPropertyChanged();
-                if (value != null && Medicine != null)
-                    Medicine.SupplierId = value.SupplierId;
             }
         }
 
@@ -226,8 +224,9 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
         // Selected stock entry from the DataGrid
-private Medicine.StockInWithRemaining _selectedStockEntry;
+        private Medicine.StockInWithRemaining _selectedStockEntry;
         public Medicine.StockInWithRemaining SelectedStockEntry
         {
             get => _selectedStockEntry;
@@ -325,6 +324,18 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
             }
         }
 
+        // Thêm property cho việc chỉnh sửa thông tin nhà cung cấp của lô thuốc
+        private Supplier _editSupplier;
+        public Supplier EditSupplier
+        {
+            get => _editSupplier;
+            set
+            {
+                _editSupplier = value;
+                OnPropertyChanged();
+            }
+        }
+
         // Helper method to calculate profit margin for edit mode
         private void CalculateEditProfitMargin()
         {
@@ -335,7 +346,6 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
             }
         }
 
-
         #region Commands
         public ICommand CloseCommand { get; set; }
         public ICommand SaveChangesCommand { get; set; }
@@ -344,7 +354,6 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
         public ICommand EditStockEntryCommand { get; set; }
         public ICommand SaveStockEntryCommand { get; set; }
         public ICommand CancelEditStockEntryCommand { get; set; }
-
         #endregion
         #endregion
 
@@ -355,6 +364,7 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
             InitializeCommands();
             LoadDropdownData();
             LoadMedicineDetailsForEdit(medicine);
+            LoadRelatedData(); // Thêm phương thức mới để load dữ liệu liên quan
         }
 
         #region InitializeCommands
@@ -374,10 +384,11 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                 parameter => RefreshMedicineData(),
                 parameter => Medicine != null
             );
+
             EditStockEntryCommand = new RelayCommand<Medicine.StockInWithRemaining>(
-      parameter => BeginEditStockEntry(parameter),
-      parameter => parameter != null
-  );
+                parameter => BeginEditStockEntry(parameter),
+                parameter => parameter != null
+            );
 
             SaveStockEntryCommand = new RelayCommand<object>(
                 parameter => SaveEditedStockEntry(),
@@ -393,6 +404,39 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
 
         #region Data Loading Methods
 
+        // Thêm phương thức mới để load dữ liệu liên quan
+        private void LoadRelatedData()
+        {
+            if (Medicine == null) return;
+
+            try
+            {
+                // Lấy nhà cung cấp từ StockIn gần nhất
+                var latestStockIn = DataProvider.Instance.Context.StockIns
+                    .Include(si => si.Supplier)
+                    .Where(si => si.MedicineId == Medicine.MedicineId)
+                    .OrderByDescending(si => si.ImportDate)
+                    .FirstOrDefault();
+
+                // Cập nhật tên nhà cung cấp mới nhất
+                if (latestStockIn?.Supplier != null)
+                {
+                    LatestSupplierName = latestStockIn.Supplier.SupplierName;
+                }
+                else
+                {
+                    LatestSupplierName = "Chưa có thông tin nhà cung cấp";
+                }
+
+                // Cập nhật UI
+                OnPropertyChanged(nameof(LatestSupplierName));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tải thông tin liên quan: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         /// <summary>
         /// Load initial data when Medicine is initialized
         /// </summary>
@@ -402,14 +446,74 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
             {
                 if (Medicine != null)
                 {
-                    // Get stock details from current Medicine
-                    var details = Medicine.GetDetailedStock();
-                    DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>(
-                        details.OrderByDescending(d => d.ImportDate));
+                    // Instead of using GetDetailedStock which filters by expiry date,
+                    // we'll directly access all StockIns and calculate remaining quantities
+                    var context = DataProvider.Instance.Context;
+
+                    // Get a refreshed medicine with all needed relationships
+                    var refreshedMedicine = context.Medicines
+                        .Include(m => m.StockIns)
+                            .ThenInclude(si => si.Supplier) // Thêm dòng này để include Supplier
+                        .Include(m => m.InvoiceDetails)
+                        .Include(m => m.Category)
+                        .Include(m => m.Unit)
+                        .FirstOrDefault(m => m.MedicineId == Medicine.MedicineId);
+
+                    if (refreshedMedicine != null)
+                    {
+                        // Temporarily clear the cache to force recalculation
+                        refreshedMedicine._availableStockInsCache = null;
+
+                        // Force calculation of all stock entries without expiry filtering
+                        var allStockEntries = new List<Medicine.StockInWithRemaining>();
+
+                        // Calculate total sold quantity
+                        var totalSold = refreshedMedicine.InvoiceDetails?.Sum(id => id.Quantity) ?? 0;
+                        var remainingToSubtract = totalSold;
+
+                        // Process all stock entries in FIFO order without filtering by expiry
+                        foreach (var stockIn in refreshedMedicine.StockIns.OrderBy(si => si.ImportDate))
+                        {
+                            var remainingInThisLot = stockIn.Quantity - Math.Min(remainingToSubtract, stockIn.Quantity);
+
+                            allStockEntries.Add(new Medicine.StockInWithRemaining
+                            {
+                                StockIn = stockIn,
+                                RemainingQuantity = Math.Max(0, remainingInThisLot),
+                                // Đảm bảo UnitPrice và SellPrice được set đúng
+                        
+                            });
+
+                            remainingToSubtract = Math.Max(0, remainingToSubtract - stockIn.Quantity);
+                        }
+
+                        DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>(
+                            allStockEntries.OrderByDescending(d => d.ImportDate));
+
+                        // Lấy thông tin nhà cung cấp mới nhất
+                        var latestStockIn = refreshedMedicine.StockIns
+                            .OrderByDescending(si => si.ImportDate)
+                            .FirstOrDefault();
+
+                        if (latestStockIn?.Supplier != null)
+                        {
+                            LatestSupplierName = latestStockIn.Supplier.SupplierName;
+                        }
+                        else
+                        {
+                            LatestSupplierName = "Chưa có thông tin nhà cung cấp";
+                        }
+                    }
+                    else
+                    {
+                        DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
+                        LatestSupplierName = "Không tìm thấy thông tin thuốc";
+                    }
                 }
                 else
                 {
                     DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
+                    LatestSupplierName = "Không có thông tin thuốc";
                 }
             }
             catch (Exception ex)
@@ -429,12 +533,13 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                 if (Medicine == null) return;
 
                 // Get latest data from database
-                var refreshedMedicine = DataProvider.Instance.Context.Medicines
+                var context = DataProvider.Instance.Context;
+                var refreshedMedicine = context.Medicines
                     .Include(m => m.StockIns)
+                        .ThenInclude(si => si.Supplier) // Thêm dòng này để include Supplier
                     .Include(m => m.InvoiceDetails)
                     .Include(m => m.Category)
                     .Include(m => m.Unit)
-                    .Include(m => m.Supplier)
                     .FirstOrDefault(m => m.MedicineId == Medicine.MedicineId);
 
                 if (refreshedMedicine != null)
@@ -442,13 +547,48 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                     // Update current Medicine properties
                     UpdateMedicineProperties(refreshedMedicine);
 
-                    // Update DetailedStockList
-                    var details = refreshedMedicine.GetDetailedStock();
+                    // Calculate all stock entries, including expired ones
+                    var allStockEntries = new List<Medicine.StockInWithRemaining>();
+
+                    // Calculate total sold quantity
+                    var totalSold = refreshedMedicine.InvoiceDetails?.Sum(id => id.Quantity) ?? 0;
+                    var remainingToSubtract = totalSold;
+
+                    // Process all stock entries in FIFO order without filtering by expiry
+                    foreach (var stockIn in refreshedMedicine.StockIns.OrderBy(si => si.ImportDate))
+                    {
+                        var remainingInThisLot = stockIn.Quantity - Math.Min(remainingToSubtract, stockIn.Quantity);
+
+                        allStockEntries.Add(new Medicine.StockInWithRemaining
+                        {
+                            StockIn = stockIn,
+                            RemainingQuantity = Math.Max(0, remainingInThisLot),
+                            // Đảm bảo UnitPrice và SellPrice được set đúng
+                       
+                        });
+
+                        remainingToSubtract = Math.Max(0, remainingToSubtract - stockIn.Quantity);
+                    }
+
                     DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>(
-                        details.OrderByDescending(d => d.ImportDate));
+                        allStockEntries.OrderByDescending(d => d.ImportDate));
 
                     // Update dropdown selections
                     UpdateDropdownSelections();
+
+                    // Cập nhật thông tin nhà cung cấp mới nhất
+                    var latestStockIn = refreshedMedicine.StockIns
+                        .OrderByDescending(si => si.ImportDate)
+                        .FirstOrDefault();
+
+                    if (latestStockIn?.Supplier != null)
+                    {
+                        LatestSupplierName = latestStockIn.Supplier.SupplierName;
+                    }
+                    else
+                    {
+                        LatestSupplierName = "Chưa có thông tin nhà cung cấp";
+                    }
                 }
                 else
                 {
@@ -472,13 +612,12 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
             Medicine.Name = refreshedMedicine.Name;
             Medicine.CategoryId = refreshedMedicine.CategoryId;
             Medicine.UnitId = refreshedMedicine.UnitId;
-            Medicine.SupplierId = refreshedMedicine.SupplierId;
+            // Medicine.SupplierId đã bị loại bỏ, nên không cần cập nhật
             Medicine.ExpiryDate = refreshedMedicine.ExpiryDate;
             Medicine.StockIns = refreshedMedicine.StockIns;
             Medicine.InvoiceDetails = refreshedMedicine.InvoiceDetails;
             Medicine.Category = refreshedMedicine.Category;
             Medicine.Unit = refreshedMedicine.Unit;
-            Medicine.Supplier = refreshedMedicine.Supplier;
 
             // Notify UI about changes
             OnPropertyChanged(nameof(Medicine));
@@ -499,7 +638,7 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                 UnitList = new ObservableCollection<Unit>(
                     context.Units.Where(u => !(bool)u.IsDeleted));
 
-                // Only include suppliers that are both not deleted AND active
+                // Only include suppliers that are both not deleted AND active - for editing stock entries
                 SupplierList = new ObservableCollection<Supplier>(
                     context.Suppliers.Where(s => !(bool)s.IsDeleted && (bool)s.IsActive));
             }
@@ -508,7 +647,6 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                 MessageBox.Show($"Error loading dropdown data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
 
         /// <summary>
         /// Update dropdown selections
@@ -519,7 +657,7 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
 
             SelectedCategory = CategoryList?.FirstOrDefault(c => c.CategoryId == Medicine.CategoryId);
             SelectedUnit = UnitList?.FirstOrDefault(u => u.UnitId == Medicine.UnitId);
-            SelectedSupplier = SupplierList?.FirstOrDefault(s => s.SupplierId == Medicine.SupplierId);
+            // Không cần cập nhật SelectedSupplier vì Medicine không còn thuộc tính SupplierId
         }
 
         /// <summary>
@@ -572,8 +710,7 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
             return Medicine != null &&
                    !string.IsNullOrWhiteSpace(Medicine.Name) &&
                    SelectedCategory != null &&
-                   SelectedUnit != null &&
-                   SelectedSupplier != null;
+                   SelectedUnit != null;
         }
 
         private void ExecuteSaveChanges()
@@ -591,7 +728,7 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                     medicineToUpdate.Name = Medicine.Name;
                     medicineToUpdate.CategoryId = SelectedCategory?.CategoryId;
                     medicineToUpdate.UnitId = SelectedUnit?.UnitId;
-                    medicineToUpdate.SupplierId = SelectedSupplier?.SupplierId;
+                    // Không còn cập nhật SupplierId nữa vì đã chuyển sang StockIn
 
                     if (ExpiryDateDateTime.HasValue)
                     {
@@ -605,6 +742,25 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                     // Check if we need to add a new StockIn entry
                     if (StockinQuantity > 0 && StockinUnitPrice > 0)
                     {
+                        // Lấy thông tin nhà cung cấp từ lô nhập kho gần đây nhất
+                        var latestStockIn = dbContext.StockIns
+                            .Where(si => si.MedicineId == Medicine.MedicineId)
+                            .OrderByDescending(si => si.ImportDate)
+                            .FirstOrDefault();
+
+                        // Lấy SupplierId từ EditSupplier nếu có, ngược lại sử dụng SupplierId từ StockIn gần nhất
+                        int? supplierId = EditSupplier?.SupplierId ?? latestStockIn?.SupplierId;
+
+                        if (!supplierId.HasValue)
+                        {
+                            MessageBox.Show(
+                                "Không thể thêm lô nhập mới vì thiếu thông tin nhà cung cấp.",
+                                "Lỗi",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                            return;
+                        }
+
                         var newStockIn = new StockIn
                         {
                             MedicineId = Medicine.MedicineId,
@@ -613,7 +769,8 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                             UnitPrice = StockinUnitPrice,
                             SellPrice = StockinSellPrice,
                             ProfitMargin = StockProfitMargin,
-                            TotalCost = StockinUnitPrice * StockinQuantity
+                            TotalCost = StockinUnitPrice * StockinQuantity,
+                            SupplierId = supplierId.Value // Thêm SupplierId vào StockIn
                         };
 
                         dbContext.StockIns.Add(newStockIn);
@@ -675,11 +832,14 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
         {
             if (stockEntry == null) return;
 
-            // Load data from the selected stock entry
+            CurrentStockEntry = stockEntry;
             EditStockQuantity = stockEntry.StockIn.Quantity;
             EditUnitPrice = stockEntry.UnitPrice;
-            EditSellPrice = stockEntry.SellPrice ?? 0;
             EditProfitMargin = stockEntry.StockIn.ProfitMargin;
+            EditSellPrice = stockEntry.SellPrice ?? 0;
+
+            // Cập nhật chọn nhà cung cấp
+            EditSupplier = SupplierList.FirstOrDefault(s => s.SupplierId == stockEntry.StockIn.SupplierId);
 
             IsEditingStockEntry = true;
         }
@@ -690,7 +850,8 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                    SelectedStockEntry != null &&
                    EditStockQuantity > 0 &&
                    EditUnitPrice > 0 &&
-                   EditSellPrice > 0;
+                   EditSellPrice > 0 &&
+                   EditSupplier != null; // Thêm kiểm tra có chọn nhà cung cấp hay không
         }
 
         private void SaveEditedStockEntry()
@@ -714,6 +875,12 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
                     stockInToUpdate.SellPrice = EditSellPrice;
                     stockInToUpdate.ProfitMargin = EditProfitMargin;
                     stockInToUpdate.TotalCost = EditUnitPrice * EditStockQuantity;
+
+                    // Cập nhật nhà cung cấp
+                    if (EditSupplier != null)
+                    {
+                        stockInToUpdate.SupplierId = EditSupplier.SupplierId;
+                    }
 
                     // Update Stock record if quantity changed
                     if (quantityDiff != 0)
@@ -763,6 +930,10 @@ private Medicine.StockInWithRemaining _selectedStockEntry;
         {
             IsEditingStockEntry = false;
         }
+
+        // Property để lưu StockEntry hiện tại
+        private Medicine.StockInWithRemaining CurrentStockEntry { get; set; }
+
         #endregion
     }
 }

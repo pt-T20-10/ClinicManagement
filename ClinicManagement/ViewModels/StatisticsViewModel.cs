@@ -1527,77 +1527,95 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // First load all medicines to process in memory (fixing LINQ translation issue)
+                // Clear the change tracker to ensure fresh data
+                context.ChangeTracker.Clear();
+
+                // Fetch all non-deleted medicines with their related data
                 var medicines = context.Medicines
+                    .AsNoTracking()  // Force fresh data from database
                     .Where(m => m.IsDeleted != true)
+                    .Include(m => m.StockIns)
+                    .Include(m => m.InvoiceDetails)
+                    .Include(m => m.Unit)
                     .ToList();
 
-                // Now process in memory
-                var lowStockMedicines = medicines
-                    .Where(m => m.TotalStockQuantity < 10)
-                    .Take(10)
-                    .ToList();
+                // Prepare warning collections
+                var lowStockWarnings = new List<WarningMedicine>();
+                var expiryWarnings = new List<WarningMedicine>();
 
-                // Get medicine expirations
-                var expiringMedicines = medicines
-                    .Where(m => m.ExpiryDate.HasValue &&
-                          m.ExpiryDate.Value.ToDateTime(TimeOnly.MinValue) <= DateTime.Now.AddDays(30))
-                    .Take(10)
-                    .ToList();
+                // Current date reference points
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                var thirtyDaysLater = today.AddDays(30);
 
-                var warningList = new List<WarningMedicine>();
-
-                // Add low stock warnings
-                foreach (var medicine in lowStockMedicines)
+                foreach (var medicine in medicines)
                 {
-                    warningList.Add(new WarningMedicine
+                    // Force stock quantity calculation by accessing the property
+                    int currentStock = medicine.TotalStockQuantity;
+
+                    // 1. Check for low stock (threshold of 10 items)
+                    if (currentStock <= 10)
                     {
-                        Id = medicine.MedicineId,
-                        Name = medicine.Name,
-                        WarningMessage = $"Còn {medicine.TotalStockQuantity} đơn vị - Dưới mức tối thiểu"
-                    });
-                }
+                        lowStockWarnings.Add(new WarningMedicine
+                        {
+                            Id = medicine.MedicineId,
+                            Name = medicine.Name,
+                            WarningMessage = $"Còn {currentStock} {medicine.Unit?.UnitName ?? "đơn vị"} - Dưới mức tối thiểu"
+                        });
+                    }
 
-                // Add expiration warnings
-                foreach (var medicine in expiringMedicines)
-                {
+                    // 2. Check for expiry issues
                     if (medicine.ExpiryDate.HasValue)
                     {
-                        int daysUntilExpiry = (medicine.ExpiryDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Now).Days;
-
-                        // Only show positive days
-                        if (daysUntilExpiry >= 0)
+                        if (medicine.ExpiryDate.Value <= today)
                         {
-                            warningList.Add(new WarningMedicine
-                            {
-                                Id = medicine.MedicineId,
-                                Name = medicine.Name,
-                                WarningMessage = $"Hết hạn trong {daysUntilExpiry} ngày"
-                            });
-                        }
-                        else
-                        {
-                            warningList.Add(new WarningMedicine
+                            // Already expired
+                            expiryWarnings.Add(new WarningMedicine
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
                                 WarningMessage = "Đã hết hạn sử dụng"
                             });
                         }
+                        else if (medicine.ExpiryDate.Value <= thirtyDaysLater)
+                        {
+                            // Expiring soon (within 30 days)
+                            int daysUntilExpiry = medicine.ExpiryDate.Value.DayNumber - today.DayNumber;
+                            expiryWarnings.Add(new WarningMedicine
+                            {
+                                Id = medicine.MedicineId,
+                                Name = medicine.Name,
+                                WarningMessage = $"Hết hạn trong {daysUntilExpiry} ngày"
+                            });
+                        }
                     }
                 }
 
-                // Remove duplicates (same medicine with different warnings)
-                var distinctWarnings = warningList
-                    .GroupBy(w => w.Id)
-                    .Select(g => g.First())
-                    .Take(10)
-                    .ToList();
+                // Prioritize warnings and take unique medicines
+                // (one medicine might have both low stock and expiry issues)
+                var allWarnings = new Dictionary<int, WarningMedicine>();
+
+                // Add expiry warnings first (higher priority)
+                foreach (var warning in expiryWarnings)
+                {
+                    allWarnings[warning.Id] = warning;
+                }
+
+                // Then add low stock warnings (if not already added)
+                foreach (var warning in lowStockWarnings)
+                {
+                    if (!allWarnings.ContainsKey(warning.Id))
+                    {
+                        allWarnings[warning.Id] = warning;
+                    }
+                }
+
+                // Take top 10 warnings
+                var topWarnings = allWarnings.Values.Take(10).ToList();
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    WarningMedicines = new ObservableCollection<WarningMedicine>(distinctWarnings);
-                    LowStockCount = distinctWarnings.Count;
+                    WarningMedicines = new ObservableCollection<WarningMedicine>(topWarnings);
+                    LowStockCount = topWarnings.Count;
                 });
             }
             catch (Exception ex)
@@ -1611,6 +1629,7 @@ namespace ClinicManagement.ViewModels
                 });
             }
         }
+
 
 
         private void CalculateGrowthRates(ClinicDbContext context)

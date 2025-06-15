@@ -45,11 +45,25 @@ namespace ClinicManagement.Configurations
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            builder.Property(e => e.ExpiryDate)
+               .HasColumnName("HanSuDung")
+            
+               .HasColumnType("date");
+
             builder.HasOne(d => d.Medicine)
                 .WithMany(p => p.StockIns)
                 .HasForeignKey(d => d.MedicineId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_NhapKho_Thuoc");
+
+            builder.Property(e => e.SupplierId)
+         .HasColumnName("MaNhaCungCap");
+
+            builder.HasOne(e => e.Supplier)
+             .WithMany(p => p.StockIns)
+             .HasForeignKey(e => e.SupplierId)
+             .OnDelete(DeleteBehavior.ClientSetNull)
+             .HasConstraintName("FK_NhapKho_NhaCungCap");
         }
     }
 }

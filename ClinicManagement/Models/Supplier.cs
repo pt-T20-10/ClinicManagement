@@ -25,5 +25,5 @@ public partial class Supplier
 
     public bool? IsDeleted { get; set; }
 
-    public virtual ICollection<Medicine> Medicines { get; set; } = new List<Medicine>();
+    public virtual ICollection<StockIn> StockIns { get; set; } = new List<StockIn>();
 }

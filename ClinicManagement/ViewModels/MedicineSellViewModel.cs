@@ -357,24 +357,47 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                var minimumExpiryDate = today.AddDays(8);
+
+                // Load medicines with eager loading of related entities
                 var medicines = DataProvider.Instance.Context.Medicines
-                    .AsNoTracking() // Sử dụng AsNoTracking để không theo dõi thay đổi
+                    .AsNoTracking() // Use AsNoTracking for better performance
                     .Where(m => m.IsDeleted != true)
                     .Include(m => m.Category)
-                    .Include(m => m.StockIns)
-                    .Include(m => m.InvoiceDetails)
                     .Include(m => m.Unit)
                     .ToList();
 
-                // Thêm thuộc tính động sau khi đã truy vấn từ database xong
+                // Process stock data separately to avoid LINQ translation errors
                 foreach (var medicine in medicines)
                 {
-                    // Sử dụng TypeDescriptor để thêm thuộc tính vào đối tượng đã tồn tại
-                    TypeDescriptor.AddAttributes(medicine, new DefaultValueAttribute(1));
-                  ;
+                    // Manually load StockIns and InvoiceDetails to avoid LINQ translation issues
+                    var stockIns = DataProvider.Instance.Context.StockIns
+                        .AsNoTracking()
+                        .Where(si => si.MedicineId == medicine.MedicineId)
+                        .ToList();
+
+                    var invoiceDetails = DataProvider.Instance.Context.InvoiceDetails
+                        .AsNoTracking()
+                        .Where(id => id.MedicineId == medicine.MedicineId)
+                        .ToList();
+
+                    // Replace the collections with our manually loaded data
+                    medicine.StockIns = stockIns;
+                    medicine.InvoiceDetails = invoiceDetails;
+
+                    // Reset the cache to ensure fresh calculations
+                    medicine._availableStockInsCache = null;
+
+                    // Set default quantity to 1
+                    medicine.TempQuantity = 1;
                 }
 
-                MedicineList = new ObservableCollection<Medicine>(medicines);
+                // Filter out medicines that don't have valid expiry dates or stock
+                var validMedicines = medicines.Where(m =>
+                    m.StockIns.Any(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)).ToList();
+
+                MedicineList = new ObservableCollection<Medicine>(validMedicines);
 
                 // Apply view filtering for searching
                 CollectionViewSource.GetDefaultView(MedicineList).Filter = item =>
@@ -391,6 +414,8 @@ namespace ClinicManagement.ViewModels
                 MessageBox.Show($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
 
         private void LoadCategories()
         {
@@ -753,8 +778,8 @@ namespace ClinicManagement.ViewModels
 
                         if (currentStock != null)
                         {
-                            // Cập nhật số lượng tồn kho
-                            currentStock.Quantity = refreshedMedicine.TotalStockQuantity;
+                            // Cập nhật số lượng tồn kho (sử dụng TotalPhysicalStockQuantity thay vì TotalStockQuantity)
+                            currentStock.Quantity = refreshedMedicine.TotalPhysicalStockQuantity;
                             currentStock.LastUpdated = DateTime.Now;
                         }
                         else
@@ -763,7 +788,7 @@ namespace ClinicManagement.ViewModels
                             var newStock = new Stock
                             {
                                 MedicineId = detail.MedicineId.Value,
-                                Quantity = refreshedMedicine.TotalStockQuantity,
+                                Quantity = refreshedMedicine.TotalPhysicalStockQuantity,
                                 LastUpdated = DateTime.Now
                             };
                             context.Stocks.Add(newStock);
@@ -779,6 +804,8 @@ namespace ClinicManagement.ViewModels
                 MessageBox.Show($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
 
         private Patient FindOrCreatePatient()
         {

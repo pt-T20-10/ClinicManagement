@@ -26,8 +26,7 @@ namespace ClinicManagement.Configurations
             builder.Property(e => e.UnitId)
                 .HasColumnName("MaDonVi");
 
-            builder.Property(e => e.SupplierId)
-                .HasColumnName("MaNhaCungCap");
+          
 
             builder.Property(e => e.BarCode)
                 .HasColumnName("MaVach")
@@ -56,10 +55,7 @@ namespace ClinicManagement.Configurations
                 .HasForeignKey(d => d.UnitId)
                 .HasConstraintName("FK_Thuoc_DonVi");
 
-            builder.HasOne(d => d.Supplier)
-                .WithMany(p => p.Medicines)
-                .HasForeignKey(d => d.SupplierId)
-                .HasConstraintName("FK_Thuoc_NhaCungCap");
+
         }
     }
 }

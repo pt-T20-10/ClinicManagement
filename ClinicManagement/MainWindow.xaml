@@ -156,7 +156,7 @@
                         <uc:ExamineUC ></uc:ExamineUC>
                     </TabItem>
  
-                    <TabItem x:Name="AppointmentTab" Width="150" Height="80"  Padding="0"
+                   <TabItem x:Name="AppointmentTab" Width="150" Height="80"  Padding="0"
                              Visibility="{Binding CanViewAppointment, Converter={StaticResource BoolToVisibilityConverter}}">
 
                         <TabItem.Header>
@@ -176,6 +176,7 @@
                         </TabItem.Header>
                         <uc:AppointmentUC DataContext="{StaticResource AppointmentVM}"></uc:AppointmentUC>
                     </TabItem>
+                    
                     <TabItem Width="150" Height="80" Padding="0" x:Name="StockTab"
                              Visibility="{Binding CanViewInventory, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >

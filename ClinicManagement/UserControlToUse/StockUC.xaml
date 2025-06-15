@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ClinicManagement.UserControlToUse"
+             xmlns:conver="clr-namespace:ClinicManagement.Converter"
              mc:Ignorable="d" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -15,8 +16,14 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="PantientUc">
+
+    <UserControl.Resources>
+        <conver:LowStockConverter x:Key="LowStockConverter"/>
+        <conver:NearExpiryConverter x:Key="NearExpiryConverter"/>
+        <conver:ExpiredConverter x:Key="ExpiredConverter"/>
+    </UserControl.Resources>
     <materialDesign:Card >
-        
+
         <TabControl
         materialDesign:ColorZoneAssist.Mode="PrimaryLight"
         Style="{StaticResource MaterialDesignFilledTabControl}">
@@ -32,14 +39,15 @@
                 <materialDesign:Card>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="191*"/>
-                            <ColumnDefinition Width="195*"/>
+                            <ColumnDefinition Width="319*"/>
+                            <ColumnDefinition Width="91*"/>
+                            <ColumnDefinition Width="410*"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition />
                         </Grid.RowDefinitions>
-                        <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="2" >
+                        <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="3" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="auto"></ColumnDefinition>
                                 <ColumnDefinition Width="auto"></ColumnDefinition>
@@ -47,7 +55,7 @@
                                 <ColumnDefinition ></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <Grid >
-                             
+
                             </Grid>
                             <Grid Grid.Column="1">
                                 <Grid.ColumnDefinitions>
@@ -205,80 +213,110 @@
 
 
                         <!-- ListView in ScrollViewer with proper sizing -->
-                        <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" 
+                        <ScrollViewer Grid.Row="1" Grid.ColumnSpan="3" 
                              VerticalScrollBarVisibility="Auto" 
                              HorizontalScrollBarVisibility="Auto"
                              Margin="0,10,0,0">
                             <!-- DataGrid for Stock Medicines -->
-                            <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" 
-              VerticalScrollBarVisibility="Auto" 
-              HorizontalScrollBarVisibility="Auto"
-              Margin="0,10,0,0">
-                                <DataGrid ItemsSource="{Binding ListStockMedicine}" 
-              AutoGenerateColumns="False"
-              IsReadOnly="True"
-              SelectionMode="Single"
-              SelectionUnit="FullRow"
-              CanUserAddRows="False"
-              CanUserDeleteRows="False"
-              Background="White">
-                                    <DataGrid.Resources>
-                                        <Style TargetType="DataGridColumnHeader">
-                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                            <Setter Property="Foreground" Value="#37474F"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Height" Value="40"/>
-                                            <Setter Property="Padding" Value="8,0"/>
-                                        </Style>
+                            <DataGrid ItemsSource="{Binding ListStockMedicine}" 
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      SelectionUnit="FullRow"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      Background="White">
+                                <DataGrid.Resources>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="#ECEFF1"/>
+                                        <Setter Property="Foreground" Value="#37474F"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Height" Value="40"/>
+                                        <Setter Property="Padding" Value="8,0"/>
+                                    </Style>
 
-                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="TextWrapping" Value="Wrap"/>
-                                            <Setter Property="Padding" Value="4,0"/>
-                                        </Style>
-                                    </DataGrid.Resources>
-
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Tên thuốc" Width="200" 
-                                Binding="{Binding Medicine.Name}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Loại" Width="180" 
-                                Binding="{Binding Medicine.Category.CategoryName}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="ĐVĐ" Width="180" 
-                                Binding="{Binding Medicine.Unit.UnitName}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Nhà cung cấp" Width="220" 
-                                Binding="{Binding Medicine.Supplier.SupplierName}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Ngày nhập mới nhất" Width="150" 
-                                Binding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Đơn giá hiện tại" Width="180" 
-                                Binding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Tổng tồn kho" 
-                                Binding="{Binding Quantity}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTemplateColumn Header=" " Width="250">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
+                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                        <Setter Property="Padding" Value="4,0"/>
+                                    </Style>
+                                </DataGrid.Resources>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Medicine.TotalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True">
+                                                <Setter Property="Background" Value="#FFEB00"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource NearExpiryConverter}}" Value="True">
+                                                <Setter Property="Background" Value="#FFEB00"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource ExpiredConverter}}" Value="True">
+                                                <Setter Property="Background" Value="#FFEBEE"/>
+                                                <Setter Property="Foreground" Value="#EA2F14"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tên thuốc" Width="180" 
+                            Binding="{Binding Medicine.Name}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Loại" Width="150" 
+                            Binding="{Binding Medicine.Category.CategoryName}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="ĐVĐ" Width="100" 
+                            Binding="{Binding Medicine.Unit.UnitName}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Ngày nhập mới nhất" Width="180" 
+                            Binding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Đơn giá hiện tại" Width="130" 
+                            Binding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Tồn kho tổng"   Width="100" 
+                            Binding="{Binding Quantity}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTextColumn Header="Sử dụng được"  Width="100" 
+                            Binding="{Binding Medicine.TotalStockQuantity}" 
+                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    <DataGridTemplateColumn Header="Lô mới nhất" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Medicine.CalculatedRemainingQuantity}" 
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="280">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
                                                     <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.ShowMedicineDetailsCommand}"
-                                                        CommandParameter="{Binding Medicine}"
-                                                        Content="Xem chi tiết"
-                                                        Style="{StaticResource MaterialDesignRaisedButton}"
-                                                        Width="120" Height="30"
-                                                        ToolTip="Xem chi tiết lô thuốc">
+                                CommandParameter="{Binding Medicine}"
+                                Margin="0 0 10 0"
+                                Content="Xem chi tiết"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Width="120" Height="30"
+                                ToolTip="Xem chi tiết lô thuốc">
                                                     </Button>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </ScrollViewer>
+                                                    <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.DeleteMedicine}"
+                                CommandParameter="{Binding Medicine}"
+                                Content="Xóa thuốc hết hạn"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Width="120" Height="30"
+                                ToolTip="Xóa thuốc hết hạn">
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
 
                         </ScrollViewer>
                     </Grid>
@@ -316,7 +354,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
-                                
+
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -326,9 +364,9 @@
                             <!-- Nhà cung cấp -->
                             <ComboBox
                                 Grid.Column="0" Grid.Row="0"
-                                ItemsSource="{Binding SupplierList}"
-                                DisplayMemberPath="SupplierName"
-                                SelectedItem="{Binding StockinSelectedSupplier}"
+                                  ItemsSource="{Binding SupplierList}"
+   DisplayMemberPath="SupplierName"
+   SelectedItem="{Binding StockinSelectedSupplier}"
                                 Margin="5"
                                 Width="220"
                                 HorizontalAlignment="Left"
@@ -358,7 +396,7 @@
                                 HorizontalAlignment="Left"
                                 materialDesign:HintAssist.Hint="Loại thuốc"
                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-            
+
                             <!-- Tên thuốc -->
                             <TextBox
                                  Grid.Column="1" Grid.Row="0"
@@ -369,7 +407,7 @@
                             materialDesign:HintAssist.Hint="Tên thuốc"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-                        
+
 
                             <!-- Số lượng -->
                             <materialDesign:NumericUpDown
@@ -382,7 +420,7 @@
                             materialDesign:HintAssist.Hint="Số lượng"
                             Style="{StaticResource MaterialDesignOutlinedNumericUpDown}">
                             </materialDesign:NumericUpDown>
-                  
+
                             <TextBox
                             Grid.Column="2" Grid.Row="0"
                             Text="{Binding StockinUnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
@@ -408,7 +446,7 @@
                             HorizontalAlignment="Left"
                             materialDesign:HintAssist.Hint="Giá bán (VNĐ)"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                            
+
 
 
                             <!-- Hạn sử dụng -->
@@ -432,7 +470,7 @@
                                   Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
 
                             <StackPanel Margin="7 20 0 0" Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Grid.RowSpan="2" Grid.Column="4" Grid.Row="1">
-                               
+
                                 <Button
                                          Margin="0 0 0 15"
                                          Content="Thêm vào kho"
@@ -453,14 +491,14 @@
                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                 Width="180"
                                 Height="40"
-                                >            
-                                        <Button.Effect>
+                                >
+                                    <Button.Effect>
                                         <DropShadowEffect BlurRadius="5" ShadowDepth="2" Direction="270" Color="#DDDDDD"/>
                                     </Button.Effect>
                                 </Button>
-                                
+
                             </StackPanel>
-                          
+
 
                         </Grid>
                         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -475,7 +513,7 @@
                                           CanUserAddRows="False"
                                           CanUserDeleteRows="False"
                                           Background="White">
-                                        <DataGrid.Resources>
+                                    <DataGrid.Resources>
                                         <Style TargetType="DataGridColumnHeader">
                                             <Setter Property="HorizontalContentAlignment" Value="Center"/>
                                             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -493,7 +531,23 @@
                                             <Setter Property="Padding" Value="4,0"/>
                                         </Style>
                                     </DataGrid.Resources>
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Medicine.TotalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True">
 
+                                                    <Setter Property="Background" Value="#FFEB00"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource NearExpiryConverter}}" Value="True">
+                                                    <Setter Property="Background" Value="#FFEB00"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource ExpiredConverter}}" Value="True">
+                                                    <Setter Property="Background" Value="#FFEBEE"/>
+                                                    <Setter Property="Foreground" Value="#EA2F14"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.RowStyle>
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Tên thuốc" Width="170" 
                                 Binding="{Binding Medicine.Name}" 
@@ -504,14 +558,12 @@
                                         <DataGridTextColumn Header="ĐVT" Width="120" 
                                 Binding="{Binding Medicine.Unit.UnitName}" 
                                 ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Nhà cung cấp" Width="220" 
-                                Binding="{Binding Medicine.Supplier.SupplierName}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Ngày nhập" Width="150" 
+                                      
+                                        <DataGridTextColumn Header="Ngày nhập mới nhất" Width="150" 
                                 Binding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
                                 ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Hạn dùng" Width="150" 
-                                Binding="{Binding Medicine.ExpiryDate}" 
+                                Binding="{Binding Medicine.CurrentExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
                                 ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Giá nhập" Width="150" 
                                 Binding="{Binding Medicine.CurrentUnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
@@ -519,15 +571,17 @@
                                         <DataGridTextColumn Header="Giá bán" Width="150" 
                                 Binding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" 
                                 ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTextColumn Header="Còn lại" 
-                                Binding="{Binding Quantity}" 
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Tồn kho tổng"   Width="100" 
+                                            Binding="{Binding Quantity}" 
+                                            ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Sử dụng được"  Width="100" 
+                                            Binding="{Binding Medicine.TotalStockQuantity}" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </ScrollViewer>
 
                         </ScrollViewer>
-                                
+
                     </Grid>
                 </materialDesign:Card>
             </TabItem>
@@ -535,7 +589,7 @@
             <TabItem Header="Quản lí Đơn vị và Loại thuốc">
                 <TabControl materialDesign:ColorZoneAssist.Mode="PrimaryMid"
                              Style="{StaticResource MaterialDesignFilledTabControl}">
-                    
+
                     <TabItem Header="Đơn vị">
                         <TabItem.ContextMenu>
                             <ContextMenu>
@@ -545,29 +599,29 @@
                             </ContextMenu>
                         </TabItem.ContextMenu>
                         <Grid Margin="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="350"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="350"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                    <!-- Left Panel - Unit Management Form -->
-                    <materialDesign:Card 
+                            <!-- Left Panel - Unit Management Form -->
+                            <materialDesign:Card 
                         Grid.Column="0" 
                         Margin="0,0,10,0" 
                         Padding="16" 
                         UniformCornerRadius="8">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <!-- For Description -->
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <!-- For Description -->
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
 
-                            <!-- Header -->
-                            <TextBlock 
+                                    <!-- Header -->
+                                    <TextBlock 
                                 Grid.Row="0"
                                 Text="THÔNG TIN ĐƠN VỊ"
                                 FontSize="16"
@@ -575,8 +629,8 @@
                                 Margin="0,0,0,20"
                                 HorizontalAlignment="Center"/>
 
-                            <!-- Input Fields -->
-                            <TextBox 
+                                    <!-- Input Fields -->
+                                    <TextBox 
                                 Grid.Row="1"
                                 Text="{Binding UnitName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                 materialDesign:HintAssist.Hint="Tên đơn vị đo"
@@ -585,8 +639,8 @@
                                 Width="300"
                                 HorizontalAlignment="Center"/>
 
-                            <!-- Description Field -->
-                            <TextBox 
+                                    <!-- Description Field -->
+                                    <TextBox 
                                 Grid.Row="2"
                                 Text="{Binding UnitDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                 materialDesign:HintAssist.Hint="Mô tả chi tiết"
@@ -599,25 +653,25 @@
                                 Width="300"
                                 HorizontalAlignment="Center"/>
 
-                            <!-- Action Buttons -->
-                            <StackPanel 
+                                    <!-- Action Buttons -->
+                                    <StackPanel 
                                 Grid.Row="3" 
                                 Orientation="Horizontal" 
                                 HorizontalAlignment="Center"
                                 Margin="0,0,0,20">
-                                <Button 
+                                        <Button 
                                     Command="{Binding AddUnitCommand}" 
                                     Style="{StaticResource MaterialDesignRaisedButton}"
                                     materialDesign:ButtonAssist.CornerRadius="5"
                                     Margin="5" 
                                     Width="90"
                                     Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Thêm"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button 
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Thêm"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button 
                                     Command="{Binding EditUnitCommand}" 
                                     Style="{StaticResource MaterialDesignRaisedButton}"
                                     materialDesign:ButtonAssist.CornerRadius="5"
@@ -626,12 +680,12 @@
                                     Margin="5" 
                                     Width="90"
                                     Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Sửa"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button 
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Sửa"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button 
                                     Command="{Binding DeleteUnitCommand}" 
                                     Style="{StaticResource MaterialDesignRaisedButton}"
                                     materialDesign:ButtonAssist.CornerRadius="5"
@@ -640,70 +694,70 @@
                                     Margin="5" 
                                     Width="90"
                                     Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Xóa"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Xóa"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
-                                </Button>
-                            </StackPanel>
 
-                            <!-- Information Box -->
-                            <materialDesign:Card 
+                                    <!-- Information Box -->
+                                    <materialDesign:Card 
                                 Height="200"
                                 VerticalAlignment="Top"
                                 Grid.Row="4" 
                                 Margin="0,10,0,0"
                                 UniformCornerRadius="5"
                                 Background="#FFF5F5F5">
-                                <StackPanel Margin="16">
-                                    <TextBlock 
+                                        <StackPanel Margin="16">
+                                            <TextBlock 
                                         Text="Hướng dẫn sử dụng:"
                                         FontWeight="Medium"
                                         Margin="0,0,0,8"/>
-                                    <TextBlock 
+                                            <TextBlock 
                                         Text="1. Chọn một đơn vị từ danh sách để sửa hoặc xóa." 
                                         TextWrapping="Wrap"
                                         Margin="0,4,0,4"/>
-                                    <TextBlock 
+                                            <TextBlock 
                                         Text="2. Điền tên đơn vị và mô tả, nhấn 'Thêm' để tạo đơn vị mới." 
                                         TextWrapping="Wrap"
                                         Margin="0,4,0,4"/>
-                                    <TextBlock 
+                                            <TextBlock 
                                         Text="3. Sửa thông tin đơn vị hiện tại và nhấn 'Sửa' để cập nhật." 
                                         TextWrapping="Wrap"
                                         Margin="0,4,0,4"/>
-                                </StackPanel>
+                                        </StackPanel>
+                                    </materialDesign:Card>
+                                </Grid>
                             </materialDesign:Card>
-                        </Grid>
-                    </materialDesign:Card>
 
-                    <!-- Right Panel - Units List -->
-                    <materialDesign:Card 
+                            <!-- Right Panel - Units List -->
+                            <materialDesign:Card 
                         Grid.Column="1" 
                         Margin="10,0,0,0"
                         UniformCornerRadius="8">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
 
-                            <!-- List Header -->
-                            <Grid 
+                                    <!-- List Header -->
+                                    <Grid 
                                 Grid.Row="0" 
                                 Background="{DynamicResource PrimaryHueMidBrush}" 
                                 Height="50">
-                                <TextBlock 
+                                        <TextBlock 
                                     Text="DANH SÁCH ĐƠN VỊ ĐO" 
                                     FontWeight="Medium" 
                                     FontSize="16" 
                                     Foreground="White" 
                                     VerticalAlignment="Center" 
                                     HorizontalAlignment="Center"/>
-                            </Grid>
+                                    </Grid>
 
-                            <!-- List View -->
-                            <ScrollViewer 
+                                    <!-- List View -->
+                                    <ScrollViewer 
                                 Grid.Row="1" 
                                 VerticalScrollBarVisibility="Auto"
                                 Margin="0,5,0,0">
@@ -759,9 +813,9 @@
                                         </ScrollViewer>
 
                                     </ScrollViewer>
+                                </Grid>
+                            </materialDesign:Card>
                         </Grid>
-                    </materialDesign:Card>
-                </Grid> 
                     </TabItem>
                     <TabItem Header="Loại thuốc">
                         <!-- Context Menu Definition -->
@@ -913,7 +967,7 @@
                                             Grid.Column="1" 
                                             Margin="10,0,0,0"
                                             UniformCornerRadius="8">
-                                            <Grid>
+                                        <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
@@ -1077,7 +1131,7 @@
                                         materialDesign:HintAssist.Hint="Số điện thoại"
                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-                        
+
                                     <!-- Email -->
                                     <TextBox
                                         Grid.Row="1" Grid.Column="0"
@@ -1149,7 +1203,7 @@
                                                   TabIndex="9"
                                                  Margin="0,2,0,2"
                                                  Style="{StaticResource MaterialDesignRadioButton}">
-                                                                        <RadioButton.ContentTemplate>
+                                                <RadioButton.ContentTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="Cancel" 

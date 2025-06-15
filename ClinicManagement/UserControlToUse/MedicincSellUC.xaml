@@ -168,7 +168,7 @@
 
                                 <DataGridTextColumn Header="Đơn giá" Binding="{Binding CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
 
-                                <DataGridTextColumn Header="Tồn kho" Binding="{Binding TotalStockQuantity}" Width="80" ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                <DataGridTextColumn Header="Khả dụng" Binding="{Binding TotalStockQuantity}" Width="80" ElementStyle="{StaticResource CenteredCellStyle}"/>
                      
 
                                 <DataGridTemplateColumn Header="Thêm vào giỏ" Width="200" >

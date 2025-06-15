@@ -118,14 +118,17 @@
                        Style="{StaticResource MaterialDesignOutlinedNumericUpDown}">
                 </materialDesign:NumericUpDown>
 
-                <!-- Supplier -->
-                <ComboBox Grid.Row="3" Grid.Column="0" 
-                          ItemsSource="{Binding SupplierList}"
-                          SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
-                          DisplayMemberPath="SupplierName"
-                          materialDesign:HintAssist.Hint="Nhà cung cấp"
-                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          Margin="0,0,8,8"/>
+                <!-- Nhà cung cấp gần nhất - Thay thế ComboBox nhà cung cấp -->
+                <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,8,8">
+                    <TextBlock 
+                        Text="Nhà cung cấp gần nhất:" 
+                        FontWeight="Medium"
+                        Margin="0,0,0,4"/>
+                    <TextBlock 
+                        Text="{Binding LatestSupplierName}" 
+                        Style="{StaticResource MaterialDesignBody1TextBlock}"
+                        Margin="4,0,0,0"/>
+                </StackPanel>
 
                 <!-- Unit Price -->
                 <TextBox
@@ -177,7 +180,7 @@
                         <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0"/>
                         <TextBlock Text="Làm mới"/>
                     </StackPanel>
-                    
+
                 </Button>
                 <Border 
 BorderBrush="LightBlue" 
@@ -204,7 +207,7 @@ SnapsToDevicePixels="True"
             </Grid>
         </materialDesign:Card>
 
-        <!-- Stock History DataGrid -->
+        <!-- Stock History DataGrid - Cập nhật bổ sung cột nhà cung cấp -->
         <materialDesign:Card Grid.Row="2" Margin="16,8,16,8" Padding="8">
             <Grid>
                 <Grid.RowDefinitions>
@@ -242,15 +245,18 @@ SnapsToDevicePixels="True"
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Ngày nhập" 
                                                Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                               Width="150"/>
+                                               Width="120"/>
                             <DataGridTextColumn Header="Số lượng nhập" 
                                                Binding="{Binding StockIn.Quantity}" 
                                                Width="120"/>
                             <DataGridTextColumn Header="Giá nhập" 
                                                Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                               Width="150"/>
+                                               Width="120"/>
                             <DataGridTextColumn Header="Giá bán" 
                                                Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                                               Width="120"/>
+                            <DataGridTextColumn Header="Nhà cung cấp" 
+                                               Binding="{Binding StockIn.Supplier.SupplierName}" 
                                                Width="150"/>
                             <DataGridTextColumn Header="Hạn sử dụng"
                                                Binding="{Binding StockIn.Medicine.ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
@@ -300,6 +306,7 @@ SnapsToDevicePixels="True"
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -361,8 +368,20 @@ SnapsToDevicePixels="True"
                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                 </StackPanel>
 
+                <!-- Nhà cung cấp ComboBox ở phần chỉnh sửa -->
+                <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,8,8,0">
+                    <TextBlock Text="Nhà cung cấp:" FontWeight="Medium" Margin="0,0,0,4"/>
+                    <ComboBox
+                        ItemsSource="{Binding SupplierList}"
+                        DisplayMemberPath="SupplierName"
+                        SelectedItem="{Binding EditSupplier, Mode=TwoWay}"
+                        Width="180"
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                </StackPanel>
+
                 <!-- Action Buttons -->
-                <StackPanel Grid.Row="2" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <StackPanel Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,16,0,0">
                     <Button Content="Huỷ" 
                             Command="{Binding CancelEditStockEntryCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
@@ -396,7 +415,6 @@ SnapsToDevicePixels="True"
 
             <!-- Footer Buttons -->
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-
                 <Button Content="Đóng"
                         Command="{Binding CloseCommand}"
                         Style="{StaticResource MaterialDesignFlatButton}"
