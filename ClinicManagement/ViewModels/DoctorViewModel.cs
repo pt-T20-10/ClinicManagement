@@ -1,12 +1,12 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
+using ClosedXML.Excel;
+using Microsoft.Win32;
+using System.Threading;
 
 namespace ClinicManagement.ViewModels
 {
@@ -142,7 +142,7 @@ namespace ClinicManagement.ViewModels
         public ICommand ResetFiltersCommand { get; set; }
 
         public ICommand OpenDoctorDetailsCommand { get; set; }
-
+        public ICommand ExportExcelCommand { get;  set; }
         // Specialty Commands
         public ICommand AddCommand { get; set; }
         public ICommand EditCommand { get; set; }
@@ -188,10 +188,14 @@ namespace ClinicManagement.ViewModels
                 (p) => OpenDoctorDetails(p),
                 (p) => p != null
             );
+            // In the InitializeCommands method
+            ExportExcelCommand = new RelayCommand<object>(
+                p => ExportToExcel(),
+                p => DoctorList != null && DoctorList.Count > 0
+            );
 
-      
-        // Specialty Commands
-        AddCommand = new RelayCommand<object>(
+            // Specialty Commands
+            AddCommand = new RelayCommand<object>(
                 (p) => AddSpecialty(),
                 (p) => !string.IsNullOrEmpty(SpecialtyName)
             );
@@ -277,6 +281,202 @@ namespace ClinicManagement.ViewModels
                 .FirstOrDefault(s => s.SpecialtyName.Trim().ToLower() == specialtyName.Trim().ToLower() && (bool)!s.IsDeleted);
             return specialty?.SpecialtyId ?? 0;
         }
+
+        private void ExportToExcel()
+        {
+            try
+            {
+                // Create a save file dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    DefaultExt = "xlsx",
+                    Title = "Chọn vị trí lưu file Excel",
+                    FileName = $"DanhSachBacSi_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Start export operation in background thread
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var workbook = new XLWorkbook())
+                            {
+                                var worksheet = workbook.Worksheets.Add("Danh sách bác sĩ");
+
+                                // Report progress: 5% - Created workbook
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
+
+                                // Add title (merged cells)
+                                worksheet.Cell(1, 1).Value = "DANH SÁCH BÁC SĨ";
+                                var titleRange = worksheet.Range(1, 1, 1, 8);
+                                titleRange.Merge();
+                                titleRange.Style.Font.Bold = true;
+                                titleRange.Style.Font.FontSize = 16;
+                                titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add current date
+                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, 1, 2, 8);
+                                dateRange.Merge();
+                                dateRange.Style.Font.Italic = true;
+                                dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Report progress: 10% - Added title
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                                // Add headers (with spacing of 4 cells from title)
+                                int headerRow = 6; // Row 6 (leaving 3 blank rows after title)
+                                worksheet.Cell(headerRow, 1).Value = "ID";
+                                worksheet.Cell(headerRow, 2).Value = "Họ và tên";
+                                worksheet.Cell(headerRow, 3).Value = "Chuyên khoa";
+                                worksheet.Cell(headerRow, 4).Value = "Điện thoại";
+                                worksheet.Cell(headerRow, 5).Value = "Email";
+                                worksheet.Cell(headerRow, 6).Value = "Lịch làm việc";
+                                worksheet.Cell(headerRow, 7).Value = "Địa chỉ";
+                                worksheet.Cell(headerRow, 8).Value = "Tài khoản";
+
+                                // Style header row
+                                var headerRange = worksheet.Range(headerRow, 1, headerRow, 8);
+                                headerRange.Style.Font.Bold = true;
+                                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                                headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add borders to header
+                                headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+                                headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                                // Report progress: 20% - Headers added
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(20));
+
+                                // Add data
+                                int row = headerRow + 1; // Start data from next row after header
+                                int totalDoctors = DoctorList.Count;
+
+                                // Create data range (to apply borders later)
+                                var dataStartRow = row;
+
+                                for (int i = 0; i < totalDoctors; i++)
+                                {
+                                    var doctor = DoctorList[i];
+
+                                    worksheet.Cell(row, 1).Value = doctor.DoctorId;
+                                    worksheet.Cell(row, 2).Value = doctor.FullName ?? "";
+                                    worksheet.Cell(row, 3).Value = doctor.Specialty?.SpecialtyName ?? "";
+                                    worksheet.Cell(row, 4).Value = doctor.Phone ?? "";
+                                    worksheet.Cell(row, 5).Value = doctor.Email ?? "";
+                                    worksheet.Cell(row, 6).Value = doctor.Schedule ?? "";
+                                    worksheet.Cell(row, 7).Value = doctor.Address ?? "";
+
+                                    // Check if doctor has an account
+                                    var account = DataProvider.Instance.Context.Accounts
+                                        .FirstOrDefault(a => a.DoctorId == doctor.DoctorId && a.IsDeleted != true);
+
+                                    worksheet.Cell(row, 8).Value = account != null ? account.Username : "Không có";
+
+                                    row++;
+
+                                    // Update progress based on percentage of doctors processed
+                                    int progressValue = 20 + (i * 60 / totalDoctors);
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
+
+                                    // Add a small delay to make the progress visible
+                                    Thread.Sleep(30);
+                                }
+
+                                // Report progress: 80% - Data added
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
+
+                                // Apply borders to the data range
+                                if (totalDoctors > 0)
+                                {
+                                    var dataRange = worksheet.Range(dataStartRow, 1, row - 1, 8);
+                                    dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+                                    dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                                    // Center-align certain columns
+                                    worksheet.Column(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // ID
+                                    worksheet.Column(3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Specialty
+                                    worksheet.Column(4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Phone
+                                    worksheet.Column(8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Account
+                                }
+
+                                // Add total row
+                                worksheet.Cell(row + 1, 1).Value = "Tổng số:";
+                                worksheet.Cell(row + 1, 2).Value = totalDoctors;
+                                worksheet.Cell(row + 1, 2).Style.Font.Bold = true;
+
+                                // Auto-fit columns
+                                worksheet.Columns().AdjustToContents();
+
+                                // Set minimum widths for better readability
+                                worksheet.Column(1).Width = 10; // ID
+                                worksheet.Column(2).Width = 25; // Name
+                                worksheet.Column(3).Width = 20; // Specialty
+                                worksheet.Column(6).Width = 80; // Schedule
+                                worksheet.Column(7).Width = 85; // Address
+
+                                // Report progress: 90% - Formatting complete
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+
+                                // Save the workbook
+                                workbook.SaveAs(saveFileDialog.FileName);
+
+                                // Report progress: 100% - File saved
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+
+                                // Small delay to show 100%
+                                Thread.Sleep(300);
+
+                                // Close progress dialog
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.Close());
+
+                                // Show success message
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    MessageBox.Show(
+                                        $"Đã xuất danh sách bác sĩ thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                        "Thành công",
+                                        MessageBoxButton.OK,
+                                        MessageBoxImage.Information);
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Close progress dialog on error
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+
+                                MessageBox.Show(
+                                    $"Lỗi khi xuất Excel: {ex.Message}",
+                                    "Lỗi",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Lỗi khi xuất Excel: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
 
         #region Specialty Methods
         private void AddSpecialty()

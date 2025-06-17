@@ -25,26 +25,37 @@ namespace StorageManagement.ViewModels
         public ControlBarVM()
         {
 
-              ClosingWindowCommand = new RelayCommand<ControlBarUC>(
-            (controlBar) =>
-            {
-                var window = Window.GetWindow(controlBar);
-                if (window == null) return;
+            ClosingWindowCommand = new RelayCommand<ControlBarUC>(
+  (controlBar) =>
+  {
+      var window = Window.GetWindow(controlBar);
+      if (window == null) return;
 
-                // Nếu là MainWindow, gọi Close() để kích hoạt sự kiện Closing
-                if (window is MainWindow)
-                {
-                    MessageBox.Show("Bạn có chắc chắn muốn đăng xuất và thoát chương trình?", "Xác nhận thoát", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                    window.Close();
-                }
-                // Nếu là cửa sổ khác, đóng trực tiếp
-                else
-                {
-                    window.Close();
-                }
-            },
-            (controlBar) => controlBar != null
-        );
+      // Nếu là MainWindow, hiển thị hộp thoại xác nhận trước khi đóng
+      if (window is MainWindow)
+      {
+          MessageBoxResult result = MessageBox.Show(
+              "Bạn có chắc chắn muốn đăng xuất và thoát chương trình?",
+              "Xác nhận thoát",
+              MessageBoxButton.YesNo,
+              MessageBoxImage.Question);
+
+          // Chỉ đóng cửa sổ nếu người dùng chọn "Yes"
+          // Nút X hoặc nút No sẽ không đóng cửa sổ
+          if (result == MessageBoxResult.Yes)
+          {
+              window.Close();
+          }
+      }
+      // Nếu là cửa sổ khác, đóng trực tiếp
+      else
+      {
+          window.Close();
+      }
+  },
+  (controlBar) => controlBar != null
+);
+
             MaximizingWindowCommand = new RelayCommand<ControlBarUC>(
 
                (controlBar) =>

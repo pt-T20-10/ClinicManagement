@@ -20,6 +20,20 @@
                 Style="{StaticResource MaterialDesignFilledTabControl}">
         <TabItem
         Header="Bác sĩ">
+            <TabItem.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="🔄 Làm mới" 
+                                  Command="{Binding ResetFiltersCommand}"
+                                  FontWeight="Bold"
+                                 />
+                        <MenuItem Header="➕ Thêm bác sĩ" 
+                                  Command="{Binding AddDoctorCommand}"
+                                  FontWeight="Bold"/>
+                    <MenuItem Header="📊 Xuất Excel" 
+                                Command="{Binding ExportExcelCommand}"
+                                FontWeight="Bold"/>
+                </ContextMenu>
+            </TabItem.ContextMenu>
             <materialDesign:Card>
                 <Grid>
 
@@ -33,6 +47,8 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="530"/>
                             <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
 
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="5,0,5,0" VerticalAlignment="Center">
@@ -83,7 +99,7 @@
                         Grid.Column="3"
                         Command="{Binding ResetFiltersCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                        Width="100"
+                        Width="120"
                         Height="32"
                         HorizontalAlignment="Left"
                         Margin="0,0,10,0"
@@ -95,7 +111,20 @@
                                 </StackPanel>
                             </Button.Content>
                         </Button>
-
+                        <Button 
+    Grid.Column="4"
+    Margin="10,0,0,0"
+    Command="{Binding ExportExcelCommand}"
+    Style="{StaticResource MaterialDesignRaisedButton}"
+    Width="120"
+    Height="32"
+    HorizontalAlignment="Left"
+    ToolTip="Xuất danh sách bác sĩ ra Excel">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" Width="16" Height="16"/>
+                                <TextBlock Text="Xuất Excel"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
 
                     <Grid Grid.Row="1">

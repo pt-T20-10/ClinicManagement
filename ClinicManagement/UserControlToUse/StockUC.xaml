@@ -34,6 +34,9 @@
                         <MenuItem Header="🔄 Làm mới" 
                             Command="{Binding ResetStockFiltersCommand}"
                             FontWeight="Bold"/>
+                        <MenuItem Header="📊 Xuất Excel" 
+                            Command="{Binding ExportExcelCommand}"
+                            FontWeight="Bold"/>
                     </ContextMenu>
                 </TabItem.ContextMenu>
                 <materialDesign:Card>
@@ -151,7 +154,7 @@
                                     Height="32"
                                     Margin="0,5,30,5"
                                     HorizontalAlignment="Left"
-                                    Command="{Binding PrintCommand}">
+                                    Command="{Binding ExportStockExcelCommand}">
 
 
                                     <StackPanel  Orientation="Horizontal">
@@ -447,7 +450,25 @@
                             materialDesign:HintAssist.Hint="Giá bán (VNĐ)"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
+                            <!-- BarCode -->
+                            <TextBox
+                                 Grid.Column="3" Grid.Row="1"
+                                 Text="{Binding StockinBarCode, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="5"
+                                 Width="220"
+                                 HorizontalAlignment="Left"
+                                 materialDesign:HintAssist.Hint="Mã vạch (BarCode)"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
+                                                        <!-- QRCode -->
+                                                        <TextBox
+                                 Grid.Column="3" Grid.Row="2"
+                                 Text="{Binding StockinQrCode, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="5"
+                                 Width="220"
+                                 HorizontalAlignment="Left"
+                                 materialDesign:HintAssist.Hint="Mã QR (QRCode)"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                             <!-- Hạn sử dụng -->
                             <DatePicker

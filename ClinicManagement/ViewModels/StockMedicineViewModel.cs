@@ -1,18 +1,13 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.SubWindow;
-using MaterialDesignThemes.Wpf;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-
+using ClosedXML.Excel;
+using Microsoft.Win32;
 namespace ClinicManagement.ViewModels
 {
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
@@ -485,7 +480,7 @@ namespace ClinicManagement.ViewModels
             {
                 _currentMedicine = value;
                 OnPropertyChanged();
-              
+
             }
         }
         private ObservableCollection<Medicine.StockInWithRemaining> _currentMedicineDetails;
@@ -502,7 +497,7 @@ namespace ClinicManagement.ViewModels
         public string DialogTitle => CurrentMedicine != null
             ? $"Chi tiết các lô thuốc: {CurrentMedicine.Name}"
             : "Chi tiết lô thuốc";
-      
+
         private MedicineCategory _stockinSelectedCategory;
         public MedicineCategory StockinSelectedCategory
         {
@@ -547,7 +542,28 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-   
+        // Add new properties for BarCode and QRCode
+        private string _stockinBarCode;
+        public string StockinBarCode
+        {
+            get => _stockinBarCode;
+            set
+            {
+                _stockinBarCode = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _stockinQrCode;
+        public string StockinQrCode
+        {
+            get => _stockinQrCode;
+            set
+            {
+                _stockinQrCode = value;
+                OnPropertyChanged();
+            }
+        }
 
         private int _stockinQuantity = 1;
         public int StockinQuantity
@@ -709,8 +725,8 @@ namespace ClinicManagement.ViewModels
         public ICommand SearchStockMedicineCommand { get; set; }
         public ICommand ResetStockFiltersCommand { get; set; }
         public ICommand DeleteMedicine { get; set; }
+        public ICommand ExportStockExcelCommand { get; private set; }
 
-        
         //StockIn Commands
         public ICommand AddNewMedicineCommand { get; set; }
         public ICommand RestartCommand { get; set; }
@@ -811,12 +827,16 @@ namespace ClinicManagement.ViewModels
             SearchStockMedicineCommand = new RelayCommand<object>
             (   (p) => ExecuteSearchStockMedicine(),
                 (p) => true
-            );//StockMedicine Commands
+            );
             ResetStockFiltersCommand = new RelayCommand<object>
             (   (p) => ExecuteResetStockFilters(),
                 (p) => true
             );
-
+            // In the constructor, initialize the command:
+            ExportStockExcelCommand = new RelayCommand<object>(
+                p => ExportToExcel(),
+                p => ListStockMedicine != null && ListStockMedicine.Count > 0
+            );
             // Add these lines to the InitializeCommands method
             AddNewMedicineCommand = new RelayCommand<object>(
                 (p) => ExecuteAddNewMedicine(),
@@ -846,78 +866,7 @@ namespace ClinicManagement.ViewModels
             );
 
         }
-        private void ExecuteDeleteMedicine(Medicine medicine)
-        {
-            try
-            {
-                var medicineId = medicine.MedicineId;
-                // Confirm dialog
-                MessageBoxResult result = MessageBox.Show(
-                        "Xác nhận xóa thuốc '" + medicine.Name + "'?",
-                        "Xác nhận",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning
-                    );
-
-
-                if (result != MessageBoxResult.Yes)
-                    return;
-                // Check if specialty already exists
-                int isNotExist = DataProvider.Instance.Context.Medicines
-                    .Count(s => s.MedicineId == medicineId);
-
-                if (isNotExist == 0 ) 
-                {
-                    MessageBox.Show("Thuốc này đã không tồn tại.");
-                    return;
-                }
-                else
-                {
-                    // Soft delete the medicine
-                    var medicineToDelete = DataProvider.Instance.Context.Medicines
-                        .FirstOrDefault(s => s.MedicineId == medicineId);
-                    if (medicineToDelete == null)
-                    {
-                        MessageBox.Show("Không tìm thấy thuốc cần xóa.");
-                        return;
-                    }
-                    medicineToDelete.IsDeleted = true;
-                    DataProvider.Instance.Context.SaveChanges();
-                    // Refresh data
-                    ListMedicine = new ObservableCollection<Stock>(
-                DataProvider.Instance.Context.Stocks
-                .Where(d => (bool)!d.Medicine.IsDeleted)
-                .Include(d => d.Medicine)
-                    .ThenInclude(m => m.InvoiceDetails) // Cần để tính số lượng đã bán
-                .Include(d => d.Medicine.Category)
-                .Include(d => d.Medicine.Unit)
-        
-                .Include(d => d.Medicine.StockIns)
-                .ToList()
-               );
-                    MessageBox.Show(
-                        "Đã xóa thuốc thành công.",
-                        "Thành Công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-                }    
-
-            }
-            catch
-            {
-
-            } 
-            
-        }
-        private bool CanDeleteMedicine(Medicine medicine)
-        {
-            if (medicine == null)
-                return false;
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            if (medicine.CurrentExpiryDate > today)
-                return false;
-            return true;
-        }
+    
 
        
         #endregion
@@ -1753,7 +1702,301 @@ namespace ClinicManagement.ViewModels
             // Apply filters and update the list
             ListStockMedicine = new ObservableCollection<Stock>(filteredList.ToList());
         }
-    
+        private void ExecuteDeleteMedicine(Medicine medicine)
+        {
+            try
+            {
+                var medicineId = medicine.MedicineId;
+                // Confirm dialog
+                MessageBoxResult result = MessageBox.Show(
+                        "Xác nhận xóa thuốc '" + medicine.Name + "'?",
+                        "Xác nhận",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning
+                    );
+
+
+                if (result != MessageBoxResult.Yes)
+                    return;
+                // Check if specialty already exists
+                int isNotExist = DataProvider.Instance.Context.Medicines
+                    .Count(s => s.MedicineId == medicineId);
+
+                if (isNotExist == 0)
+                {
+                    MessageBox.Show("Thuốc này đã không tồn tại.");
+                    return;
+                }
+                else
+                {
+                    // Soft delete the medicine
+                    var medicineToDelete = DataProvider.Instance.Context.Medicines
+                        .FirstOrDefault(s => s.MedicineId == medicineId);
+                    if (medicineToDelete == null)
+                    {
+                        MessageBox.Show("Không tìm thấy thuốc cần xóa.");
+                        return;
+                    }
+                    medicineToDelete.IsDeleted = true;
+                    DataProvider.Instance.Context.SaveChanges();
+                    // Refresh data
+                    ListMedicine = new ObservableCollection<Stock>(
+                DataProvider.Instance.Context.Stocks
+                .Where(d => (bool)!d.Medicine.IsDeleted)
+                .Include(d => d.Medicine)
+                    .ThenInclude(m => m.InvoiceDetails) // Cần để tính số lượng đã bán
+                .Include(d => d.Medicine.Category)
+                .Include(d => d.Medicine.Unit)
+
+                .Include(d => d.Medicine.StockIns)
+                .ToList()
+               );
+                    MessageBox.Show(
+                        "Đã xóa thuốc thành công.",
+                        "Thành Công",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+
+            }
+            catch
+            {
+
+            }
+
+        }
+
+        private bool CanDeleteMedicine(Medicine medicine)
+        {
+            if (medicine == null)
+                return false;
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            if (medicine.CurrentExpiryDate > today)
+                return false;
+            return true;
+        }
+        private void ExportToExcel()
+        {
+            try
+            {
+                // Create a save file dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    DefaultExt = "xlsx",
+                    Title = "Chọn vị trí lưu file Excel",
+                    FileName = $"DanhSachTonKho_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Start export operation in background thread
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var workbook = new XLWorkbook())
+                            {
+                                var worksheet = workbook.Worksheets.Add("Danh sách tồn kho");
+
+                                // Report progress: 5% - Created workbook
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
+
+                                // Add title (merged cells)
+                                worksheet.Cell(1, 1).Value = "DANH SÁCH TỒN KHO";
+
+                               
+
+                                var titleRange = worksheet.Range(1, 1, 1, 11); // Expanded to 11 columns 
+                                titleRange.Merge();
+                                titleRange.Style.Font.Bold = true;
+                                titleRange.Style.Font.FontSize = 16;
+                                titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add current date
+                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, 1, 2, 11); // Expanded to 11 columns
+                                dateRange.Merge();
+                                dateRange.Style.Font.Italic = true;
+                                dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Report progress: 10% - Added title
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                                // Add headers (with spacing of 4 cells from title)
+                                int headerRow = 6; // Row 6 (leaving 3 blank rows after title)
+                                worksheet.Cell(headerRow, 1).Value = "Tên thuốc";
+                                worksheet.Cell(headerRow, 2).Value = "Loại";
+                                worksheet.Cell(headerRow, 3).Value = "Đơn vị tính";
+                                worksheet.Cell(headerRow, 4).Value = "Mã vạch";
+                                worksheet.Cell(headerRow, 5).Value = "Mã QR";
+                                worksheet.Cell(headerRow, 6).Value = "Ngày nhập mới nhất";
+                                worksheet.Cell(headerRow, 7).Value = "Đơn giá hiện tại";
+                                worksheet.Cell(headerRow, 8).Value = "Tồn kho tổng";
+                                worksheet.Cell(headerRow, 9).Value = "Sử dụng được";
+                                worksheet.Cell(headerRow, 10).Value = "Lô mới nhất";
+                                worksheet.Cell(headerRow, 11).Value = "Ngày hết hạn";
+
+                                // Style header row
+                                var headerRange = worksheet.Range(headerRow, 1, headerRow, 11);
+                                headerRange.Style.Font.Bold = true;
+                                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                                headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add borders to header
+                                headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+                                headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                                // Report progress: 20% - Headers added
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(20));
+
+                                // Add data
+                                int row = headerRow + 1; // Start data from next row after header
+                                int totalItems = ListStockMedicine.Count;
+
+                                // Create data range (to apply borders later)
+                                var dataStartRow = row;
+
+                                for (int i = 0; i < totalItems; i++)
+                                {
+                                    var item = ListStockMedicine[i];
+                                    var medicine = item.Medicine;
+
+                                    worksheet.Cell(row, 1).Value = medicine.Name ?? "";
+                                    worksheet.Cell(row, 2).Value = medicine.Category?.CategoryName ?? "";
+                                    worksheet.Cell(row, 3).Value = medicine.Unit?.UnitName ?? "";
+                                    worksheet.Cell(row, 4).Value = medicine.BarCode ?? "";
+                                    worksheet.Cell(row, 5).Value = medicine.QrCode ?? "";
+
+                                    if (medicine.LatestImportDate.HasValue)
+                                        worksheet.Cell(row, 6).Value = medicine.LatestImportDate.Value.ToString("dd/MM/yyyy");
+                                    else
+                                        worksheet.Cell(row, 6).Value = "";
+
+                                    worksheet.Cell(row, 7).Value = medicine.CurrentSellPrice;
+                                    worksheet.Cell(row, 7).Style.NumberFormat.Format = "#,##0"; // Formatting for currency
+
+                                    worksheet.Cell(row, 8).Value = item.Quantity;
+                                    worksheet.Cell(row, 9).Value = medicine.TotalStockQuantity;
+                                    worksheet.Cell(row, 10).Value = medicine.CalculatedRemainingQuantity;
+
+                                    if (medicine.CurrentExpiryDate.HasValue)
+                                        worksheet.Cell(row, 11).Value = medicine.CurrentExpiryDate.Value.ToString("dd/MM/yyyy");
+                                    else
+                                        worksheet.Cell(row, 11).Value = "";
+
+                                    row++;
+
+                                    // Update progress based on percentage processed
+                                    int progressValue = 20 + (i * 60 / totalItems);
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
+
+                                    // Add a small delay to make the progress visible
+                                    Thread.Sleep(30);
+                                }
+
+                                // Report progress: 80% - Data added
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
+
+                                // Apply borders to the data range
+                                if (totalItems > 0)
+                                {
+                                    var dataRange = worksheet.Range(dataStartRow, 1, row - 1, 11);
+                                    dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+                                    dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                                    // Center-align certain columns
+                                    worksheet.Column(3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Unit
+                                    worksheet.Column(6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Date
+                                    worksheet.Column(7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;  // Price
+                                    worksheet.Column(8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Quantity
+                                    worksheet.Column(9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Usable
+                                    worksheet.Column(10).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Latest batch
+                                    worksheet.Column(11).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Expiry
+                                }
+
+                                // Add total rows
+                                worksheet.Cell(row + 1, 7).Value = "Tổng số mặt hàng:";
+                                worksheet.Cell(row + 1, 8).Value = totalItems;
+                                worksheet.Cell(row + 1, 8).Style.Font.Bold = true;
+
+                                worksheet.Cell(row + 2, 7).Value = "Tổng số lượng tồn:";
+                                worksheet.Cell(row + 2, 8).Value = TotalQuantity;
+                                worksheet.Cell(row + 2, 8).Style.Font.Bold = true;
+
+                                worksheet.Cell(row + 3, 7).Value = "Tổng tiền nhập:";
+                                worksheet.Cell(row + 3, 8).Value = decimal.Parse(TotalValue, System.Globalization.NumberStyles.Currency);
+                                worksheet.Cell(row + 3, 8).Style.NumberFormat.Format = "#,##0";
+                                worksheet.Cell(row + 3, 8).Style.Font.Bold = true;
+
+                                // Auto-fit columns
+                                worksheet.Columns().AdjustToContents();
+
+                                // Set minimum widths for better readability
+                                worksheet.Column(1).Width = 30; // Name
+                                worksheet.Column(2).Width = 20; // Category
+                                worksheet.Column(4).Width = 15; // Barcode
+                                worksheet.Column(5).Width = 15; // QR Code
+                                worksheet.Column(7).Width = 15; // Price
+
+                                // Report progress: 90% - Formatting complete
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+
+                                // Save the workbook
+                                workbook.SaveAs(saveFileDialog.FileName);
+
+                                // Report progress: 100% - File saved
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+
+                                // Small delay to show 100%
+                                Thread.Sleep(300);
+
+                                // Close progress dialog
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.Close());
+
+                                // Show success message
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    MessageBox.Show(
+                                        $"Đã xuất danh sách tồn kho thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                        "Thành công",
+                                        MessageBoxButton.OK,
+                                        MessageBoxImage.Information);
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Close progress dialog on error
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+
+                                MessageBox.Show(
+                                    $"Lỗi khi xuất Excel: {ex.Message}",
+                                    "Lỗi",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Lỗi khi xuất Excel: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
 
         #endregion
 
@@ -1842,6 +2085,17 @@ namespace ClinicManagement.ViewModels
                                 existingExactMedicine.ExpiryDate = expiryDateOnly;
                             }
 
+                            // Update BarCode and QRCode if provided
+                            if (!string.IsNullOrWhiteSpace(StockinBarCode))
+                            {
+                                existingExactMedicine.BarCode = StockinBarCode.Trim();
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(StockinQrCode))
+                            {
+                                existingExactMedicine.QrCode = StockinQrCode.Trim();
+                            }
+
                             MessageBoxResult result = MessageBox.Show(
                                 $"Bạn có muốn nhập thêm '{StockinQuantity}' '{StockinSelectedCategory.CategoryName}' cho thuốc '{existingExactMedicine.Name}' hiện có không?",
                                 "Xác nhận",
@@ -1880,6 +2134,8 @@ namespace ClinicManagement.ViewModels
                                 CategoryId = StockinSelectedCategory.CategoryId,
                                 UnitId = StockinSelectedUnit.UnitId,
                                 ExpiryDate = expiryDateOnly,
+                                BarCode = StockinBarCode?.Trim(),  // Add BarCode
+                                QrCode = StockinQrCode?.Trim(),    // Add QRCode
                                 IsDeleted = false
                             };
                             DataProvider.Instance.Context.Medicines.Add(medicine);
@@ -1896,6 +2152,8 @@ namespace ClinicManagement.ViewModels
                                 CategoryId = StockinSelectedCategory.CategoryId,
                                 UnitId = StockinSelectedUnit.UnitId,
                                 ExpiryDate = expiryDateOnly,
+                                BarCode = StockinBarCode?.Trim(),  // Add BarCode
+                                QrCode = StockinQrCode?.Trim(),    // Add QRCode
                                 IsDeleted = false
                             };
                             DataProvider.Instance.Context.Medicines.Add(medicine);
@@ -2008,7 +2266,8 @@ namespace ClinicManagement.ViewModels
         {
             // Clear all form fields
             StockinMedicineName = string.Empty;
-           
+            StockinBarCode = string.Empty;     // Clear BarCode
+            StockinQrCode = string.Empty;      // Clear QRCode
             StockinQuantity = 0;
             StockinUnitPrice = 0;
             StockinSellPrice = 0;
@@ -2019,6 +2278,7 @@ namespace ClinicManagement.ViewModels
             SelectedMedicine = null;
             ImportDate = DateTime.Now;
         }
+
         private void LoadMedicineDetailsForStockIn(Medicine medicine)
         {
             if (medicine == null) return;
@@ -2027,6 +2287,8 @@ namespace ClinicManagement.ViewModels
             var freshDetails = medicine.GetDetailedStock(); // This calls _availableStockInsCache = null first
 
             StockinMedicineName = medicine.Name;
+            StockinBarCode = medicine.BarCode; // Set BarCode from medicine
+            StockinQrCode = medicine.QrCode; // Set QRCode from medicine
             StockinSelectedCategory = medicine.Category;
             StockinSelectedUnit = medicine.Unit;
             StockinUnitPrice = medicine.CurrentUnitPrice;
@@ -2063,6 +2325,7 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+
 
         private bool IsSupplierWorking(Supplier supplier)
         {
