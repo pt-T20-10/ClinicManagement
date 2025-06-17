@@ -30,7 +30,6 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                    
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
@@ -39,7 +38,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Patient search - Row 0 -->
-                    <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,8">
+                    <Grid Grid.Row="0" Grid.Column="0"  Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -122,11 +121,11 @@
                         </Button>
                     </Grid>
                     <!-- Patient details - Row 1 -->
-                    <materialDesign:Card Grid.Row="1" 
-                              Grid.Column="0" 
-                              Grid.ColumnSpan="3" 
+                    <materialDesign:Card  
+                              Grid.Column="1" 
+                               
                               Background="#E8F5E9"
-                              Margin="0,8,0,0"
+                              Margin="12"
                               Visibility="{Binding SelectedPatient, Converter={StaticResource NullToVisibilityConverter}}">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
@@ -149,21 +148,21 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,24,0" Grid.Row="0">
-                                    <TextBlock Text="Mã BN:" FontWeight="Medium" Margin="5"/>
+                                    <TextBlock Text="Mã BN:" FontWeight="Medium" Margin="5 0 5 5"/>
                                     <TextBlock Text="{Binding SelectedPatient.PatientId}" FontWeight="SemiBold"/>
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,0,24,0" Grid.Row="1">
-                                    <TextBlock Text="Năm sinh:" FontWeight="Medium" Margin="5" />
+                                    <TextBlock Text="Năm sinh:" FontWeight="Medium" Margin="5 0 5 5 " />
                                     <TextBlock Text="{Binding SelectedPatient.DateOfBirth}" FontWeight="SemiBold"/>
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal" Grid.Row="2" >
-                                    <TextBlock Text="Giới tính:" FontWeight="Medium" Margin="5"/>
+                                    <TextBlock Text="Giới tính:" FontWeight="Medium" Margin="5 0 5 5"/>
                                     <TextBlock Text="{Binding SelectedPatient.Gender}" FontWeight="SemiBold"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,24,8" Grid.Row="3">
-                                    <TextBlock Text="Địa chỉ:" FontWeight="Medium" Margin="5"/>
+                                    <TextBlock Text="Địa chỉ:" FontWeight="Medium" Margin="5 0 5 5 "/>
                                     <TextBlock Text="{Binding SelectedPatient.Address}" 
                                    TextTrimming="CharacterEllipsis" 
                                    MaxWidth="200" 
@@ -171,7 +170,7 @@
                                 </StackPanel>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,0,24,8" Grid.Row="4">
-                                    <TextBlock Text="BHYT:" FontWeight="Medium" Margin="5"/>
+                                    <TextBlock Text="BHYT:" FontWeight="Medium" Margin="5 0 5 5"/>
                                     <TextBlock Text="{Binding SelectedPatient.InsuranceCode}" 
                                      FontWeight="SemiBold"/>
                                 </StackPanel>
@@ -253,10 +252,10 @@
                                 <DatePicker Grid.Column="1"
                                Width="170" 
                                Height="50"
-                                Padding="5"
+                               Padding="12"
                                SelectedDate="{Binding RecordDate}" 
                                Style="{StaticResource MaterialDesignOutlinedDatePicker}" 
-                               Margin="0,0,24,0"
+                               Margin="0,0,12,0"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Center"/>
 
