@@ -31,8 +31,12 @@
                         <MenuItem Header="🔄 Làm mới" 
             Command="{Binding ResetFiltersCommand}"
             FontWeight="Bold"/>
+                        <MenuItem Header="📊 Xuất Excel" 
+            Command="{Binding ExportExcelCommand}"
+            FontWeight="Bold"/>
                     </ContextMenu>
                 </TabItem.ContextMenu>
+
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="107*"/>
@@ -138,7 +142,7 @@
                                 DockPanel.Dock="Left"
                                 Command="{Binding ResetFiltersCommand}"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Width="100"
+                                Width="120"
                                 Height="32"
                                 HorizontalAlignment="Left"
                                 Margin="0,0,10,0"
@@ -149,12 +153,31 @@
                                         <TextBlock Text="Đặt lại"/>
                                     </StackPanel>
                                 </Button.Content>
+                                
+                                
                             </Button>
 
+                            <!-- Add Export Excel Button -->
+                            <Button
+                         DockPanel.Dock="Left"
+                         Command="{Binding ExportExcelCommand}"
+                         Style="{StaticResource MaterialDesignOutlinedButton}"
+                         Width="120"
+                         Height="32"
+                         HorizontalAlignment="Left"
+                         Margin="0,0,10,0"
+                         ToolTip="Xuất danh sách bệnh nhân ra file Excel">
+                                                    <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" Width="16" Height="16"/>
+                                        <TextBlock Text="Xuất Excel"/>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
                             <Grid Width="100"></Grid>
                             <Button
                                 DockPanel.Dock="Right"
-                                Margin=" 0 10 0 0"
+                                Margin=" 0 10 0 10"
                                 IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
                                 Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
                                 materialDesign:HintAssist.Hint="Thêm bệnh nhân mới"
