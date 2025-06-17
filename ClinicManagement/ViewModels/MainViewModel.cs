@@ -416,20 +416,51 @@ namespace ClinicManagement.ViewModels
                 (tabName) => true
             );
 
-            // Register refresh actions for tabs that need updating
+            // Register refresh actions for all tabs that need updating
+            TabSelectionManager.Instance.RegisterTabReloadAction("PatientTab", () =>
+            {
+                var patientVM = Application.Current.Resources["PatientVM"] as PatientViewModel;
+                patientVM?.LoadData();
+            });
+
+
+            TabSelectionManager.Instance.RegisterTabReloadAction("AppointmentTab", () =>
+            {
+                var appointmentVM = Application.Current.Resources["AppointmentVM"] as AppointmentViewModel;
+                appointmentVM?.LoadData();
+            });
+
+            TabSelectionManager.Instance.RegisterTabReloadAction("StockTab", () =>
+            {
+                var stockVM = Application.Current.Resources["StockMedicineVM"] as StockMedicineViewModel;
+                stockVM?.LoadData();
+            });
+
+            TabSelectionManager.Instance.RegisterTabReloadAction("InvoiceTab", () =>
+            {
+                var invoiceVM = Application.Current.Resources["InvoiceVM"] as InvoiceViewModel;
+                invoiceVM?.LoadInvoices();
+            });
+
+            TabSelectionManager.Instance.RegisterTabReloadAction("MedicineSellTab", () =>
+            {
+                var medicineSellVM = Application.Current.Resources["MedicineSellVM"] as MedicineSellViewModel;
+                medicineSellVM?.LoadData();
+            });
+
+            TabSelectionManager.Instance.RegisterTabReloadAction("DoctorTab", () =>
+            {
+                var doctorVM = Application.Current.Resources["DoctorVM"] as DoctorViewModel;
+                doctorVM?.LoadData();
+            });
+
             TabSelectionManager.Instance.RegisterTabReloadAction("StatisticsTab", () =>
             {
                 var statisticsVM = Application.Current.Resources["StatisticsVM"] as StatisticsViewModel;
                 statisticsVM?.LoadStatisticsAsync();
             });
 
-            TabSelectionManager.Instance.RegisterTabReloadAction("Stock", () =>
-            {
-                var inventoryVM = Application.Current.Resources["StockVM"] as StockMedicineViewModel;
-                inventoryVM?.LoadData();
-            });
-
-            // Add other tabs as nee
+            
         }
     }
 }

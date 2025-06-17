@@ -466,7 +466,7 @@ namespace ClinicManagement.ViewModels
 
         #region Data Loading Methods
 
-        private void LoadData()
+        public void LoadData()
         {
             _AllPatients = new ObservableCollection<Patient>(
                 DataProvider.Instance.Context.Patients

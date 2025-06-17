@@ -364,7 +364,7 @@ namespace ClinicManagement.ViewModels
         #region Data Loading Methods
 
         //Phương thức Load hóa đơn
-        private void LoadInvoices()
+        public void LoadInvoices()
         {
             try // Bắt lỗi khi tải hóa đơn
             {

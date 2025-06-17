@@ -1078,8 +1078,8 @@
                 <TabItem.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="🔄 Làm mới" 
-                         Command="{Binding RefreshSulpierCommand}"
-                            FontWeight="Bold"/>
+              Command="{Binding RefreshSulpierCommand}"
+                 FontWeight="Bold"/>
                     </ContextMenu>
                 </TabItem.ContextMenu>
                 <materialDesign:Card Margin="5">
@@ -1104,12 +1104,12 @@
 
                                 <!-- Form Title -->
                                 <TextBlock 
-                                    Grid.Row="0" 
-                                    Text="THÔNG TIN NHÀ CUNG CẤP" 
-                                    FontWeight="Bold" 
-                                    FontSize="18" 
-                                    Margin="15,15,0,15" 
-                                    HorizontalAlignment="Left"/>
+                         Grid.Row="0" 
+                         Text="THÔNG TIN NHÀ CUNG CẤP" 
+                         FontWeight="Bold" 
+                         FontSize="18" 
+                         Margin="15,15,0,15" 
+                         HorizontalAlignment="Left"/>
 
                                 <!-- Horizontal Input Controls - Grid layout -->
                                 <Grid Grid.Row="1" Margin="15,0,15,10">
@@ -1127,90 +1127,90 @@
 
                                     <!-- Supplier Code -->
                                     <TextBox
-                                        TabIndex="1"
-                                        Grid.Row="0" Grid.Column="0"
-                                        Text="{Binding SupplierCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnSourceUpdated=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Mã nhà cung cấp (VD: NCC001)"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             TabIndex="1"
+                             Grid.Row="0" Grid.Column="0"
+                             Text="{Binding SupplierCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnSourceUpdated=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Mã nhà cung cấp (VD: NCC001)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                                     <!-- Supplier Name -->
                                     <TextBox
-                                        Grid.Row="0" Grid.Column="1"
-                                        TabIndex="2"
-                                        Text="{Binding SupplierName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnSourceUpdated=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Tên nhà cung cấp"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Grid.Row="0" Grid.Column="1"
+                             TabIndex="2"
+                             Text="{Binding SupplierName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnSourceUpdated=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Tên nhà cung cấp"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                                     <!-- Phone -->
                                     <TextBox
-                                        Grid.Row="0" Grid.Column="2"
-                                          TabIndex="3"
-                                        Text="{Binding SupplierPhone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Số điện thoại"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Grid.Row="0" Grid.Column="2"
+                               TabIndex="3"
+                             Text="{Binding SupplierPhone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Số điện thoại"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
 
                                     <!-- Email -->
                                     <TextBox
-                                        Grid.Row="1" Grid.Column="0"
-                                          TabIndex="4"
-                                        Text="{Binding SupplierEmail, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Email"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Grid.Row="1" Grid.Column="0"
+                               TabIndex="4"
+                             Text="{Binding SupplierEmail, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Email"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                                     <!-- Tax Code -->
                                     <TextBox
-                                        Grid.Row="1" Grid.Column="1"
-                                          TabIndex="5"
-                                        Text="{Binding SupplierTaxCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Mã số thuế"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Grid.Row="1" Grid.Column="1"
+                               TabIndex="5"
+                             Text="{Binding SupplierTaxCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Mã số thuế"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                                     <!-- Row 2 -->
                                     <!-- Address -->
                                     <TextBox
-                                        Grid.Row="2" Grid.Column="0"
-                                          TabIndex="6"
-                                        Text="{Binding SupplierAddress, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Địa chỉ"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Grid.Row="2" Grid.Column="0"
+                               TabIndex="6"
+                             Text="{Binding SupplierAddress, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Địa chỉ"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                                     <!-- Contact Person -->
                                     <TextBox
-                                        Grid.Row="2" Grid.Column="1"
-                                          TabIndex="7"
-                                        Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                                        Margin="10"
-                                        materialDesign:HintAssist.Hint="Người liên hệ"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Grid.Row="2" Grid.Column="1"
+                               TabIndex="7"
+                             Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             Margin="10"
+                             materialDesign:HintAssist.Hint="Người liên hệ"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                                     <GroupBox Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" Header="Trạng thái" 
-                                      Margin="10" 
-                                     
-                                      Style="{StaticResource MaterialDesignCardGroupBox}">
+                           Margin="10" 
+                          
+                           Style="{StaticResource MaterialDesignCardGroupBox}">
                                         <StackPanel Orientation="Vertical" Margin="5">
                                             <!-- Active Radio Button -->
                                             <RadioButton Content="Hoạt động" 
-                                             TabIndex="8"
-                                             IsChecked="{Binding IsActive}" 
-                                             Command="{Binding SetActiveStatusCommand}"
-                                          
-                                             Margin="0,2,0,2"
-                                             Style="{StaticResource MaterialDesignRadioButton}">
+                                  TabIndex="8"
+                                  IsChecked="{Binding IsActive}" 
+                                  Command="{Binding SetActiveStatusCommand}"
+                               
+                                  Margin="0,2,0,2"
+                                  Style="{StaticResource MaterialDesignRadioButton}">
                                                 <RadioButton.ContentTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="CheckCircle" 
-                                                   Width="18" Height="18" 
-                                                   Foreground="Green" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="0,0,5,0"/>
+                                        Width="18" Height="18" 
+                                        Foreground="Green" 
+                                        VerticalAlignment="Center" 
+                                        Margin="0,0,5,0"/>
                                                             <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </DataTemplate>
@@ -1219,19 +1219,19 @@
 
                                             <!-- Inactive Radio Button -->
                                             <RadioButton Content="Ngừng hoạt động" 
-                                                 IsChecked="{Binding IsNotActive}" 
-                                                 Command="{Binding SetNoActiveStatusCommand}"
-                                                  TabIndex="9"
-                                                 Margin="0,2,0,2"
-                                                 Style="{StaticResource MaterialDesignRadioButton}">
+                                      IsChecked="{Binding IsNotActive}" 
+                                      Command="{Binding SetNoActiveStatusCommand}"
+                                       TabIndex="9"
+                                      Margin="0,2,0,2"
+                                      Style="{StaticResource MaterialDesignRadioButton}">
                                                 <RadioButton.ContentTemplate>
                                                     <DataTemplate>
                                                         <StackPanel Orientation="Horizontal">
                                                             <materialDesign:PackIcon Kind="Cancel" 
-                                                   Width="18" Height="18" 
-                                                   Foreground="Red" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="0,0,5,0"/>
+                                        Width="18" Height="18" 
+                                        Foreground="Red" 
+                                        VerticalAlignment="Center" 
+                                        Margin="0,0,5,0"/>
                                                             <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </DataTemplate>
@@ -1243,12 +1243,12 @@
                                     <!-- Action Buttons -->
                                     <StackPanel VerticalAlignment="Center" Grid.Column="3" Grid.Row="0" Grid.RowSpan="3" Orientation="Vertical">
                                         <Button 
-                                              Command="{Binding AddSupplierCommand}" 
-                                              Style="{StaticResource MaterialDesignRaisedButton}"
-                                              materialDesign:ButtonAssist.CornerRadius="5"
-                                              Margin="0,0,0,0" 
-                                              Height="36"
-                                              Width="110">
+                                   Command="{Binding AddSupplierCommand}" 
+                                   Style="{StaticResource MaterialDesignRaisedButton}"
+                                   materialDesign:ButtonAssist.CornerRadius="5"
+                                   Margin="0,0,0,0" 
+                                   Height="36"
+                                   Width="110">
                                             <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBlock Text="Thêm"/>
@@ -1256,14 +1256,14 @@
                                         </Button>
 
                                         <Button 
-                                          Command="{Binding  EditSupplierCommand}" 
-                                          Style="{StaticResource MaterialDesignRaisedButton}"
-                                          materialDesign:ButtonAssist.CornerRadius="5"
-                                          Background="#FF3F51B5"
-                                          BorderBrush="#FF3F51B5"
-                                          Margin="0,5,0,0" 
-                                          Height="36"
-                                          Width="110">
+                               Command="{Binding  EditSupplierCommand}" 
+                               Style="{StaticResource MaterialDesignRaisedButton}"
+                               materialDesign:ButtonAssist.CornerRadius="5"
+                               Background="#FF3F51B5"
+                               BorderBrush="#FF3F51B5"
+                               Margin="0,5,0,0" 
+                               Height="36"
+                               Width="110">
                                             <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBlock Text="Cập nhật"/>
@@ -1271,14 +1271,14 @@
                                         </Button>
 
                                         <Button 
-                                              Command="{Binding DeleteSupplierCommand}" 
-                                              Style="{StaticResource MaterialDesignRaisedButton}"
-                                              materialDesign:ButtonAssist.CornerRadius="5"
-                                              Background="#FFE91E63"
-                                              BorderBrush="#FFE91E63"
-                                             Margin="0,5,0,0" 
-                                              Height="36"
-                                              Width="110">
+                                   Command="{Binding DeleteSupplierCommand}" 
+                                   Style="{StaticResource MaterialDesignRaisedButton}"
+                                   materialDesign:ButtonAssist.CornerRadius="5"
+                                   Background="#FFE91E63"
+                                   BorderBrush="#FFE91E63"
+                                  Margin="0,5,0,0" 
+                                   Height="36"
+                                   Width="110">
                                             <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBlock Text="Xóa"/>
@@ -1300,39 +1300,41 @@
                                     <!-- Filter Options -->
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
                                         <RadioButton 
-                                            Content="Tất cả" 
-                                            IsChecked="{Binding ShowAllSuppliers}"
-                                            Margin="0,0,15,0"
-                                            GroupName="SupplierFilter"/>
+                                 Content="Tất cả" 
+                                 IsChecked="{Binding ShowAllSuppliers}"
+                                 Margin="0,0,15,0"
+                                 GroupName="SupplierFilter"/>
                                         <RadioButton 
-                                            Content="Đang hoạt động" 
-                                            IsChecked="{Binding ShowActiveSuppliers}"
-                                            Margin="0,0,15,0"
-                                            GroupName="SupplierFilter"/>
+                                 Content="Đang hoạt động" 
+                                 IsChecked="{Binding ShowActiveSuppliers}"
+                                 Margin="0,0,15,0"
+                                 GroupName="SupplierFilter"/>
                                         <RadioButton 
-                                            Content="Ngừng hoạt động" 
-                                            IsChecked="{Binding ShowInactiveSuppliers}"
-                                            GroupName="SupplierFilter"/>
+                                 Content="Ngừng hoạt động" 
+                                 IsChecked="{Binding ShowInactiveSuppliers}"
+                                 GroupName="SupplierFilter"/>
                                     </StackPanel>
 
                                     <TextBox
-                                        Margin="20 0 0 0"
-                                        Grid.Column="2"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Left"
-                                        Height="42"
-                                        Width="500"
-                                        Padding="15 0 0 0 "
-                                        materialDesign:HintAssist.Hint="Tên nhà cung cấp"
-                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                             Margin="20 0 0 0"
+                             Grid.Column="2"
+                             VerticalAlignment="Center"
+                             HorizontalAlignment="Left"
+                             Text="{Binding SupplierSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Height="42"
+                             Width="500"
+                             Padding="15 0 0 0 "
+                             materialDesign:HintAssist.Hint="Tên nhà cung cấp"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
                                     <Button
-                                         HorizontalAlignment="Right"
-                                         Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
-                                         Grid.Column="2"
-                                         Width="120"
-                                         Height="32"
-                                         ToolTip="Resource name: MaterialDesignRaisedButton"
-                                          Command="{Binding SearchCommand}">
+                              HorizontalAlignment="Right"
+                              Style="{StaticResource MaterialDesignRaisedButton}" Margin="10 5 5 5 "
+                              Grid.Column="2"
+                              Width="120"
+                              Height="32"
+                              ToolTip="Resource name: MaterialDesignRaisedButton"
+                               Command="{Binding SearchSupplierCommand}">
                                         <StackPanel Orientation="Horizontal">
                                             <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
                                             <TextBlock Text="Tìm kiếm"/>
@@ -1347,15 +1349,15 @@
                                     <!-- DataGrid for Suppliers -->
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                                         <DataGrid Grid.Row="1" 
-                                              ItemsSource="{Binding SupplierList}"
-                                              SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
-                                              AutoGenerateColumns="False"
-                                              IsReadOnly="True"
-                                              SelectionMode="Single"
-                                              SelectionUnit="FullRow"
-                                              CanUserAddRows="False"
-                                              CanUserDeleteRows="False"
-                                              Background="White">
+                                   ItemsSource="{Binding SupplierList}"
+                                   SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                                   AutoGenerateColumns="False"
+                                   IsReadOnly="True"
+                                   SelectionMode="Single"
+                                   SelectionUnit="FullRow"
+                                   CanUserAddRows="False"
+                                   CanUserDeleteRows="False"
+                                   Background="White">
                                             <DataGrid.Resources>
                                                 <Style TargetType="DataGridColumnHeader">
                                                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -1377,33 +1379,33 @@
 
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Mã NCC" 
-                                                    Binding="{Binding SupplierCode}" 
-                                                    Width="120" 
-                                                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                         Binding="{Binding SupplierCode}" 
+                                         Width="120" 
+                                         ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTextColumn Header="Nhà cung cấp" 
-                                Binding="{Binding SupplierName}" 
-                                Width="220"
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     Binding="{Binding SupplierName}" 
+                     Width="220"
+                     ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTextColumn Header="Người liên hệ" 
-                                Binding="{Binding ContactPerson}" 
-                                Width="150"
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     Binding="{Binding ContactPerson}" 
+                     Width="150"
+                     ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTextColumn Header="SĐT" 
-                                Binding="{Binding Phone}" 
-                                Width="150"
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     Binding="{Binding Phone}" 
+                     Width="150"
+                     ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTextColumn Header="Email" 
-                                Binding="{Binding Email}" 
-                                Width="200"
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     Binding="{Binding Email}" 
+                     Width="200"
+                     ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTextColumn Header="Mã số thuế" 
-                                Binding="{Binding TaxCode}" 
-                                Width="150"
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     Binding="{Binding TaxCode}" 
+                     Width="150"
+                     ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTextColumn Header="Địa chỉ" 
-                                Binding="{Binding Address}" 
-                                Width="500"
-                                ElementStyle="{StaticResource CenteredCellStyle}"/>
+                     Binding="{Binding Address}" 
+                     Width="500"
+                     ElementStyle="{StaticResource CenteredCellStyle}"/>
                                                 <DataGridTemplateColumn Header="Trạng thái" Width="120">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>

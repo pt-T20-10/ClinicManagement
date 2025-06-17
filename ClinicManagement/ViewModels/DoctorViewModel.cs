@@ -221,7 +221,7 @@ namespace ClinicManagement.ViewModels
             detailsWindow.ShowDialog();
             LoadData(); // Refresh data after closing details window
         }
-        private void LoadData()
+        public void LoadData()
         {
             // Load doctors with their specialties
             _allDoctors = new ObservableCollection<Doctor>(

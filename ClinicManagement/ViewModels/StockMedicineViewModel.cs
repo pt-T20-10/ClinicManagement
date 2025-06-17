@@ -469,6 +469,93 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        // Private backing fields for supplier filters
+        private ObservableCollection<Supplier> _allSuppliers;
+        private string _supplierSearchText;
+
+        // Public property for supplier search text with auto-filtering
+        public string SupplierSearchText
+        {
+            get => _supplierSearchText;
+            set
+            {
+                _supplierSearchText = value;
+                OnPropertyChanged();
+                // Auto-filter when text changes
+                ExecuteAutoSupplierFilter();
+            }
+        }
+
+        // Supplier filter flags with auto-filtering
+        private bool _showAllSuppliers = true;
+        public bool ShowAllSuppliers
+        {
+            get => _showAllSuppliers;
+            set
+            {
+                if (_showAllSuppliers != value)
+                {
+                    _showAllSuppliers = value;
+                    OnPropertyChanged();
+
+                    if (value)
+                    {
+                        _showActiveSuppliers = false;
+                        _showInactiveSuppliers = false;
+                        OnPropertyChanged(nameof(ShowActiveSuppliers));
+                        OnPropertyChanged(nameof(ShowInactiveSuppliers));
+                        ExecuteAutoSupplierFilter();
+                    }
+                }
+            }
+        }
+
+        private bool _showActiveSuppliers;
+        public bool ShowActiveSuppliers
+        {
+            get => _showActiveSuppliers;
+            set
+            {
+                if (_showActiveSuppliers != value)
+                {
+                    _showActiveSuppliers = value;
+                    OnPropertyChanged();
+
+                    if (value)
+                    {
+                        _showAllSuppliers = false;
+                        _showInactiveSuppliers = false;
+                        OnPropertyChanged(nameof(ShowAllSuppliers));
+                        OnPropertyChanged(nameof(ShowInactiveSuppliers));
+                        ExecuteAutoSupplierFilter();
+                    }
+                }
+            }
+        }
+
+        private bool _showInactiveSuppliers;
+        public bool ShowInactiveSuppliers
+        {
+            get => _showInactiveSuppliers;
+            set
+            {
+                if (_showInactiveSuppliers != value)
+                {
+                    _showInactiveSuppliers = value;
+                    OnPropertyChanged();
+
+                    if (value)
+                    {
+                        _showAllSuppliers = false;
+                        _showActiveSuppliers = false;
+                        OnPropertyChanged(nameof(ShowAllSuppliers));
+                        OnPropertyChanged(nameof(ShowActiveSuppliers));
+                        ExecuteAutoSupplierFilter();
+                    }
+                }
+            }
+        }
         #endregion
 
         #region StockinMedicine Properties
@@ -704,6 +791,7 @@ namespace ClinicManagement.ViewModels
         public ICommand DeleteSupplierCommand { get; set; }
         public ICommand SetActiveStatusCommand { get; set; }
         public ICommand SetNoActiveStatusCommand { get; set; }
+        public ICommand SearchSupplierCommand { get; set; }
         public ICommand RefreshSulpierCommand { get; set; }
 
 
@@ -823,6 +911,17 @@ namespace ClinicManagement.ViewModels
            (p) => ExecuteSupplierRefresh(),
            (p) => true
        );
+            // Initialize supplier filter commands
+            SearchSupplierCommand = new RelayCommand<object>(
+        p => FilterSuppliers(),
+        p => true
+    );
+
+            RefreshSulpierCommand = new RelayCommand<object>(
+                p => ResetSupplierFilters(),
+                p => true
+            );
+            ShowAllSuppliers = true;
             //StockMedicine Commands
             SearchStockMedicineCommand = new RelayCommand<object>
             (   (p) => ExecuteSearchStockMedicine(),
@@ -1638,6 +1737,123 @@ namespace ClinicManagement.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
+        /// <summary>
+        /// Auto-filter suppliers based on current filter settings
+        /// </summary>
+        private void ExecuteAutoSupplierFilter()
+        {
+            FilterSuppliers();
+        }
+
+        /// <summary>
+        /// Filter suppliers based on status and search text
+        /// </summary>
+        private void FilterSuppliers()
+        {
+            if (_allSuppliers == null)
+            {
+                // Load all suppliers if not already loaded
+                LoadAllSuppliers();
+            }
+
+            if (_allSuppliers == null || _allSuppliers.Count == 0)
+            {
+                SupplierList = new ObservableCollection<Supplier>();
+                return;
+            }
+
+            IEnumerable<Supplier> filteredSuppliers = _allSuppliers;
+
+            // Apply status filter
+            if (ShowActiveSuppliers)
+            {
+                filteredSuppliers = filteredSuppliers.Where(s => (bool)s.IsActive);
+            }
+            else if (ShowInactiveSuppliers)
+            {
+                filteredSuppliers = filteredSuppliers.Where(s => (bool)!s.IsActive);
+            }
+            // If ShowAllSuppliers is true, we don't filter by active status
+
+            // Apply search text filter
+            if (!string.IsNullOrWhiteSpace(SupplierSearchText))
+            {
+                string searchTerm = SupplierSearchText.ToLower().Trim();
+                filteredSuppliers = filteredSuppliers.Where(s =>
+                    (s.SupplierName != null && s.SupplierName.ToLower().Contains(searchTerm)) ||
+                    (s.SupplierCode != null && s.SupplierCode.ToLower().Contains(searchTerm)) ||
+                    (s.Phone != null && s.Phone.ToLower().Contains(searchTerm)) ||
+                    (s.ContactPerson != null && s.ContactPerson.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Update the SupplierList with filtered results
+            SupplierList = new ObservableCollection<Supplier>(filteredSuppliers);
+        }
+
+        /// <summary>
+        /// Load all suppliers from database
+        /// </summary>
+        private void LoadAllSuppliers()
+        {
+            try
+            {
+                _allSuppliers = new ObservableCollection<Supplier>(
+                    DataProvider.Instance.Context.Suppliers
+                        .Where(s => s.IsDeleted != true)
+                        .ToList()
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Lỗi khi tải danh sách nhà cung cấp: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Load suppliers with filtering support
+        /// </summary>
+        public void LoadSuppliers()
+        {
+            try
+            {
+                LoadAllSuppliers();
+                FilterSuppliers();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Lỗi khi tải danh sách nhà cung cấp: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+        private void ResetSupplierFilters()
+        {
+            SupplierSearchText = string.Empty;
+
+            // Temporarily disable auto filtering to avoid redundant updates
+            var tempShowAll = _showAllSuppliers;
+            var tempShowActive = _showActiveSuppliers;
+            var tempShowInactive = _showInactiveSuppliers;
+
+            _showAllSuppliers = false;
+            _showActiveSuppliers = false;
+            _showInactiveSuppliers = false;
+
+            // Set ShowAllSuppliers to true which will trigger filtering
+            ShowAllSuppliers = true;
+
+            // Reload all suppliers
+            LoadSuppliers();
+        }
+
         #endregion
 
         #region StockMedicine Methods

@@ -336,7 +336,7 @@ namespace ClinicManagement.ViewModels
             );
         }
 
-        private void LoadData()
+        public void LoadData()
         {
             LoadMedicines();
             LoadCategories();

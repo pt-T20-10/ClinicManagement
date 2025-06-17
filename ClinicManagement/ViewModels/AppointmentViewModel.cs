@@ -337,6 +337,10 @@ namespace ClinicManagement.ViewModels
      
            public AppointmentViewModel()
         {
+            LoadData(); 
+        }
+        public void LoadData()
+        {
             _filterDate = DateTime.Today;
             _patientSearch = string.Empty;
             _patientPhone = string.Empty;
@@ -361,7 +365,6 @@ namespace ClinicManagement.ViewModels
             // Initialize validation collections
             _touchedFields = new HashSet<string>();
         }
-        
 
         private void LoadAppointmentTypeData()
         {
