@@ -331,7 +331,9 @@ public partial class Medicine : BaseViewModel
                 return oldestValidStock.StockIn;
 
             // Nếu không tìm thấy, trả về lô mới nhất
-            return StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();
+            return StockIns?.OrderByDescending(si => si.ImportDate).FirstOrDefault();  
+
+
         }
     }
     /// <summary>
