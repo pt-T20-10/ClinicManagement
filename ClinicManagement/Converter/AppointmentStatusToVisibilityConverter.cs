@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace ClinicManagement.SubWindow
+namespace ClinicManagement.Converter
 {
     public class AppointmentStatusToVisibilityConverter : IValueConverter
     {

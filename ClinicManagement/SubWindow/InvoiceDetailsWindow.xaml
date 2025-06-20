@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClinicManagement.SubWindow"
+        xmlns:conver="clr-namespace:ClinicManagement.Converter"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
@@ -22,8 +23,8 @@
     
     <!-- Khởi tạo Window Resouces để sử dụng Converter -->
     <Window.Resources>
-        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <local:ItemNameConverter x:Key="ItemNameConverter"/>
+        <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conver:ItemNameConverter x:Key="ItemNameConverter"/>
     </Window.Resources>
     <!--Main grid có 2 Row-->
     <Grid>
@@ -247,7 +248,7 @@
                                                         <Binding Path="SalePrice" />
                                                         <Binding Path="Quantity" />
                                                         <MultiBinding.Converter>
-                                                            <local:SimpleMultiplicationConverter />
+                                                            <conver:SimpleMultiplicationConverter />
                                                         </MultiBinding.Converter>
                                                     </MultiBinding>
                                                 </TextBlock.Text>

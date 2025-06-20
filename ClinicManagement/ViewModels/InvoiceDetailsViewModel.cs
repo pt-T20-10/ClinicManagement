@@ -653,7 +653,7 @@ namespace ClinicManagement.ViewModels
             var qrCodePanel = new StackPanel();
             qrCodePanel.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("IsBankTransfer")
             {
-                Converter = new SubWindow.BooleanToVisibilityConverter()
+                Converter = new Converter.BooleanToVisibilityConverter()
             });
 
             var qrCodeTitle = new TextBlock

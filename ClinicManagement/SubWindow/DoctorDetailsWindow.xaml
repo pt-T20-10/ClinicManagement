@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:ClinicManagement.SubWindow"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:conver="clr-namespace:ClinicManagement.Converter"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="13"
@@ -28,7 +29,7 @@
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>
-        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>  
+        <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>  
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 
-namespace ClinicManagement.SubWindow
+namespace ClinicManagement.Converter
 {
     // SimpleMultiplicationConverter for calculating SalePrice * Quantity in DataGrid
     public class SimpleMultiplicationConverter : IMultiValueConverter

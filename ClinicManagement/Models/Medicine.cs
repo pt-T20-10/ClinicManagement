@@ -63,7 +63,8 @@ public partial class Medicine : BaseViewModel
 
     public virtual ICollection<Stock> Stocks { get; set; } = new List<Stock>();
 
- 
+    public virtual ICollection<MonthlyStock> MonthlyStocks { get; set; } = new List<MonthlyStock>();
+
 
     public virtual Unit? Unit { get; set; }
 

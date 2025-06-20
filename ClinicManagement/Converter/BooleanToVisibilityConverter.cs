@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace ClinicManagement.SubWindow
+namespace ClinicManagement.Converter
 {
     // BooleanToVisibilityConverter for toggling UI elements based on boolean values
     public class BooleanToVisibilityConverter : IValueConverter

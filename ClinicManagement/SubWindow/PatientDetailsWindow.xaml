@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClinicManagement.SubWindow"
+        
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
@@ -15,6 +16,7 @@
         mc:Ignorable="d"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
         WindowStyle="None"
+        xmlns:conver="clr-namespace:ClinicManagement.Converter"
         ResizeMode="NoResize"
         Name="patientdetailsWindow"
         Title="Thông tin bệnh nhân"
@@ -23,9 +25,9 @@
         WindowStartupLocation="CenterScreen"
         Width="1500" Height="900">
     <Window.Resources>
-        <local:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
-        <local:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
-        <local:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
+        <conver:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
+        <conver:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
+        <conver:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
     </Window.Resources>
 
     <i:Interaction.Triggers>

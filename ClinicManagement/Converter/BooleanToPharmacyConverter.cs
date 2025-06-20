@@ -2,26 +2,22 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace ClinicManagement.SubWindow
+namespace ClinicManagement.Converter
 {
-    public class StringTrimmingConverter : IValueConverter
+    public class BooleanToPharmacyConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string stringValue)
+            if (value is bool isPharmacySale)
             {
-                return stringValue.Trim();
+                return isPharmacySale ? "Bán thuốc" : "Dịch vụ khám";
             }
-            return value;
+            return "Không xác định";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string stringValue)
-            {
-                return stringValue.Trim();
-            }
-            return value;
+            throw new NotImplementedException();
         }
     }
 }

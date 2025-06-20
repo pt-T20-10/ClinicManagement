@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using ClinicManagement.Models;
 
-namespace ClinicManagement.SubWindow
+namespace ClinicManagement.Converter
 {
     public class ItemNameConverter : IMultiValueConverter
     {
