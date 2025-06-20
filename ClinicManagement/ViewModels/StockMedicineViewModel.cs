@@ -77,34 +77,19 @@ namespace ClinicManagement.ViewModels
 
         public int TempQuantity { get; set; }
 
-        private string _TotalQuantity;
-        public string TotalQuantity
-        {
-            get => _TotalQuantity;
-            set
-            {
-                _TotalQuantity = value;
-                OnPropertyChanged();
-                var totalValue = ListMedicine.Sum(m => m.Medicine.CurrentUnitPrice).ToString() ?? "0";
-                _TotalValue = (Convert.ToInt32(TotalQuantity) * Convert.ToDecimal(totalValue)).ToString();
-            }
-        }
-        private string _TotalValue;
-        public string TotalValue
-        {
-            get => _TotalValue;
-            set
-            {
-                _TotalValue = value;
-                OnPropertyChanged();
-            
-            }
-        }
+        public string TotalQuantity => IsMonthlyView
+    ? MonthlyTotalQuantity.ToString()
+    : CurrentTotalQuantity.ToString();
+
+        public string TotalValue => IsMonthlyView
+            ? MonthlyTotalValue.ToString("N0")
+            : CurrentTotalValue.ToString("N0");
         #endregion
 
         #region StockProperties
 
         private ObservableCollection<Stock> _allStockMedicine;
+        // Thuộc tính tìm kiếm
         private string _SearchStockMedicine;
         public string SearchStockMedicine
         {
@@ -113,7 +98,13 @@ namespace ClinicManagement.ViewModels
             {
                 _SearchStockMedicine = value;
                 OnPropertyChanged();
-                ExecuteSearchStockMedicine();
+
+                // Có thể bỏ auto-filter ở đây nếu muốn chỉ filter khi nhấn nút tìm kiếm
+                // Còn nếu muốn auto-filter khi nhập, giữ nguyên dòng bên dưới
+                if (IsMonthlyView)
+                    FilterMonthlyStock();
+                else
+                    FilterCurrentStock();
             }
         }
 
@@ -143,7 +134,12 @@ namespace ClinicManagement.ViewModels
             {
                 _SelectedStockUnitId = value;
                 OnPropertyChanged();
-                ExecuteSearchStockMedicine();
+
+                // Lọc theo chế độ xem hiện tại
+                if (IsMonthlyView)
+                    FilterMonthlyStock();
+                else
+                    FilterCurrentStock();
             }
         }
         private Supplier _SelectedStockSupplier;
@@ -173,7 +169,12 @@ namespace ClinicManagement.ViewModels
             {
                 _SelectedStockSupplierId = value;
                 OnPropertyChanged();
-                ExecuteSearchStockMedicine();
+
+                // Lọc theo chế độ xem hiện tại
+                if (IsMonthlyView)
+                    FilterMonthlyStock();
+                else
+                    FilterCurrentStock();
             }
         }
 
@@ -204,12 +205,147 @@ namespace ClinicManagement.ViewModels
             {
                 _SelectedStockCategoryId = value;
                 OnPropertyChanged(nameof(_SelectedStockCategoryId));
-                ExecuteSearchStockMedicine();
+
+                // Lọc theo chế độ xem hiện tại
+                if (IsMonthlyView)
+                    FilterMonthlyStock();
+                else
+                    FilterCurrentStock();
             }
         }
-       
-        
 
+
+
+        #endregion
+
+        #region Monthly Stock Properties
+
+        private bool _isMonthlyView;
+        public bool IsMonthlyView
+        {
+            get => _isMonthlyView;
+            set
+            {
+                _isMonthlyView = value;
+                OnPropertyChanged();
+                // Cập nhật dữ liệu khi thay đổi chế độ xem
+                if (_isMonthlyView)
+                    FilterMonthlyStock();
+                else
+                    FilterCurrentStock();
+            }
+        }
+
+        private ObservableCollection<int> _monthOptions = new ObservableCollection<int>(
+            Enumerable.Range(1, 12).ToList()
+        );
+        public ObservableCollection<int> MonthOptions
+        {
+            get => _monthOptions;
+            set
+            {
+                _monthOptions = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<int> _yearOptions = new ObservableCollection<int>(
+            Enumerable.Range(DateTime.Now.Year - 5, 6).ToList() // 5 năm trước và năm hiện tại
+        );
+        public ObservableCollection<int> YearOptions
+        {
+            get => _yearOptions;
+            set
+            {
+                _yearOptions = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _selectedMonth = DateTime.Now.Month;
+        public int SelectedMonth
+        {
+            get => _selectedMonth;
+            set
+            {
+                _selectedMonth = value;
+                OnPropertyChanged();
+                if (IsMonthlyView) FilterMonthlyStock();
+            }
+        }
+
+        private int _selectedYear = DateTime.Now.Year;
+        public int SelectedYear
+        {
+            get => _selectedYear;
+            set
+            {
+                _selectedYear = value;
+                OnPropertyChanged();
+                if (IsMonthlyView) FilterMonthlyStock();
+            }
+        }
+
+        private ObservableCollection<MonthlyStock> _monthlyStockList = new ObservableCollection<MonthlyStock>();
+        public ObservableCollection<MonthlyStock> MonthlyStockList
+        {
+            get => _monthlyStockList;
+            set
+            {
+                _monthlyStockList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Properties để quản lý tổng số lượng và giá trị theo từng chế độ xem
+        private int _monthlyTotalQuantity;
+        public int MonthlyTotalQuantity
+        {
+            get => _monthlyTotalQuantity;
+            set
+            {
+                _monthlyTotalQuantity = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalQuantity));
+            }
+        }
+
+        private decimal _monthlyTotalValue;
+        public decimal MonthlyTotalValue
+        {
+            get => _monthlyTotalValue;
+            set
+            {
+                _monthlyTotalValue = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalValue));
+            }
+        }
+
+        private int _currentTotalQuantity;
+        public int CurrentTotalQuantity
+        {
+            get => _currentTotalQuantity;
+            set
+            {
+                _currentTotalQuantity = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalQuantity));
+            }
+        }
+
+        private decimal _currentTotalValue;
+        public decimal CurrentTotalValue
+        {
+            get => _currentTotalValue;
+            set
+            {
+                _currentTotalValue = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalValue));
+            }
+        }
+  
 
         #endregion
 
@@ -826,10 +962,23 @@ namespace ClinicManagement.ViewModels
 
         public StockMedicineViewModel()
         {
-            
+            // Khởi tạo các thuộc tính mặc định
+            MonthOptions = new ObservableCollection<int>(Enumerable.Range(1, 12));
+            YearOptions = new ObservableCollection<int>(
+                Enumerable.Range(DateTime.Now.Year - 5, 6)
+            );
+
+            SelectedMonth = DateTime.Now.Month;
+            SelectedYear = DateTime.Now.Year;
+
+            // Đặt chế độ xem mặc định là tồn kho hiện tại
+            IsMonthlyView = false;
+
+            // Khởi tạo các lệnh và tải dữ liệu
             LoadData();
-            InitializeCommands();   
+            InitializeCommands();
         }
+
 
         #region Methods
         #region InitializeCommands
@@ -924,18 +1073,39 @@ namespace ClinicManagement.ViewModels
             ShowAllSuppliers = true;
             //StockMedicine Commands
             SearchStockMedicineCommand = new RelayCommand<object>
-            (   (p) => ExecuteSearchStockMedicine(),
-                (p) => true
-            );
-            ResetStockFiltersCommand = new RelayCommand<object>
-            (   (p) => ExecuteResetStockFilters(),
-                (p) => true
-            );
+ (
+     (p) => {
+         // Thực hiện tìm kiếm theo chế độ xem hiện tại
+         if (IsMonthlyView)
+             FilterMonthlyStock();
+         else
+             FilterCurrentStock();
+     },
+     (p) => true
+ );
+            ResetStockFiltersCommand = new RelayCommand<object>(
+     (p) => {
+         // Đặt lại các filter
+         SearchStockMedicine = "";
+         SelectedStockCategoryName = null;
+         SelectedStockSupplier = null;
+         SelectedStockUnit = null;
+
+         // Làm mới dữ liệu theo chế độ xem hiện tại
+         if (IsMonthlyView)
+             FilterMonthlyStock();
+         else
+             FilterCurrentStock();
+     },
+     (p) => true
+ );
             // In the constructor, initialize the command:
             ExportStockExcelCommand = new RelayCommand<object>(
-                p => ExportToExcel(),
-                p => ListStockMedicine != null && ListStockMedicine.Count > 0
-            );
+      p => ExportToExcel(),
+      p => IsMonthlyView
+          ? MonthlyStockList?.Count > 0
+          : ListStockMedicine?.Count > 0
+  );
             // Add these lines to the InitializeCommands method
             AddNewMedicineCommand = new RelayCommand<object>(
                 (p) => ExecuteAddNewMedicine(),
@@ -1792,6 +1962,166 @@ namespace ClinicManagement.ViewModels
             SupplierList = new ObservableCollection<Supplier>(filteredSuppliers);
         }
 
+
+        // Phương thức lọc tồn kho hiện tại
+        // Phương thức lọc tồn kho hiện tại
+        // Phương thức lọc tồn kho hiện tại
+        public void FilterCurrentStock()
+        {
+            try
+            {
+                // Check if _allStockMedicine is null
+                if (_allStockMedicine == null)
+                {
+                    ListStockMedicine = new ObservableCollection<Stock>();
+                    UpdateCurrentTotals();
+                    return;
+                }
+
+                var query = _allStockMedicine.AsEnumerable();
+
+                // Áp dụng các bộ lọc
+                if (SelectedStockCategoryId.HasValue && SelectedStockCategoryId.Value > 0)
+                {
+                    query = query.Where(s => s.Medicine?.CategoryId == SelectedStockCategoryId.Value);
+                }
+
+                if (SelectedStockSupplierId.HasValue && SelectedStockSupplierId.Value > 0)
+                {
+                    query = query.Where(s =>
+                        s.Medicine != null &&
+                        s.Medicine.StockIns != null &&
+                        s.Medicine.StockIns.Any(si => si.SupplierId == SelectedStockSupplierId.Value));
+                }
+
+                if (SelectedStockUnitId.HasValue && SelectedStockUnitId.Value > 0)
+                {
+                    query = query.Where(s => s.Medicine?.UnitId == SelectedStockUnitId.Value);
+                }
+
+                // Tìm kiếm theo tên thuốc
+                if (!string.IsNullOrWhiteSpace(SearchStockMedicine))
+                {
+                    var searchTerm = SearchStockMedicine.ToLower().Trim();
+                    query = query.Where(s =>
+                        s.Medicine?.Name != null &&
+                        s.Medicine.Name.ToLower().Contains(searchTerm));
+                }
+
+                // Cập nhật danh sách và tính tổng
+                ListStockMedicine = new ObservableCollection<Stock>(query.ToList());
+
+                // Tính tổng số lượng và giá trị
+                UpdateCurrentTotals();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi lọc dữ liệu tồn kho hiện tại: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // In case of error, make sure ListStockMedicine is not null
+                if (ListStockMedicine == null)
+                    ListStockMedicine = new ObservableCollection<Stock>();
+            }
+        }
+
+
+
+        // Phương thức lọc tồn kho theo tháng
+        public void FilterMonthlyStock()
+        {
+            try
+            {
+                // Tạo định dạng tháng/năm
+                string monthYear = $"{SelectedYear:D4}-{SelectedMonth:D2}";
+
+                // Lấy dữ liệu từ database
+                var query = DataProvider.Instance.Context.MonthlyStocks
+                    .Include(ms => ms.Medicine)
+                    .ThenInclude(m => m.Category)
+                    .Include(ms => ms.Medicine.Unit)
+                    .Where(ms => ms.MonthYear == monthYear);
+
+                // Áp dụng các bộ lọc
+                if (SelectedStockCategoryId.HasValue && SelectedStockCategoryId.Value > 0)
+                {
+                    query = query.Where(ms => ms.Medicine.CategoryId == SelectedStockCategoryId.Value);
+                }
+
+                if (SelectedStockUnitId.HasValue && SelectedStockUnitId.Value > 0)
+                {
+                    query = query.Where(ms => ms.Medicine.UnitId == SelectedStockUnitId.Value);
+                }
+
+                if (SelectedStockSupplierId.HasValue && SelectedStockSupplierId.Value > 0)
+                {
+                    // Với tồn kho tháng, cần kiểm tra qua Medicine
+                    query = query.Where(ms =>
+                        ms.Medicine.StockIns != null &&
+                        ms.Medicine.StockIns.Any(si => si.SupplierId == SelectedStockSupplierId.Value));
+                }
+
+                // Tìm kiếm theo tên thuốc
+                if (!string.IsNullOrWhiteSpace(SearchStockMedicine))
+                {
+                    var searchTerm = SearchStockMedicine.ToLower().Trim();
+                    query = query.Where(ms =>
+                        ms.Medicine.Name.ToLower().Contains(searchTerm));
+                }
+
+                // Tải dữ liệu và cập nhật danh sách
+                var monthlyStockItems = query.ToList();
+                MonthlyStockList = new ObservableCollection<MonthlyStock>(monthlyStockItems);
+
+                // Cập nhật tổng số lượng và giá trị
+                UpdateMonthlyTotals();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi lọc dữ liệu tồn kho theo tháng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // In case of error, make sure MonthlyStockList is not null
+                if (MonthlyStockList == null)
+                    MonthlyStockList = new ObservableCollection<MonthlyStock>();
+            }
+        }
+
+
+        // Phương thức để cập nhật tổng số lượng và giá trị tồn kho hiện tại
+        private void UpdateCurrentTotals()
+        {
+            if (ListStockMedicine == null)
+            {
+                CurrentTotalQuantity = 0;
+                CurrentTotalValue = 0;
+            }
+            else
+            {
+                CurrentTotalQuantity = ListStockMedicine.Sum(x => x.Quantity);
+                CurrentTotalValue = ListStockMedicine.Sum(x => x.Quantity * (x.Medicine?.CurrentUnitPrice ?? 0));
+            }
+
+            OnPropertyChanged(nameof(TotalQuantity));
+            OnPropertyChanged(nameof(TotalValue));
+        }
+
+        // Phương thức để cập nhật tổng số lượng và giá trị tồn kho theo tháng
+        private void UpdateMonthlyTotals()
+        {
+            if (MonthlyStockList == null)
+            {
+                MonthlyTotalQuantity = 0;
+                MonthlyTotalValue = 0;
+            }
+            else
+            {
+                MonthlyTotalQuantity = MonthlyStockList.Sum(x => x.Quantity);
+                MonthlyTotalValue = MonthlyStockList.Sum(x => x.Quantity * (x.Medicine?.CurrentUnitPrice ?? 0));
+            }
+
+            OnPropertyChanged(nameof(TotalQuantity));
+            OnPropertyChanged(nameof(TotalValue));
+        }
+
         /// <summary>
         /// Load all suppliers from database
         /// </summary>
@@ -1991,42 +2321,43 @@ namespace ClinicManagement.ViewModels
                 return false;
             return true;
         }
+        // Phương thức xuất Excel cập nhật để hỗ trợ cả hai chế độ xem
         private void ExportToExcel()
         {
             try
             {
-                // Create a save file dialog
-                SaveFileDialog saveFileDialog = new SaveFileDialog
+                var saveFileDialog = new SaveFileDialog
                 {
                     Filter = "Excel files (*.xlsx)|*.xlsx",
                     DefaultExt = "xlsx",
                     Title = "Chọn vị trí lưu file Excel",
-                    FileName = $"DanhSachTonKho_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                    FileName = IsMonthlyView
+                        ? $"TonKho_Thang_{SelectedMonth:D2}_{SelectedYear}.xlsx"
+                        : $"TonKho_HienTai_{DateTime.Now:yyyyMMdd}.xlsx"
                 };
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Create and show progress dialog
+                    // Hiển thị dialog tiến trình
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Start export operation in background thread
                     Task.Run(() =>
                     {
                         try
                         {
                             using (var workbook = new XLWorkbook())
                             {
-                                var worksheet = workbook.Worksheets.Add("Danh sách tồn kho");
+                                var worksheet = workbook.Worksheets.Add("Tồn kho");
 
                                 // Report progress: 5% - Created workbook
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
                                 // Add title (merged cells)
-                                worksheet.Cell(1, 1).Value = "DANH SÁCH TỒN KHO";
+                                worksheet.Cell(1, 1).Value = IsMonthlyView
+                                    ? $"DANH SÁCH TỒN KHO THÁNG {SelectedMonth}/{SelectedYear}"
+                                    : "DANH SÁCH TỒN KHO HIỆN TẠI";
 
-                               
-
-                                var titleRange = worksheet.Range(1, 1, 1, 11); // Expanded to 11 columns 
+                                var titleRange = worksheet.Range(1, 1, 1, IsMonthlyView ? 8 : 9);
                                 titleRange.Merge();
                                 titleRange.Style.Font.Bold = true;
                                 titleRange.Style.Font.FontSize = 16;
@@ -2034,7 +2365,7 @@ namespace ClinicManagement.ViewModels
 
                                 // Add current date
                                 worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
-                                var dateRange = worksheet.Range(2, 1, 2, 11); // Expanded to 11 columns
+                                var dateRange = worksheet.Range(2, 1, 2, IsMonthlyView ? 8 : 9);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -2042,27 +2373,39 @@ namespace ClinicManagement.ViewModels
                                 // Report progress: 10% - Added title
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Add headers (with spacing of 4 cells from title)
-                                int headerRow = 6; // Row 6 (leaving 3 blank rows after title)
-                                worksheet.Cell(headerRow, 1).Value = "Tên thuốc";
-                                worksheet.Cell(headerRow, 2).Value = "Loại";
-                                worksheet.Cell(headerRow, 3).Value = "Đơn vị tính";
-                                worksheet.Cell(headerRow, 4).Value = "Mã vạch";
-                                worksheet.Cell(headerRow, 5).Value = "Mã QR";
-                                worksheet.Cell(headerRow, 6).Value = "Ngày nhập mới nhất";
-                                worksheet.Cell(headerRow, 7).Value = "Đơn giá hiện tại";
-                                worksheet.Cell(headerRow, 8).Value = "Tồn kho tổng";
-                                worksheet.Cell(headerRow, 9).Value = "Sử dụng được";
-                                worksheet.Cell(headerRow, 10).Value = "Lô mới nhất";
-                                worksheet.Cell(headerRow, 11).Value = "Ngày hết hạn";
+                                // Add headers
+                                int headerRow = 4;
+                                int column = 1;
+
+                                if (IsMonthlyView)
+                                {
+                                    worksheet.Cell(headerRow, column++).Value = "Tên thuốc";
+                                    worksheet.Cell(headerRow, column++).Value = "Loại";
+                                    worksheet.Cell(headerRow, column++).Value = "Đơn vị tính";
+                                    worksheet.Cell(headerRow, column++).Value = "Tháng/năm";
+                                    worksheet.Cell(headerRow, column++).Value = "Tồn kho tổng";
+                                    worksheet.Cell(headerRow, column++).Value = "Sử dụng được";
+                                    worksheet.Cell(headerRow, column++).Value = "Đơn giá";
+                                    worksheet.Cell(headerRow, column++).Value = "Giá trị tồn";
+                                }
+                                else
+                                {
+                                    worksheet.Cell(headerRow, column++).Value = "Tên thuốc";
+                                    worksheet.Cell(headerRow, column++).Value = "Loại";
+                                    worksheet.Cell(headerRow, column++).Value = "Đơn vị tính";
+                                    worksheet.Cell(headerRow, column++).Value = "Ngày nhập mới nhất";
+                                    worksheet.Cell(headerRow, column++).Value = "Đơn giá hiện tại";
+                                    worksheet.Cell(headerRow, column++).Value = "Tồn kho tổng";
+                                    worksheet.Cell(headerRow, column++).Value = "Sử dụng được";
+                                    worksheet.Cell(headerRow, column++).Value = "Lô mới nhất";
+                                    worksheet.Cell(headerRow, column++).Value = "Thành tiền";
+                                }
 
                                 // Style header row
-                                var headerRange = worksheet.Range(headerRow, 1, headerRow, 11);
+                                var headerRange = worksheet.Range(headerRow, 1, headerRow, IsMonthlyView ? 8 : 9);
                                 headerRange.Style.Font.Bold = true;
                                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
                                 headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-
-                                // Add borders to header
                                 headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                 headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
@@ -2070,93 +2413,107 @@ namespace ClinicManagement.ViewModels
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(20));
 
                                 // Add data
-                                int row = headerRow + 1; // Start data from next row after header
-                                int totalItems = ListStockMedicine.Count;
-
-                                // Create data range (to apply borders later)
+                                int row = headerRow + 1;
+                                int totalItems = IsMonthlyView ? MonthlyStockList.Count : ListStockMedicine.Count;
                                 var dataStartRow = row;
 
-                                for (int i = 0; i < totalItems; i++)
+                                if (IsMonthlyView)
                                 {
-                                    var item = ListStockMedicine[i];
-                                    var medicine = item.Medicine;
+                                    for (int i = 0; i < totalItems; i++)
+                                    {
+                                        var item = MonthlyStockList[i];
+                                        column = 1;
 
-                                    worksheet.Cell(row, 1).Value = medicine.Name ?? "";
-                                    worksheet.Cell(row, 2).Value = medicine.Category?.CategoryName ?? "";
-                                    worksheet.Cell(row, 3).Value = medicine.Unit?.UnitName ?? "";
-                                    worksheet.Cell(row, 4).Value = medicine.BarCode ?? "";
-                                    worksheet.Cell(row, 5).Value = medicine.QrCode ?? "";
+                                        worksheet.Cell(row, column++).Value = item.Medicine?.Name ?? "";
+                                        worksheet.Cell(row, column++).Value = item.Medicine?.Category?.CategoryName ?? "";
+                                        worksheet.Cell(row, column++).Value = item.Medicine?.Unit?.UnitName ?? "";
+                                        worksheet.Cell(row, column++).Value = item.MonthYear;
+                                        worksheet.Cell(row, column++).Value = item.Quantity;
+                                        worksheet.Cell(row, column++).Value = item.CanUsed;
 
-                                    if (medicine.LatestImportDate.HasValue)
-                                        worksheet.Cell(row, 6).Value = medicine.LatestImportDate.Value.ToString("dd/MM/yyyy");
-                                    else
-                                        worksheet.Cell(row, 6).Value = "";
+                                        decimal unitPrice = item.Medicine?.CurrentUnitPrice ?? 0;
+                                        worksheet.Cell(row, column++).Value = unitPrice;
+                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
 
-                                    worksheet.Cell(row, 7).Value = medicine.CurrentSellPrice;
-                                    worksheet.Cell(row, 7).Style.NumberFormat.Format = "#,##0"; // Formatting for currency
+                                        decimal stockValue = item.Quantity * unitPrice;
+                                        worksheet.Cell(row, column++).Value = stockValue;
+                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
 
-                                    worksheet.Cell(row, 8).Value = item.Quantity;
-                                    worksheet.Cell(row, 9).Value = medicine.TotalStockQuantity;
-                                    worksheet.Cell(row, 10).Value = medicine.CalculatedRemainingQuantity;
+                                        row++;
 
-                                    if (medicine.CurrentExpiryDate.HasValue)
-                                        worksheet.Cell(row, 11).Value = medicine.CurrentExpiryDate.Value.ToString("dd/MM/yyyy");
-                                    else
-                                        worksheet.Cell(row, 11).Value = "";
+                                        // Update progress
+                                        int progressValue = 20 + (i * 60 / totalItems);
+                                        Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
+                                        Thread.Sleep(5); // Slight delay for visual feedback
+                                    }
+                                }
+                                else
+                                {
+                                    for (int i = 0; i < totalItems; i++)
+                                    {
+                                        var item = ListStockMedicine[i];
+                                        var medicine = item.Medicine;
+                                        column = 1;
 
-                                    row++;
+                                        worksheet.Cell(row, column++).Value = medicine?.Name ?? "";
+                                        worksheet.Cell(row, column++).Value = medicine?.Category?.CategoryName ?? "";
+                                        worksheet.Cell(row, column++).Value = medicine?.Unit?.UnitName ?? "";
 
-                                    // Update progress based on percentage processed
-                                    int progressValue = 20 + (i * 60 / totalItems);
-                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
+                                        if (medicine?.LatestImportDate.HasValue == true)
+                                            worksheet.Cell(row, column++).Value = medicine.LatestImportDate.Value.ToString("dd/MM/yyyy");
+                                        else
+                                            worksheet.Cell(row, column++).Value = "";
 
-                                    // Add a small delay to make the progress visible
-                                    Thread.Sleep(30);
+                                        worksheet.Cell(row, column++).Value = medicine?.CurrentSellPrice ?? 0;
+                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
+
+                                        worksheet.Cell(row, column++).Value = item.Quantity;
+                                        worksheet.Cell(row, column++).Value = medicine?.TotalStockQuantity ?? 0;
+                                        worksheet.Cell(row, column++).Value = medicine?.CalculatedRemainingQuantity ?? 0;
+
+                                        decimal totalValue = item.Quantity * (medicine?.CurrentUnitPrice ?? 0);
+                                        worksheet.Cell(row, column++).Value = totalValue;
+                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
+
+                                        row++;
+
+                                        // Update progress
+                                        int progressValue = 20 + (i * 60 / totalItems);
+                                        Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
+                                        Thread.Sleep(5); // Slight delay for visual feedback
+                                    }
                                 }
 
                                 // Report progress: 80% - Data added
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
 
-                                // Apply borders to the data range
+                                // Apply borders to data
                                 if (totalItems > 0)
                                 {
-                                    var dataRange = worksheet.Range(dataStartRow, 1, row - 1, 11);
+                                    var dataRange = worksheet.Range(dataStartRow, 1, row - 1, IsMonthlyView ? 8 : 9);
                                     dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                     dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
-
-                                    // Center-align certain columns
-                                    worksheet.Column(3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Unit
-                                    worksheet.Column(6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Date
-                                    worksheet.Column(7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;  // Price
-                                    worksheet.Column(8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Quantity
-                                    worksheet.Column(9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Usable
-                                    worksheet.Column(10).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Latest batch
-                                    worksheet.Column(11).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Expiry
                                 }
 
-                                // Add total rows
-                                worksheet.Cell(row + 1, 7).Value = "Tổng số mặt hàng:";
-                                worksheet.Cell(row + 1, 8).Value = totalItems;
-                                worksheet.Cell(row + 1, 8).Style.Font.Bold = true;
+                                // Add totals row
+                                int totalCol = IsMonthlyView ? 5 : 6;
+                                int valueCol = IsMonthlyView ? 8 : 9;
 
-                                worksheet.Cell(row + 2, 7).Value = "Tổng số lượng tồn:";
-                                worksheet.Cell(row + 2, 8).Value = TotalQuantity;
-                                worksheet.Cell(row + 2, 8).Style.Font.Bold = true;
+                                row++;
+                                worksheet.Cell(row, 1).Value = "Tổng cộng";
+                                worksheet.Cell(row, 1).Style.Font.Bold = true;
 
-                                worksheet.Cell(row + 3, 7).Value = "Tổng tiền nhập:";
-                                worksheet.Cell(row + 3, 8).Value = decimal.Parse(TotalValue, System.Globalization.NumberStyles.Currency);
-                                worksheet.Cell(row + 3, 8).Style.NumberFormat.Format = "#,##0";
-                                worksheet.Cell(row + 3, 8).Style.Font.Bold = true;
+                                // Tổng số lượng
+                                worksheet.Cell(row, totalCol).Value = IsMonthlyView ? MonthlyTotalQuantity : CurrentTotalQuantity;
+                                worksheet.Cell(row, totalCol).Style.Font.Bold = true;
+
+                                // Tổng giá trị
+                                worksheet.Cell(row, valueCol).Value = IsMonthlyView ? MonthlyTotalValue : CurrentTotalValue;
+                                worksheet.Cell(row, valueCol).Style.Font.Bold = true;
+                                worksheet.Cell(row, valueCol).Style.NumberFormat.Format = "#,##0";
 
                                 // Auto-fit columns
                                 worksheet.Columns().AdjustToContents();
-
-                                // Set minimum widths for better readability
-                                worksheet.Column(1).Width = 30; // Name
-                                worksheet.Column(2).Width = 20; // Category
-                                worksheet.Column(4).Width = 15; // Barcode
-                                worksheet.Column(5).Width = 15; // QR Code
-                                worksheet.Column(7).Width = 15; // Price
 
                                 // Report progress: 90% - Formatting complete
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
@@ -2166,19 +2523,15 @@ namespace ClinicManagement.ViewModels
 
                                 // Report progress: 100% - File saved
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                Thread.Sleep(200); // Slight delay for visual feedback
 
-                                // Small delay to show 100%
-                                Thread.Sleep(300);
-
-                                // Close progress dialog
-                                Application.Current.Dispatcher.Invoke(() => progressDialog.Close());
-
-                                // Show success message
+                                // Close progress dialog and show success message
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
+                                    progressDialog.Close();
                                     MessageBox.Show(
                                         $"Đã xuất danh sách tồn kho thành công!\nĐường dẫn: {saveFileDialog.FileName}",
-                                        "Thành công",
+                                        "Thông báo",
                                         MessageBoxButton.OK,
                                         MessageBoxImage.Information);
                                 });
@@ -2186,11 +2539,9 @@ namespace ClinicManagement.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            // Close progress dialog on error
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
-
                                 MessageBox.Show(
                                     $"Lỗi khi xuất Excel: {ex.Message}",
                                     "Lỗi",
@@ -2200,7 +2551,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // Show progress dialog
                     progressDialog.ShowDialog();
                 }
             }
@@ -2213,6 +2564,7 @@ namespace ClinicManagement.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
 
         #endregion
 
@@ -2573,19 +2925,8 @@ namespace ClinicManagement.ViewModels
 );
 
 
-                // Calculate total quantity across all medicines
-                TotalQuantity = ListMedicine.Sum(m => Math.Max(0, m.Quantity)).ToString() ?? "0";
 
-                // Calculate total value based on current prices and usable quantities
-                decimal totalValue = 0;
-                foreach (var stockItem in ListMedicine)
-                {
-                    // Only count medicines with valid expiry dates and positive quantities
-                    int usableQuantity = Math.Max(0, stockItem.Medicine.TotalStockQuantity);
-                    totalValue += usableQuantity * stockItem.Medicine.CurrentUnitPrice;
-                }
-
-                TotalValue = totalValue.ToString("N0");
+                UpdateCurrentTotals();
 
                 // Load other data
                 UnitList = new ObservableCollection<Unit>(

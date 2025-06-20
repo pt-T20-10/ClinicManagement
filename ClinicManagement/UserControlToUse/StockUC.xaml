@@ -21,7 +21,12 @@
         <conver:LowStockConverter x:Key="LowStockConverter"/>
         <conver:NearExpiryConverter x:Key="NearExpiryConverter"/>
         <conver:ExpiredConverter x:Key="ExpiredConverter"/>
+        <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conver:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <conver:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <conver:MonthlyStockValueConverter x:Key="MonthlyStockValueConverter"/>
     </UserControl.Resources>
+
     <materialDesign:Card >
 
         <TabControl
@@ -65,39 +70,116 @@
                                     <ColumnDefinition Width="auto"></ColumnDefinition>
                                     <ColumnDefinition Width="auto"></ColumnDefinition>
                                     <ColumnDefinition Width="auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                    <RowDefinition Height="auto"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <!-- Toggle chế độ xem -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,10,15,10">
+                                    <RadioButton
+                                        Margin="5 0 15 0"
+                                       Content="Tồn kho hiện tại"
+                                      IsChecked="{Binding IsMonthlyView, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}"
+                                      Style="{StaticResource MaterialDesignLightRadioButton}"
+                                        />
+                                    <RadioButton
+                                      Content="Tồn kho theo tháng"
+                                      IsChecked="{Binding IsMonthlyView, Mode=TwoWay}"
+                                      Style="{StaticResource MaterialDesignLightRadioButton}"
+                                             />
+          
+                                </StackPanel>
 
+                                <!-- Bộ chọn cho Tồn kho theo tháng -->
+                                <StackPanel 
+        Grid.Column="1"
+        Orientation="Horizontal" 
+        Margin="10,10,0,10"
+        Visibility="{Binding IsMonthlyView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ComboBox 
+            Width="80"
+            materialDesign:HintAssist.Hint="Tháng"
+            Style="{StaticResource MaterialDesignOutlinedComboBox}"
+            ItemsSource="{Binding MonthOptions}"
+            SelectedItem="{Binding SelectedMonth}"/>
+                                    <ComboBox 
+            Width="100"
+            Margin="10,0,0,0"
+            materialDesign:HintAssist.Hint="Năm"
+            Style="{StaticResource MaterialDesignOutlinedComboBox}"
+            ItemsSource="{Binding YearOptions}"
+            SelectedItem="{Binding SelectedYear}"/>
+                                </StackPanel>
+
+                                <!-- Combobox bộ lọc hiện tại -->
                                 <ComboBox
+                                    Grid.Column="2"
                                     ItemsSource="{Binding SupplierList}"
                                     DisplayMemberPath="SupplierName"
                                     SelectedItem="{Binding SelectedStockSupplier}"
-                                    Grid.Column="0"
                                     Margin="10 5 15 5"
                                     Width="180"
                                     materialDesign:HintAssist.Hint="Chọn nhà cung cấp"
                                     Style="{StaticResource MaterialDesignOutlinedComboBox}">
                                 </ComboBox>
                                 <ComboBox
-                                    ItemsSource="{Binding CategoryList}"
-                                    DisplayMemberPath="CategoryName"
-                                    SelectedItem="{Binding SelectedStockCategoryName}"
-                                    Grid.Column="1"
-                                    Margin="10 5 5 5"
-                                    Width="120"
-                                    materialDesign:HintAssist.Hint="Loại"
-                                    Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                Grid.Column="3"
+                                ItemsSource="{Binding CategoryList}"
+                                DisplayMemberPath="CategoryName"
+                                SelectedItem="{Binding SelectedStockCategoryName}"
+                                Margin="10 5 5 5"
+                                Width="120"
+                                materialDesign:HintAssist.Hint="Loại"
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}">
                                 </ComboBox>
-                                <ComboBox
-                                    ItemsSource="{Binding UnitList}"
-                                    DisplayMemberPath="UnitName"
-                                    SelectedItem="{Binding SelectedStockUnit}"
-                                    Grid.Column="2"
-                                    Margin="10 5 5 5"
-                                    Width="120"
-                                    materialDesign:HintAssist.Hint="ĐVT"
-                                    Style="{StaticResource MaterialDesignOutlinedComboBox}">
-                                </ComboBox>
+
+
+                                <!-- StackPanel hiển thị tổng số lượng và giá trị -->
+                                <StackPanel Grid.Row="1">
+                                    <Grid Margin="0,5,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock 
+            Grid.Column="0"
+            Text="Tổng số lượng tồn: " 
+            FontWeight="Medium"
+            VerticalAlignment="Center"/>
+                                        <TextBlock
+            Grid.Column="1"
+            Text="{Binding TotalQuantity, UpdateSourceTrigger=PropertyChanged}"
+            FontWeight="Medium"
+            Margin="5,0,0,0"
+            VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid HorizontalAlignment="Left" Margin="0,5,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock 
+            Grid.Column="0"
+            Text="Tổng tiền nhập: " 
+            FontWeight="SemiBold"
+            VerticalAlignment="Center"/>
+                                        <TextBlock
+            Grid.Column="1"
+            Text="{Binding TotalValue, StringFormat='{}{0} VNĐ', UpdateSourceTrigger=PropertyChanged}"
+            FontWeight="SemiBold"
+            Padding="5,2"
+            Margin="5,0,0,0"
+            VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
                             </Grid>
+
+                           
+
+
                             <TextBox
                                 Margin="20 0 0 0"
                                 Grid.Column="2"
@@ -166,162 +248,187 @@
                                     </StackPanel>
                                 </Button>
                                 <materialDesign:Card 
-                                        HorizontalAlignment="Right"
-                                        Grid.Column="2"
-                                        Margin="0,10,0,0"
-                                        Padding="8"
-                                        UniformCornerRadius="6"
-                                        >
-                                    <StackPanel >
-                                        <Grid Margin="0,5,0,5">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock 
-                                            Grid.Column="0"
-                                            Text="Tổng số lượng tồn: " 
-                                            FontWeight="Medium"
-                                            VerticalAlignment="Center"/>
-                                            <TextBlock
-                                            Grid.Column="1"
-                                            Text="{Binding TotalQuantity, UpdateSourceTrigger=PropertyChanged}"
-                                            FontWeight="Medium"
-                                            Margin="5,0,0,0"
-                                            VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Grid HorizontalAlignment="Right" Margin="0,5,0,5">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock 
-                                                Grid.Column="0"
-                                                Text="Tổng tiền nhập: " 
-                                                FontWeight="SemiBold"
-                                                VerticalAlignment="Center"/>
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                Text="{Binding TotalValue, StringFormat='{}{0:N0} VNĐ',UpdateSourceTrigger=PropertyChanged}"
-                                                FontWeight="SemiBold"
-                                                Padding="5,2"
-                                                Margin="5,0,0,0"
-                                                VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
+    HorizontalAlignment="Right"
+    Grid.Column="2"
+    Margin="0,10,0,0"
+    Padding="8"
+    UniformCornerRadius="6">
+                                 
                                 </materialDesign:Card>
+
                             </Grid>
                         </Grid>
 
 
                         <!-- ListView in ScrollViewer with proper sizing -->
                         <ScrollViewer Grid.Row="1" Grid.ColumnSpan="3" 
-                             VerticalScrollBarVisibility="Auto" 
-                             HorizontalScrollBarVisibility="Auto"
-                             Margin="0,10,0,0">
-                            <!-- DataGrid for Stock Medicines -->
-                            <DataGrid ItemsSource="{Binding ListStockMedicine}" 
-                                      AutoGenerateColumns="False"
-                                      IsReadOnly="True"
-                                      SelectionMode="Single"
-                                      SelectionUnit="FullRow"
-                                      CanUserAddRows="False"
-                                      CanUserDeleteRows="False"
-                                      Background="White">
-                                <DataGrid.Resources>
-                                    <Style TargetType="DataGridColumnHeader">
-                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        <Setter Property="Background" Value="#ECEFF1"/>
-                                        <Setter Property="Foreground" Value="#37474F"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Height" Value="40"/>
-                                        <Setter Property="Padding" Value="8,0"/>
-                                    </Style>
+               VerticalScrollBarVisibility="Auto" 
+               HorizontalScrollBarVisibility="Auto"
+               Margin="0,10,0,0">
+                            <Grid>
+                                <!-- DataGrid cho tồn kho hiện tại -->
+                                <DataGrid 
+            Visibility="{Binding IsMonthlyView, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+            ItemsSource="{Binding ListStockMedicine}" 
+            AutoGenerateColumns="False"
+            IsReadOnly="True"
+            SelectionMode="Single"
+            SelectionUnit="FullRow"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            Background="White">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
 
-                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="Padding" Value="4,0"/>
-                                    </Style>
-                                </DataGrid.Resources>
-                                <DataGrid.RowStyle>
-                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Medicine.TotalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True">
-                                                <Setter Property="Background" Value="#FFEB00"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource NearExpiryConverter}}" Value="True">
-                                                <Setter Property="Background" Value="#FFEB00"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource ExpiredConverter}}" Value="True">
-                                                <Setter Property="Background" Value="#FFEBEE"/>
-                                                <Setter Property="Foreground" Value="#EA2F14"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </DataGrid.RowStyle>
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Tên thuốc" Width="180" 
-                            Binding="{Binding Medicine.Name}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Loại" Width="150" 
-                            Binding="{Binding Medicine.Category.CategoryName}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="ĐVĐ" Width="100" 
-                            Binding="{Binding Medicine.Unit.UnitName}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Ngày nhập mới nhất" Width="180" 
-                            Binding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Đơn giá hiện tại" Width="130" 
-                            Binding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Tồn kho tổng"   Width="100" 
-                            Binding="{Binding Quantity}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Sử dụng được"  Width="100" 
-                            Binding="{Binding Medicine.TotalStockQuantity}" 
-                            ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTemplateColumn Header="Lô mới nhất" Width="120">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Medicine.CalculatedRemainingQuantity}" 
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+
+                                    <!-- RowStyle cho DataGrid tồn kho hiện tại -->
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Medicine.TotalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True">
+                                                    <Setter Property="Background" Value="#FFEB00"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource NearExpiryConverter}}" Value="True">
+                                                    <Setter Property="Background" Value="#FFEB00"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Medicine.CurrentExpiryDate, Converter={StaticResource ExpiredConverter}}" Value="True">
+                                                    <Setter Property="Background" Value="#FFEBEE"/>
+                                                    <Setter Property="Foreground" Value="#EA2F14"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tên thuốc" Width="180" 
+                    Binding="{Binding Medicine.Name}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Loại" Width="150" 
+                    Binding="{Binding Medicine.Category.CategoryName}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="ĐVĐ" Width="100" 
+                    Binding="{Binding Medicine.Unit.UnitName}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Ngày nhập mới nhất" Width="180" 
+                    Binding="{Binding Medicine.LatestImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Đơn giá hiện tại" Width="130" 
+                    Binding="{Binding Medicine.CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Tồn kho tổng" Width="100" 
+                    Binding="{Binding Quantity}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Sử dụng được" Width="100" 
+                    Binding="{Binding Medicine.TotalStockQuantity}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTemplateColumn Header="Lô mới nhất" Width="120">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Medicine.CalculatedRemainingQuantity}" 
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Width="280">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.ShowMedicineDetailsCommand}"
-                                CommandParameter="{Binding Medicine}"
-                                Margin="0 0 10 0"
-                                Content="Xem chi tiết"
-                                Style="{StaticResource MaterialDesignRaisedButton}"
-                                Width="120" Height="30"
-                                ToolTip="Xem chi tiết lô thuốc">
-                                                    </Button>
-                                                    <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.DeleteMedicine}"
-                                CommandParameter="{Binding Medicine}"
-                                Content="Xóa thuốc hết hạn"
-                                Style="{StaticResource MaterialDesignRaisedButton}"
-                                Width="120" Height="30"
-                                ToolTip="Xóa thuốc hết hạn">
-                                                    </Button>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTemplateColumn Width="280">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.ShowMedicineDetailsCommand}"
+                                    CommandParameter="{Binding Medicine}"
+                                    Margin="0 0 10 0"
+                                    Content="Xem chi tiết"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Width="120" Height="30"
+                                    ToolTip="Xem chi tiết lô thuốc">
+                                                        </Button>
+                                                        <Button Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.DeleteMedicine}"
+                                    CommandParameter="{Binding Medicine}"
+                                    Content="Xóa thuốc hết hạn"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Width="120" Height="30"
+                                    ToolTip="Xóa thuốc hết hạn">
+                                                        </Button>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
 
+                                <!-- DataGrid cho tồn kho theo tháng -->
+                                <DataGrid 
+                                Visibility="{Binding IsMonthlyView, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                ItemsSource="{Binding MonthlyStockList}" 
+                                AutoGenerateColumns="False"
+                                IsReadOnly="True"
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                Background="White">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
 
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tên thuốc" Width="180" 
+                    Binding="{Binding Medicine.Name}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Loại" Width="150" 
+                    Binding="{Binding Medicine.Category.CategoryName}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="ĐVĐ" Width="100" 
+                    Binding="{Binding Medicine.Unit.UnitName}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Tháng/Năm" Width="100" 
+                    Binding="{Binding MonthYear}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Tồn kho tổng" Width="120" 
+                    Binding="{Binding Quantity}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Sử dụng được" Width="120" 
+                    Binding="{Binding CanUsed}" 
+                  
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                        <DataGridTextColumn Header="Ngày ghi nhận" Width="150" 
+                    Binding="{Binding RecordedDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
+                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
                         </ScrollViewer>
+
                     </Grid>
                 </materialDesign:Card>
 

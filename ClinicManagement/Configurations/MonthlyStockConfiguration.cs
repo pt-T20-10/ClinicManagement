@@ -22,6 +22,10 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("SoLuong")
                 .HasDefaultValue(0);
 
+               builder.Property(e => e.CanUsed)
+                .HasColumnName("SuDungDuoc")
+                .HasDefaultValue(0);
+
             builder.Property(e => e.MonthYear)
                 .HasColumnName("ThangNam")
                 .HasColumnType("CHAR(7)")
