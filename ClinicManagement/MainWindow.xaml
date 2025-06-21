@@ -47,51 +47,27 @@
         <materialDesign:Card Grid.Row="1">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="100"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
                     <RowDefinition Height="28*" ></RowDefinition>
                     <RowDefinition Height="407*"/>
                 </Grid.RowDefinitions>
 
-                <Grid Margin="16,16,16,16">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
-                    <!-- Logo + Tên -->
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                        <TextBlock Text="MediClinic" FontWeight="Bold" FontSize="28" Foreground="Black"/>
-                        <TextBlock Text="Hệ thống quản lý phòng khám" FontSize="18" Foreground="Gray"/>
-                    </StackPanel>
-
                     <!-- Nút chức năng -->
-                    <StackPanel HorizontalAlignment="Right" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" >
-                        <Button Command="{Binding AddAppointmentCommand}" CommandParameter="{Binding ElementName=MainTabControl}" Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm lịch hẹn" Style="{StaticResource MaterialDesignOutlinedButton}" />
-                        <Button Command="{Binding AddPatientCommand}" Height="45" Width="150" Margin="5 0 5 0" Content="+ Thêm bệnh nhân" Style="{StaticResource MaterialDesignOutlinedButton}" />
-                        <!-- User Profile Section - Added in 3rd row -->
-                        <materialDesign:Card Padding="15 5 15 5">
-                            <Grid  Height="Auto">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <!-- User Info -->
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding CurrentAccount.Doctor.FullName}" Foreground="Black" FontWeight="Medium" FontSize="14"/>
-                                    <TextBlock Text="{Binding CurrentAccount.Role}" Foreground="#AAAAAA" FontSize="12"/>
-                                </StackPanel>
-                            </Grid>
-                        </materialDesign:Card>
-                    </StackPanel>
                 </Grid>
-
                 <!--#region Tab control-->
 
                 <TabControl Grid.Row="1"
+                            Margin="0 10 0 0 "
                          TabStripPlacement="Left"
                              SelectionChanged="MainTabControl_SelectionChanged"
                            x:Name="MainTabControl" Grid.RowSpan="2">
+                    
                     <TabItem Width="150" Height="80" x:Name="StatisticsTab"
                              Visibility="{Binding CanViewStatistics, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >

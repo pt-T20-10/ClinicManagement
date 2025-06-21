@@ -6,7 +6,20 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>ResourceXAML\Icons\icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="ResourceXAML\Icons\logo24.png" />
+    <None Remove="ResourceXAML\Icons\logo96.png" />
+    <None Remove="ResourceXAML\Images\banner.png" />
+    <None Remove="ResourceXAML\Images\logo24.png" />
+    <None Remove="ResourceXAML\Images\logo96.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ResourceXAML\Icons\icon.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
@@ -26,8 +39,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Images\" />
     <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="ResourceXAML\Icons\logo24.png" />
+    <Resource Include="ResourceXAML\Icons\logo96.png" />
+    <Resource Include="ResourceXAML\Images\banner.png" />
+    <Resource Include="ResourceXAML\Images\logo24.png" />
+    <Resource Include="ResourceXAML\Images\logo96.png" />
   </ItemGroup>
 
 </Project>

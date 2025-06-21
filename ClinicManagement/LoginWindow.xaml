@@ -11,10 +11,9 @@
         TextElement.FontSize="13"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
-        Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         mc:Ignorable="d"
-        Title="Đăng nhập" Height="700" Width="850"
+        Height="600" Width="950"
         WindowStyle="None"
         ResizeMode="NoResize"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
@@ -23,90 +22,157 @@
         DataContext="{StaticResource LoginVM}"
         Name="loginWindow">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
-            <uc:ControlBarUC Tag="{Binding Title, ElementName=loginWindow}"></uc:ControlBarUC>
-        </Grid>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.5*"/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            
-            <materialDesign:Card Grid.Column="1">
-                <Grid>
-                    <Grid.Resources>
-                        <Style TargetType="Grid">
-                            <Setter Property="Margin" Value="15 0 5 0"></Setter>
-                        </Style>
-                    </Grid.Resources>
+    <!-- Thêm Input Bindings cho phím Esc -->
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" 
+                 Command="{Binding CloseCommand}" 
+                 CommandParameter="{Binding ElementName=loginWindow}"/>
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <LinearGradientBrush x:Key="LoginGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0065F8" Offset="0"/>
+            <GradientStop Color="#00FFDE" Offset="1"/>
+        </LinearGradientBrush>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource LoginGradient}">
+        <!-- Main login card with shadow -->
+        <materialDesign:Card 
+            VerticalAlignment="Center" 
+            HorizontalAlignment="Center"
+            Width="800" 
+            Height="500"
+            UniformCornerRadius="30"
+            materialDesign:ElevationAssist.Elevation="Dp8"
+            Margin="0,0,0,0"
+            Background="White">
+
+            <!-- Main content grid -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.3*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left side - Banner with gradient background -->
+                <Grid Grid.Column="0" Background="{StaticResource LoginGradient}">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="1.5*"/>
-                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row ="0"
-                        Margin="0 5 0 0 "
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        FontSize="50"
-                        FontWeight="Bold"
-                        Text="Welcome" />
-                    <StackPanel Grid.Row="0" VerticalAlignment="Bottom">
+
+                    <!-- Banner image -->
+                    <Image Grid.Row="1" 
+                           Source="/ResourceXAML/Images/banner.png"
+                           Stretch="Uniform" 
+                           Margin="30"
+                           VerticalAlignment="Center" 
+                           HorizontalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                    <!-- Caption text -->
+                    <StackPanel Grid.Row="2" Margin="20,0,20,20">
+                        <TextBlock 
+                            Text="Chăm sóc sức khỏe - Vì cuộc sống tốt đẹp hơn" 
+                            Foreground="White"
+                            FontSize="14"
+                            TextAlignment="Center"
+                            FontWeight="Medium"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Right side - Login form -->
+                <Grid Grid.Column="1" Margin="30,30,30,30">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Greeting texts -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,30">
+                        <TextBlock 
+                            Text="Xin chào!" 
+                            FontSize="24" 
+                            FontWeight="Bold" 
+                            Foreground="{StaticResource LoginGradient}"/>
+                        <TextBlock 
+                            Text="Đăng nhập vào tài khoản của bạn" 
+                            FontSize="14" 
+                            Margin="0,5,0,0" 
+                            Opacity="0.7"/>
+                    </StackPanel>
+
+                    <!-- Login form -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                        <!-- Username field -->
                         <TextBox
-                           Margin="5 0 5 20"
-                           Grid.Row="0"
-                           VerticalAlignment="Center"
-                           materialDesign:HintAssist.Hint="User Name"
-                           Text="{Binding UserName}"
-                           Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
+                            Margin="0,0,0,20"
+                            materialDesign:HintAssist.Hint="Tên đăng nhập"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            Text="{Binding UserName}"
+                            FontSize="14"/>
+
+                        <!-- Password field -->
                         <PasswordBox
-                            Margin="5 5 5 20"
-                            materialDesign:HintAssist.Hint="Password"
+                            materialDesign:HintAssist.Hint="Mật khẩu"
                             materialDesign:PasswordBoxAssist.Password="{Binding Password2, Mode=TwoWay}"
                             x:Name="FloatingPasswordBox"
                             IsEnabled="{Binding ElementName=RevealPasswordFloatingEnabled, Path=IsChecked}"
-                            Style="{StaticResource MaterialDesignFloatingHintRevealPasswordBox}">
-                        <i:Interaction.Triggers>
+                            Style="{StaticResource MaterialDesignOutlinedRevealPasswordBox}"
+                            FontSize="14">
+                            <i:Interaction.Triggers>
                                 <i:EventTrigger EventName="PasswordChanged">
-                                    <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" CommandParameter="{Binding ElementName=FloatingPasswordBox}"/>
+                                    <i:InvokeCommandAction Command="{Binding PasswordChangedCommand}" 
+                                                          CommandParameter="{Binding ElementName=FloatingPasswordBox}"/>
                                 </i:EventTrigger>
                             </i:Interaction.Triggers>
                         </PasswordBox>
-                    </StackPanel>
-                    <Grid Grid.Row="1" Margin="10,30,10,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <Button
-                            VerticalAlignment="Top"
-                            IsDefault="True"
-                            Width="100"
-                            Content="Login"
-                            Command="{Binding LoginCommand}"
-                             CommandParameter="{Binding ElementName=loginWindow}"
-                            IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-                            Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-                            Background="Snow"
-                            ToolTip="Resource name: MaterialDesignRaisedSecondaryButton"/>
-                        <Button Grid.Column="1"
-                                 VerticalAlignment="Top"
-                             Width="100"
-                            Content="Cancel"
-                             Command="{Binding CloseCommand}"
-                             CommandParameter="{Binding ElementName=loginWindow}"
-                            IsEnabled="{Binding DataContext.ControlsEnabled, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
-                            Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-                            ToolTip="Resource name: MaterialDesignRaisedSecondaryButton"/>
-                    </Grid>
 
+    
+                    </StackPanel>
+
+                    <!-- Login button -->
+                    <Button 
+                        Grid.Row="2"
+                        Content="ĐĂNG NHẬP"
+                        IsDefault="True"
+                        Command="{Binding LoginCommand}"
+                        CommandParameter="{Binding ElementName=loginWindow}"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Height="45"
+                        Width="200"
+                        VerticalAlignment="Top"
+                        Margin="0,20,0,0"
+                        materialDesign:ButtonAssist.CornerRadius="20"
+                        Background="{StaticResource LoginGradient}"
+                        BorderBrush="{StaticResource LoginGradient}"
+                        FontWeight="Medium"/>
+
+                    <!-- Cancel link -->
+                    <StackPanel 
+                        Grid.Row="3" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Center">
+                        <TextBlock 
+                            Text="Hủy thao tác?" 
+                            VerticalAlignment="Center" 
+                            Opacity="0.7"/>
+                        <Button 
+                            Content="Thoát"
+                            Margin="8,0,0,0"
+                            Command="{Binding CloseCommand}"
+                            CommandParameter="{Binding ElementName=loginWindow}"
+                            IsCancel="True"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Foreground="{StaticResource LoginGradient}"
+                            FontWeight="Medium"/>
+                    </StackPanel>
                 </Grid>
-            </materialDesign:Card>
-        </Grid>
-       
+            </Grid>
+        </materialDesign:Card>
     </Grid>
 </Window>

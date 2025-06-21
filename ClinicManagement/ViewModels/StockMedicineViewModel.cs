@@ -968,7 +968,7 @@ namespace ClinicManagement.ViewModels
                 Enumerable.Range(DateTime.Now.Year - 5, 6)
             );
 
-            SelectedMonth = DateTime.Now.Month;
+            SelectedMonth = DateTime.Now.Month-1;
             SelectedYear = DateTime.Now.Year;
 
             // Đặt chế độ xem mặc định là tồn kho hiện tại
@@ -1678,6 +1678,7 @@ namespace ClinicManagement.ViewModels
                 return error;
             }
         }
+
         private void AddSupplier()
         {
             try
@@ -1908,17 +1909,13 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        /// <summary>
-        /// Auto-filter suppliers based on current filter settings
-        /// </summary>
+
         private void ExecuteAutoSupplierFilter()
         {
             FilterSuppliers();
         }
 
-        /// <summary>
-        /// Filter suppliers based on status and search text
-        /// </summary>
+
         private void FilterSuppliers()
         {
             if (_allSuppliers == null)
@@ -1961,10 +1958,6 @@ namespace ClinicManagement.ViewModels
             // Update the SupplierList with filtered results
             SupplierList = new ObservableCollection<Supplier>(filteredSuppliers);
         }
-
-
-        // Phương thức lọc tồn kho hiện tại
-        // Phương thức lọc tồn kho hiện tại
         // Phương thức lọc tồn kho hiện tại
         public void FilterCurrentStock()
         {
@@ -2197,57 +2190,7 @@ namespace ClinicManagement.ViewModels
             ClearForm();
 
         }
-        private void ExecuteResetStockFilters()
-        {
-            
-            SelectedStockCategoryName = null;
-            SelectedStockSupplier = null;
-            SelectedStockUnit = null;
-            SearchStockMedicine = ""; // Clear search text
-            // Reset the stock medicine list to show all items
-            ListStockMedicine = new ObservableCollection<Stock>(_allStockMedicine);
-        }
-        private void ExecuteSearchStockMedicine()
-        {
-            if (_allStockMedicine == null || _allStockMedicine.Count == 0)
-            {
-                ListStockMedicine = new ObservableCollection<Stock>();
-                return;
-            }
-
-            // Start with all items
-            var filteredList = _allStockMedicine.AsEnumerable();
-
-            // Filter by category if selected
-            if (SelectedStockCategoryId.HasValue && SelectedStockCategoryId.Value > 0)
-            {
-                filteredList = filteredList.Where(s =>
-                    s.Medicine?.CategoryId == SelectedStockCategoryId.Value);
-            }
-            if (SelectedStockSupplierId.HasValue && SelectedStockSupplierId.Value > 0)
-            {
-                filteredList = filteredList.Where(s =>
-                    s.Medicine.StockIns != null &&
-                    s.Medicine.StockIns.Any(si => si.SupplierId == SelectedStockSupplierId.Value));
-            }
-            if (SelectedStockUnitId.HasValue && SelectedStockUnitId.Value > 0)
-            {
-                filteredList = filteredList.Where(s =>
-                    s.Medicine?.UnitId == SelectedStockUnitId.Value);
-            }  
-
-            // Filter by search text if provided
-            if (!string.IsNullOrWhiteSpace(SearchStockMedicine))
-            {
-                var searchTerm = SearchStockMedicine.ToLower().Trim();
-                filteredList = filteredList.Where(s =>
-                    s.Medicine?.Name != null &&
-                    s.Medicine.Name.ToLower().Contains(searchTerm));
-            }
-
-            // Apply filters and update the list
-            ListStockMedicine = new ObservableCollection<Stock>(filteredList.ToList());
-        }
+ 
         private void ExecuteDeleteMedicine(Medicine medicine)
         {
             try
@@ -2913,16 +2856,16 @@ namespace ClinicManagement.ViewModels
             {
                 // Load medicines with proper eager loading
               ListMedicine = new ObservableCollection<Stock>(
-    DataProvider.Instance.Context.Stocks
-    .Where(d => (bool)!d.Medicine.IsDeleted)
-    .Include(d => d.Medicine)
-        .ThenInclude(m => m.InvoiceDetails)
-    .Include(d => d.Medicine.Category)
-    .Include(d => d.Medicine.Unit)
-    .Include(d => d.Medicine.StockIns)
-        .ThenInclude(si => si.Supplier) // Đảm bảo load Supplier
-    .ToList()
-);
+                DataProvider.Instance.Context.Stocks
+                .Where(d => (bool)!d.Medicine.IsDeleted)
+                .Include(d => d.Medicine)
+                    .ThenInclude(m => m.InvoiceDetails)
+                .Include(d => d.Medicine.Category)
+                .Include(d => d.Medicine.Unit)
+                .Include(d => d.Medicine.StockIns)
+                    .ThenInclude(si => si.Supplier) // Đảm bảo load Supplier
+                .ToList()
+            );
 
 
 

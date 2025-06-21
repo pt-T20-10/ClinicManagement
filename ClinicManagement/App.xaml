@@ -12,8 +12,10 @@
                 <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="LightBlue" SecondaryColor="Lime" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
                 <ResourceDictionary Source="/ResourceXAML/MainResource.xaml"></ResourceDictionary>
+                <!-- Thêm app icon -->
+
             </ResourceDictionary.MergedDictionaries>
-          
+         <BitmapImage x:Key="AppIcon" UriSource="/ResourceXAML/Icons/icon.ico"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

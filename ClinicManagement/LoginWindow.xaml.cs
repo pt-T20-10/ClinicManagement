@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ClinicManagement.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +23,34 @@ namespace ClinicManagement
         public LoginWindow()
         {
             InitializeComponent();
+
+            // Đăng ký sự kiện KeyDown
+            this.KeyDown += LoginWindow_KeyDown;
+        }
+
+        private void LoginWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Xử lý khi phím Esc được nhấn
+            if (e.Key == Key.Escape)
+            {
+                // Lấy ViewModel từ DataContext
+                var viewModel = DataContext as LoginViewModel;
+
+                // Gọi lệnh đóng của ViewModel
+                if (viewModel != null)
+                {
+                    viewModel.CloseCommand.Execute(this);
+                }
+                else
+                {
+                    // Trường hợp không tìm thấy ViewModel, đóng cửa sổ trực tiếp
+                    this.Close();
+                }
+
+                // Đánh dấu sự kiện đã được xử lý
+                e.Handled = true;
+            }
         }
     }
+
 }

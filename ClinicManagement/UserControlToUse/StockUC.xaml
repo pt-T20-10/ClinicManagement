@@ -27,9 +27,10 @@
         <conver:MonthlyStockValueConverter x:Key="MonthlyStockValueConverter"/>
     </UserControl.Resources>
 
-    <materialDesign:Card >
+ 
 
         <TabControl
+            Margin="10"
         materialDesign:ColorZoneAssist.Mode="PrimaryLight"
         Style="{StaticResource MaterialDesignFilledTabControl}">
             <TabItem
@@ -55,6 +56,7 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition />
                         </Grid.RowDefinitions>
+                        
                         <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="3" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="auto"></ColumnDefinition>
@@ -72,54 +74,53 @@
                                     <ColumnDefinition Width="auto"></ColumnDefinition>
                                     <ColumnDefinition Width="auto"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"></RowDefinition>
-                                    <RowDefinition Height="auto"></RowDefinition>
-                                </Grid.RowDefinitions>
                                 <!-- Toggle chế độ xem -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,10,15,10">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" >
                                     <RadioButton
-                                        Margin="5 0 15 0"
+                                        Margin=" 15 0 15 0"
                                        Content="Tồn kho hiện tại"
                                       IsChecked="{Binding IsMonthlyView, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}"
                                       Style="{StaticResource MaterialDesignLightRadioButton}"
                                         />
                                     <RadioButton
                                       Content="Tồn kho theo tháng"
+                                              Margin=" 0 0 15 0"
                                       IsChecked="{Binding IsMonthlyView, Mode=TwoWay}"
                                       Style="{StaticResource MaterialDesignLightRadioButton}"
                                              />
-          
+
                                 </StackPanel>
 
                                 <!-- Bộ chọn cho Tồn kho theo tháng -->
                                 <StackPanel 
-        Grid.Column="1"
-        Orientation="Horizontal" 
-        Margin="10,10,0,10"
-        Visibility="{Binding IsMonthlyView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    Grid.Column="1"
+                                    Orientation="Horizontal" 
+                             
+                                    Visibility="{Binding IsMonthlyView, Converter={StaticResource BooleanToVisibilityConverter}}">
                                     <ComboBox 
-            Width="80"
-            materialDesign:HintAssist.Hint="Tháng"
-            Style="{StaticResource MaterialDesignOutlinedComboBox}"
-            ItemsSource="{Binding MonthOptions}"
-            SelectedItem="{Binding SelectedMonth}"/>
+                                        Width="80"
+                                           Margin=" 0 0 15 0"
+                                        materialDesign:HintAssist.Hint="Tháng"
+                                        Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                        ItemsSource="{Binding MonthOptions}"
+                                        SelectedItem="{Binding SelectedMonth}"/>
                                     <ComboBox 
-            Width="100"
-            Margin="10,0,0,0"
-            materialDesign:HintAssist.Hint="Năm"
-            Style="{StaticResource MaterialDesignOutlinedComboBox}"
-            ItemsSource="{Binding YearOptions}"
-            SelectedItem="{Binding SelectedYear}"/>
+                                        Width="100"
+                                              Margin=" 0 0 15 0"
+                                        materialDesign:HintAssist.Hint="Năm"
+                                        Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                        ItemsSource="{Binding YearOptions}"
+                                        SelectedItem="{Binding SelectedYear}"/>
                                 </StackPanel>
 
                                 <!-- Combobox bộ lọc hiện tại -->
                                 <ComboBox
                                     Grid.Column="2"
+                                          Margin=" 0 0 15 0"
                                     ItemsSource="{Binding SupplierList}"
                                     DisplayMemberPath="SupplierName"
                                     SelectedItem="{Binding SelectedStockSupplier}"
-                                    Margin="10 5 15 5"
+                            
                                     Width="180"
                                     materialDesign:HintAssist.Hint="Chọn nhà cung cấp"
                                     Style="{StaticResource MaterialDesignOutlinedComboBox}">
@@ -129,57 +130,15 @@
                                 ItemsSource="{Binding CategoryList}"
                                 DisplayMemberPath="CategoryName"
                                 SelectedItem="{Binding SelectedStockCategoryName}"
-                                Margin="10 5 5 5"
-                                Width="120"
+                     
+                                Width="110"
                                 materialDesign:HintAssist.Hint="Loại"
                                 Style="{StaticResource MaterialDesignOutlinedComboBox}">
                                 </ComboBox>
 
 
-                                <!-- StackPanel hiển thị tổng số lượng và giá trị -->
-                                <StackPanel Grid.Row="1">
-                                    <Grid Margin="0,5,0,5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock 
-            Grid.Column="0"
-            Text="Tổng số lượng tồn: " 
-            FontWeight="Medium"
-            VerticalAlignment="Center"/>
-                                        <TextBlock
-            Grid.Column="1"
-            Text="{Binding TotalQuantity, UpdateSourceTrigger=PropertyChanged}"
-            FontWeight="Medium"
-            Margin="5,0,0,0"
-            VerticalAlignment="Center"/>
-                                    </Grid>
 
-                                    <Grid HorizontalAlignment="Left" Margin="0,5,0,5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock 
-            Grid.Column="0"
-            Text="Tổng tiền nhập: " 
-            FontWeight="SemiBold"
-            VerticalAlignment="Center"/>
-                                        <TextBlock
-            Grid.Column="1"
-            Text="{Binding TotalValue, StringFormat='{}{0} VNĐ', UpdateSourceTrigger=PropertyChanged}"
-            FontWeight="SemiBold"
-            Padding="5,2"
-            Margin="5,0,0,0"
-            VerticalAlignment="Center"/>
-                                    </Grid>
-                                </StackPanel>
                             </Grid>
-
-                           
-
-
                             <TextBox
                                 Margin="20 0 0 0"
                                 Grid.Column="2"
@@ -187,7 +146,7 @@
                                 HorizontalAlignment="Left"
                                 Text="{Binding SearchStockMedicine, UpdateSourceTrigger=PropertyChanged}"
                                 Height="42"
-                                Width="500"
+                                Width="400"
                                 Padding="15 0 0 0 "
                                 materialDesign:HintAssist.Hint="Tên thuốc"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
@@ -216,15 +175,15 @@
                                   Grid.Column="0"
                                   Command="{Binding ResetStockFiltersCommand}"
                                   Style="{StaticResource MaterialDesignOutlinedButton}"
-                                  Width="100"
+                                  Width="50"
                                   Height="32"
                                   HorizontalAlignment="Left"
                                   Margin="0,0,10,0"
                                   ToolTip="Đặt lại tất cả bộ lọc">
                                     <Button.Content>
                                         <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Refresh" Margin="0,0,5,0" Width="16" Height="16"/>
-                                            <TextBlock Text="Đặt lại"/>
+                                            <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
+                                  
                                         </StackPanel>
                                     </Button.Content>
                                 </Button>
@@ -232,29 +191,65 @@
                                 <Button 
                                     Grid.Column="1"
                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Width="120"
+                                    Width="50"
                                     Height="32"
                                     Margin="0,5,30,5"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ExportStockExcelCommand}">
-
-
                                     <StackPanel  Orientation="Horizontal">
                                         <materialDesign:PackIcon 
-                                        Kind="Printer" 
+                                        Kind="FileExcel" 
                                         VerticalAlignment="Center"
-                                        Margin="0,0,5,0"/>
-                                        <TextBlock Text="Xuất excel"/>
+                                        />
+                                      
                                     </StackPanel>
                                 </Button>
-                                <materialDesign:Card 
-    HorizontalAlignment="Right"
-    Grid.Column="2"
-    Margin="0,10,0,0"
-    Padding="8"
-    UniformCornerRadius="6">
-                                 
+                                <materialDesign:Card
+                                          HorizontalAlignment="Left"
+                                          Grid.Column="2"
+                                          Margin="0,10,0,0"
+                                          Padding="8"
+                                          UniformCornerRadius="6">
+                                    <StackPanel Grid.Row="1">
+                                        <Grid Margin="0,5,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock 
+                   Grid.Column="0"
+                   Text="Tổng số lượng tồn: " 
+                   FontWeight="Medium"
+                   VerticalAlignment="Center"/>
+                                            <TextBlock
+                   Grid.Column="1"
+                   Text="{Binding TotalQuantity, UpdateSourceTrigger=PropertyChanged}"
+                   FontWeight="Medium"
+                   Margin="5,0,0,0"
+                   VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <Grid HorizontalAlignment="Left" Margin="0,5,0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock 
+                       Grid.Column="0"
+                       Text="Tổng tiền nhập: " 
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+                                            <TextBlock
+                       Grid.Column="1"
+                       Text="{Binding TotalValue, StringFormat='{}{0} VNĐ', UpdateSourceTrigger=PropertyChanged}"
+                       FontWeight="SemiBold"
+                       Padding="5,2"
+                       Margin="5,0,0,0"
+                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
                                 </materialDesign:Card>
+                                <!-- StackPanel hiển thị tổng số lượng và giá trị -->
 
                             </Grid>
                         </Grid>
@@ -262,21 +257,21 @@
 
                         <!-- ListView in ScrollViewer with proper sizing -->
                         <ScrollViewer Grid.Row="1" Grid.ColumnSpan="3" 
-               VerticalScrollBarVisibility="Auto" 
-               HorizontalScrollBarVisibility="Auto"
-               Margin="0,10,0,0">
+                               VerticalScrollBarVisibility="Auto" 
+                               HorizontalScrollBarVisibility="Auto"
+                               Margin="0,10,0,0">
                             <Grid>
                                 <!-- DataGrid cho tồn kho hiện tại -->
                                 <DataGrid 
-            Visibility="{Binding IsMonthlyView, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-            ItemsSource="{Binding ListStockMedicine}" 
-            AutoGenerateColumns="False"
-            IsReadOnly="True"
-            SelectionMode="Single"
-            SelectionUnit="FullRow"
-            CanUserAddRows="False"
-            CanUserDeleteRows="False"
-            Background="White">
+                                    Visibility="{Binding IsMonthlyView, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                    ItemsSource="{Binding ListStockMedicine}" 
+                                    AutoGenerateColumns="False"
+                                    IsReadOnly="True"
+                                    SelectionMode="Single"
+                                    SelectionUnit="FullRow"
+                                    CanUserAddRows="False"
+                                    CanUserDeleteRows="False"
+                                    Background="White">
                                     <DataGrid.Resources>
                                         <Style TargetType="DataGridColumnHeader">
                                             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -1549,6 +1544,6 @@
             </TabItem>
 
         </TabControl>
-    </materialDesign:Card>
+
 
 </UserControl>
