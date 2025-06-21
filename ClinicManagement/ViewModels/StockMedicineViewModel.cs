@@ -949,7 +949,8 @@ namespace ClinicManagement.ViewModels
         public ICommand SearchStockMedicineCommand { get; set; }
         public ICommand ResetStockFiltersCommand { get; set; }
         public ICommand DeleteMedicine { get; set; }
-        public ICommand ExportStockExcelCommand { get; private set; }
+        public ICommand ExportStockExcelCommand { get;  set; }
+        public ICommand GenerateMonthlyStockCommand { get; private set; }
 
         //StockIn Commands
         public ICommand AddNewMedicineCommand { get; set; }
@@ -977,6 +978,9 @@ namespace ClinicManagement.ViewModels
             // Khởi tạo các lệnh và tải dữ liệu
             LoadData();
             InitializeCommands();
+
+            // Check if we need to generate monthly stock data
+            CheckAndGenerateMonthlyStock();
         }
 
 
@@ -1099,6 +1103,12 @@ namespace ClinicManagement.ViewModels
      },
      (p) => true
  );
+            // Add command to manually generate monthly stock data
+            GenerateMonthlyStockCommand = new RelayCommand<object>(
+                p => GenerateMonthlyStock(SelectedYear, SelectedMonth),
+                p => true
+            );
+
             // In the constructor, initialize the command:
             ExportStockExcelCommand = new RelayCommand<object>(
       p => ExportToExcel(),
@@ -2508,6 +2518,130 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Add this method to the StockMedicineViewModel class
+
+        /// <summary>
+        /// Checks if monthly stock generation is needed and performs it if necessary
+        /// </summary>
+        public void CheckAndGenerateMonthlyStock()
+        {
+            try
+            {
+                // Get current date and time
+                var now = DateTime.Now;
+
+                // Get the last day of the current month
+                var lastDayOfMonth = new DateTime(now.Year, now.Month,
+                    DateTime.DaysInMonth(now.Year, now.Month));
+
+                // Only run this process on the last day of the month 
+                // or if there's no monthly stock record for the current month yet
+                string currentMonthYear = $"{now.Year:D4}-{now.Month:D2}";
+
+                // Check if we already have monthly records for this month
+                bool hasCurrentMonthRecords = DataProvider.Instance.Context.MonthlyStocks
+                    .Any(ms => ms.MonthYear == currentMonthYear);
+
+                // If it's the last day of month OR we don't have records for this month yet and it's near month end (e.g., day >= 25)
+                bool isLastDayOfMonth = now.Day == lastDayOfMonth.Day;
+                bool isNearMonthEnd = now.Day >= 25;
+
+                if (isLastDayOfMonth || (isNearMonthEnd && !hasCurrentMonthRecords))
+                {
+                    GenerateMonthlyStock(now.Year, now.Month);
+                    MessageBox.Show(
+                        $"Đã tự động cập nhật dữ liệu tồn kho tháng {now.Month}/{now.Year}.",
+                        "Cập nhật tồn kho tháng",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Lỗi khi kiểm tra và tạo dữ liệu tồn kho tháng: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Generates monthly stock data for a specific month and year
+        /// </summary>
+        /// <param name="year">Year to generate data for</param>
+        /// <param name="month">Month to generate data for</param>
+        private void GenerateMonthlyStock(int year, int month)
+        {
+            try
+            {
+                var dbContext = DataProvider.Instance.Context;
+                string monthYearFormat = $"{year:D4}-{month:D2}";
+
+                // Check if monthly stock already exists for this month
+                if (dbContext.MonthlyStocks.Any(ms => ms.MonthYear == monthYearFormat))
+                {
+                    // If records already exist, clear them first to avoid duplicates
+                    var existingRecords = dbContext.MonthlyStocks
+                        .Where(ms => ms.MonthYear == monthYearFormat)
+                        .ToList();
+
+                    foreach (var record in existingRecords)
+                    {
+                        dbContext.MonthlyStocks.Remove(record);
+                    }
+
+                    dbContext.SaveChanges();
+                }
+
+                // Get all medicines that have stock
+                var medicines = dbContext.Medicines
+                    .Where(m => m.IsDeleted != true)
+                    .Include(m => m.StockIns)
+                    .Include(m => m.InvoiceDetails)
+                    .ToList();
+
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var minimumExpiryDate = today.AddDays(8); // Define medicines that can still be used
+
+                foreach (var medicine in medicines)
+                {
+                    // Reset cache to ensure fresh calculations
+                    medicine._availableStockInsCache = null;
+
+                    // Calculate total physical stock (all stock regardless of expiry date)
+                    int totalQuantity = medicine.TotalPhysicalStockQuantity;
+
+                    // Calculate usable stock (only stock with valid expiry date)
+                    int usableQuantity = medicine.TotalStockQuantity;
+
+                    // Only record medicines that have stock
+                    if (totalQuantity > 0)
+                    {
+                        var monthlyStock = new MonthlyStock
+                        {
+                            MedicineId = medicine.MedicineId,
+                            MonthYear = monthYearFormat,
+                            Quantity = totalQuantity,
+                            CanUsed = usableQuantity,
+                            RecordedDate = DateTime.Now
+                        };
+
+                        dbContext.MonthlyStocks.Add(monthlyStock);
+                    }
+                }
+
+                dbContext.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Lỗi khi tạo dữ liệu tồn kho tháng {month}/{year}: {ex.Message}",
+                    "Lỗi",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
 
         #endregion
 
