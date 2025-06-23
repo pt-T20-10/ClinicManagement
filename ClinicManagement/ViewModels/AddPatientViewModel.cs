@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -317,11 +318,10 @@ namespace ClinicManagement.ViewModels
                 // Check for validation errors
                 if (HasErrors)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Vui lòng sửa các lỗi nhập liệu trước khi thêm bệnh nhân.",
-                        "Lỗi Validation",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi thông tin"
+                   );
                     return;
                 }
 
@@ -355,22 +355,20 @@ namespace ClinicManagement.ViewModels
                 NewPatient = newPatient;
 
                 // Success message
-                MessageBox.Show(
+                MessageBoxService.ShowSuccess(
                     "Đã thêm bệnh nhân thành công!",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công"
+                
+                     );
 
                 // Close window
                 _window?.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi thêm bệnh nhân: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi");
             }
         }
 

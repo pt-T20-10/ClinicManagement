@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
@@ -620,7 +621,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (Doctor == null)
                 {
-                    MessageBox.Show("Không tìm thấy thông tin bác sĩ!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không tìm thấy thông tin bác sĩ!", "Lỗi");
                     return;
                 }
 
@@ -642,22 +643,22 @@ namespace ClinicManagement.ViewModels
                 // Check for validation errors
                 if (HasErrors)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Vui lòng sửa các lỗi nhập liệu trước khi cập nhật thông tin bác sĩ.",
-                        "Lỗi Validation",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi thông tin"
+                         
+                          );
                     return;
                 }
                 bool emailExits = DataProvider.Instance.Context.Doctors
                                  .Any(d => d.Email == Email.Trim() && d.DoctorId != Doctor.DoctorId && d.IsDeleted == false);
                 if(emailExits)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                                 "Email đã tồn tại. Vui lòng sử dụng email khác.",
-                                "Lỗi Dữ Liệu",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
+                                "Lỗi Dữ Liệu"
+                                 
+                                  );
                     return;
                 }    
                 // Check if phone number already exists (excluding current doctor)
@@ -666,11 +667,11 @@ namespace ClinicManagement.ViewModels
 
                 if (phoneExists)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
-                        "Lỗi Dữ Liệu",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi Dữ Liệu"
+                         
+                          );
                     return;
                 }
 
@@ -691,28 +692,28 @@ namespace ClinicManagement.ViewModels
 
                     DataProvider.Instance.Context.SaveChanges();
 
-                    MessageBox.Show(
+                    MessageBoxService.ShowMessage(
                         "Đã cập nhật thông tin bác sĩ thành công!",
-                        "Thành Công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        "Thành Công"
+                         
+                         );
                 }
                 else
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Không tìm thấy thông tin bác sĩ!",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Lỗi"
+                         
+                          );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi cập nhật thông tin bác sĩ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                      );
             }
         }
 
@@ -730,24 +731,24 @@ namespace ClinicManagement.ViewModels
 
                 if (hasActiveAppointments)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Không thể xóa bác sĩ này vì còn lịch hẹn đang chờ hoặc đang khám.\n" +
                         "Vui lòng giải quyết các lịch hẹn hiện tại trước khi xóa.",
-                        "Cảnh Báo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Cảnh Báo"
+                         
+                          );
                     return;
                 }
 
                 // Ask for confirmation
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowSuccess(
                     $"Bạn có chắc muốn xóa bác sĩ {FullName} không?\n" +
                     "Lưu ý: Tài khoản liên kết với bác sĩ này cũng sẽ bị xóa.",
-                    "Xác Nhận Xóa",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    "Xác Nhận Xóa"
+                     
+                      );
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Find and soft-delete the doctor
@@ -770,31 +771,31 @@ namespace ClinicManagement.ViewModels
 
                     DataProvider.Instance.Context.SaveChanges();
 
-                    MessageBox.Show(
+                    MessageBoxService.ShowSuccess(
                         "Đã xóa bác sĩ thành công!",
-                        "Thành Công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        "Thành Công"
+                         
+                         );
 
                     // Close the window
                     _window?.Close();
                 }
                 else
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Không tìm thấy thông tin bác sĩ!",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Lỗi"
+                         
+                          );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa bác sĩ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                      );
             }
         }
 
@@ -804,23 +805,23 @@ namespace ClinicManagement.ViewModels
             {
                 if (Doctor == null || !HasAccount)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Không thể đặt lại mật khẩu. Bác sĩ này chưa có tài khoản!",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Lỗi"
+                         
+                          );
                     return;
                 }
 
                 // Ask for confirmation
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc muốn đặt lại mật khẩu cho tài khoản này không?\n" +
                     "Mật khẩu mới sẽ là: 1111",
-                    "Xác Nhận Đặt Lại Mật Khẩu",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác Nhận Đặt Lại Mật Khẩu"
+                     
+                      );
 
-                if (result != MessageBoxResult.Yes)
+                if ( !result)
                     return;
 
                 // Find the account
@@ -834,20 +835,20 @@ namespace ClinicManagement.ViewModels
                     account.Password = hashedPassword;
                     DataProvider.Instance.Context.SaveChanges();
 
-                    MessageBox.Show(
+                    MessageBoxService.ShowSuccess(
                         "Đã đặt lại mật khẩu thành công!\n" +
                         "Mật khẩu mới: 1111",
-                        "Thành Công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        "Thành Công"
+                         
+                         );
                 }
                 else
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Không tìm thấy tài khoản liên kết với bác sĩ này!",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Lỗi"
+                         
+                          );
 
                     // Cập nhật lại trạng thái HasAccount
                     HasAccount = false;
@@ -856,11 +857,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi đặt lại mật khẩu: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                      );
             }
         }
 
@@ -906,25 +907,25 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tải lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                      );
             }
         }
 
         private void ViewAppointmentDetails(AppointmentDisplayInfo appointmentInfo)
         {
             // Show appointment details with date and time from the DateTime field
-            MessageBox.Show($"Chi tiết lịch hẹn của bệnh nhân {appointmentInfo.PatientName}\n" +
+            MessageBoxService.ShowInfo($"Chi tiết lịch hẹn của bệnh nhân {appointmentInfo.PatientName}\n" +
                            $"Ngày: {appointmentInfo.AppointmentDate.ToString("dd/MM/yyyy")}\n" +
                            $"Giờ: {appointmentInfo.AppointmentTimeString}\n" +
                            $"Trạng thái: {appointmentInfo.Status}\n" +
                            $"Lý do khám: {appointmentInfo.Reason}",
-                           "Chi tiết lịch hẹn",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
+                           "Chi tiết lịch hẹn"
+                            
+                            );
         }
 
         #region Account Management
@@ -955,11 +956,11 @@ namespace ClinicManagement.ViewModels
                 // Check for validation errors
                 if (HasUsernameErrors)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Tên đăng nhập không hợp lệ. Vui lòng nhập tên đăng nhập có ít nhất 4 ký tự.",
-                        "Lỗi Validation",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi thông tin"
+                         
+                          );
                     return;
                 }
 
@@ -969,25 +970,25 @@ namespace ClinicManagement.ViewModels
 
                 if (usernameExists)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.",
-                        "Lỗi Dữ Liệu",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi Dữ Liệu"
+                         
+                          );
                     return;
                 }
 
                 // Ask for confirmation
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn tạo tài khoản cho bác sĩ {FullName} không?\n" +
                     $"Tên đăng nhập: {NewUsername.Trim()}\n" +
                     $"Mật khẩu mặc định: 1111\n" +
                     $"Vai trò: {SelectedRole}",
-                    "Xác Nhận Tạo Tài Khoản",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác Nhận Tạo Tài Khoản"
+                     
+                      );
 
-                if (result != MessageBoxResult.Yes)
+                if ( !result)
                     return;
 
                 // Create account with default password "1111"
@@ -1005,11 +1006,11 @@ namespace ClinicManagement.ViewModels
                 DataProvider.Instance.Context.Accounts.Add(newAccount);
                 DataProvider.Instance.Context.SaveChanges();
 
-                MessageBox.Show(
+                MessageBoxService.ShowSuccess(
                     "Đã tạo tài khoản thành công với mật khẩu mặc định là \"1111\".",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công"
+                     
+                     );
 
                 // Update UI to reflect new account
                 UserName = NewUsername.Trim();
@@ -1022,11 +1023,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tạo tài khoản: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                      );
             }
         }
         #endregion

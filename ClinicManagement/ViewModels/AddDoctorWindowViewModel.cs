@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -336,11 +337,10 @@ namespace ClinicManagement.ViewModels
                 // Check for validation errors
                 if (HasErrors)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Vui lòng sửa các lỗi nhập liệu trước khi thêm bác sĩ.",
-                        "Lỗi Validation",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi thông tin")
+                     ;
                     return;
                 }
 
@@ -350,11 +350,10 @@ namespace ClinicManagement.ViewModels
 
                 if (phoneExists)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
-                        "Lỗi Dữ Liệu",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi Dữ Liệu"
+                     );
                     return;
                 }
 
@@ -382,11 +381,10 @@ namespace ClinicManagement.ViewModels
 
                     if (usernameExists)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowWarning(
                             "Tên đăng nhập đã tồn tại. Tài khoản không được tạo nhưng thông tin bác sĩ đã được lưu.",
-                            "Cảnh Báo",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Cảnh Báo"
+                           );
                     }
                     else
                     {
@@ -405,30 +403,25 @@ namespace ClinicManagement.ViewModels
                         DataProvider.Instance.Context.Accounts.Add(newAccount);
                         DataProvider.Instance.Context.SaveChanges();
 
-                        MessageBox.Show(
+                        MessageBoxService.ShowSuccess(
                             "Tài khoản được tạo thành công với mật khẩu mặc định là \"1111\".",
-                            "Thông Báo",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                            "Thông Báo");
                     }
                 }
 
-                MessageBox.Show(
+                MessageBoxService.ShowSuccess(
                     "Đã thêm bác sĩ thành công!",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công"
+                 );
 
                 // Close the window
                 _window?.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi thêm bác sĩ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi");
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -309,8 +310,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu hồ sơ bệnh án: {ex.Message}",
+                    "Lỗi"    );
             }
         }
 
@@ -344,13 +345,13 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Implement printing functionality
-                MessageBox.Show("Chức năng in hồ sơ bệnh án đang được phát triển.",
-                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowWarning("Chức năng in hồ sơ bệnh án đang được phát triển.",
+                    "Thông báo"     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi in hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi in hồ sơ bệnh án: {ex.Message}",
+                    "Lỗi"    );
             }
         }
 
@@ -362,13 +363,13 @@ namespace ClinicManagement.ViewModels
                 // Reload data from database to reset any changes
                 LoadMedicalRecordData();
 
-                MessageBox.Show("Đã làm mới dữ liệu hồ sơ bệnh án.",
-                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess("Đã làm mới dữ liệu hồ sơ bệnh án.",
+                    "Thông báo"     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi làm mới hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi làm mới hồ sơ bệnh án: {ex.Message}",
+                    "Lỗi"    );
             }
         }
         public void SetRecord(MedicalRecord record)
@@ -422,7 +423,7 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 // Nếu có lỗi khi parse, sử dụng giá trị mặc định
-                MessageBox.Show($"Lỗi khi phân tích thông số sinh hiệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowError($"Lỗi khi phân tích thông số sinh hiệu: {ex.Message}", "Lỗi"     );
                 Pulse = "";
                 Respiration = "";
                 Temperature = "";
@@ -504,8 +505,8 @@ namespace ClinicManagement.ViewModels
                 // Check if user has permission to edit
                 if (!CanEdit)
                 {
-                    MessageBox.Show("Bạn không có quyền chỉnh sửa hồ sơ bệnh án này!",
-                        "Quyền truy cập bị từ chối", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Bạn không có quyền chỉnh sửa hồ sơ bệnh án này!",
+                        "Quyền truy cập bị từ chối"    );
                     return;
                 }
 
@@ -515,11 +516,11 @@ namespace ClinicManagement.ViewModels
 
                 if (recordToUpdate == null)
                 {
-                    MessageBox.Show("Không tìm thấy hồ sơ bệnh án trong cơ sở dữ liệu!",
-                        "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không tìm thấy hồ sơ bệnh án trong cơ sở dữ liệu!",
+                        "Lỗi"    );
                     return;
                 }
-
+                
                 // Format vital signs
                 string formattedVitalSigns = FormatVitalSigns();
 
@@ -542,13 +543,13 @@ namespace ClinicManagement.ViewModels
                 // Save changes to database
                 DataProvider.Instance.Context.SaveChanges();
 
-                MessageBox.Show("Đã lưu thông tin hồ sơ bệnh án thành công!",
-                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess("Đã lưu thông tin hồ sơ bệnh án thành công!"
+                       );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi lưu hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi lưu hồ sơ bệnh án: {ex.Message}",
+                    "Lỗi"    );
             }
         }
 

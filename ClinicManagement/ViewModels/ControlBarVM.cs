@@ -1,4 +1,5 @@
 ﻿using ClinicManagement;
+using ClinicManagement.Services;
 using ClinicManagement.UserControlToUse;
 using ClinicManagement.ViewModels;
 using System;
@@ -26,35 +27,34 @@ namespace StorageManagement.ViewModels
         {
 
             ClosingWindowCommand = new RelayCommand<ControlBarUC>(
-  (controlBar) =>
-  {
-      var window = Window.GetWindow(controlBar);
-      if (window == null) return;
+     (controlBar) =>
+     {
+         var window = Window.GetWindow(controlBar);
+         if (window == null) return;
 
-      // Nếu là MainWindow, hiển thị hộp thoại xác nhận trước khi đóng
-      if (window is MainWindow)
-      {
-          MessageBoxResult result = MessageBox.Show(
-              "Bạn có chắc chắn muốn đăng xuất và thoát chương trình?",
-              "Xác nhận thoát",
-              MessageBoxButton.YesNo,
-              MessageBoxImage.Question);
+         // Nếu là MainWindow, hiển thị hộp thoại xác nhận trước khi đóng
+         if (window is MainWindow)
+         {
+             // Sử dụng MessageBoxService để hiển thị CustomMessageBox thay vì MessageBox tiêu chuẩn
+             bool result = MessageBoxService.ShowQuestion(
+                 "Bạn có chắc chắn muốn đăng xuất và thoát chương trình?",
+                 "Xác nhận thoát");
 
-          // Chỉ đóng cửa sổ nếu người dùng chọn "Yes"
-          // Nút X hoặc nút No sẽ không đóng cửa sổ
-          if (result == MessageBoxResult.Yes)
-          {
-              window.Close();
-          }
-      }
-      // Nếu là cửa sổ khác, đóng trực tiếp
-      else
-      {
-          window.Close();
-      }
-  },
-  (controlBar) => controlBar != null
-);
+             // Chỉ đóng cửa sổ nếu người dùng chọn "OK"
+             if (result)
+             {
+                 window.Close();
+             }
+         }
+         // Nếu là cửa sổ khác, đóng trực tiếp
+         else
+         {
+             window.Close();
+         }
+     },
+     (controlBar) => controlBar != null
+ );
+
 
             MaximizingWindowCommand = new RelayCommand<ControlBarUC>(
 

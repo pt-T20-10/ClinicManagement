@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
+using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
@@ -398,7 +399,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex) // thực hiện bắt lỗi
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu hóa đơn: {ex.Message}", "Lỗi"    );
             }
             finally // Đảm bảo IsLoading được đặt về false sau khi hoàn thành việc tải hóa đơn, bất kể có lỗi hay không
             {
@@ -507,10 +508,10 @@ namespace ClinicManagement.ViewModels
         {
             if (invoice == null) return;
 
-            MessageBox.Show($"Đang in hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName}",
-                           "In hóa đơn",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
+            MessageBoxService.ShowInfo($"Đang in hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName}",
+                           "In hóa đơn"
+                            
+                             );
 
             
         }
@@ -586,13 +587,13 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Không tìm thấy tab
-                MessageBox.Show($"Đã chọn hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName} nhưng không thể chuyển đến tab Bán thuốc",
-                              "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowWarning($"Đã chọn hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName} nhưng không thể chuyển đến tab Bán thuốc",
+                              "Thông báo"     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
+                               "Lỗi"   );
             }
         }
 

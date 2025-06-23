@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -364,42 +365,26 @@ namespace ClinicManagement.ViewModels
                 if (string.IsNullOrWhiteSpace(InsuranceCode) &&
                    (string.IsNullOrWhiteSpace(PatienName) || string.IsNullOrWhiteSpace(Phone)))
                 {
-                    MessageBox.Show(
-                        "Vui lòng nhập mã BHYT hoặc cả tên và số điện thoại để tìm kiếm.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Vui lòng nhập mã BHYT hoặc cả tên và số điện thoại để tìm kiếm.", "Thiếu thông tin");
                     return;
                 }
 
                 // Check minimum length for search fields
                 if (!string.IsNullOrWhiteSpace(PatienName) && PatienName.Length < 2)
                 {
-                    MessageBox.Show(
-                        "Tên bệnh nhân cần có ít nhất 2 ký tự.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Tên bệnh nhân cần có ít nhất 2 ký tự.", "Thiếu thông tin");
                     return;
                 }
 
                 if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length < 5)
                 {
-                    MessageBox.Show(
-                        "Số điện thoại cần có ít nhất 5 ký tự.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Số điện thoại cần có ít nhất 5 ký tự.", "Thiếu thông tin");
                     return;
                 }
 
                 if (!string.IsNullOrWhiteSpace(InsuranceCode) && InsuranceCode.Length < 5)
                 {
-                    MessageBox.Show(
-                        "Mã BHYT cần có ít nhất 5 ký tự.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Mã BHYT cần có ít nhất 5 ký tự.", "Thiếu thông tin");
                     return;
                 }
 
@@ -441,14 +426,14 @@ namespace ClinicManagement.ViewModels
                         SelectedDoctor = pendingAppointment.Doctor;
 
                         // Ask if the user wants to proceed with this appointment
-                        MessageBoxResult result = MessageBox.Show(
+                         bool  result = MessageBoxService.ShowQuestion(
                             $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Doctor.FullName}.\n" +
                             $"Bạn có muốn tiến hành khám với lịch hẹn này không?",
-                            "Tìm thấy lịch hẹn",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Question);
+                            "Tìm thấy lịch hẹn"
+                             
+                            );
 
-                        if (result == MessageBoxResult.Yes)
+                        if (result)
                         {
                             UpdateAppointmentStatus(pendingAppointment, "Đang khám");
                         }
@@ -461,20 +446,16 @@ namespace ClinicManagement.ViewModels
                 else
                 {
                     SelectedPatient = null;
-                    MessageBox.Show(
-                        "Không tìm thấy bệnh nhân với thông tin đã nhập. Vui lòng kiểm tra lại thông tin tìm kiếm.",
-                        "Không tìm thấy",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    MessageBoxService.ShowWarning  ("Không tìm thấy bệnh nhân với thông tin đã nhập. Vui lòng kiểm tra lại thông tin tìm kiếm.", "Không tìm thấy");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tìm kiếm bệnh nhân: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 
@@ -498,11 +479,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 
@@ -544,14 +525,14 @@ namespace ClinicManagement.ViewModels
                         SelectedDoctor = pendingAppointment.Doctor;
 
                         // Ask if the user wants to proceed with this appointment
-                        MessageBoxResult result = MessageBox.Show(
+                         bool  result = MessageBoxService.ShowInfo(
                             $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Doctor.FullName}.\n" +
                             $"Bạn có muốn tiến hành khám với lịch hẹn này không?",
-                            "Tìm thấy lịch hẹn",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Question);
+                            "Tìm thấy lịch hẹn"
+                             
+                            );
 
-                        if (result == MessageBoxResult.Yes)
+                        if (result)
                         {
                             UpdateAppointmentStatus(pendingAppointment, "Đang khám");
                         }
@@ -568,11 +549,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tìm kiếm bệnh nhân: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 
@@ -590,31 +571,19 @@ namespace ClinicManagement.ViewModels
             {
                 if (SelectedPatient == null)
                 {
-                    MessageBox.Show(
-                        "Vui lòng chọn bệnh nhân trước khi lưu hồ sơ.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Vui lòng chọn bệnh nhân trước khi lưu hồ sơ.", "Thiếu thông tin");
                     return;
                 }
 
                 if (SelectedDoctor == null)
                 {
-                    MessageBox.Show(
-                        "Vui lòng chọn bác sĩ khám trước khi lưu hồ sơ.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Vui lòng chọn bác sĩ khám trước khi lưu hồ sơ.", "Thiếu thông tin");
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(Diagnosis))
                 {
-                    MessageBox.Show(
-                        "Vui lòng nhập chẩn đoán trước khi lưu hồ sơ.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Vui lòng nhập chẩn đoán trước khi lưu hồ sơ.", "Thiếu thông tin");
                     return;
                 }
 
@@ -677,22 +646,18 @@ namespace ClinicManagement.ViewModels
                     UpdateAppointmentStatus(RelatedAppointment, "Đã khám");
                 }
 
-                MessageBox.Show(
-                    "Đã lưu hồ sơ khám bệnh và tạo hóa đơn thành công!",
-                    "Thành công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess("Đã lưu hồ sơ khám bệnh và tạo hóa đơn thành công!", "Thành công");
 
                 // Optional: Reset form after saving
                 ResetForm();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi lưu hồ sơ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 
@@ -750,11 +715,7 @@ namespace ClinicManagement.ViewModels
         private void PrintRecord()
         {
             // This functionality would be implemented later
-            MessageBox.Show(
-                "Chức năng in hồ sơ sẽ được phát triển trong phiên bản tiếp theo.",
-                "Thông báo",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            MessageBoxService.ShowWarning("Chức năng in hồ sơ sẽ được phát triển trong phiên bản tiếp theo.", "Thông báo");
         }
 
         private void ResetForm()
@@ -803,11 +764,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi cập nhật trạng thái lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 
@@ -830,11 +791,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tải danh sách loại khám: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
         #endregion

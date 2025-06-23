@@ -1,4 +1,5 @@
 using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.Win32;
 using System;
@@ -331,19 +332,19 @@ namespace ClinicManagement.ViewModels
             {
                 if (_mainViewModel == null || _mainViewModel.CurrentAccount == null)
                 {
-                    MessageBox.Show("Không thể đăng xuất vào lúc này.",
-                        "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Không thể đăng xuất vào lúc này.",
+                        "Thông báo"     );
                     return;
                 }
 
                 // Hiển thị hộp thoại xác nhận
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn đăng xuất?",
-                    "Xác nhận đăng xuất",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác nhận đăng xuất"
+                     
+                      );
 
-                if (result == MessageBoxResult.Yes)
+                if (result)
                 {
                     // Cập nhật trạng thái đăng nhập trong CSDL
                     var accountToUpdate = DataProvider.Instance.Context.Accounts
@@ -390,8 +391,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi đăng xuất: {ex.Message}",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi đăng xuất: {ex.Message}",
+                    "Lỗi"    );
             }
         }
 
@@ -467,7 +468,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải thông tin bác sĩ: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải thông tin bác sĩ: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -485,15 +486,15 @@ namespace ClinicManagement.ViewModels
             {
                 if (_currentDoctor == null)
                 {
-                    MessageBox.Show("Không tìm thấy thông tin bác sĩ!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không tìm thấy thông tin bác sĩ!", "Lỗi"    );
                     return;
                 }
 
                 // Validate phone number format
                 if (!string.IsNullOrWhiteSpace(Phone) && !Regex.IsMatch(Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
                 {
-                    MessageBox.Show("Số điện thoại không đúng định dạng (VD: 0901234567)", 
-                                    "Lỗi Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxService.ShowError("Số điện thoại không đúng định dạng (VD: 0901234567)", 
+                                    "Lỗi định dạng"    );
                     return;
                 }
 
@@ -503,8 +504,8 @@ namespace ClinicManagement.ViewModels
 
                 if (phoneExists)
                 {
-                    MessageBox.Show("Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
-                                   "Lỗi Dữ Liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxService.ShowError("Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
+                                   "Lỗi dữ liệu"     );
                     return;
                 }
 
@@ -527,19 +528,19 @@ namespace ClinicManagement.ViewModels
                     // Update local copy
                     _currentDoctor = doctorToUpdate;
 
-                    MessageBox.Show("Đã cập nhật thông tin bác sĩ thành công!", 
-                                   "Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxService.ShowSuccess("Đã cập nhật thông tin bác sĩ thành công!", 
+                                   "Thành Công"    );
                 }
                 else
                 {
-                    MessageBox.Show("Không tìm thấy thông tin bác sĩ!",
-                                   "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không tìm thấy thông tin bác sĩ!",
+                                   "Lỗi"    );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Đã xảy ra lỗi khi cập nhật thông tin bác sĩ: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi cập nhật thông tin bác sĩ: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -562,13 +563,13 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Save application settings (this would typically use a settings service)
-                MessageBox.Show("Đã lưu cài đặt ứng dụng thành công!", 
-                               "Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess("Đã lưu cài đặt ứng dụng thành công!", 
+                               "Thành Công"   );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi lưu cài đặt: {ex.Message}", 
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi lưu cài đặt: {ex.Message}", 
+                               "Lỗi"    );
             }
         }
 
@@ -583,13 +584,13 @@ namespace ClinicManagement.ViewModels
                 IsLightTheme = true;
                 PrimaryColorBrush = new SolidColorBrush(Color.FromRgb(63, 81, 181));
                 
-                MessageBox.Show("Đã đặt lại cài đặt về mặc định!", 
-                               "Thành Công", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess("Đã đặt lại cài đặt về mặc định!", 
+                               "Thành Công"     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi đặt lại cài đặt: {ex.Message}", 
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi đặt lại cài đặt: {ex.Message}", 
+                               "Lỗi"    );
             }
         }
     }

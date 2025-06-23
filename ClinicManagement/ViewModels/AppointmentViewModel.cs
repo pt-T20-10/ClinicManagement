@@ -13,6 +13,7 @@ using System.Windows;
 using System.Windows.Input;
 using Microsoft.VisualBasic;
 using System.Xml.Linq;
+using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
@@ -462,21 +463,18 @@ namespace ClinicManagement.ViewModels
 
                 if (string.IsNullOrWhiteSpace(reason))
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Vui lòng nhập lý do hủy lịch hẹn.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Thiếu thông tin");
                     return;
                 }
 
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
-                    "Xác nhận hủy",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác nhận hủy"
+                    );
 
-                if (result == MessageBoxResult.Yes)
+                if (result)
                 {
                     var appointmentToUpdate = DataProvider.Instance.Context.Appointments
                         .FirstOrDefault(a => a.AppointmentId == appointmentInfo.OriginalAppointment.AppointmentId);
@@ -490,21 +488,18 @@ namespace ClinicManagement.ViewModels
                         // Refresh appointments list
                         LoadAppointments();
 
-                        MessageBox.Show(
+                        MessageBoxService.ShowSuccess(
                             "Đã hủy lịch hẹn thành công!",
-                            "Thông báo",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                            "Thông báo"
+                          );
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi hủy lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi");
             }
         }
         private void OpenAppointmentDetails(AppointmentDisplayInfo appointmentInfo)
@@ -513,11 +508,9 @@ namespace ClinicManagement.ViewModels
             {
                 if (appointmentInfo == null || appointmentInfo.OriginalAppointment == null)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Vui lòng chọn một lịch hẹn để xem chi tiết.",
-                        "Thông báo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        "Thông báo");
                     return;
                 }
 
@@ -531,11 +524,9 @@ namespace ClinicManagement.ViewModels
 
                 if (fullAppointment == null)
                 {
-                    MessageBox.Show(
-                        "Không thể tải thông tin chi tiết lịch hẹn.",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    MessageBoxService.ShowError(
+                        "Không thể tải thông tin chi tiết lịch hẹn."
+                   );
                     return;
                 }
 
@@ -553,20 +544,15 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show(
-                        "Không thể khởi tạo cửa sổ chi tiết lịch hẹn.",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    MessageBoxService.ShowError(
+                        "Không thể khởi tạo cửa sổ chi tiết lịch hẹn."
+                  );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi mở chi tiết lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                    $"Đã xảy ra lỗi khi mở chi tiết lịch hẹn: {ex.Message}");
             }
         }
 
@@ -602,11 +588,9 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi tìm kiếm bệnh nhân: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                    $"Đã xảy ra lỗi khi tìm kiếm bệnh nhân: {ex.Message}"
+            );
             }
         }
 
@@ -619,11 +603,9 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!silentMode)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowWarning(
                             "Vui lòng nhập tên hoặc mã bảo hiểm của bệnh nhân.",
-                            "Thiếu thông tin",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Thiếu thông tin");
                     }
                     return;
                 }
@@ -636,11 +618,10 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!silentMode)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowWarning(
                             "Vui lòng nhập số điện thoại của bệnh nhân.",
-                            "Thiếu thông tin",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Thiếu thông tin"
+                         );
                     }
                     return;
                 }
@@ -651,11 +632,10 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!silentMode)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowWarning(
                             "Số điện thoại không đúng định dạng. Vui lòng nhập số điện thoại hợp lệ (VD: 0901234567).",
-                            "Số điện thoại không hợp lệ",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Số điện thoại không hợp lệ"
+                      );
                     }
                     return;
                 }
@@ -669,11 +649,10 @@ namespace ClinicManagement.ViewModels
                     SelectedPatient = patient;
                     if (!silentMode)
                     {
-                        MessageBox.Show(
-                            $"Đã tìm thấy bệnh nhân: {patient.FullName}",
-                            "Thông báo",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                        MessageBoxService.ShowInfo(
+                            $"Đã tìm thấy bệnh nhân: {patient.FullName}"
+                      
+                          );
                     }
                     return;
                 }
@@ -685,14 +664,13 @@ namespace ClinicManagement.ViewModels
                 // Special message for insurance code search
                 if (looksLikeInsuranceCode)
                 {
-                    var result = MessageBox.Show(
+                    var result = MessageBoxService.ShowQuestion(
                         $"Không tìm thấy bệnh nhân với mã bảo hiểm '{PatientSearch.Trim()}'.\n" +
                         "Bạn có muốn tạo hồ sơ bệnh nhân mới không?",
-                        "Mã bảo hiểm không tồn tại",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
+                        "Mã bảo hiểm không tồn tại"
+                  );
 
-                    if (result != MessageBoxResult.Yes)
+                    if (!result)
                         return;
 
                     // If creating new patient with insurance code, we need to get more info
@@ -701,11 +679,8 @@ namespace ClinicManagement.ViewModels
 
                     if (string.IsNullOrWhiteSpace(nameResult))
                     {
-                        MessageBox.Show(
-                            "Không thể tạo bệnh nhân mới vì thiếu họ tên.",
-                            "Thiếu thông tin",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                        MessageBoxService.ShowWarning(
+                            "Không thể tạo bệnh nhân mới vì thiếu họ tên.");
                         return;
                     }
 
@@ -719,11 +694,9 @@ namespace ClinicManagement.ViewModels
                         if (string.IsNullOrWhiteSpace(phoneResult) ||
                             !Regex.IsMatch(phoneResult.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
                         {
-                            MessageBox.Show(
+                            MessageBoxService.ShowWarning(
                                 "Số điện thoại không hợp lệ. Không thể tạo bệnh nhân mới.",
-                                "Số điện thoại không hợp lệ",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
+                                "Số điện thoại không hợp lệ");
                             return;
                         }
                         phone = phoneResult.Trim();
@@ -748,28 +721,24 @@ namespace ClinicManagement.ViewModels
                     SelectedPatient = newPatient;
                     PatientPhone = phone;
 
-                    MessageBox.Show(
+                    MessageBoxService.ShowSuccess(
                         $"Đã tạo bệnh nhân mới: {newPatient.FullName}",
-                        "Thành công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        "Thành công");
 
                     return;
                 }
 
                 // Standard patient creation for name search
-                var standardResult = MessageBox.Show(
+                var standardResult = MessageBoxService.ShowQuestion(
                     "Không tìm thấy bệnh nhân với thông tin đã nhập. Bạn có muốn tạo mới không?",
-                    "Tạo bệnh nhân mới?",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Tạo bệnh nhân mới?"
+                
+                   );
 
-                if (standardResult == MessageBoxResult.Yes)
+                if (standardResult)
                 {
-                    // Rest of the existing patient creation code remains the same
-                    // ...
-
-                    // Determine if PatientSearch is a name or insurance code
+                    
+     
                     string name = PatientSearch.Trim();
                     string insuranceCode = null;
 
@@ -782,11 +751,11 @@ namespace ClinicManagement.ViewModels
 
                         if (string.IsNullOrWhiteSpace(nameResult))
                         {
-                            MessageBox.Show(
+                             MessageBoxService.ShowWarning(
                                 "Không thể tạo bệnh nhân mới vì thiếu họ tên.",
-                                "Thiếu thông tin",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Warning);
+                                "Thiếu thông tin"
+                                
+                                );
                             return; // User cancelled or provided empty name
                         }
 
@@ -797,11 +766,9 @@ namespace ClinicManagement.ViewModels
                     // Additional validation for name
                     if (name.Length < 2)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowWarning(
                             "Tên bệnh nhân phải có ít nhất 2 ký tự.",
-                            "Tên không hợp lệ",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Tên không hợp lệ");
                         return;
                     }
 
@@ -825,11 +792,9 @@ namespace ClinicManagement.ViewModels
 
                     if (existingPatient != null)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowWarning(
                             $"Đã tồn tại bệnh nhân '{existingPatient.FullName}' với số điện thoại này.",
-                            "Bệnh nhân đã tồn tại",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Bệnh nhân đã tồn tại");
 
                         // Set the existing patient as selected
                         SelectedPatient = existingPatient;
@@ -843,28 +808,21 @@ namespace ClinicManagement.ViewModels
                     // Set as selected patient
                     SelectedPatient = newPatient;
 
-                    MessageBox.Show(
-                        $"Đã tạo bệnh nhân mới: {newPatient.FullName}",
-                        "Thành công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    MessageBoxService.ShowSuccess(
+                        $"Đã tạo bệnh nhân mới: {newPatient.FullName}");
                 }
             }
             catch (DbUpdateException dbEx)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Lỗi khi lưu thông tin bệnh nhân: {dbEx.InnerException?.Message ?? dbEx.Message}",
-                    "Lỗi cơ sở dữ liệu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi cơ sở dữ liệu");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tìm kiếm hoặc tạo bệnh nhân: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi");
             }
         }
 
@@ -950,11 +908,9 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi");
 
                 DoctorList = new ObservableCollection<Doctor>();
             }
@@ -1018,11 +974,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi tải lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                    $"Đã xảy ra lỗi khi tải lịch hẹn: {ex.Message}");
 
                 // Ensure AppointmentsDisplay is not null when there's an error
                 AppointmentsDisplay = new ObservableCollection<AppointmentDisplayInfo>();
@@ -1381,13 +1334,11 @@ namespace ClinicManagement.ViewModels
                     return;
 
                 // All validations passed, confirm creation
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     $"Bạn có muốn tạo lịch hẹn cho bệnh nhân {SelectedPatient.FullName} với bác sĩ {SelectedDoctor.FullName} vào {AppointmentDate?.ToString("dd/MM/yyyy")} lúc {SelectedAppointmentTime?.ToString("HH:mm")} không?",
-                    "Xác nhận",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác nhận");
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Fix for correct date/time storage in database
@@ -1429,11 +1380,8 @@ namespace ClinicManagement.ViewModels
                 DataProvider.Instance.Context.Appointments.Add(newAppointment);
                 DataProvider.Instance.Context.SaveChanges();
 
-                MessageBox.Show(
-                    "Đã tạo lịch hẹn thành công!",
-                    "Thành công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess(
+                    "Đã tạo lịch hẹn thành công!");
 
                 // Clear form and refresh appointment list
                 ClearAppointmentForm();
@@ -1441,19 +1389,14 @@ namespace ClinicManagement.ViewModels
             }
             catch (DbUpdateException dbEx)
             {
-                MessageBox.Show(
-                    $"Lỗi khi lưu lịch hẹn vào cơ sở dữ liệu: {dbEx.InnerException?.Message ?? dbEx.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                    $"Lỗi khi lưu lịch hẹn vào cơ sở dữ liệu: {dbEx.InnerException?.Message ?? dbEx.Message}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi tạo lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                    $"Đã xảy ra lỗi khi tạo lịch hẹn: {ex.Message}"
+                   );
             }
         }
 
@@ -1471,11 +1414,10 @@ namespace ClinicManagement.ViewModels
                     "Vui lòng chọn hoặc nhập thông tin bệnh nhân." :
                     "Không tìm thấy bệnh nhân với thông tin đã nhập. Vui lòng kiểm tra lại.";
 
-                MessageBox.Show(
+                MessageBoxService.ShowWarning(
                     errorMessage,
-                    "Lỗi - Thông tin bệnh nhân",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Thông tin bệnh nhân"
+              );
 
                 return false;
             }
@@ -1490,11 +1432,9 @@ namespace ClinicManagement.ViewModels
         {
             if (SelectedDoctor == null)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowWarning(
                     "Vui lòng chọn bác sĩ khám.",
-                    "Lỗi - Thông tin bác sĩ",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Thông tin bác sĩ");
 
                 return false;
             }
@@ -1508,11 +1448,9 @@ namespace ClinicManagement.ViewModels
         {
             if (SelectedAppointmentType == null)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowWarning(
                     "Vui lòng chọn loại lịch hẹn.",
-                    "Lỗi - Thông tin lịch hẹn",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Thông tin lịch hẹn");
 
                 return false;
             }
@@ -1528,11 +1466,9 @@ namespace ClinicManagement.ViewModels
             // Check if date is selected
             if (!AppointmentDate.HasValue)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowWarning(
                     "Vui lòng chọn ngày hẹn.",
-                    "Lỗi - Ngày hẹn",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Ngày hẹn");
 
                 return false;
             }
@@ -1540,11 +1476,9 @@ namespace ClinicManagement.ViewModels
             // Check if date is in the past
             if (AppointmentDate.Value.Date < DateTime.Today)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowWarning(
                     "Ngày hẹn không hợp lệ. Vui lòng chọn ngày hiện tại hoặc trong tương lai.",
-                    "Lỗi - Ngày hẹn",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Ngày hẹn");
 
                 return false;
             }
@@ -1552,11 +1486,11 @@ namespace ClinicManagement.ViewModels
             // Check if time is selected
             if (!SelectedAppointmentTime.HasValue)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     "Vui lòng chọn giờ hẹn.",
-                    "Lỗi - Giờ hẹn",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Giờ hẹn"
+                    
+                    );
 
                 return false;
             }
@@ -1568,11 +1502,11 @@ namespace ClinicManagement.ViewModels
             // Check if appointment time is in the past
             if (appointmentDateTime < DateTime.Now)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     "Thời gian hẹn đã qua. Vui lòng chọn thời gian trong tương lai.",
-                    "Lỗi - Thời gian hẹn",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Lỗi - Thời gian hẹn"
+                    
+                    );
 
                 return false;
             }
@@ -1595,13 +1529,13 @@ namespace ClinicManagement.ViewModels
 
                 if (hasExactSameTime)
                 {
-                    MessageBox.Show(
+                     MessageBoxService.ShowError(
                         $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn vào lúc " +
                         $"{appointmentDateTime.ToString("HH:mm")}.\n" +
                         $"Vui lòng chọn thời gian khác.",
-                        "Lỗi - Trùng lịch",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi - Trùng lịch"
+                        
+                        );
 
                     return false;
                 }
@@ -1616,13 +1550,13 @@ namespace ClinicManagement.ViewModels
 
                     if (timeDifference < 30 && timeDifference > 0)
                     {
-                        MessageBox.Show(
+                         MessageBoxService.ShowError(
                             $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn khác vào lúc " +
                             $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
                             $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
-                            "Lỗi - Trùng lịch",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Lỗi - Trùng lịch"
+                            
+                            );
 
                         return false;
                     }
@@ -1643,11 +1577,11 @@ namespace ClinicManagement.ViewModels
                 // Check if doctor works on this day
                 if (!workingDays.Contains(dayCode))
                 {
-                    MessageBox.Show(
+                     MessageBoxService.ShowError(
                         $"Bác sĩ {SelectedDoctor.FullName} không làm việc vào ngày {AppointmentDate.Value:dd/MM/yyyy} ({GetVietnameseDayName(dayOfWeek)}).",
-                        "Lỗi - Lịch làm việc",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi - Lịch làm việc"
+                        
+                        );
 
                     return false;
                 }
@@ -1656,12 +1590,12 @@ namespace ClinicManagement.ViewModels
                 TimeSpan appointmentTime = new TimeSpan(appointmentDateTime.Hour, appointmentDateTime.Minute, 0);
                 if (appointmentTime < startTime || appointmentTime > endTime)
                 {
-                    MessageBox.Show(
+                     MessageBoxService.ShowError(
                         $"Giờ hẹn không nằm trong thời gian làm việc của bác sĩ {SelectedDoctor.FullName}.\n" +
                         $"Thời gian làm việc: {startTime.ToString("hh\\:mm")} - {endTime.ToString("hh\\:mm")}.",
-                        "Lỗi - Giờ làm việc",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi - Giờ làm việc"
+                        
+                        );
 
                     return false;
                 }
@@ -1682,13 +1616,13 @@ namespace ClinicManagement.ViewModels
 
                 if (hasExactSameTime)
                 {
-                    MessageBox.Show(
+                     MessageBoxService.ShowError(
                         $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
                         $"{appointmentDateTime.ToString("HH:mm")}.\n" +
                         $"Vui lòng chọn thời gian khác.",
-                        "Lỗi - Trùng lịch",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Lỗi - Trùng lịch"
+                        
+                        );
 
                     return false;
                 }
@@ -1703,13 +1637,13 @@ namespace ClinicManagement.ViewModels
 
                     if (timeDifference < 30 && timeDifference > 0 && timeDifference % 30 != 0)
                     {
-                        MessageBox.Show(
+                         MessageBoxService.ShowError(
                             $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
                             $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
                             $"Vui lòng chọn thời gian cách ít nhất 30 phút hoặc đúng khung giờ 30 phút.",
-                            "Lỗi - Trùng lịch",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Lỗi - Trùng lịch"
+                            
+                            );
 
                         return false;
                     }
@@ -1812,13 +1746,13 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Confirm dialog
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result =  MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn thêm loaị lịch hẹn '{TypeDisplayName}' không?",
-                    "Xác Nhận Thêm",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác Nhận Thêm"
+                     
+                  );
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Check if specialty already exists
@@ -1827,7 +1761,7 @@ namespace ClinicManagement.ViewModels
 
                 if (isExist)
                 {
-                    MessageBox.Show("Loại lịch hẹn này đã tồn tại.");
+                     MessageBoxService.ShowWarning("Loại lịch hẹn này đã tồn tại.");
                     return;
                 }
 
@@ -1855,27 +1789,27 @@ namespace ClinicManagement.ViewModels
 
                 ExecuteRefreshType();
 
-                MessageBox.Show(
+                 MessageBoxService.ShowSuccess(
                     "Đã thêm loại lịch hẹn thành công!",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công"
+                    
+                     );
             }
             catch (DbUpdateException ex)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     $"Không thể thêm loại lịch hẹn: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi Cơ Sở Dữ Liệu"
+                    
+                     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                    
+                     );
             }
         }
 
@@ -1884,13 +1818,13 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Confirm dialog
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result =  MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa loại lịch hẹn '{SelectedAppointmentType.TypeName}' thành '{TypeDisplayName}' không?",
-                    "Xác Nhận Sửa",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác Nhận Sửa"
+                     
+                  );
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Check if specialty name already exists (except for current)
@@ -1901,7 +1835,7 @@ namespace ClinicManagement.ViewModels
 
                 if (isExist)
                 {
-                    MessageBox.Show("Tên loại lịch hẹn này đã tồn tại.");
+                     MessageBoxService.ShowWarning("Tên loại lịch hẹn này đã tồn tại.");
                     return;
                 }
 
@@ -1911,7 +1845,7 @@ namespace ClinicManagement.ViewModels
 
                 if (appointmenttypeToUpdate == null)
                 {
-                    MessageBox.Show("Không tìm thấy loại lịch hẹn cần sửa.");
+                     MessageBoxService.ShowWarning("Không tìm thấy loại lịch hẹn cần sửa.");
                     return;
                 }
 
@@ -1934,27 +1868,27 @@ namespace ClinicManagement.ViewModels
                 LoadAppointmentTypeData();
                 ExecuteRefreshType();
 
-                MessageBox.Show(
+                 MessageBoxService.ShowSuccess(
                     "Đã cập nhật loại lịch hẹn thành công!",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công"
+                    
+                     );
             }
             catch (DbUpdateException ex)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     $"Không thể sửa loại lịch hẹn: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi Cơ Sở Dữ Liệu"
+                    
+                     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                    
+                     );
             }
         }
 
@@ -1964,13 +1898,13 @@ namespace ClinicManagement.ViewModels
             {
 
                 // Confirm deletion
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result =  MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn xóa loại lịch hẹn '{SelectedAppointmentType.TypeName}' không?",
-                    "Xác Nhận Xóa",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    "Xác Nhận Xóa"
+                     
+                    );
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Soft delete the specialty
@@ -1979,7 +1913,7 @@ namespace ClinicManagement.ViewModels
 
                 if (appointmenttypeToDelete == null)
                 {
-                    MessageBox.Show("Không tìm thấy loại lịch hẹn cần xóa.");
+                     MessageBoxService.ShowWarning("Không tìm thấy loại lịch hẹn cần xóa.");
                     return;
                 }
 
@@ -1998,19 +1932,19 @@ namespace ClinicManagement.ViewModels
 
                   ExecuteRefreshType();
 
-                MessageBox.Show(
+                 MessageBoxService.ShowSuccess(
                     "Đã xóa loại lịch hẹn thành công.",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công"
+                    
+                     );
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa loại lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                    
+                     );
             }
         }
         private void ExecuteRefreshType()

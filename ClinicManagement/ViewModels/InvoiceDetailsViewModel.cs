@@ -8,6 +8,7 @@ using ClinicManagement.Models;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
+using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
@@ -399,7 +400,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải chi tiết hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải chi tiết hóa đơn: {ex.Message}", "Lỗi"   );
             }
         }
 
@@ -413,8 +414,8 @@ namespace ClinicManagement.ViewModels
 
                 if (medicineSellVM == null)
                 {
-                    MessageBox.Show("Không thể khởi tạo màn hình bán thuốc.",
-                                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không thể khởi tạo màn hình bán thuốc.",
+                                    "Lỗi"    );
                     return;
                 }
 
@@ -459,13 +460,13 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // If we couldn't find the tab
-                MessageBox.Show("Không tìm thấy tab Bán thuốc.",
-                              "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowWarning("Không tìm thấy tab Bán thuốc.",
+                              "Thông báo");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
+                               "Lỗi"   );
             }
         }
 
@@ -528,7 +529,7 @@ namespace ClinicManagement.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Lỗi khi tải hồ sơ bệnh án: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError($"Lỗi khi tải hồ sơ bệnh án: {ex.Message}", "Lỗi"   );
                     HasMedicalRecord = false;
                 }
             }
@@ -579,8 +580,8 @@ namespace ClinicManagement.ViewModels
         {
             if (Invoice == null) return;
 
-            MessageBox.Show($"Đang in hóa đơn #{Invoice.InvoiceId}", "In hóa đơn",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowInfo($"Đang in hóa đơn #{Invoice.InvoiceId}", "In hóa đơn"
+                    );
 
             // TODO: Implement actual printing functionality
         }
@@ -740,7 +741,7 @@ namespace ClinicManagement.ViewModels
         {
             // TODO: Generate real QR code for payment
             // This is just a placeholder
-            MessageBox.Show("Tính năng tạo mã QR sẽ được xử lý sau.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowWarning("Tính năng tạo mã QR sẽ được xử lý sau.", "Thông báo"    );
         }
 
         private void ConfirmPayment(Window paymentWindow)
@@ -777,15 +778,16 @@ namespace ClinicManagement.ViewModels
                 PaymentMethod = paymentMethod;
                 PaymentDate = DateTime.Now;
 
-                MessageBox.Show($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công"
+                        );
 
                 // Close payment dialog
                 paymentWindow?.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi");
+
             }
         }
 

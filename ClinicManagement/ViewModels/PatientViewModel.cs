@@ -7,6 +7,7 @@ using System.Windows.Input;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 using System.IO;
+using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
@@ -246,13 +247,13 @@ namespace ClinicManagement.ViewModels
                     try
                     {
                         // Hiển thị hộp thoại xác nhận
-                        MessageBoxResult result = MessageBox.Show(
+                         bool  result = MessageBoxService.ShowQuestion(
                              $"Bạn có chắc muốn thêm loại bệnh nhân '{TypeName}' không?",
-                             "Xác Nhận Thêm",
-                             MessageBoxButton.YesNo,
-                             MessageBoxImage.Question);
+                             "Xác Nhận Thêm"
+                              
+                               );
 
-                        if (result != MessageBoxResult.Yes)
+                        if ( !result)
                             return;
 
                         bool isExist = DataProvider.Instance.Context.PatientTypes
@@ -260,7 +261,7 @@ namespace ClinicManagement.ViewModels
 
                         if (isExist)
                         {
-                            MessageBox.Show("Loại bệnh nhân này đã tồn tại.");
+                            MessageBoxService.ShowWarning("Loại bệnh nhân này đã tồn tại.");
                         }
                         else
                         {
@@ -280,35 +281,35 @@ namespace ClinicManagement.ViewModels
                                 LoadData();
 
                                 // Hiển thị thông báo thành công
-                                MessageBox.Show(
+                                MessageBoxService.ShowSuccess(
                                      "Đã thêm loại bệnh nhân thành công!",
-                                     "Thành Công",
-                                     MessageBoxButton.OK,
-                                     MessageBoxImage.Information);
+                                     "Thành Công"
+                                      
+                                       );
                             }
                             else
                             {
-                                MessageBox.Show("Vui lòng nhập giảm giá hợp lệ (số thực).");
+                                MessageBoxService.ShowSuccess("Vui lòng nhập giảm giá hợp lệ (số thực).");
                             }
                         }
                     }
                     catch (DbUpdateException ex)
                     {
                         // Xử lý lỗi liên quan đến cơ sở dữ liệu
-                        MessageBox.Show(
+                        MessageBoxService.ShowError(
                              $"Không thể thêm loại bệnh nhân: {ex.InnerException?.Message ?? ex.Message}",
-                             "Lỗi Cơ Sở Dữ Liệu",
-                             MessageBoxButton.OK,
-                             MessageBoxImage.Error);
+                             "Lỗi Cơ Sở Dữ Liệu"
+                              
+                              );
                     }
                     catch (Exception ex)
                     {
                         // Xử lý lỗi chung
-                        MessageBox.Show(
+                        MessageBoxService.ShowError(
                              $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                             "Lỗi",
-                             MessageBoxButton.OK,
-                             MessageBoxImage.Error);
+                             "Lỗi"
+                              
+                              );
                     }
                 },
                 (p) => true
@@ -320,13 +321,13 @@ namespace ClinicManagement.ViewModels
                     try
                     {
                         // Hiển thị hộp thoại xác nhận
-                        MessageBoxResult result = MessageBox.Show(
+                         bool  result = MessageBoxService.ShowQuestion(
                              $"Bạn có chắc muốn sửa loại bệnh nhân '{TypeName}' không?",
-                             "Xác Nhận Sửa",
-                             MessageBoxButton.YesNo,
-                             MessageBoxImage.Question);
+                             "Xác Nhận Sửa"
+                              
+                               );
 
-                        if (result != MessageBoxResult.Yes)
+                        if ( !result)
                             return;
 
                         // Tìm loại bệnh nhân cần sửa
@@ -335,7 +336,7 @@ namespace ClinicManagement.ViewModels
 
                         if (patientTypeToUpdate == null)
                         {
-                            MessageBox.Show("Không tìm thấy loại bệnh nhân cần sửa.");
+                            MessageBoxService.ShowWarning("Không tìm thấy loại bệnh nhân cần sửa.");
                             return;
                         }
 
@@ -346,7 +347,7 @@ namespace ClinicManagement.ViewModels
 
                         if (isExist)
                         {
-                            MessageBox.Show("Loại bệnh nhân này đã tồn tại.");
+                            MessageBoxService.ShowWarning("Loại bệnh nhân này đã tồn tại.");
                             return;
                         }
 
@@ -358,35 +359,35 @@ namespace ClinicManagement.ViewModels
 
                             DataProvider.Instance.Context.SaveChanges();
 
-                            MessageBox.Show(
+                            MessageBoxService.ShowSuccess(
                                  "Đã cập nhật loại bệnh nhân thành công!",
-                                 "Thành Công",
-                                 MessageBoxButton.OK,
-                                 MessageBoxImage.Information);
+                                 "Thành Công"
+                                  
+                                   );
 
                             // Refresh data after edit
                             LoadData();
                         }
                         else
                         {
-                            MessageBox.Show("Vui lòng nhập giảm giá hợp lệ (số thực).");
+                            MessageBoxService.ShowWarning("Vui lòng nhập giảm giá hợp lệ (số thực).");
                         }
                     }
                     catch (DbUpdateException ex)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowError(
                              $"Không thể sửa loại bệnh nhân: {ex.InnerException?.Message ?? ex.Message}",
-                             "Lỗi Cơ Sở Dữ Liệu",
-                             MessageBoxButton.OK,
-                             MessageBoxImage.Error);
+                             "Lỗi Cơ Sở Dữ Liệu"
+                              
+                              );
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowError(
                              $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                             "Lỗi",
-                             MessageBoxButton.OK,
-                             MessageBoxImage.Error);
+                             "Lỗi"
+                              
+                              );
                     }
                 },
                 (p) => SelectedType != null
@@ -398,13 +399,13 @@ namespace ClinicManagement.ViewModels
                     try
                     {
                         // Hiển thị hộp thoại xác nhận
-                        MessageBoxResult result = MessageBox.Show(
+                         bool  result = MessageBoxService.ShowQuestion(
                             $"Bạn có chắc muốn xóa loại bệnh nhân '{SelectedType?.TypeName}' không?",
-                            "Xác Nhận Xóa",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Warning);
+                            "Xác Nhận Xóa"
+                             
+                              );
 
-                        if (result != MessageBoxResult.Yes)
+                        if ( !result)
                             return;
 
                         // Tìm đối tượng cần xóa
@@ -413,7 +414,7 @@ namespace ClinicManagement.ViewModels
 
                         if (patientTypeToDelete == null)
                         {
-                            MessageBox.Show("Không tìm thấy loại bệnh nhân để xóa.");
+                            MessageBoxService.ShowWarning("Không tìm thấy loại bệnh nhân để xóa.");
                             return;
                         }
 
@@ -422,11 +423,11 @@ namespace ClinicManagement.ViewModels
 
                         DataProvider.Instance.Context.SaveChanges();
 
-                        MessageBox.Show(
+                        MessageBoxService.ShowSuccess(
                             "Đã xóa (ẩn) loại bệnh nhân thành công.",
-                            "Xóa Thành Công",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                            "Xóa Thành Công"
+                             
+                              );
 
                         // Refresh data after delete
                         LoadData();
@@ -434,11 +435,11 @@ namespace ClinicManagement.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(
+                        MessageBoxService.ShowError(
                             $"Đã xảy ra lỗi khi xóa: {ex.Message}",
-                            "Lỗi",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                            "Lỗi"
+                             
+                             );
                     }
                 },
                 (p) => SelectedType != null
@@ -789,11 +790,11 @@ namespace ClinicManagement.ViewModels
                                 // Show success message
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
-                                    MessageBox.Show(
+                                    MessageBoxService.ShowSuccess(
                                         $"Đã xuất danh sách bệnh nhân thành công!\nĐường dẫn: {saveFileDialog.FileName}",
-                                        "Thành công",
-                                        MessageBoxButton.OK,
-                                        MessageBoxImage.Information);
+                                        "Thành công"
+                                         
+                                          );
                                 });
                             }
                         }
@@ -804,11 +805,11 @@ namespace ClinicManagement.ViewModels
                             {
                                 progressDialog.Close();
 
-                                MessageBox.Show(
+                                MessageBoxService.ShowError(
                                     $"Lỗi khi xuất Excel: {ex.Message}",
-                                    "Lỗi",
-                                    MessageBoxButton.OK,
-                                    MessageBoxImage.Error);
+                                    "Lỗi"
+                                     
+                                     );
                             });
                         }
                     });
@@ -819,11 +820,11 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Lỗi khi xuất Excel: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 

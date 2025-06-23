@@ -7,6 +7,7 @@ using System.Windows.Input;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 using System.Threading;
+using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
@@ -439,11 +440,9 @@ namespace ClinicManagement.ViewModels
                                 // Show success message
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
-                                    MessageBox.Show(
-                                        $"Đã xuất danh sách bác sĩ thành công!\nĐường dẫn: {saveFileDialog.FileName}",
-                                        "Thành công",
-                                        MessageBoxButton.OK,
-                                        MessageBoxImage.Information);
+                                    MessageBoxService.ShowSuccess(
+                                     $"Đã xuất danh sách bác sĩ thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                     "Thành công");
                                 });
                             }
                         }
@@ -454,11 +453,10 @@ namespace ClinicManagement.ViewModels
                             {
                                 progressDialog.Close();
 
-                                MessageBox.Show(
+                                MessageBoxService.ShowError(
                                     $"Lỗi khi xuất Excel: {ex.Message}",
-                                    "Lỗi",
-                                    MessageBoxButton.OK,
-                                    MessageBoxImage.Error);
+                                    "Lỗi");
+                              
                             });
                         }
                     });
@@ -469,11 +467,9 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Lỗi khi xuất Excel: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                                   $"Lỗi khi xuất Excel: {ex.Message}",
+                                   "Lỗi");
             }
         }
 
@@ -484,13 +480,10 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Confirm dialog
-                MessageBoxResult result = MessageBox.Show(
-                    $"Bạn có chắc muốn thêm chuyên khoa '{SpecialtyName}' không?",
-                    "Xác Nhận Thêm",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                if (result != MessageBoxResult.Yes)
+                bool result = MessageBoxService.ShowQuestion(
+                     $"Bạn có chắc muốn thêm chuyên khoa '{SpecialtyName}' không?",
+                     "Xác Nhận Thêm");
+                if (!result)
                     return;
 
                 // Check if specialty already exists
@@ -499,7 +492,7 @@ namespace ClinicManagement.ViewModels
 
                 if (isExist)
                 {
-                    MessageBox.Show("Chuyên khoa này đã tồn tại.");
+                    MessageBoxService.ShowWarning("Chuyên khoa này đã tồn tại.");
                     return;
                 }
 
@@ -525,27 +518,21 @@ namespace ClinicManagement.ViewModels
                 SpecialtyName = "";
                 Description = "";
 
-                MessageBox.Show(
+                MessageBoxService.ShowSuccess(
                     "Đã thêm chuyên khoa thành công!",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công");
             }
             catch (DbUpdateException ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Không thể thêm chuyên khoa: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi Cơ Sở Dữ Liệu");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi");
             }
         }
 
@@ -554,13 +541,11 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Confirm dialog
-                MessageBoxResult result = MessageBox.Show(
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa chuyên khoa '{SelectedItem.SpecialtyName}' thành '{SpecialtyName}' không?",
-                    "Xác Nhận Sửa",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác Nhận Sửa");
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Check if specialty name already exists (except for current)
@@ -571,7 +556,7 @@ namespace ClinicManagement.ViewModels
 
                 if (isExist)
                 {
-                    MessageBox.Show("Tên chuyên khoa này đã tồn tại.");
+                    MessageBoxService.ShowWarning("Tên chuyên khoa này đã tồn tại.");
                     return;
                 }
 
@@ -581,7 +566,7 @@ namespace ClinicManagement.ViewModels
 
                 if (specialtyToUpdate == null)
                 {
-                    MessageBox.Show("Không tìm thấy chuyên khoa cần sửa.");
+                    MessageBoxService.ShowWarning("Không tìm thấy chuyên khoa cần sửa.");
                     return;
                 }
 
@@ -599,27 +584,23 @@ namespace ClinicManagement.ViewModels
                 // Update doctor list as specialty names may have changed
                 LoadData();
 
-                MessageBox.Show(
+                MessageBoxService.ShowSuccess(
                     "Đã cập nhật chuyên khoa thành công!",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công");
+                ;
             }
             catch (DbUpdateException ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Không thể sửa chuyên khoa: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi Cơ Sở Dữ Liệu");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                  );
             }
         }
 
@@ -633,22 +614,18 @@ namespace ClinicManagement.ViewModels
 
                 if (isInUse)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Không thể xóa chuyên khoa này vì đang được sử dụng bởi một hoặc nhiều bác sĩ.",
-                        "Cảnh báo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Cảnh báo");
                     return;
                 }
 
                 // Confirm deletion
-                MessageBoxResult result = MessageBox.Show(
+               bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn xóa chuyên khoa '{SelectedItem.SpecialtyName}' không?",
-                    "Xác Nhận Xóa",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    "Xác Nhận Xóa");
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Soft delete the specialty
@@ -657,7 +634,7 @@ namespace ClinicManagement.ViewModels
 
                 if (specialtyToDelete == null)
                 {
-                    MessageBox.Show("Không tìm thấy chuyên khoa cần xóa.");
+                    MessageBoxService.ShowWarning("Không tìm thấy chuyên khoa cần xóa.");
                     return;
                 }
 
@@ -676,19 +653,16 @@ namespace ClinicManagement.ViewModels
                 SpecialtyName = "";
                 Description = "";
 
-                MessageBox.Show(
+                MessageBoxService.ShowSuccess(
                     "Đã xóa chuyên khoa thành công.",
-                    "Thành Công",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "Thành Công");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa chuyên khoa: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                    );
             }
         }
 

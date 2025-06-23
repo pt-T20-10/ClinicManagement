@@ -1,4 +1,5 @@
 using ClinicManagement.Models;
+using ClinicManagement.Services;
 using LiveCharts;
 using LiveCharts.Wpf;
 using Microsoft.EntityFrameworkCore;
@@ -753,8 +754,8 @@ namespace ClinicManagement.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBox.Show($"Lỗi khi tải thống kê: {ex.Message}",
-                                   "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError($"Lỗi khi tải thống kê: {ex.Message}",
+                                   "Lỗi"    );
                 });
             }
             finally
@@ -858,8 +859,8 @@ namespace ClinicManagement.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBox.Show($"Lỗi khi tải thống kê cơ bản: {ex.Message}",
-                                   "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError($"Lỗi khi tải thống kê cơ bản: {ex.Message}",
+                                   "Lỗi"    );
                 });
             }
         }
@@ -909,8 +910,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ doanh thu theo tháng: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo tháng: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -949,8 +950,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ doanh thu theo giờ: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo giờ: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1014,8 +1015,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ phân bố sản phẩm: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ phân bố sản phẩm: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1057,8 +1058,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ top ngày có doanh thu cao: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ top ngày có doanh thu cao: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1102,8 +1103,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ xu hướng doanh thu: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ xu hướng doanh thu: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1147,8 +1148,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ doanh thu theo loại hóa đơn: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo loại hóa đơn: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1204,8 +1205,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ tỷ lệ doanh thu theo dịch vụ: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ tỷ lệ doanh thu theo dịch vụ: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1266,8 +1267,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ phân loại bệnh nhân: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ phân loại bệnh nhân: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1307,8 +1308,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ trạng thái lịch hẹn: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ trạng thái lịch hẹn: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1346,8 +1347,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ giờ cao điểm lịch hẹn: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ giờ cao điểm lịch hẹn: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1394,8 +1395,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ bệnh nhân theo bác sĩ: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ bệnh nhân theo bác sĩ: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1452,8 +1453,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu sản phẩm bán chạy: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu sản phẩm bán chạy: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1517,8 +1518,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu khách hàng VIP: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu khách hàng VIP: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1622,8 +1623,8 @@ namespace ClinicManagement.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBox.Show($"Lỗi khi tải cảnh báo thuốc: {ex.Message}",
-                                   "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError($"Lỗi khi tải cảnh báo thuốc: {ex.Message}",
+                                   "Lỗi"    );
                     WarningMedicines.Clear();
                     LowStockCount = 0;
                 });
@@ -1691,8 +1692,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tính toán tỷ lệ tăng trưởng: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tính toán tỷ lệ tăng trưởng: {ex.Message}",
+                               "Lỗi"    );
                 RevenueGrowth = "N/A";
                 PatientGrowth = "N/A";
             }
@@ -1758,8 +1759,8 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải biểu đồ doanh thu theo danh mục: {ex.Message}",
-                               "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo danh mục: {ex.Message}",
+                               "Lỗi"    );
             }
         }
 
@@ -1860,13 +1861,13 @@ namespace ClinicManagement.ViewModels
             if (WarningMedicines.Count > 0)
             {
                 var warningText = string.Join("\n", WarningMedicines.Select(m => $"{m.Name}: {m.WarningMessage}"));
-                MessageBox.Show($"Danh sách thuốc cần chú ý:\n\n{warningText}",
-                               "Cảnh báo tồn kho", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowError($"Danh sách thuốc cần chú ý:\n\n{warningText}",
+                               "Cảnh báo tồn kho"   );
             }
             else
             {
-                MessageBox.Show("Không có thuốc nào cần chú ý trong kho.",
-                               "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowError("Không có thuốc nào cần chú ý trong kho.",
+                               "Thông báo"     );
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.ViewModels;
 using System;
 using System.Linq;
@@ -210,8 +211,8 @@ public class ChangeDoctorPasswordViewModel : BaseViewModel
         {
             if (Account == null)
             {
-                MessageBox.Show("Không tìm thấy thông tin tài khoản!",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError("Không tìm thấy thông tin tài khoản!",
+                    "Lỗi"  );
                 return;
             }
 
@@ -219,8 +220,8 @@ public class ChangeDoctorPasswordViewModel : BaseViewModel
             string hashedCurrentPassword = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(CurrentPassword));
             if (Account.Password != hashedCurrentPassword)
             {
-                MessageBox.Show("Mật khẩu hiện tại không đúng!",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError("Mật khẩu hiện tại không đúng!",
+                    "Lỗi"  );
                 return;
             }
 
@@ -241,8 +242,8 @@ public class ChangeDoctorPasswordViewModel : BaseViewModel
                 Account.Password = hashedNewPassword;
 
                 // Hiển thị thông báo thành công
-                MessageBox.Show("Đổi mật khẩu thành công!",
-                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBoxService.ShowWarning("Đổi mật khẩu thành công!",
+                    "Thông báo"  );
 
                 // Đóng window
                 Window window = Application.Current.Windows.OfType<Window>()
@@ -251,14 +252,14 @@ public class ChangeDoctorPasswordViewModel : BaseViewModel
             }
             else
             {
-                MessageBox.Show("Không tìm thấy tài khoản trong hệ thống!",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError("Không tìm thấy tài khoản trong hệ thống!",
+                    "Lỗi"  );
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Lỗi khi đổi mật khẩu: {ex.Message}",
-                "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBoxService.ShowError($"Lỗi khi đổi mật khẩu: {ex.Message}",
+                "Lỗi"  );
         }
     }
 

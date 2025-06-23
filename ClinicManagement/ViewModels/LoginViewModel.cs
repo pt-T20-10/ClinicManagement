@@ -1,5 +1,6 @@
 ﻿
 using ClinicManagement.Models;
+using ClinicManagement.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,7 +94,7 @@ namespace ClinicManagement.ViewModels
             }
             else
             {
-                MessageBox.Show("Tên đăng nhập hoặc mật khẩu không đúng!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowWarning("Tên đăng nhập hoặc mật khẩu không đúng!", "Thông báo"   );
             }
         }
     }

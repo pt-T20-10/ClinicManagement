@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -530,25 +531,25 @@ namespace ClinicManagement.ViewModels
 
             if (!string.IsNullOrEmpty(fullNameError))
             {
-                MessageBox.Show(fullNameError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowError(fullNameError, "Lỗi dữ liệu"     );
                 return false;
             }
 
             if (!string.IsNullOrEmpty(phoneError))
             {
-                MessageBox.Show(phoneError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowError(phoneError, "Lỗi dữ liệu"     );
                 return false;
             }
 
             if (!string.IsNullOrEmpty(dateOfBirthError))
             {
-                MessageBox.Show(dateOfBirthError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowError(dateOfBirthError, "Lỗi dữ liệu"     );
                 return false;
             }
 
             if (!string.IsNullOrEmpty(insuranceCodeError))
             {
-                MessageBox.Show(insuranceCodeError, "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowError(insuranceCodeError, "Lỗi dữ liệu"     );
                 return false;
             }
 
@@ -728,7 +729,7 @@ namespace ClinicManagement.ViewModels
 
                 if (patientToUpdate == null)
                 {
-                    MessageBox.Show("Không tìm thấy thông tin bệnh nhân!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không tìm thấy thông tin bệnh nhân!", "Lỗi"    );
                     return;
                 }
 
@@ -750,17 +751,17 @@ namespace ClinicManagement.ViewModels
                     .FirstOrDefault(p => p.PatientId == PatientId);
 
 
-                MessageBox.Show("Thông tin bệnh nhân đã được cập nhật thành công!",
-                               "Thông báo",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess("Thông tin bệnh nhân đã được cập nhật thành công!",
+                               "Thông báo"
+                                
+                                 );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi cập nhật thông tin: {ex.Message}",
-                               "Lỗi",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi cập nhật thông tin: {ex.Message}",
+                               "Lỗi"
+                                
+                                );
             }
         }
 
@@ -776,22 +777,22 @@ namespace ClinicManagement.ViewModels
 
                 if (hasActiveAppointments)
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowWarning(
                         "Không thể xóa bệnh nhân này vì còn lịch hẹn đang chờ hoặc đang khám.\n" +
                         "Vui lòng hủy tất cả lịch hẹn trước khi xóa bệnh nhân.",
-                        "Cảnh báo",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Cánh báo"
+                         
+                          );
                     return;
                 }
 
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc chắn muốn xóa bệnh nhân {Patient.FullName} không?",
-                    "Xác nhận xóa",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    "Xác nhận xóa"
+                     
+                      );
 
-                if (result == MessageBoxResult.Yes)
+                if (result)
                 {
                     var patientToDelete = DataProvider.Instance.Context.Patients
                         .FirstOrDefault(p => p.PatientId == Patient.PatientId);
@@ -802,7 +803,7 @@ namespace ClinicManagement.ViewModels
                         patientToDelete.IsDeleted = true;
                         DataProvider.Instance.Context.SaveChanges();
 
-                        MessageBox.Show("Đã xóa bệnh nhân thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBoxService.ShowSuccess("Đã xóa bệnh nhân thành công!", "Thông báo"     );
 
                         // Close the window after deletion
                         _window?.Close();
@@ -811,7 +812,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xóa bệnh nhân: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi xóa bệnh nhân: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -853,7 +854,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi lọc hồ sơ bệnh án: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi lọc hồ sơ bệnh án: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -896,7 +897,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi lọc hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi lọc hóa đơn: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -933,18 +934,18 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi lọc lịch hẹn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi lọc lịch hẹn: {ex.Message}", "Lỗi"    );
             }
         }
 
         private void ViewPrescription(MedicalRecord record)
         {
-            MessageBox.Show(record.Prescription, "Đơn thuốc", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowInfo(record.Prescription, "Đơn thuốc"     );
         }
 
         private void ViewTestResults(MedicalRecord record)
         {
-            MessageBox.Show(record.TestResults, "Kết quả xét nghiệm", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowInfo(record.TestResults, "Kết quả xét nghiệm"    );
         }
 
         private void OpenMedicalRecord(MedicalRecord record)
@@ -970,40 +971,40 @@ namespace ClinicManagement.ViewModels
         {
             // Open invoice details window
             // You would need to implement this window
-            MessageBox.Show("Chức năng xem hóa đơn chi tiết đang được phát triển.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowWarning("Chức năng xem hóa đơn chi tiết đang được phát triển.", "Thông báo"     );
         }
 
         private void PrintInvoice(Invoice invoice)
         {
             // Implement printing functionality
-            MessageBox.Show("Chức năng in hóa đơn đang được phát triển.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowWarning("Chức năng in hóa đơn đang được phát triển.", "Thông báo"     );
         }
 
         private void AddNewAppointment()
         {
             // Open add appointment window
             // You would need to implement this window
-            MessageBox.Show("Chức năng thêm lịch hẹn mới đang được phát triển.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowWarning("Chức năng thêm lịch hẹn mới đang được phát triển.", "Thông báo"     );
         }
 
         private void EditExistingAppointment(Appointment appointment)
         {
             // Open edit appointment window
             // You would need to implement this window
-            MessageBox.Show("Chức năng sửa lịch hẹn đang được phát triển.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBoxService.ShowWarning("Chức năng sửa lịch hẹn đang được phát triển.", "Thông báo"     );
         }
 
         private void CancelExistingAppointment(Appointment appointment)
         {
             try
             {
-                MessageBoxResult result = MessageBox.Show(
+                 bool  result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
-                    "Xác nhận hủy",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác nhận hủy"
+                     
+                    );
 
-                if (result == MessageBoxResult.Yes)
+                if (result)
                 {
                     var appointmentToUpdate = DataProvider.Instance.Context.Appointments
                         .FirstOrDefault(a => a.AppointmentId == appointment.AppointmentId);
@@ -1016,13 +1017,13 @@ namespace ClinicManagement.ViewModels
                         // Refresh appointments list
                         FilterAppointments();
 
-                        MessageBox.Show("Đã hủy lịch hẹn thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBoxService.ShowSuccess("Đã hủy lịch hẹn thành công!", "Thông báo"     );
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi"    );
             }
 
         }

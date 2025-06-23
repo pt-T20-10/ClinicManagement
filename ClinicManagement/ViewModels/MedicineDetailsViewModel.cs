@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
@@ -433,7 +434,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi tải thông tin liên quan: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải thông tin liên quan: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -518,7 +519,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading initial data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError("Lỗi xảy ra trong quá trình tải dữ liệu {ex.Message}", "Lỗi"    );
                 DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
             }
         }
@@ -592,13 +593,13 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show("Medicine information not found in database.", "Notice",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Không tìm thấy thông tin thuốc", "Cảnh báo"
+                            );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error refreshing data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải lại dữ liệu: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -644,7 +645,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading dropdown data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu cho các ô chọn: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -753,11 +754,11 @@ namespace ClinicManagement.ViewModels
 
                         if (!supplierId.HasValue)
                         {
-                            MessageBox.Show(
+                            MessageBoxService.ShowError(
                                 "Không thể thêm lô nhập mới vì thiếu thông tin nhà cung cấp.",
-                                "Lỗi",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Error);
+                                "Lỗi"
+                                 
+                                 );
                             return;
                         }
 
@@ -800,31 +801,31 @@ namespace ClinicManagement.ViewModels
 
                     dbContext.SaveChanges();
 
-                    MessageBox.Show(
-                        "Medicine information has been updated successfully!",
-                        "Success",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    MessageBoxService.ShowSuccess(
+                        "Câp nhật thông tin thuốc thành công!",
+                        "Thành công"
+                         
+                          );
 
                     // Refresh data after saving
                     RefreshMedicineData();
                 }
                 else
                 {
-                    MessageBox.Show(
-                        "Medicine not found in database.",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    MessageBoxService.ShowError(
+                        "Không tìm thấy thuốc trong cơ sở dữ liệu.",
+                        "Lỗi"
+                         
+                         );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error saving medicine information: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError(
+                    $"Lỗi trong khi đang lưu thông tin thuốc: {ex.Message}",
+                    "Lỗi"
+                     
+                     );
             }
         }
 
@@ -897,11 +898,11 @@ namespace ClinicManagement.ViewModels
 
                     dbContext.SaveChanges();
 
-                    MessageBox.Show(
+                    MessageBoxService.ShowSuccess(
                         "Thông tin lô nhập kho đã được cập nhật thành công!",
-                        "Thành công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                        "Thành công"
+                         
+                          );
 
                     // Refresh data after saving
                     RefreshMedicineData();
@@ -909,20 +910,20 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show(
+                    MessageBoxService.ShowError(
                         "Không tìm thấy lô nhập kho trong cơ sở dữ liệu.",
-                        "Lỗi",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        "Lỗi"
+                         
+                         );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                MessageBoxService.ShowError(
                     $"Lỗi khi lưu thông tin lô nhập kho: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    "Lỗi"
+                     
+                     );
             }
         }
 

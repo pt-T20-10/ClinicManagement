@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -411,7 +412,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -434,7 +435,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Không thể tải danh sách loại thuốc: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Không thể tải danh sách loại thuốc: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -480,8 +481,8 @@ namespace ClinicManagement.ViewModels
                         if (cartItem.Quantity > availableStock)
                         {
                             cartItem.Quantity = availableStock;
-                            MessageBox.Show($"Số lượng của {medicine.Name} đã được điều chỉnh xuống {availableStock} do hạn chế tồn kho.",
-                                          "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBoxService.ShowWarning($"Số lượng của {medicine.Name} đã được điều chỉnh xuống {availableStock} do hạn chế tồn kho.",
+                                          "Thông báo"     );
                         }
 
                         CartItems.Add(cartItem);
@@ -490,7 +491,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Không thể tải thông tin chi tiết hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Không thể tải thông tin chi tiết hóa đơn: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -536,8 +537,8 @@ namespace ClinicManagement.ViewModels
             // Kiểm tra nếu số lượng vượt quá tồn kho
             if (quantity > medicine.TotalStockQuantity)
             {
-                MessageBox.Show($"Số lượng yêu cầu ({quantity}) vượt quá số lượng tồn kho ({medicine.TotalStockQuantity}).",
-                                "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBoxService.ShowWarning($"Số lượng yêu cầu ({quantity}) vượt quá số lượng tồn kho ({medicine.TotalStockQuantity}).",
+                                "Cánh báo"     );
                 return;
             }
 
@@ -552,8 +553,8 @@ namespace ClinicManagement.ViewModels
                 if (existingItem.Quantity > medicine.TotalStockQuantity)
                 {
                     existingItem.Quantity = medicine.TotalStockQuantity;
-                    MessageBox.Show($"Số lượng đã được điều chỉnh theo tồn kho hiện có ({medicine.TotalStockQuantity}).",
-                                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxService.ShowWarning($"Số lượng đã được điều chỉnh theo tồn kho hiện có ({medicine.TotalStockQuantity}).",
+                                    "Thông báo"     );
                 }
             }
             else
@@ -584,8 +585,8 @@ namespace ClinicManagement.ViewModels
                 // Kiểm tra có sản phẩm trong giỏ không
                 if (CartItems.Count == 0)
                 {
-                    MessageBox.Show("Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.",
-                                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxService.ShowWarning("Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.",
+                                    "Thông báo"     );
                     return;
                 }
 
@@ -607,8 +608,8 @@ namespace ClinicManagement.ViewModels
                     invoice = context.Invoices.Find(CurrentInvoice.InvoiceId);
                     if (invoice == null)
                     {
-                        MessageBox.Show("Không thể tìm thấy hóa đơn để cập nhật.",
-                                        "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBoxService.ShowError("Không thể tìm thấy hóa đơn để cập nhật.",
+                                        "Lỗi"    );
                         return;
                     }
 
@@ -714,7 +715,7 @@ namespace ClinicManagement.ViewModels
                     // Cập nhật lại danh sách thuốc để có số lượng chính xác
                     LoadMedicines();
 
-                    MessageBox.Show("Thanh toán thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxService.ShowSuccess("Thanh toán thành công!", "Thông báo"     );
                 }
                 else if (refreshedInvoice.Status == "Chưa thanh toán")
                 {
@@ -733,13 +734,13 @@ namespace ClinicManagement.ViewModels
                     // Cập nhật lại danh sách thuốc để có số lượng chính xác
                     LoadMedicines();
                     // Hóa đơn vẫn chưa thanh toán
-                    MessageBox.Show($"Hóa đơn #{refreshedInvoice.InvoiceId} đã được tạo nhưng chưa thanh toán.",
-                                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxService.ShowWarning($"Hóa đơn #{refreshedInvoice.InvoiceId} đã được tạo nhưng chưa thanh toán.",
+                                    "Thông báo"     );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -801,7 +802,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi"    );
             }
         }
 
@@ -837,11 +838,11 @@ namespace ClinicManagement.ViewModels
                 // Nếu không tìm thấy bệnh nhân, tạo mới
                 if (patient == null)
                 {
-                    var result = MessageBox.Show(
+                    var result = MessageBoxService.ShowQuestion(
                         $"Không tìm thấy bệnh nhân với thông tin đã nhập. Bạn có muốn tạo bệnh nhân mới?",
-                        "Thông báo", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        "Thông báo" );
 
-                    if (result == MessageBoxResult.Yes)
+                    if (result)
                     {
                         // Tạo bệnh nhân mới với thông tin cơ bản
                         patient = new Patient
@@ -861,7 +862,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xử lý thông tin bệnh nhân: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi xử lý thông tin bệnh nhân: {ex.Message}", "Lỗi"    );
                 return null;
             }
         }
@@ -880,7 +881,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi cập nhật số hóa đơn mới: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Lỗi khi cập nhật số hóa đơn mới: {ex.Message}", "Lỗi"    );
             }
         }
     }

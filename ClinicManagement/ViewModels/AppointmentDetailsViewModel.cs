@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.UserControlToUse;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -215,11 +216,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}", "Lỗi");
             }
         }
 
@@ -257,11 +254,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi tải danh sách loại lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi tải danh sách loại lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
         #endregion
@@ -278,10 +271,7 @@ namespace ClinicManagement.ViewModels
                 var mainWindow = Application.Current.MainWindow;
                 if (mainWindow == null)
                 {
-                    MessageBox.Show("Không thể tìm thấy cửa sổ chính của ứng dụng.",
-                                 "Lỗi",
-                                 MessageBoxButton.OK,
-                                 MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không thể tìm thấy cửa sổ chính của ứng dụng.", "Lỗi");
                     return;
                 }
 
@@ -289,10 +279,7 @@ namespace ClinicManagement.ViewModels
                 var mainTabControl = mainWindow.FindName("MainTabControl") as TabControl;
                 if (mainTabControl == null)
                 {
-                    MessageBox.Show("Không thể tìm thấy TabControl trong cửa sổ chính.",
-                                 "Lỗi",
-                                 MessageBoxButton.OK,
-                                 MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không thể tìm thấy TabControl trong cửa sổ chính.", "Lỗi");
                     return;
                 }
 
@@ -303,10 +290,7 @@ namespace ClinicManagement.ViewModels
                 var examineUC = mainTabControl.SelectedContent as ExamineUC;
                 if (examineUC == null)
                 {
-                    MessageBox.Show("Không thể tìm thấy giao diện khám bệnh.",
-                                 "Lỗi",
-                                 MessageBoxButton.OK,
-                                 MessageBoxImage.Error);
+                    MessageBoxService.ShowError("Không thể tìm thấy giao diện khám bệnh.", "Lỗi");
                     return;
                 }
 
@@ -319,18 +303,12 @@ namespace ClinicManagement.ViewModels
 
                
 
-                MessageBox.Show($"Đã chuyển đến phần khám bệnh cho bệnh nhân {OriginalAppointment.Patient.FullName}.",
-                             "Thành công",
-                             MessageBoxButton.OK,
-                             MessageBoxImage.Information);
+                MessageBoxService.ShowSuccess($"Đã chuyển đến phần khám bệnh cho bệnh nhân {OriginalAppointment.Patient.FullName}.", "Thành công");
                 _window?.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Đã xảy ra lỗi khi tiến hành khám: {ex.Message}",
-                             "Lỗi",
-                             MessageBoxButton.OK,
-                             MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi tiến hành khám: {ex.Message}", "Lỗi");
             }
         }
 
@@ -355,22 +333,14 @@ namespace ClinicManagement.ViewModels
                 // Verify time slot validity
                 if (!ValidateDateTimeSelection())
                 {
-                    MessageBox.Show(
-                        TimeSlotError,
-                        "Lỗi - Thời gian không hợp lệ",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowError(TimeSlotError, "Lỗi - Thời gian không hợp lệ");
                     return;
                 }
 
                 // Check if appointment type is selected
                 if (SelectedAppointmentType == null)
                 {
-                    MessageBox.Show(
-                        "Vui lòng chọn loại lịch hẹn",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Vui lòng chọn loại lịch hẹn", "Thiếu thông tin");
                     return;
                 }
 
@@ -384,17 +354,15 @@ namespace ClinicManagement.ViewModels
                     0);
 
                 // Ask for confirmation
-                MessageBoxResult result = MessageBox.Show(
+               bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có muốn cập nhật lịch hẹn với thông tin sau không?\n" +
                     $"- Bác sĩ: {SelectedDoctor.FullName}\n" +
                     $"- Loại lịch hẹn: {SelectedAppointmentType.TypeName}\n" +
                     $"- Ngày: {AppointmentDate?.ToString("dd/MM/yyyy")}\n" +
                     $"- Giờ: {SelectedAppointmentTime?.ToString("HH:mm")}",
-                    "Xác nhận cập nhật",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác nhận cập nhật");
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Update appointment
@@ -418,20 +386,12 @@ namespace ClinicManagement.ViewModels
                         .Include(a => a.AppointmentType)
                         .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
 
-                    MessageBox.Show(
-                        "Lịch hẹn đã được cập nhật thành công!",
-                        "Thành công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    MessageBoxService.ShowSuccess("Lịch hẹn đã được cập nhật thành công!", "Thành công");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi cập nhật lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi cập nhật lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
 
@@ -445,22 +405,16 @@ namespace ClinicManagement.ViewModels
                 // Check if there's a reason for cancellation 
                 if (string.IsNullOrWhiteSpace(OriginalAppointment.Notes))
                 {
-                    MessageBox.Show(
-                        "Vui lòng nhập lý do hủy lịch hẹn.",
-                        "Thiếu thông tin",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    MessageBoxService.ShowWarning("Vui lòng nhập lý do hủy lịch hẹn.", "Thiếu thông tin");
                     return;
                 }
 
                 // Ask for confirmation
-                MessageBoxResult result = MessageBox.Show(
+                bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
-                    "Xác nhận hủy",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
+                    "Xác nhận hủy");
 
-                if (result != MessageBoxResult.Yes)
+                if (!result)
                     return;
 
                 // Update appointment status
@@ -482,11 +436,7 @@ namespace ClinicManagement.ViewModels
                         .Include(a => a.AppointmentType)
                         .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
 
-                    MessageBox.Show(
-                        "Lịch hẹn đã được hủy thành công!",
-                        "Thành công",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    MessageBoxService.ShowSuccess("Lịch hẹn đã được hủy thành công!", "Thành công");
 
                     // Close the window after cancellation
                     _window?.Close();
@@ -494,11 +444,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Đã xảy ra lỗi khi hủy lịch hẹn: {ex.Message}",
-                    "Lỗi",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
         #endregion

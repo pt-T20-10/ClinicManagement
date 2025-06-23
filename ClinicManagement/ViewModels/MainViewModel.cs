@@ -156,20 +156,19 @@ namespace ClinicManagement.ViewModels
             );
 
             // Xử lý khi cửa sổ đóng
+            // Xử lý khi cửa sổ đóng
             WindowClosingCommand = new RelayCommand<CancelEventArgs>(
                 (e) =>
                 {
                     // Xác định xem có đang đăng xuất không
                     if (CurrentAccount != null)
                     {
-                        // Hiển thị hộp thoại xác nhận
-                        MessageBoxResult result = MessageBox.Show(
+                        // Sử dụng MessageBoxService để hiển thị CustomMessageBox thay vì MessageBox tiêu chuẩn
+                        bool result = ClinicManagement.Services.MessageBoxService.ShowQuestion(
                             "Bạn có chắc chắn muốn đăng xuất?",
-                            "Xác nhận",
-                            MessageBoxButton.YesNo,
-                            MessageBoxImage.Question);
+                            "Xác nhận đăng xuất");
 
-                        if (result == MessageBoxResult.No)
+                        if (!result)
                         {
                             // Người dùng không muốn đăng xuất, hủy sự kiện
                             if (e != null)
@@ -273,8 +272,9 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi đăng xuất: {ex.Message}",
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+               MessageBoxService.ShowError(
+                    $"Lỗi khi đăng xuất: {ex.Message}",
+                    "Lỗi");
             }
         }
 
@@ -358,7 +358,7 @@ namespace ClinicManagement.ViewModels
             else
             {
                 Console.WriteLine($"Role '{role}' not found in permissions");
-                MessageBox.Show($"Không tìm thấy quyền cho vai trò: '{role}'", "Lỗi phân quyền");
+                MessageBoxService.ShowWarning($"Không tìm thấy quyền cho vai trò: '{role}'", "Lỗi phân quyền");
             }
         }
 
