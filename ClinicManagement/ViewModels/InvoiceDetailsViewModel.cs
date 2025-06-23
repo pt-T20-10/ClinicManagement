@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Windows;
-using System.Windows.Input;
-using ClinicManagement.Models;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
-using System.Windows.Controls;
+﻿using ClinicManagement.Models;
 using ClinicManagement.Services;
+using Microsoft.Win32;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace ClinicManagement.ViewModels
 {
@@ -245,7 +245,7 @@ namespace ClinicManagement.ViewModels
 
         #region Commands
 
-        public ICommand PrintInvoiceCommand { get; set; }
+
         public ICommand ProcessPaymentCommand { get; set; }
         public ICommand CloseWindow { get; set; }
         public ICommand GenerateQRCodeCommand { get; set; }
@@ -253,6 +253,7 @@ namespace ClinicManagement.ViewModels
         public ICommand ApplyPatientDiscountCommand { get; set; }
         public ICommand RecalculateTotalsCommand { get; set; }
         public ICommand EditSaleCommand { get; set; }
+        public ICommand ExportInvoiceCommand { get; set; } 
 
         #endregion
 
@@ -269,9 +270,7 @@ namespace ClinicManagement.ViewModels
 
         private void InitializeCommands()
         {
-            PrintInvoiceCommand = new RelayCommand<object>(
-                p => PrintInvoice(),
-                p => Invoice != null);
+           
 
             ProcessPaymentCommand = new RelayCommand<object>(
                 p => ProcessPayment(),
@@ -306,6 +305,10 @@ namespace ClinicManagement.ViewModels
                 },
                 p => true
             );
+            ExportInvoiceCommand = new RelayCommand<object>(
+              p => ExportInvoiceToPdf(),
+              p => Invoice != null
+          );
 
             GenerateQRCodeCommand = new RelayCommand<object>(
                 p => GenerateQRCode(),
@@ -677,7 +680,7 @@ namespace ClinicManagement.ViewModels
             {
                 Content = "Tạo mã QR",
                 Margin = new Thickness(0, 10, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
             };
             generateQrButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "GenerateQRCodeCommand");
             qrCodePanel.Children.Add(generateQrButton);
@@ -707,7 +710,7 @@ namespace ClinicManagement.ViewModels
             var buttonsPanel = new StackPanel
             {
                 Orientation = System.Windows.Controls.Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
                 Margin = new Thickness(0, 20, 0, 0)
             };
 
@@ -794,5 +797,288 @@ namespace ClinicManagement.ViewModels
         public bool CanEditMedicineSale => Invoice != null &&
                                     Invoice.Status == "Chưa thanh toán" &&
                                     (Invoice.InvoiceType == "Bán thuốc" || Invoice.InvoiceType == "Khám và bán thuốc");
+
+        #region PDF
+        private void ExportInvoiceToPdf()
+        {
+            QuestPDF.Settings.License = LicenseType.Community;
+            try
+            {
+                // Create save file dialog to let the user choose where to save the PDF
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "PDF files (*.pdf)|*.pdf",
+                    DefaultExt = "pdf",
+                    FileName = $"HoaDon_{Invoice.InvoiceId}_{DateTime.Now:yyyyMMdd}.pdf",
+                    Title = "Lưu hóa đơn PDF"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    string filePath = saveFileDialog.FileName;
+
+                    // Generate PDF using QuestPDF - với phương thức đơn giản hóa
+                    GenerateSimplePdfDocument(filePath);
+
+                    MessageBoxService.ShowSuccess(
+                        $"Đã xuất hóa đơn #{Invoice.InvoiceId} thành công!\nĐường dẫn: {filePath}",
+                        "Xuất hóa đơn"
+                    );
+
+                    // Open the PDF file with the default PDF viewer
+                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
+                    {
+                        try
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = filePath,
+                                UseShellExecute = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi xuất hóa đơn: {ex.Message}", "Lỗi xuất hóa đơn");
+            }
+        }
+
+        // Phương thức tạo PDF đơn giản, không chia nhỏ
+        private void GenerateSimplePdfDocument(string filePath)
+        {
+            Document.Create(document =>
+            {
+                document.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(50);
+                    page.DefaultTextStyle(x => x.FontSize(11));
+
+                    // Tất cả nội dung trong một container duy nhất
+                    page.Content().Column(column =>
+                    {
+                        // HEADER
+                        column.Item().Row(row =>
+                        {
+                            // Clinic information
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().Text("PHÒNG KHÁM CLINIC MANAGEMENT")
+                                    .FontSize(18).Bold();
+                                col.Item().Text("Địa chỉ: 123 Đường Khám Bệnh, Q1, TP.HCM")
+                                    .FontSize(10);
+                                col.Item().Text("SĐT: 028.1234.5678 | Email: info@clinicmanagement.com")
+                                    .FontSize(10);
+                            });
+
+                            // Invoice information
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().AlignRight().Text($"HÓA ĐƠN #{Invoice.InvoiceId}")
+                                    .FontSize(16).Bold().FontColor(Colors.Blue.Medium);
+                                col.Item().AlignRight().Text($"Ngày: {Invoice.InvoiceDate:dd/MM/yyyy HH:mm}")
+                                    .FontSize(10);
+                                col.Item().AlignRight().Text($"Trạng thái: {Invoice.Status}")
+                                    .FontSize(10)
+                                    .FontColor(Invoice.Status == "Đã thanh toán" ? Colors.Green.Medium : Colors.Orange.Medium);
+                            });
+                        });
+
+                        // Separator
+                        column.Item().PaddingVertical(10)
+                              .BorderBottom(1).BorderColor(Colors.Grey.Lighten2);
+
+                        // CONTENT - Invoice type
+                        column.Item().PaddingTop(20)
+                              .Text($"Loại hóa đơn: {Invoice.InvoiceType}")
+                              .FontSize(12).Bold();
+
+                        // Patient information
+                        if (HasPatient)
+                        {
+                            column.Item().PaddingTop(10)
+                                  .Border(1).BorderColor(Colors.Grey.Lighten3)
+                                  .Padding(10)
+                                  .Column(patientCol =>
+                                  {
+                                      patientCol.Item().Text("THÔNG TIN KHÁCH HÀNG").Bold();
+                                      patientCol.Item().PaddingTop(5).Text($"Họ tên: {Invoice.Patient?.FullName}");
+                                      patientCol.Item().Text($"Số điện thoại: {Invoice.Patient?.Phone}");
+
+                                      if (!string.IsNullOrEmpty(Invoice.Patient?.InsuranceCode))
+                                          patientCol.Item().Text($"Mã BHYT: {Invoice.Patient?.InsuranceCode}");
+
+                                      if (Invoice.Patient?.PatientType != null)
+                                          patientCol.Item().Text($"Loại khách hàng: {Invoice.Patient?.PatientType?.TypeName}");
+                                  });
+                        }
+
+                        // Invoice details
+                        column.Item().PaddingTop(20)
+                              .Column(detailCol =>
+                              {
+                                  detailCol.Item().Text("CHI TIẾT HÓA ĐƠN").Bold().FontSize(12);
+
+                                  detailCol.Item().PaddingTop(5)
+                                         .Table(table =>
+                                         {
+                                             // Define columns
+                                             table.ColumnsDefinition(columns =>
+                                             {
+                                                 columns.RelativeColumn(3); // Item name
+                                                 columns.RelativeColumn(1); // Quantity
+                                                 columns.RelativeColumn((float)1.5); // Unit price
+                                                 columns.RelativeColumn((float)1.5); // Total price
+                                             });
+
+                                             // Add header row
+                                             table.Header(header =>
+                                             {
+                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Tên thuốc/dịch vụ").Bold();
+                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignCenter().Text("Số lượng").Bold();
+                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Đơn giá").Bold();
+                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Thành tiền").Bold();
+                                             });
+
+                                             // Add data rows
+                                             foreach (var detail in InvoiceDetails)
+                                             {
+                                                 string itemName = !string.IsNullOrEmpty(detail.ServiceName)
+                                                     ? detail.ServiceName
+                                                     : detail.Medicine?.Name ?? "Không xác định";
+
+                                                 int quantity = detail.Quantity ?? 1;
+                                                 decimal unitPrice = detail.SalePrice ?? 0;
+                                                 decimal totalPrice = unitPrice * quantity;
+
+                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                                      .Padding(5).Text(itemName);
+                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                                      .Padding(5).AlignCenter().Text(quantity.ToString());
+                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                                      .Padding(5).AlignRight().Text($"{unitPrice:N0} VNĐ");
+                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                                      .Padding(5).AlignRight().Text($"{totalPrice:N0} VNĐ");
+                                             }
+                                         });
+                              });
+
+                        // Payment Summary
+                        column.Item().PaddingTop(20)
+                              .AlignRight()
+                              .Table(table =>
+                              {
+                                  // Define the table columns
+                                  table.ColumnsDefinition(columns =>
+                                  {
+                                      columns.RelativeColumn(1); // Label column
+                                      columns.RelativeColumn(1); // Value column
+                                  });
+
+                                  // Subtotal row
+                                  table.Cell().AlignRight().Text("Tạm tính:").Bold();
+                                  table.Cell().AlignRight().Text($"{SubTotal:N0} VNĐ");
+
+                                  // Discount row (if applicable)
+                                  if (DiscountAmount > 0)
+                                  {
+                                      table.Cell().AlignRight().Text("Giảm giá:").Bold();
+                                      table.Cell().AlignRight().Text($"{DiscountAmount:N0} VNĐ").FontColor(Colors.Green.Medium);
+                                  }
+
+                                  // Tax row (if applicable)
+                                  if (TaxAmount > 0)
+                                  {
+                                      table.Cell().AlignRight().Text($"Thuế VAT ({Invoice.Tax}%):").Bold();
+                                      table.Cell().AlignRight().Text($"{TaxAmount:N0} VNĐ");
+                                  }
+
+                                  // Separator
+                                  table.Cell().ColumnSpan(2).BorderBottom(1)
+                                       .BorderColor(Colors.Grey.Lighten2)
+                                       .PaddingVertical(5);
+
+                                  // Total amount row
+                                  table.Cell().AlignRight().Text("TỔNG CỘNG:").Bold().FontSize(12);
+                                  table.Cell().AlignRight().Text($"{TotalAmount:N0} VNĐ")
+                                       .Bold().FontSize(12).FontColor(Colors.Red.Medium);
+                              });
+
+                        // Payment Information
+                        if (IsPaid && PaymentDate.HasValue)
+                        {
+                            column.Item().PaddingTop(10)
+                                  .AlignRight()
+                                  .Text($"Thanh toán bằng {PaymentMethod} ngày {PaymentDate:dd/MM/yyyy HH:mm}")
+                                  .FontColor(Colors.Green.Medium);
+                        }
+
+                        // Doctor's notes (if applicable) - simplified
+                        if (HasMedicalRecord && MedicalRecord != null)
+                        {
+                            column.Item().PaddingTop(20)
+                                  .Border(1).BorderColor(Colors.Grey.Lighten3)
+                                  .Padding(10)
+                                  .Column(notesCol =>
+                                  {
+                                      notesCol.Item().Text("LỜI DẶN CỦA BÁC SĨ").Bold().FontSize(12);
+
+                                      string notes = !string.IsNullOrEmpty(MedicalRecord.DoctorAdvice)
+                                          ? MedicalRecord.DoctorAdvice
+                                          : "Không có lời dặn";
+
+                                      notesCol.Item().PaddingTop(5)
+                                             .Text(notes)
+                                             .FontSize(10)
+                                             .FontColor(string.IsNullOrEmpty(MedicalRecord.DoctorAdvice)
+                                                 ? Colors.Grey.Medium
+                                                 : Colors.Black);
+
+                                      notesCol.Item().PaddingTop(10)
+                                             .AlignRight()
+                                             .Text($"Bác sĩ: {MedicalRecord.Doctor?.FullName ?? "Không xác định"}")
+                                             .Bold();
+                                  });
+                        }
+
+                        // FOOTER
+                        column.Item().PaddingTop(20)
+                              .BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                              .PaddingTop(10)
+                              .Row(row =>
+                              {
+                                  row.RelativeItem().Column(footerCol =>
+                                  {
+                                      footerCol.Item().Text("Xin cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!")
+                                          .FontSize(10).Italic();
+
+                                      if (!string.IsNullOrEmpty(Invoice.Notes))
+                                      {
+                                          footerCol.Item().Text($"Ghi chú: {Invoice.Notes}")
+                                              .FontSize(9).FontColor(Colors.Grey.Medium);
+                                      }
+                                  });
+
+                                  row.RelativeItem().AlignRight().Text(text =>
+                                  {
+                                      text.Span("Trang ").FontSize(10);
+                                      text.CurrentPageNumber().FontSize(10);
+                                      text.Span(" / ").FontSize(10);
+                                      text.TotalPages().FontSize(10);
+                                  });
+                              });
+                    });
+                });
+            })
+            .GeneratePdf(filePath);
+        }
+        #endregion
+
     }
 }

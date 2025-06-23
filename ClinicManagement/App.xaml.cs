@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.ViewModels;
+using QuestPDF.Infrastructure;
 using System.Configuration;
 using System.Data;
 using System.Windows;
@@ -13,7 +14,7 @@ namespace ClinicManagement
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-
+            QuestPDF.Settings.License = LicenseType.Community;
             // Initialize shared ViewModels
             // Initialize all shared ViewModels
             Current.Resources["MainVM"] = new MainViewModel();

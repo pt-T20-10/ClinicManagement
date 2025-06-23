@@ -36,6 +36,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="QuestPDF" Version="2025.5.1" />
   </ItemGroup>
 
   <ItemGroup>
