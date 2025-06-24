@@ -209,6 +209,7 @@
                                     <ColumnDefinition Width="*" MaxWidth="70"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
+                                
                                 <TextBox Grid.Column="0" 
                      Text="{Binding Respiration}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
@@ -289,21 +290,24 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
+                                
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding SystolicPressure}" 
+                     Text="{Binding SystolicPressure, UpdateSourceTrigger=PropertyChanged}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
                                          Padding="0"
                      HorizontalAlignment="Stretch"/>
+                                
                                 <TextBlock Grid.Column="1" 
                        Text="/" 
                        VerticalAlignment="Center" 
                        Margin="8,0" 
                        FontWeight="Bold"
                        FontSize="16"/>
+                                
                                 <TextBox Grid.Column="2" 
-                     Text="{Binding DiastolicPressure}" 
+                     Text="{Binding DiastolicPressure, UpdateSourceTrigger=PropertyChanged}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5,5,5" 
                      Height="35"
@@ -374,21 +378,14 @@
                                 Width="180" Height="45" Margin="10,0">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock Text="Lưu hồ sơ" FontSize="14"/>
+                                <TextBlock Text="Lưu hồ sơ" FontSize="14" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
+                        <Button Command="{Binding ExportPDFCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
                                 Width="180" Height="45" Margin="10,0">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock Text="In hồ sơ" FontSize="14"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Command="{Binding ResetRecordCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Width="180" Height="45" Margin="10,0">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock Text="Làm mới" FontSize="14"/>
+                            <TextBlock Text="Xuất PDF" FontSize="14" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>

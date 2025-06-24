@@ -1,5 +1,6 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.Services;
+using ClinicManagement.SubWindow;
 using Microsoft.Win32;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -817,30 +818,75 @@ namespace ClinicManagement.ViewModels
                 {
                     string filePath = saveFileDialog.FileName;
 
-                    // Generate PDF using QuestPDF - với phương thức đơn giản hóa
-                    GenerateSimplePdfDocument(filePath);
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
 
-                    MessageBoxService.ShowSuccess(
-                        $"Đã xuất hóa đơn #{Invoice.InvoiceId} thành công!\nĐường dẫn: {filePath}",
-                        "Xuất hóa đơn"
-                    );
-
-                    // Open the PDF file with the default PDF viewer
-                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
+                    // Start export operation in background thread
+                    Task.Run(() =>
                     {
                         try
                         {
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            // Report progress: 10% - Starting
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                            // Report progress: 30% - Preparing document
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
+                            Thread.Sleep(100); // Small delay for visibility
+
+                            // Report progress: 60% - Generating content
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(60));
+
+                            // Generate PDF using QuestPDF - với phương thức đơn giản hóa
+                            GenerateSimplePdfDocument(filePath);
+
+                            // Report progress: 90% - Saving file
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+                            Thread.Sleep(100); // Small delay for visibility
+
+                            // Report progress: 100% - Complete
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                            Thread.Sleep(300); // Show 100% briefly
+
+                            // Close progress dialog and show success message
+                            Application.Current.Dispatcher.Invoke(() =>
                             {
-                                FileName = filePath,
-                                UseShellExecute = true
+                                progressDialog.Close();
+
+                                MessageBoxService.ShowSuccess(
+                                    $"Đã xuất hóa đơn #{Invoice.InvoiceId} thành công!\nĐường dẫn: {filePath}",
+                                    "Xuất hóa đơn"
+                                );
+
+                                // Open the PDF file with the default PDF viewer
+                                if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
+                                {
+                                    try
+                                    {
+                                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                        {
+                                            FileName = filePath,
+                                            UseShellExecute = true
+                                        });
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                    }
+                                }
                             });
                         }
                         catch (Exception ex)
                         {
-                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+                                MessageBoxService.ShowError($"Lỗi khi xuất hóa đơn: {ex.Message}", "Lỗi xuất hóa đơn");
+                            });
                         }
-                    }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
                 }
             }
             catch (Exception ex)
@@ -848,6 +894,7 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi xuất hóa đơn: {ex.Message}", "Lỗi xuất hóa đơn");
             }
         }
+
 
         // Phương thức tạo PDF đơn giản, không chia nhỏ
         private void GenerateSimplePdfDocument(string filePath)

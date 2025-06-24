@@ -2,15 +2,15 @@
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
+using Microsoft.Win32;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using System.IO;
+using System.Windows;
 
 namespace ClinicManagement.ViewModels
 {
@@ -272,6 +272,7 @@ namespace ClinicManagement.ViewModels
         public ICommand ResetRecordCommand { get; set; }
         public ICommand SearchPatientCommand { get; set; }
         public ICommand AddPatientCommand { get; set; }
+        public ICommand ExportPDFCommand { get; set; }
 
         #endregion
 
@@ -314,11 +315,6 @@ namespace ClinicManagement.ViewModels
                 (p) => CanSaveRecord()
             );
 
-            PrintRecordCommand = new RelayCommand<object>(
-                (p) => PrintRecord(),
-                (p) => CanPrintRecord()
-            );
-
             ResetRecordCommand = new RelayCommand<object>(
                 (p) => ResetForm(),
                 (p) => true
@@ -354,6 +350,10 @@ namespace ClinicManagement.ViewModels
 
                 },
                 (p) => true
+            );
+            ExportPDFCommand = new RelayCommand<object>(
+                (p) => ExporttoPDF(),
+                (p) => CanExportToPdf()
             );
         }
 
@@ -705,18 +705,7 @@ namespace ClinicManagement.ViewModels
         }
 
 
-        private bool CanPrintRecord()
-        {
-            return SelectedPatient != null &&
-                   SelectedDoctor != null &&
-                   !string.IsNullOrWhiteSpace(Diagnosis);
-        }
 
-        private void PrintRecord()
-        {
-            // This functionality would be implemented later
-            MessageBoxService.ShowWarning("Chức năng in hồ sơ sẽ được phát triển trong phiên bản tiếp theo.", "Thông báo");
-        }
 
         private void ResetForm()
         {
@@ -904,6 +893,400 @@ namespace ClinicManagement.ViewModels
 
                 return error;
             }
+        }
+        #endregion
+
+        #region PDF
+        private bool CanExportToPdf()
+        {
+            return SelectedPatient != null &&
+                   SelectedDoctor != null &&
+                   !string.IsNullOrWhiteSpace(Diagnosis);
+        }
+
+        private void ExporttoPDF()
+        {
+            try
+            {
+                // Perform the same validations as in SaveRecord method
+                if (SelectedPatient == null)
+                {
+                    MessageBoxService.ShowWarning("Vui lòng chọn bệnh nhân trước khi xuất phiếu khám.", "Thiếu thông tin");
+                    return;
+                }
+
+                if (SelectedDoctor == null)
+                {
+                    MessageBoxService.ShowWarning("Vui lòng chọn bác sĩ khám trước khi xuất phiếu khám.", "Thiếu thông tin");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(Diagnosis))
+                {
+                    MessageBoxService.ShowWarning("Vui lòng nhập chẩn đoán trước khi xuất phiếu khám.", "Thiếu thông tin");
+                    return;
+                }
+                bool result = MessageBoxService.ShowQuestion(
+                    "Bạn có muốn xuất phiếu khám bệnh không? Hồ sơ sẽ được lưu trước khi xuất.",
+                    "Xuất phiếu khám"
+                );
+                if (!result)
+                {
+                    return; // User cancelled the export
+                }
+                // Save the record first if needed (uses the same logic as SaveRecord method)
+                MedicalRecord medicalRecord = null;
+                bool isNewRecord = true;
+
+                // Check if we already have a saved record for this patient and session
+                if (RelatedAppointment != null)
+                {
+                    medicalRecord = DataProvider.Instance.Context.MedicalRecords
+                        .FirstOrDefault(m => m.PatientId == SelectedPatient.PatientId &&
+                                           m.DoctorId == SelectedDoctor.DoctorId &&
+                                           m.RecordDate == RecordDate.Date &&
+                                           m.IsDeleted != true);
+
+                    if (medicalRecord != null)
+                        isNewRecord = false;
+                }
+
+                if (isNewRecord)
+                {
+                    // Format vital signs for test results
+                    string formattedVitalSigns = FormatVitalSigns();
+
+                    // Combine vital signs with any existing test results
+                    string combinedTestResults = formattedVitalSigns;
+                    if (!string.IsNullOrWhiteSpace(TestResults))
+                    {
+                        combinedTestResults += formattedVitalSigns.Length > 0 ? " " + TestResults : TestResults;
+                    }
+
+                    // Create new medical record
+                    medicalRecord = new MedicalRecord
+                    {
+                        PatientId = SelectedPatient.PatientId,
+                        DoctorId = SelectedDoctor.DoctorId,
+                        RecordDate = RecordDate,
+                        Diagnosis = Diagnosis,
+                        DoctorAdvice = DoctorAdvice,
+                        TestResults = combinedTestResults,
+                        Prescription = Prescription,
+                        IsDeleted = false
+                    };
+
+                    // Save to database
+                    DataProvider.Instance.Context.MedicalRecords.Add(medicalRecord);
+                    DataProvider.Instance.Context.SaveChanges();
+
+                    // Create invoice for examination
+                    var invoice = new Invoice
+                    {
+                        PatientId = SelectedPatient.PatientId,
+                        MedicalRecordId = medicalRecord.RecordId,
+                        InvoiceDate = DateTime.Now,
+                        Status = "Chưa thanh toán",
+                        InvoiceType = "Khám bệnh",
+                        TotalAmount = ExaminationFee,
+                        Discount = SelectedPatient.PatientType?.Discount ?? 0,
+                        Tax = 0
+                    };
+                    DataProvider.Instance.Context.Invoices.Add(invoice);
+                    DataProvider.Instance.Context.SaveChanges();
+
+                    // Add invoice detail for examination fee
+                    var invoiceDetail = new InvoiceDetail
+                    {
+                        InvoiceId = invoice.InvoiceId,
+                        ServiceName = SelectedAppointmentType?.TypeName ?? "Khám bệnh",
+                        SalePrice = ExaminationFee,
+                        Quantity = 1
+                    };
+                    DataProvider.Instance.Context.InvoiceDetails.Add(invoiceDetail);
+                    DataProvider.Instance.Context.SaveChanges();
+
+                    // Update related appointment if exists
+                    if (RelatedAppointment != null)
+                    {
+                        UpdateAppointmentStatus(RelatedAppointment, "Đã khám");
+                    }
+
+                    MessageBoxService.ShowSuccess("Đã lưu hồ sơ và hóa đơn khám bệnh thành công!", "Thành công");
+                }
+
+                // Now that we have a valid medical record, export it to PDF
+                QuestPDF.Settings.License = LicenseType.Community;
+
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "PDF files (*.pdf)|*.pdf",
+                    DefaultExt = "pdf",
+                    FileName = $"PhieuKhamBenh_{SelectedPatient.FullName}_{DateTime.Now:yyyyMMdd}.pdf",
+                    Title = "Lưu phiếu khám bệnh"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    string filePath = saveFileDialog.FileName;
+
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Generate PDF in background thread with progress reporting
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            // Report progress: 10% - Starting
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+                            Thread.Sleep(100); // Small delay for visibility
+
+                            // Report progress: 30% - Preparing data
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
+                            Thread.Sleep(100); // Small delay for visibility
+
+                            // Report progress: 50% - Generating document
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
+
+                            // Create the PDF document
+                            GenerateMedicalExaminationPdf(filePath, medicalRecord);
+
+                            // Report progress: 90% - Saving file
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+                            Thread.Sleep(100); // Small delay for visibility
+
+                            // Report progress: 100% - Complete
+                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                            Thread.Sleep(300); // Show 100% briefly
+
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                // Close progress dialog
+                                progressDialog.Close();
+
+                                // Show success message
+                                MessageBoxService.ShowSuccess(
+                                    $"Đã xuất phiếu khám bệnh thành công!\nĐường dẫn: {filePath}",
+                                    "Xuất phiếu khám"
+                                );
+
+                                // Ask if user wants to open the PDF
+                                if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
+                                {
+                                    try
+                                    {
+                                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                        {
+                                            FileName = filePath,
+                                            UseShellExecute = true
+                                        });
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                    }
+                                }
+                            });
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+                                MessageBoxService.ShowError(
+                                    $"Đã xảy ra lỗi khi xuất phiếu khám: {ex.Message}",
+                                    "Lỗi"
+                                );
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                    ResetForm();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError(
+                    $"Đã xảy ra lỗi khi xuất phiếu khám: {ex.Message}",
+                    "Lỗi"
+                );
+            }
+        }
+
+
+
+        private void GenerateMedicalExaminationPdf(string filePath, MedicalRecord medicalRecord)
+        {
+            Document.Create(document =>
+            {
+                document.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(50);
+                    page.DefaultTextStyle(x => x.FontSize(11));
+
+                    page.Content().Column(column =>
+                    {
+                        // HEADER
+                        column.Item().Row(row =>
+                        {
+                            // Clinic information
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().Text("PHÒNG KHÁM CLINIC MANAGEMENT")
+                                    .FontSize(18).Bold();
+                                col.Item().Text("Địa chỉ: 123 Đường Khám Bệnh, Q1, TP.HCM")
+                                    .FontSize(10);
+                                col.Item().Text("SĐT: 028.1234.5678 | Email: info@clinicmanagement.com")
+                                    .FontSize(10);
+                            });
+
+                            // Date information
+                            row.RelativeItem().Column(col =>
+                            {
+                                col.Item().AlignRight().Text($"Ngày khám: {RecordDate:dd/MM/yyyy}")
+                                    .FontSize(10);
+                            });
+                        });
+
+                        // TITLE
+                        column.Item().PaddingVertical(20)
+                            .Text("PHIẾU KHÁM BỆNH")
+                            .FontSize(16).Bold()
+                            .AlignCenter();
+
+                        // PATIENT INFORMATION
+                        column.Item().PaddingTop(10)
+                            .Column(patientCol =>
+                            {
+                                patientCol.Item().Text("THÔNG TIN BỆNH NHÂN").Bold();
+                                patientCol.Item().PaddingTop(5).Text($"Họ tên: {SelectedPatient.FullName}");
+                                patientCol.Item().Text($"Ngày sinh: {(SelectedPatient.DateOfBirth.HasValue ? SelectedPatient.DateOfBirth.Value.ToString("dd/MM/yyyy") : "Không có")}");
+                                patientCol.Item().Text($"Giới tính: {SelectedPatient.Gender ?? "Không có"}");
+                                patientCol.Item().Text($"Số điện thoại: {SelectedPatient.Phone ?? "Không có"}");
+
+                                if (!string.IsNullOrEmpty(SelectedPatient.InsuranceCode))
+                                    patientCol.Item().Text($"Mã BHYT: {SelectedPatient.InsuranceCode}");
+
+                                if (SelectedPatient.PatientType != null)
+                                    patientCol.Item().Text($"Loại khách hàng: {SelectedPatient.PatientType.TypeName}");
+                            });
+
+                        // VITAL SIGNS
+                        if (!string.IsNullOrWhiteSpace(Pulse) ||
+                            !string.IsNullOrWhiteSpace(Respiration) ||
+                            !string.IsNullOrWhiteSpace(Temperature) ||
+                            !string.IsNullOrWhiteSpace(Weight) ||
+                            !string.IsNullOrWhiteSpace(SystolicPressure) ||
+                            !string.IsNullOrWhiteSpace(DiastolicPressure))
+                        {
+                            column.Item().PaddingTop(20)
+                                .Column(vitalCol =>
+                                {
+                                    vitalCol.Item().Text("DẤU HIỆU SINH TỒN").Bold();
+
+                                    if (!string.IsNullOrWhiteSpace(Pulse) && int.TryParse(Pulse, out _))
+                                        vitalCol.Item().Text($"Mạch: {Pulse} lần/ph");
+
+                                    if (!string.IsNullOrWhiteSpace(Respiration) && int.TryParse(Respiration, out _))
+                                        vitalCol.Item().Text($"Nhịp thở: {Respiration} lần/ph");
+
+                                    if (!string.IsNullOrWhiteSpace(Temperature) && decimal.TryParse(Temperature, out _))
+                                        vitalCol.Item().Text($"Nhiệt độ: {Temperature}°C");
+
+                                    if (!string.IsNullOrWhiteSpace(Weight) && decimal.TryParse(Weight, out _))
+                                        vitalCol.Item().Text($"Cân nặng: {Weight}kg");
+
+                                    if ((!string.IsNullOrWhiteSpace(SystolicPressure) || !string.IsNullOrWhiteSpace(DiastolicPressure)))
+                                    {
+                                        string bloodPressure = CombineBloodPressure(SystolicPressure, DiastolicPressure);
+                                        vitalCol.Item().Text($"Huyết áp: {bloodPressure}");
+                                    }
+                                });
+                        }
+
+                        // TEST RESULTS
+                        if (!string.IsNullOrWhiteSpace(TestResults))
+                        {
+                            column.Item().PaddingTop(20)
+                                .Column(testCol =>
+                                {
+                                    testCol.Item().Text("KẾT QUẢ XÉT NGHIỆM").Bold();
+                                    testCol.Item().Text(TestResults);
+                                });
+                        }
+
+                        // DIAGNOSIS
+                        column.Item().PaddingTop(20)
+                            .Column(diagCol =>
+                            {
+                                diagCol.Item().Text("CHẨN ĐOÁN").Bold();
+                                diagCol.Item().Text(Diagnosis);
+                            });
+
+                        // PRESCRIPTION
+                        if (!string.IsNullOrWhiteSpace(Prescription))
+                        {
+                            column.Item().PaddingTop(20)
+                                .Column(presCol =>
+                                {
+                                    presCol.Item().Text("ĐƠN THUỐC").Bold();
+                                    presCol.Item().Text(Prescription);
+                                });
+                        }
+
+                        // DOCTOR ADVICE
+                        if (!string.IsNullOrWhiteSpace(DoctorAdvice))
+                        {
+                            column.Item().PaddingTop(20)
+                                .Column(adviceCol =>
+                                {
+                                    adviceCol.Item().Text("LỜI DẶN CỦA BÁC SĨ").Bold();
+                                    adviceCol.Item().Text(DoctorAdvice);
+                                });
+                        }
+
+                        // DOCTOR SIGNATURE
+                        column.Item().PaddingTop(40)
+                            .Row(row =>
+                            {
+                                row.RelativeItem(2);
+                                row.RelativeItem(3).Column(col =>
+                                {
+                                    col.Item().AlignCenter().Text("Bác sĩ khám bệnh").Bold();
+                                    col.Item().AlignCenter().Text("(Ký, họ tên)").Italic().FontSize(9);
+                                    col.Item().PaddingTop(70).AlignCenter().Text(SelectedDoctor.FullName).Bold();
+                                });
+                            });
+
+                        // FOOTER
+                        column.Item().PaddingTop(30)
+                            .BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                            .PaddingTop(10)
+                            .Row(row =>
+                            {
+                                row.RelativeItem().Column(footerCol =>
+                                {
+                                    footerCol.Item().Text("Xin cám ơn Quý khách đã sử dụng dịch vụ của phòng khám chúng tôi!")
+                                        .FontSize(9).Italic();
+                                });
+
+                                row.RelativeItem().AlignRight().Text(text =>
+                                {
+                                    text.Span("Trang ").FontSize(9);
+                                    text.CurrentPageNumber().FontSize(9);
+                                    text.Span(" / ").FontSize(9);
+                                    text.TotalPages().FontSize(9);
+                                });
+                            });
+                    });
+                });
+            })
+            .GeneratePdf(filePath);
         }
         #endregion
     }

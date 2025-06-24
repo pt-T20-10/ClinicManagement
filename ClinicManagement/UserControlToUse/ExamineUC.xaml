@@ -20,6 +20,19 @@
     <UserControl.Resources>
         <conver:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </UserControl.Resources>
+    <UserControl.ContextMenu>
+
+   
+                <ContextMenu>
+                    <MenuItem Header="🔄 Làm mới" 
+                        Command="{Binding ResetRecordCommand}"
+                        FontWeight="Bold"/>
+                    <MenuItem Header="📊 Xuất Excel" 
+                         Command="{Binding ExportPDFCommand}"
+                         FontWeight="Bold"/>
+                </ContextMenu>
+       
+    </UserControl.ContextMenu>
     <materialDesign:Card Padding="16">
         <Grid>
             <Grid.RowDefinitions>
@@ -39,7 +52,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Patient search - Row 0 -->
-                    <Grid Grid.Row="0" Grid.Column="0"  Margin="0,0,0,8">
+                    <Grid Grid.Row="0" VerticalAlignment="Center" Grid.Column="0"  Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -53,7 +66,7 @@
                         </Grid.RowDefinitions>
 
                         <!-- Patient name search -->
-                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                        <TextBlock  Grid.Row="0" Grid.Column="0" 
                            Text="Bệnh nhân:" 
                            VerticalAlignment="Center" 
                            Margin="0,0,8,0"/>
@@ -126,7 +139,7 @@
                               Grid.Column="1" 
                                
                               Background="#E8F5E9"
-                              Margin="12"
+                              Margin="22 12 12 12"
                               Visibility="{Binding SelectedPatient, Converter={StaticResource NullToVisibilityConverter}}">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
@@ -503,21 +516,21 @@
                                 Width="180" Height="45" Margin="10,0">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock Text="Lưu hồ sơ" FontSize="14"/>
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="Lưu hồ sơ" FontSize="14"/>
                             </StackPanel>
                         </Button>
-                        <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
+                        <Button Command="{Binding ExportPDFCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
                                 Width="180" Height="45" Margin="10,0">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock Text="In hồ sơ" FontSize="14"/>
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="Xuất PDF" FontSize="14"/>
                             </StackPanel>
                         </Button>
                         <Button Command="{Binding ResetRecordCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
                                 Width="180" Height="45" Margin="10,0">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock Text="Làm mới" FontSize="14"/>
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="Làm mới" FontSize="14"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
