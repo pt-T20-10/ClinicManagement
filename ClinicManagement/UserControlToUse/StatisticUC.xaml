@@ -800,10 +800,6 @@
                                                             <TextBlock Text="{Binding WarningMessage}" FontSize="11" 
                                                                  Foreground="#FF9800"/>
                                                         </StackPanel>
-
-                                                        <Button Grid.Column="2" Content="Chi tiết" 
-                                                          Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                          Margin="10,0,0,0" Padding="8,0"/>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ListView.ItemTemplate>

@@ -142,19 +142,10 @@
                              HorizontalAlignment="Right">
 
 
-                    <!-- OK Button -->
-                    <Button Content="OK" 
-                            Width="80" 
-                            Height="30"
-                            Margin="5"
-                            Background="#3F51B5"
-                            Foreground="White"
-                            BorderThickness="0"
-                            Click="OkButton_Click"/>
                     <!-- Cancel Button (Visible only for Question type) -->
                     <Button x:Name="CancelButton"
                             Content="Hủy" 
-                            Width="80" 
+                            Width="60" 
                             Height="30"
                             Margin="5"
                             Background="#F5F5F5"
@@ -163,6 +154,15 @@
                             BorderThickness="1"
                             Click="CancelButton_Click"
                             Visibility="{Binding ShowCancelButton, Converter={StaticResource BoolToVis}}"/>
+                    <!-- OK Button -->
+                    <Button Content="OK" 
+                            Width="100" 
+                            Height="30"
+                            Margin="5"
+                            Background="#3F51B5"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Click="OkButton_Click"/>
                 </UniformGrid>
             </Grid>
         </Grid>

@@ -1031,37 +1031,39 @@ namespace ClinicManagement.ViewModels
                            i.Status == "Đã thanh toán")
                     .ToList();
 
-                var topRevenueDays = invoices
+                // Group by date but order by date ascending (chronological order) instead of by revenue
+                var revenueByDate = invoices
                     .GroupBy(i => i.InvoiceDate.Value.Date)
                     .Select(g => new { Date = g.Key, Revenue = g.Sum(i => i.TotalAmount) })
-                    .OrderByDescending(x => x.Revenue)
+                    .OrderBy(x => x.Date) // Changed from OrderByDescending(x => x.Revenue)
                     .Take(7)
                     .ToList();
 
-                if (topRevenueDays.Any())
+                if (revenueByDate.Any())
                 {
-                    var values = topRevenueDays.Select(x => (double)x.Revenue).ToArray();
-                    var labels = topRevenueDays.Select(x => x.Date.ToString("dd/MM")).ToArray();
+                    var values = revenueByDate.Select(x => (double)x.Revenue).ToArray();
+                    var labels = revenueByDate.Select(x => x.Date.ToString("dd/MM")).ToArray();
 
                     TopRevenueDaysSeries = new SeriesCollection
-                    {
-                        new ColumnSeries
-                        {
-                            Title = "Doanh thu",
-                            Values = new ChartValues<double>(values),
-                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
-                        }
-                    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(values),
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+                }
+            };
 
                     TopRevenueDaysLabels = labels;
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ top ngày có doanh thu cao: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo ngày: {ex.Message}",
+                               "Lỗi");
             }
         }
+
 
         private void LoadRevenueTrendChart(ClinicDbContext context)
         {
