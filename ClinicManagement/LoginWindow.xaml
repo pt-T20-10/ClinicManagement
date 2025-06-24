@@ -37,6 +37,20 @@
     </Window.Resources>
 
     <Grid Background="{StaticResource LoginGradient}">
+        <Button
+            Content="{materialDesign:PackIcon Kind=Close}"
+            Command="{Binding CloseCommand}"
+            CommandParameter="{Binding ElementName=loginWindow}"
+            Height="18"
+            Width="24"
+            Style="{DynamicResource MaterialDesignTextButton}"
+            Background="Transparent"
+            BorderThickness="0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            
+            
+            />
         <!-- Main login card with shadow -->
         <materialDesign:Card 
             VerticalAlignment="Center" 

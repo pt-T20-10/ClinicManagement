@@ -586,7 +586,14 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowWarning("Vui lòng nhập chẩn đoán trước khi lưu hồ sơ.", "Thiếu thông tin");
                     return;
                 }
-
+                bool result = MessageBoxService.ShowQuestion(
+                    "Bạn có chắc chắn muốn lưu hồ sơ khám bệnh không?",
+                    "Xác nhận lưu hồ sơ"
+                );
+                if (!result)
+                {
+                    return; // User cancelled the save
+                }   
                 // Format vital signs for test results
                 string formattedVitalSigns = FormatVitalSigns();
 
