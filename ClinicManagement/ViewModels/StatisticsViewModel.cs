@@ -832,22 +832,13 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 decimal yesterdayRevenue = yesterdayInvoices.Sum(i => i.TotalAmount);
 
-                // Calculate growth percentage without negative values
                 double growthPercentage = 0;
                 if (yesterdayRevenue > 0)
                 {
-                    // Calculate raw growth percentage
-                    double rawGrowth = (double)((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100);
-
-                    // Convert to absolute value to remove negative
-                    growthPercentage = Math.Abs(rawGrowth);
-
-                    // Cap at 1000% maximum
-                    growthPercentage = Math.Min(growthPercentage, 1000);
+                    growthPercentage = (double)((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100);
                 }
                 else if (todayRevenue > 0)
                 {
-                    // If there was no revenue yesterday but there is today, set to 100%
                     growthPercentage = 100;
                 }
 

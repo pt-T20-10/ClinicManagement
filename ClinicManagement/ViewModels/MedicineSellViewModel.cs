@@ -149,7 +149,7 @@ namespace ClinicManagement.ViewModels
             set
             {
                 _invoiceNumber = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(_invoiceNumber));
             }
         }
 
@@ -733,7 +733,6 @@ namespace ClinicManagement.ViewModels
 
                     // Cập nhật lại danh sách thuốc để có số lượng chính xác
                     LoadMedicines();
-                   
                     // Hóa đơn vẫn chưa thanh toán
                     MessageBoxService.ShowWarning($"Hóa đơn #{refreshedInvoice.InvoiceId} đã được tạo nhưng chưa thanh toán.",
                                     "Thông báo"     );

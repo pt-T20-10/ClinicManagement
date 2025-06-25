@@ -82,7 +82,7 @@
                     VerticalAlignment="Center"
                     Margin="0,0,8,0"/>
                     <TextBlock 
-                    Text="{Binding InvoiceNumber, UpdateSourceTrigger=PropertyChanged}"
+                    Text="{Binding InvoiceNumber}"
                     FontWeight="Bold"
                     FontSize="16"
                     VerticalAlignment="Center"/>
