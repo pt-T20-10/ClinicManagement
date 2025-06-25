@@ -214,6 +214,8 @@ namespace ClinicManagement.ViewModels
         public ICommand AddPatientCommand { get; set; }
         public ICommand OpenPatientDetailsCommand { get; set; }
 
+        public ICommand AutoUpgradePatientsCommand { get; private set; }
+
         // Filter Commands
         public ICommand SearchCommand { get; set; }
         public ICommand VIPSelectedCommand { get; set; }
@@ -237,6 +239,7 @@ namespace ClinicManagement.ViewModels
             
 
         }
+
         #region Type Commands
 
         private void InitializTypeCommands()
@@ -539,6 +542,10 @@ namespace ClinicManagement.ViewModels
                 (p) => ExecuteResetFilters(),
                 (p) => true
             );
+            AutoUpgradePatientsCommand = new RelayCommand<object>(
+              (p) => CheckAndUpgradePatients(),
+              (p) => true
+            );
         }
 
         private void ExecuteSearch()
@@ -828,6 +835,94 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Checks all patients for upgrade eligibility and promotes them to VIP status if they qualify
+        /// </summary>
+        public void CheckAndUpgradePatients()
+        {
+            try
+            {
+                // Get the VIP patient type
+                var vipType = DataProvider.Instance.Context.PatientTypes
+                    .FirstOrDefault(pt => pt.TypeName.Trim().Equals("VIP", StringComparison.OrdinalIgnoreCase) == true);
+
+                if (vipType == null)
+                    return;
+
+                // Get the standard patient type
+                var normalType = DataProvider.Instance.Context.PatientTypes
+                    .FirstOrDefault(pt => pt.TypeName.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase) == true);
+
+                if (normalType == null)
+                    return;
+
+                // Get regular patients who are not VIPs
+                var regularPatients = DataProvider.Instance.Context.Patients
+                    .Where(p => p.PatientTypeId == normalType.PatientTypeId && p.IsDeleted != true)
+                    .ToList();
+
+                if (regularPatients.Count == 0)
+                    return;
+
+                // Get all invoices
+                var invoices = DataProvider.Instance.Context.Invoices
+                    .Where(i => i.Status == "Đã thanh toán")
+                    .ToList();
+
+                List<string> upgradedPatients = new List<string>();
+
+                // Check each patient's spending and invoice count
+                foreach (var patient in regularPatients)
+                {
+                    // Get all paid invoices for this patient
+                    var patientInvoices = invoices
+                        .Where(i => i.PatientId == patient.PatientId)
+                        .ToList();
+
+                    // Calculate total spending
+                    decimal totalSpending = patientInvoices.Sum(i => i.TotalAmount);
+
+                    // Get invoice count
+                    int invoiceCount = patientInvoices.Count;
+
+                    // Check if patient qualifies for upgrade
+                    bool qualifiedBySpending = totalSpending >= 8000000; // 8 million
+                    bool qualifiedByCount = invoiceCount >= 30;
+
+                    if (qualifiedBySpending || qualifiedByCount)
+                    {
+                        // Upgrade patient to VIP
+                        patient.PatientTypeId = vipType.PatientTypeId;
+
+                        // Add to upgraded list for reporting
+                        upgradedPatients.Add(patient.FullName);
+                    }
+                }
+
+                // Save changes if any patients were upgraded
+                if (upgradedPatients.Count > 0)
+                {
+                    DataProvider.Instance.Context.SaveChanges();
+
+                    // Show a notification only if patients were upgraded
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        string message = $"Đã nâng cấp {upgradedPatients.Count} bệnh nhân lên VIP!\n\n" +
+                                        $"Danh sách: {string.Join(", ", upgradedPatients)}";
+
+                        MessageBoxService.ShowSuccess(message, "Nâng cấp thành công");
+
+                        // Refresh patient list
+                        LoadData();
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't show it to the user since this is an automated process
+                Console.WriteLine($"Error in CheckAndUpgradePatients: {ex.Message}");
+            }
+        }
 
 
 

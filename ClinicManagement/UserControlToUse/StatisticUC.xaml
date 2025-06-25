@@ -35,7 +35,7 @@
 
                 <!-- Filter buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Content="Hôm nay" Margin="5,0" Command="{Binding FilterByDayCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                    <Button Content="Hôm nay" Margin="5,0" Command="{Binding    }" Style="{StaticResource MaterialDesignOutlinedButton}"/>
                     <Button Content="Tháng này" Margin="5,0" Command="{Binding FilterByMonthCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
                     <Button Content="Quý này" Margin="5,0" Command="{Binding FilterByQuarterCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
                     <Button Content="Năm này" Margin="5,0" Command="{Binding FilterByYearCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>

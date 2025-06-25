@@ -334,7 +334,7 @@
                                         Height="40"/>
 
                                     <Button Grid.Column="1"
-                                        Content="Thanh toán"
+                                        Content="Tiền hành thanh toán"
                                         Command="{Binding CheckoutCommand}"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                         Background="#4CAF50"

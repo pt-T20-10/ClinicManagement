@@ -14,6 +14,7 @@ namespace ClinicManagement.ViewModels
     public class DoctorViewModel : BaseViewModel
     {
         #region Properties
+
         #region DisplayProperties
         private ObservableCollection<Doctor> _DoctorList;
         public ObservableCollection<Doctor> DoctorList

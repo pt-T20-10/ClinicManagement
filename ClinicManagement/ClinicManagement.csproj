@@ -15,6 +15,8 @@
     <None Remove="ResourceXAML\Images\banner.png" />
     <None Remove="ResourceXAML\Images\logo24.png" />
     <None Remove="ResourceXAML\Images\logo96.png" />
+    <None Remove="ResourceXAML\Images\paymentqr.jpg" />
+    <None Remove="ResourceXAML\Images\paymentqr.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +47,8 @@
     <Resource Include="ResourceXAML\Images\banner.png" />
     <Resource Include="ResourceXAML\Images\logo24.png" />
     <Resource Include="ResourceXAML\Images\logo96.png" />
+    <Resource Include="ResourceXAML\Images\paymentqr.jpg" />
+    <Resource Include="ResourceXAML\Images\paymentqr.png" />
   </ItemGroup>
 
 </Project>

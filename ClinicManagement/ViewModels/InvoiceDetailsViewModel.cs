@@ -6,10 +6,13 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
 
 namespace ClinicManagement.ViewModels
 {
@@ -262,12 +265,13 @@ namespace ClinicManagement.ViewModels
         public InvoiceDetailsViewModel(Invoice invoice = null)
         {
             InitializeCommands();
-
+           
             if (invoice != null)
             {
                 Invoice = invoice;
             }
         }
+        
 
         private void InitializeCommands()
         {
@@ -303,6 +307,7 @@ namespace ClinicManagement.ViewModels
 
                     // Close the window if found
                     window?.Close();
+                    
                 },
                 p => true
             );
@@ -311,10 +316,7 @@ namespace ClinicManagement.ViewModels
               p => Invoice != null
           );
 
-            GenerateQRCodeCommand = new RelayCommand<object>(
-                p => GenerateQRCode(),
-                p => Invoice != null && IsBankTransfer);
-
+        
             ConfirmPaymentCommand = new RelayCommand<Window>(
                 p => ConfirmPayment(p),
                 p => Invoice != null);
@@ -580,15 +582,6 @@ namespace ClinicManagement.ViewModels
             CalculateInvoiceTotals();
         }
 
-        private void PrintInvoice()
-        {
-            if (Invoice == null) return;
-
-            MessageBoxService.ShowInfo($"Đang in hóa đơn #{Invoice.InvoiceId}", "In hóa đơn"
-                    );
-
-            // TODO: Implement actual printing functionality
-        }
 
         private void ProcessPayment()
         {
@@ -598,7 +591,7 @@ namespace ClinicManagement.ViewModels
             {
                 Title = "Thanh toán hóa đơn",
                 Width = 500,
-                Height = 400,
+                Height = 600,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 DataContext = this,
                 Content = CreatePaymentControl()
@@ -609,91 +602,149 @@ namespace ClinicManagement.ViewModels
 
         private UIElement CreatePaymentControl()
         {
-            // TODO: Create a proper Payment Control
-            // This is a simplified version
-
+            // Tạo một control thanh toán đơn giản để hiển thị trong cửa sổ thanh toán
             var panel = new StackPanel
             {
-                Margin = new Thickness(20)
+                Margin = new Thickness(20) // Tạo khoảng cách 20px xung quanh nội dung so với viền cửa sổ
             };
 
-            // Payment options
+            // --- PHẦN TIÊU ĐỀ ---
             var paymentOptionTitle = new TextBlock
             {
-                Text = "PHƯƠNG THỨC THANH TOÁN",
-                FontWeight = FontWeights.Bold,
-                FontSize = 16,
-                Margin = new Thickness(0, 0, 0, 10)
+                Text = "PHƯƠNG THỨC THANH TOÁN", // Nội dung tiêu đề
+                FontWeight = FontWeights.Bold,   // Kiểu chữ in đậm
+                FontSize = 16,                   // Cỡ chữ lớn hơn mặc định
+                Margin = new Thickness(0, 0, 0, 10) // Thêm khoảng cách 10px ở dưới tiêu đề
             };
-            panel.Children.Add(paymentOptionTitle);
+            panel.Children.Add(paymentOptionTitle); // Thêm tiêu đề vào panel chính
 
-            // Cash option
+            // --- LỰA CHỌN TIỀN MẶT ---
             var cashOption = new RadioButton
             {
-                Content = "Tiền mặt",
-                IsChecked = true,
-                Margin = new Thickness(0, 5, 0, 5),
-                GroupName = "PaymentMethod"
+                Content = "Tiền mặt",            // Nhãn hiển thị cho tùy chọn tiền mặt
+                IsChecked = true,                // Mặc định chọn phương thức này
+                Margin = new Thickness(0, 5, 0, 5), // Khoảng cách trên dưới 5px
+                GroupName = "PaymentMethod"      // Đặt vào cùng nhóm với các RadioButton khác
             };
+            // Liên kết trạng thái của RadioButton với thuộc tính IsCashPayment trong ViewModel
             cashOption.SetBinding(RadioButton.IsCheckedProperty, new System.Windows.Data.Binding("IsCashPayment")
             {
-                Mode = System.Windows.Data.BindingMode.TwoWay
+                Mode = System.Windows.Data.BindingMode.TwoWay // Cho phép cập nhật 2 chiều
             });
-            panel.Children.Add(cashOption);
+            panel.Children.Add(cashOption); // Thêm tùy chọn tiền mặt vào panel
 
-            // Bank transfer option
+            // --- LỰA CHỌN CHUYỂN KHOẢN ---
             var bankOption = new RadioButton
             {
-                Content = "Chuyển khoản ngân hàng",
-                Margin = new Thickness(0, 5, 0, 15),
-                GroupName = "PaymentMethod"
+                Content = "Chuyển khoản ngân hàng", // Nhãn hiển thị
+                Margin = new Thickness(0, 5, 0, 15), // Khoảng cách trên 5px, dưới 15px (lớn hơn để tách biệt với phần tiếp theo)
+                GroupName = "PaymentMethod"          // Cùng nhóm với RadioButton tiền mặt
             };
+            // Liên kết với thuộc tính IsBankTransfer trong ViewModel
             bankOption.SetBinding(RadioButton.IsCheckedProperty, new System.Windows.Data.Binding("IsBankTransfer")
             {
-                Mode = System.Windows.Data.BindingMode.TwoWay
+                Mode = System.Windows.Data.BindingMode.TwoWay // Cho phép cập nhật 2 chiều
             });
             panel.Children.Add(bankOption);
 
-            // QR Code area (visible only for bank transfers)
-            var qrCodePanel = new StackPanel();
+            // --- PHẦN MÃ QR CHỈ HIỂN THỊ KHI CHỌN CHUYỂN KHOẢN ---
+            var qrCodePanel = new StackPanel(); // Panel con chứa các thành phần liên quan đến QR
+
+            // Thiết lập ẩn/hiện dựa trên giá trị của IsBankTransfer
             qrCodePanel.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("IsBankTransfer")
             {
+                // Chuyển đổi giá trị Boolean sang Visibility (True -> Visible, False -> Collapsed)
                 Converter = new Converter.BooleanToVisibilityConverter()
             });
 
+            // Tiêu đề phần mã QR
             var qrCodeTitle = new TextBlock
             {
-                Text = "Quét mã QR để thanh toán:",
-                Margin = new Thickness(0, 0, 0, 10)
+                Text = "Quét mã QR để thanh toán:", // Hướng dẫn người dùng quét mã
+                Margin = new Thickness(0, 0, 0, 10) // Thêm khoảng cách dưới 10px
             };
             qrCodePanel.Children.Add(qrCodeTitle);
 
-            var qrCodeImage = new System.Windows.Controls.Image
+            // --- QR CODE SECTION ---
+            // Try to load a QR code image from the project resources
+            bool qrImageLoaded = false;
+            try
             {
-                Width = 200,
-                Height = 200,
-                Stretch = System.Windows.Media.Stretch.Uniform
-            };
-            qrCodeImage.SetBinding(System.Windows.Controls.Image.SourceProperty, "QrCodeImage");
-            qrCodePanel.Children.Add(qrCodeImage);
+                // Get the executable's directory
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri("pack://application:,,,/ResourceXAML/Images/paymentqr.png");
+                bitmap.EndInit();
 
-            var generateQrButton = new System.Windows.Controls.Button
+                var qrImage = new System.Windows.Controls.Image
+                {
+                    Source = bitmap,
+                    Width = 150,
+                    Height = 150,
+                    Stretch = System.Windows.Media.Stretch.Uniform
+                };
+                qrCodePanel.Children.Add(qrImage);
+                qrImageLoaded = true;
+            }
+            catch
             {
-                Content = "Tạo mã QR",
-                Margin = new Thickness(0, 10, 0, 0),
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
-            };
-            generateQrButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "GenerateQRCodeCommand");
-            qrCodePanel.Children.Add(generateQrButton);
+                qrImageLoaded = false;
+            }
 
+            // Hiển thị thông tin thanh toán dưới mã QR
+            var qrInfoText = new TextBlock
+            {
+                Text = $"Số tiền: {TotalAmount:N0} VNĐ\nNội dung: TT-{Invoice?.InvoiceId}",
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+            qrCodePanel.Children.Add(qrInfoText);
+
+            // --- NÚT TÁC VỤ CHO PHƯƠNG THỨC QR (HỦY/ĐÃ THANH TOÁN) ---
+            var qrButtonsPanel = new StackPanel
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Margin = new Thickness(0, 10, 0, 0)
+            };
+
+            // Nút hủy thanh toán QR
+            var qrCancelButton = new System.Windows.Controls.Button
+            {
+                Content = "Hủy",
+                Margin = new Thickness(0, 0, 10, 0),
+                Padding = new Thickness(15, 5, 15, 5)
+            };
+            qrCancelButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "CloseWindow");
+            qrCancelButton.CommandParameter = qrCancelButton.TemplatedParent;
+            qrButtonsPanel.Children.Add(qrCancelButton);
+
+            // Nút xác nhận đã thanh toán QR
+            var qrConfirmButton = new System.Windows.Controls.Button
+            {
+                Content = "Đã thanh toán QR",
+                Padding = new Thickness(10, 5, 10, 5),
+                Background = System.Windows.Media.Brushes.Green,
+                Foreground = System.Windows.Media.Brushes.White
+            };
+            qrConfirmButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "ConfirmPaymentCommand");
+            qrConfirmButton.CommandParameter = qrConfirmButton.TemplatedParent;
+            qrButtonsPanel.Children.Add(qrConfirmButton);
+
+            // Thêm panel chứa nút vào panel QR
+            qrCodePanel.Children.Add(qrButtonsPanel);
+
+            // Thêm panel mã QR vào panel chính
             panel.Children.Add(qrCodePanel);
 
-            // Amount information
+            // --- PHẦN HIỂN THỊ SỐ TIỀN THANH TOÁN ---
             var amountInfoPanel = new StackPanel
             {
                 Margin = new Thickness(0, 20, 0, 20)
             };
 
+            // Hiển thị số tiền cần thanh toán
             var amountText = new TextBlock
             {
                 FontWeight = FontWeights.Bold,
@@ -704,17 +755,24 @@ namespace ClinicManagement.ViewModels
                 StringFormat = "Số tiền cần thanh toán: {0:N0} VNĐ"
             });
             amountInfoPanel.Children.Add(amountText);
-
             panel.Children.Add(amountInfoPanel);
 
-            // Buttons panel
-            var buttonsPanel = new StackPanel
+            // --- PHẦN NÚT TÁC VỤ CHO PHƯƠNG THỨC TIỀN MẶT (HỦY/XÁC NHẬN) ---
+            // Chỉ hiển thị khi chọn phương thức thanh toán tiền mặt
+            var cashButtonsPanel = new StackPanel
             {
                 Orientation = System.Windows.Controls.Orientation.Horizontal,
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
                 Margin = new Thickness(0, 20, 0, 0)
             };
+            // Thiết lập ẩn/hiện dựa trên giá trị của IsCashPayment
+            cashButtonsPanel.SetBinding(UIElement.VisibilityProperty, new System.Windows.Data.Binding("IsCashPayment")
+            {
+                // Chuyển đổi giá trị Boolean sang Visibility (True -> Visible, False -> Collapsed)
+                Converter = new Converter.BooleanToVisibilityConverter()
+            });
 
+            // Nút hủy thanh toán
             var cancelButton = new System.Windows.Controls.Button
             {
                 Content = "Hủy",
@@ -723,8 +781,9 @@ namespace ClinicManagement.ViewModels
             };
             cancelButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "CloseWindow");
             cancelButton.CommandParameter = cancelButton.TemplatedParent;
-            buttonsPanel.Children.Add(cancelButton);
+            cashButtonsPanel.Children.Add(cancelButton);
 
+            // Nút xác nhận thanh toán
             var confirmButton = new System.Windows.Controls.Button
             {
                 Content = "Xác nhận thanh toán",
@@ -734,19 +793,15 @@ namespace ClinicManagement.ViewModels
             };
             confirmButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "ConfirmPaymentCommand");
             confirmButton.CommandParameter = confirmButton.TemplatedParent;
-            buttonsPanel.Children.Add(confirmButton);
+            cashButtonsPanel.Children.Add(confirmButton);
 
-            panel.Children.Add(buttonsPanel);
+            // Thêm panel chứa các nút vào panel chính
+            panel.Children.Add(cashButtonsPanel);
 
+            // Trả về toàn bộ giao diện đã tạo
             return panel;
         }
 
-        private void GenerateQRCode()
-        {
-            // TODO: Generate real QR code for payment
-            // This is just a placeholder
-            MessageBoxService.ShowWarning("Tính năng tạo mã QR sẽ được xử lý sau.", "Thông báo"    );
-        }
 
         private void ConfirmPayment(Window paymentWindow)
         {
@@ -779,7 +834,7 @@ namespace ClinicManagement.ViewModels
                 // Update view model properties
                 IsPaid = true;
                 IsNotPaid = false;
-                PaymentMethod = paymentMethod;
+                PaymentMethod = paymentMethod; 
                 PaymentDate = DateTime.Now;
 
                 MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công"

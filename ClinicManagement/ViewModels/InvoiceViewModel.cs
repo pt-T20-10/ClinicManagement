@@ -501,6 +501,7 @@ namespace ClinicManagement.ViewModels
             var invoiceDetailsWindow = new InvoiceDetailsWindow(); //Tạo mới cửa sổ chi tiết hóa đơn
             invoiceDetailsWindow.DataContext = new InvoiceDetailsViewModel(invoice);//Gán DataContext của cửa sổ chi tiết hóa đơn là InvoiceDetailsViewModel với hóa đơn đã chọn
             invoiceDetailsWindow.ShowDialog();
+            LoadInvoices();
         }
 
         // Phương thức PrintInvoice để in hóa đơn do PrintInvoiceCommand gọi
@@ -535,7 +536,7 @@ namespace ClinicManagement.ViewModels
             LoadInvoices();
         }
 
-        // Phương thức SellMedicine để bán thuốc cho hóa đơn do SellMedicineCommand gọi
+  
         // Phương thức SellMedicine để bán thuốc cho hóa đơn do SellMedicineCommand gọi
         private void SellMedicine(Invoice invoice)
         {

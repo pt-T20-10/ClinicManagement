@@ -77,6 +77,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
+
+
                     <!-- Banner image -->
                     <Image Grid.Row="1" 
                            Source="/ResourceXAML/Images/banner.png"

@@ -982,42 +982,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private bool ValidatePatientInfo()
-        {
-            bool isValid = false;
-
-            // Case 1: Selected patient from dropdown
-            if (SelectedPatient != null)
-            {
-                isValid = true;
-            }
-            // Case 2: Manual input (insurance code + phone)
-            else if (!string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone))
-            {
-                // Search for patient with matching insurance code or phone number
-                var patient = DataProvider.Instance.Context.Patients
-                    .FirstOrDefault(p =>
-                        (p.InsuranceCode == PatientSearch.Trim() || p.FullName == PatientSearch.Trim()) &&
-                        p.Phone == PatientPhone.Trim() &&
-                        p.IsDeleted != true);
-
-                if (patient != null)
-                {
-                    SelectedPatient = patient;
-                    isValid = true;
-                }
-                else
-                {
-                    // Add validation error
-                    _touchedFields.Add(nameof(PatientSearch));
-                    _touchedFields.Add(nameof(PatientPhone));
-                    isValid = false;
-                }
-            }
-
-            return isValid;
-        }
-
         private void SearchAppointments()
         {
             // Simply call LoadAppointments which already handles search filtering
@@ -1042,7 +1006,6 @@ namespace ClinicManagement.ViewModels
                    SelectedAppointmentTime.HasValue &&
                    SelectedAppointmentType != null;
         }
-
 
         private bool IsAppointmentTimeValid()
         {
