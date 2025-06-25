@@ -74,8 +74,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private Doctor _selectedDoctor;
-        public Doctor SelectedDoctor
+        private Staff _selectedDoctor;
+        public Staff SelectedDoctor
         {
             get => _selectedDoctor;
             set
@@ -85,8 +85,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private ObservableCollection<Doctor> _doctorList;
-        public ObservableCollection<Doctor> DoctorList
+        private ObservableCollection<Staff> _doctorList;
+        public ObservableCollection<Staff> DoctorList
         {
             get => _doctorList;
             set
@@ -281,7 +281,7 @@ namespace ClinicManagement.ViewModels
         public ExamineViewModel()
         {
             InitializeCommands();
-            LoadDoctors();
+            LoadStaffs();
             LoadAppointmentTypes();
         }
 
@@ -289,7 +289,7 @@ namespace ClinicManagement.ViewModels
         public ExamineViewModel(Patient patient, Appointment appointment = null)
         {
             InitializeCommands();
-            LoadDoctors();
+            LoadStaffs();
             LoadAppointmentTypes();
             SelectedPatient = patient;
             PatienName = patient?.FullName;
@@ -299,7 +299,7 @@ namespace ClinicManagement.ViewModels
             if (appointment != null)
             {
                 RelatedAppointment = appointment;
-                SelectedDoctor = appointment.Doctor;
+                SelectedDoctor = appointment.Staff;
 
                 // Update appointment status to "Đang khám"
                 UpdateAppointmentStatus(appointment, "Đang khám");
@@ -414,7 +414,7 @@ namespace ClinicManagement.ViewModels
 
                     // Check if there's a pending appointment for this patient
                     var pendingAppointment = DataProvider.Instance.Context.Appointments
-                        .Include(a => a.Doctor)
+                        .Include(a => a.Staff)
                         .FirstOrDefault(a => a.PatientId == patient.PatientId &&
                                             a.Status == "Đang chờ" &&
                                             a.IsDeleted != true &&
@@ -423,11 +423,11 @@ namespace ClinicManagement.ViewModels
                     if (pendingAppointment != null && RelatedAppointment == null)
                     {
                         RelatedAppointment = pendingAppointment;
-                        SelectedDoctor = pendingAppointment.Doctor;
+                        SelectedDoctor = pendingAppointment.Staff;
 
                         // Ask if the user wants to proceed with this appointment
                          bool  result = MessageBoxService.ShowQuestion(
-                            $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Doctor.FullName}.\n" +
+                            $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Staff.FullName}.\n" +
                             $"Bạn có muốn tiến hành khám với lịch hẹn này không?",
                             "Tìm thấy lịch hẹn"
                              
@@ -460,16 +460,16 @@ namespace ClinicManagement.ViewModels
         }
 
 
-        private void LoadDoctors()
+        private void LoadStaffs()
         {
             try
             {
-                var doctors = DataProvider.Instance.Context.Doctors
+                var Staffs = DataProvider.Instance.Context.Staffs
                     .Where(d => d.IsDeleted != true)
                     .OrderBy(d => d.FullName)
                     .ToList();
 
-                DoctorList = new ObservableCollection<Doctor>(doctors);
+                DoctorList = new ObservableCollection<Staff>(Staffs);
 
                 // Select first doctor by default if available
                 if (DoctorList.Count > 0 && SelectedDoctor == null)
@@ -513,7 +513,7 @@ namespace ClinicManagement.ViewModels
 
                     // Check if there's a pending appointment for this patient
                     var pendingAppointment = DataProvider.Instance.Context.Appointments
-                        .Include(a => a.Doctor)
+                        .Include(a => a.Staff)
                         .FirstOrDefault(a => a.PatientId == patient.PatientId &&
                                             a.Status == "Đang chờ" &&
                                             a.IsDeleted != true &&
@@ -522,11 +522,11 @@ namespace ClinicManagement.ViewModels
                     if (pendingAppointment != null && RelatedAppointment == null)
                     {
                         RelatedAppointment = pendingAppointment;
-                        SelectedDoctor = pendingAppointment.Doctor;
+                        SelectedDoctor = pendingAppointment.Staff;
 
                         // Ask if the user wants to proceed with this appointment
                          bool  result = MessageBoxService.ShowInfo(
-                            $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Doctor.FullName}.\n" +
+                            $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Staff.FullName}.\n" +
                             $"Bạn có muốn tiến hành khám với lịch hẹn này không?",
                             "Tìm thấy lịch hẹn"
                              
@@ -608,7 +608,7 @@ namespace ClinicManagement.ViewModels
                 MedicalRecord newRecord = new MedicalRecord
                 {
                     PatientId = SelectedPatient.PatientId,
-                    DoctorId = SelectedDoctor.DoctorId,
+                    StaffId = SelectedDoctor.StaffId,
                     RecordDate = RecordDate,
                     Diagnosis = Diagnosis,
                     DoctorAdvice = DoctorAdvice,
@@ -950,7 +950,7 @@ namespace ClinicManagement.ViewModels
                 {
                     medicalRecord = DataProvider.Instance.Context.MedicalRecords
                         .FirstOrDefault(m => m.PatientId == SelectedPatient.PatientId &&
-                                           m.DoctorId == SelectedDoctor.DoctorId &&
+                                           m.StaffId == SelectedDoctor.StaffId &&
                                            m.RecordDate == RecordDate.Date &&
                                            m.IsDeleted != true);
 
@@ -974,7 +974,7 @@ namespace ClinicManagement.ViewModels
                     medicalRecord = new MedicalRecord
                     {
                         PatientId = SelectedPatient.PatientId,
-                        DoctorId = SelectedDoctor.DoctorId,
+                        StaffId = SelectedDoctor.StaffId,
                         RecordDate = RecordDate,
                         Diagnosis = Diagnosis,
                         DoctorAdvice = DoctorAdvice,

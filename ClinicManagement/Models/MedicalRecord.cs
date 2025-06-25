@@ -9,7 +9,7 @@ public partial class MedicalRecord
 
     public int PatientId { get; set; }
 
-    public int DoctorId { get; set; }
+    public int StaffId { get; set; }
 
     public string? Diagnosis { get; set; }
 
@@ -23,7 +23,7 @@ public partial class MedicalRecord
 
     public bool? IsDeleted { get; set; }
 
-    public virtual Doctor Doctor { get; set; } = null!;
+    public virtual Staff Doctor { get; set; } = null!;
 
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 

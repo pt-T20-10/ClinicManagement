@@ -20,11 +20,11 @@ namespace ClinicManagement
             Current.Resources["MainVM"] = new MainViewModel();
             Current.Resources["LoginVM"] = new LoginViewModel();
             Current.Resources["PatientVM"] = new PatientViewModel();
-            Current.Resources["DoctorVM"] = new DoctorViewModel();
+            Current.Resources["StaffVM"] = new StaffViewModel();
             Current.Resources["AppointmentVM"] = new AppointmentViewModel();
             Current.Resources["StockMedicineVM"] = new StockMedicineViewModel();
             Current.Resources["AddPatientVM"] = new AddPatientViewModel();
-            Current.Resources["AddDoctorVM"] = new AddDoctorWindowViewModel();
+            Current.Resources["AddStaffVM"] = new AddDoctorWindowViewModel();
             Current.Resources["InvoiceVM"] = new InvoiceViewModel();
             Current.Resources["MedicineSellVM"] = new MedicineSellViewModel();
             Current.Resources["StatisticsVM"] = new StatisticsViewModel();

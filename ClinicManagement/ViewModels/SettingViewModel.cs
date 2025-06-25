@@ -19,13 +19,13 @@ namespace ClinicManagement.ViewModels
     {
         #region Doctor Information Properties
 
-        private int _doctorID;
-        public int DoctorID
+        private int _StaffId;
+        public int StaffId
         {
-            get => _doctorID;
+            get => _StaffId;
             set
             {
-                _doctorID = value;
+                _StaffId = value;
                 OnPropertyChanged();
             }
         }
@@ -246,7 +246,7 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         private Account _currentAccount;
-        private Doctor _currentDoctor;
+        private Staff _currentDoctor;
 
         public SettingViewModel()
         {
@@ -436,12 +436,12 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Load doctor information from account
-                _currentDoctor = DataProvider.Instance.Context.Doctors
-                    .FirstOrDefault(d => d.DoctorId == account.DoctorId && d.IsDeleted != true);
+                _currentDoctor = DataProvider.Instance.Context.Staffs
+                    .FirstOrDefault(d => d.StaffId == account.StaffId && d.IsDeleted != true);
 
                 if (_currentDoctor != null)
                 {
-                    DoctorID = _currentDoctor.DoctorId;
+                    StaffId = _currentDoctor.StaffId;
                     FullName = _currentDoctor.FullName;
                     Phone = _currentDoctor.Phone ?? string.Empty;
                     Schedule = _currentDoctor.Schedule ?? string.Empty;
@@ -499,8 +499,8 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Check if phone number already exists (excluding current doctor)
-                bool phoneExists = DataProvider.Instance.Context.Doctors
-                    .Any(d => d.Phone == Phone.Trim() && d.DoctorId != _currentDoctor.DoctorId && d.IsDeleted == false);
+                bool phoneExists = DataProvider.Instance.Context.Staffs
+                    .Any(d => d.Phone == Phone.Trim() && d.StaffId != _currentDoctor.StaffId && d.IsDeleted == false);
 
                 if (phoneExists)
                 {
@@ -510,8 +510,8 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Get doctor record from database
-                var doctorToUpdate = DataProvider.Instance.Context.Doctors
-                    .FirstOrDefault(d => d.DoctorId == _currentDoctor.DoctorId);
+                var doctorToUpdate = DataProvider.Instance.Context.Staffs
+                    .FirstOrDefault(d => d.StaffId == _currentDoctor.StaffId);
 
                 if (doctorToUpdate != null)
                 {

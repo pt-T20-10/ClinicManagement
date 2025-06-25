@@ -448,13 +448,13 @@ namespace ClinicManagement.ViewModels
         }
 
         // Patients By Doctor Series
-        private SeriesCollection _patientsByDoctorSeries;
-        public SeriesCollection PatientsByDoctorSeries
+        private SeriesCollection _patientsByStaffseries;
+        public SeriesCollection PatientsByStaffseries
         {
-            get => _patientsByDoctorSeries;
+            get => _patientsByStaffseries;
             set
             {
-                _patientsByDoctorSeries = value;
+                _patientsByStaffseries = value;
                 OnPropertyChanged();
             }
         }
@@ -676,7 +676,7 @@ namespace ClinicManagement.ViewModels
 
            
             AppointmentPeakHoursSeries = new SeriesCollection();
-            PatientsByDoctorSeries = new SeriesCollection();
+            PatientsByStaffseries = new SeriesCollection();
             RevenueByCategorySeries = new SeriesCollection();
             CancellationRateSeries = new SeriesCollection();
         }
@@ -1358,13 +1358,13 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Get all doctors
-                var doctors = context.Doctors
+                // Get all Staffs
+                var Staffs = context.Staffs
                     .Where(d => d.IsDeleted != true)
                     .Take(10)
                     .ToList();
 
-                if (!doctors.Any())
+                if (!Staffs.Any())
                     return;
 
                 // Get appointments in the date range
@@ -1377,13 +1377,13 @@ namespace ClinicManagement.ViewModels
                 var doctorNames = new List<string>();
                 var patientCounts = new List<double>();
 
-                foreach (var doctor in doctors)
+                foreach (var doctor in Staffs)
                 {
                     doctorNames.Add(doctor.FullName);
-                    patientCounts.Add(appointments.Count(a => a.DoctorId == doctor.DoctorId));
+                    patientCounts.Add(appointments.Count(a => a.StaffId == doctor.StaffId));
                 }
 
-                PatientsByDoctorSeries = new SeriesCollection
+                PatientsByStaffseries = new SeriesCollection
                 {
                     new ColumnSeries
                     {
@@ -1774,7 +1774,7 @@ namespace ClinicManagement.ViewModels
             var appointments = DataProvider.Instance.Context.Appointments
           .Where(a => a.IsDeleted == false || a.IsDeleted == null)
           .Include(a => a.Patient)
-          .Include(a => a.Doctor)
+          .Include(a => a.Staff)
           .Include(a => a.AppointmentType)
           .ToList();
             int waitingCount = appointments.Count(a => a.Status == "Đang chờ");
@@ -1785,7 +1785,7 @@ namespace ClinicManagement.ViewModels
                     Appointment = appointment,
                     Initials = GetInitialsFromFullName(appointment.Patient?.FullName),
                     PatientName = appointment.Patient?.FullName,
-                    DoctorName = appointment.Doctor?.FullName,
+                    DoctorName = appointment.Staff?.FullName,
                     Notes = appointment.Notes,
                     Status = appointment.Status,
                     Time = appointment.AppointmentDate.TimeOfDay

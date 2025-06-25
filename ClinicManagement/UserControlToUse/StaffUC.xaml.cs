@@ -16,11 +16,11 @@ using System.Windows.Shapes;
 namespace ClinicManagement.UserControlToUse
 {
     /// <summary>
-    /// Interaction logic for DoctorUC.xaml
+    /// Interaction logic for StaffUC.xaml
     /// </summary>
-    public partial class DoctorUC : UserControl
+    public partial class StaffUC : UserControl
     {
-        public DoctorUC()
+        public StaffUC()
         {
             InitializeComponent();
         }

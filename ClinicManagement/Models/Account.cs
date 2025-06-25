@@ -7,7 +7,7 @@ public partial class Account
 {
     public string Username { get; set; } = null!;
 
-    public int? DoctorId { get; set; }
+    public int? StaffId { get; set; }
 
     public string Password { get; set; } = null!;
 
@@ -17,5 +17,5 @@ public partial class Account
 
     public bool? IsDeleted { get; set; }
 
-    public virtual Doctor? Doctor { get; set; }
+    public virtual Staff? Staff { get; set; }
 }

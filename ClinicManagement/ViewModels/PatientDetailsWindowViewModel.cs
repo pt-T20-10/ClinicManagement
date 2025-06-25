@@ -650,7 +650,7 @@ namespace ClinicManagement.ViewModels
         {
             Appointments = new ObservableCollection<Appointment>(
                 DataProvider.Instance.Context.Appointments
-                .Include(a => a.Doctor)
+                .Include(a => a.Staff)
                 .Where(a => a.PatientId == PatientId && a.IsDeleted != true)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToList()
@@ -911,7 +911,7 @@ namespace ClinicManagement.ViewModels
                 if (Patient == null) return;
 
                 var query = DataProvider.Instance.Context.Appointments
-                    .Include(a => a.Doctor)
+                    .Include(a => a.Staff)
                     .Where(a => a.PatientId == PatientId && a.IsDeleted != true);
 
                 // Filter by status with trimming

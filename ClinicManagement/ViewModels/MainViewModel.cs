@@ -450,8 +450,8 @@ namespace ClinicManagement.ViewModels
 
             TabSelectionManager.Instance.RegisterTabReloadAction("DoctorTab", () =>
             {
-                var doctorVM = Application.Current.Resources["DoctorVM"] as DoctorViewModel;
-                doctorVM?.LoadData();
+                var StaffVM = Application.Current.Resources["StaffVM"] as StaffViewModel;
+                StaffVM?.LoadData();
             });
 
             TabSelectionManager.Instance.RegisterTabReloadAction("StatisticsTab", () =>

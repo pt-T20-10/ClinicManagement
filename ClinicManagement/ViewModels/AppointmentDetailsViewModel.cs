@@ -68,8 +68,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private Doctor _selectedDoctor;
-        public Doctor SelectedDoctor
+        private Staff _selectedDoctor;
+        public Staff SelectedDoctor
         {
             get => _selectedDoctor;
             set
@@ -84,8 +84,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private ObservableCollection<Doctor> _doctorList;
-        public ObservableCollection<Doctor> DoctorList
+        private ObservableCollection<Staff> _doctorList;
+        public ObservableCollection<Staff> DoctorList
         {
             get => _doctorList;
             set
@@ -157,7 +157,7 @@ namespace ClinicManagement.ViewModels
         public AppointmentDetailsViewModel()
         {
             InitializeCommands();
-            LoadDoctors();
+            LoadStaffs();
             LoadAppointmentTypes();
         }
 
@@ -203,16 +203,16 @@ namespace ClinicManagement.ViewModels
             );
         }
 
-        private void LoadDoctors()
+        private void LoadStaffs()
         {
             try
             {
-                var doctors = DataProvider.Instance.Context.Doctors
+                var Staffs = DataProvider.Instance.Context.Staffs
                     .Where(d => d.IsDeleted != true)
                     .OrderBy(d => d.FullName)
                     .ToList();
 
-                DoctorList = new ObservableCollection<Doctor>(doctors);
+                DoctorList = new ObservableCollection<Staff>(Staffs);
             }
             catch (Exception ex)
             {
@@ -235,7 +235,7 @@ namespace ClinicManagement.ViewModels
         0);
 
     // Set the doctor
-    SelectedDoctor = OriginalAppointment.Doctor;
+    SelectedDoctor = OriginalAppointment.Staff;
     
     // Set the appointment type
     SelectedAppointmentType = OriginalAppointment.AppointmentType;
@@ -372,7 +372,7 @@ namespace ClinicManagement.ViewModels
                 if (appointmentToUpdate != null)
                 {
                     // Update appointment information
-                    appointmentToUpdate.DoctorId = SelectedDoctor.DoctorId;
+                    appointmentToUpdate.StaffId = SelectedDoctor.StaffId;
                     appointmentToUpdate.AppointmentDate = appointmentDateTime;
                     appointmentToUpdate.AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId;
 
@@ -382,7 +382,7 @@ namespace ClinicManagement.ViewModels
                     // Refresh the appointment data
                     OriginalAppointment = DataProvider.Instance.Context.Appointments
                         .Include(a => a.Patient)
-                        .Include(a => a.Doctor)
+                        .Include(a => a.Staff)
                         .Include(a => a.AppointmentType)
                         .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
 
@@ -432,7 +432,7 @@ namespace ClinicManagement.ViewModels
                     // Refresh the appointment data
                     OriginalAppointment = DataProvider.Instance.Context.Appointments
                         .Include(a => a.Patient)
-                        .Include(a => a.Doctor)
+                        .Include(a => a.Staff)
                         .Include(a => a.AppointmentType)
                         .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
 
@@ -562,7 +562,7 @@ namespace ClinicManagement.ViewModels
                 // Get doctor's appointments for that day (excluding the current one)
                 var doctorAppointments = DataProvider.Instance.Context.Appointments
                     .Where(a =>
-                        a.DoctorId == SelectedDoctor.DoctorId &&
+                        a.StaffId == SelectedDoctor.StaffId &&
                         a.IsDeleted != true &&
                         a.Status != "Đã hủy" &&
                         a.AppointmentDate.Date == appointmentDateTime.Date &&

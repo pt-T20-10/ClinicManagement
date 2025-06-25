@@ -28,8 +28,8 @@ namespace ClinicManagement.ViewModels
         }
 
         private Window? _window;
-        private Doctor? _doctor;
-        public Doctor? Doctor
+        private Staff? _doctor;
+        public Staff? Doctor
         {
             get => _doctor;
             set
@@ -48,13 +48,13 @@ namespace ClinicManagement.ViewModels
         private bool _isValidating = false;
 
         // Doctor Information Properties
-        private int _doctorID;
-        public int DoctorID
+        private int _StaffId;
+        public int StaffId
         {
-            get => _doctorID;
+            get => _StaffId;
             set
             {
-                _doctorID = value;
+                _StaffId = value;
                 OnPropertyChanged();
             }
         }
@@ -406,7 +406,7 @@ namespace ClinicManagement.ViewModels
             if (Doctor == null) return;
 
             // Load doctor information
-            DoctorID = Doctor.DoctorId;
+            StaffId = Doctor.StaffId;
             FullName = Doctor.FullName;
             Phone = Doctor.Phone ?? string.Empty;
             Email = Doctor.Email ?? string.Empty;   
@@ -425,7 +425,7 @@ namespace ClinicManagement.ViewModels
             SelectedSpecialty = SpecialtyList.FirstOrDefault(s => s.SpecialtyId == Doctor.SpecialtyId);
 
             var account = DataProvider.Instance.Context.Accounts
-         .FirstOrDefault(a => a.DoctorId == Doctor.DoctorId && a.IsDeleted != true);
+         .FirstOrDefault(a => a.StaffId == Doctor.StaffId && a.IsDeleted != true);
 
             if (account != null)
             {
@@ -650,8 +650,8 @@ namespace ClinicManagement.ViewModels
                           );
                     return;
                 }
-                bool emailExits = DataProvider.Instance.Context.Doctors
-                                 .Any(d => d.Email == Email.Trim() && d.DoctorId != Doctor.DoctorId && d.IsDeleted == false);
+                bool emailExits = DataProvider.Instance.Context.Staffs
+                                 .Any(d => d.Email == Email.Trim() && d.StaffId != Doctor.StaffId && d.IsDeleted == false);
                 if(emailExits)
                 {
                     MessageBoxService.ShowError(
@@ -662,8 +662,8 @@ namespace ClinicManagement.ViewModels
                     return;
                 }    
                 // Check if phone number already exists (excluding current doctor)
-                bool phoneExists = DataProvider.Instance.Context.Doctors
-                    .Any(d => d.Phone == Phone.Trim() && d.DoctorId != Doctor.DoctorId && d.IsDeleted == false);
+                bool phoneExists = DataProvider.Instance.Context.Staffs
+                    .Any(d => d.Phone == Phone.Trim() && d.StaffId != Doctor.StaffId && d.IsDeleted == false);
 
                 if (phoneExists)
                 {
@@ -676,8 +676,8 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Get doctor record
-                var doctorToUpdate = DataProvider.Instance.Context.Doctors
-                    .FirstOrDefault(d => d.DoctorId == Doctor.DoctorId);
+                var doctorToUpdate = DataProvider.Instance.Context.Staffs
+                    .FirstOrDefault(d => d.StaffId == Doctor.StaffId);
 
                 if (doctorToUpdate != null)
                 {
@@ -725,7 +725,7 @@ namespace ClinicManagement.ViewModels
 
                 // Check if doctor has pending or in-progress appointments
                 bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
-                    .Any(a => a.DoctorId == Doctor.DoctorId &&
+                    .Any(a => a.StaffId == Doctor.StaffId &&
                              (a.Status == "Đang chờ" || a.Status == "Đang khám") &&
                              a.IsDeleted != true);
 
@@ -752,8 +752,8 @@ namespace ClinicManagement.ViewModels
                     return;
 
                 // Find and soft-delete the doctor
-                var doctorToDelete = DataProvider.Instance.Context.Doctors
-                    .FirstOrDefault(d => d.DoctorId == Doctor.DoctorId);
+                var doctorToDelete = DataProvider.Instance.Context.Staffs
+                    .FirstOrDefault(d => d.StaffId == Doctor.StaffId);
 
                 if (doctorToDelete != null)
                 {
@@ -762,7 +762,7 @@ namespace ClinicManagement.ViewModels
 
                     // Also soft-delete the associated account
                     var accountToDelete = DataProvider.Instance.Context.Accounts
-                        .FirstOrDefault(a => a.DoctorId == Doctor.DoctorId);
+                        .FirstOrDefault(a => a.StaffId == Doctor.StaffId);
 
                     if (accountToDelete != null)
                     {
@@ -826,7 +826,7 @@ namespace ClinicManagement.ViewModels
 
                 // Find the account
                 var account = DataProvider.Instance.Context.Accounts
-                    .FirstOrDefault(a => a.DoctorId == Doctor.DoctorId && a.IsDeleted != true);
+                    .FirstOrDefault(a => a.StaffId == Doctor.StaffId && a.IsDeleted != true);
 
                 if (account != null)
                 {
@@ -873,7 +873,7 @@ namespace ClinicManagement.ViewModels
 
                 var query = DataProvider.Instance.Context.Appointments
                     .Include(a => a.Patient)
-                    .Where(a => a.DoctorId == Doctor.DoctorId &&
+                    .Where(a => a.StaffId == Doctor.StaffId &&
                                a.IsDeleted != true &&
                                a.AppointmentDate.Date >= AppointmentStartDate.Date &&
                                a.AppointmentDate.Date <= AppointmentEndDate.Date);
@@ -997,7 +997,7 @@ namespace ClinicManagement.ViewModels
                 {
                     Username = NewUsername.Trim(),
                     Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
-                    DoctorId = Doctor.DoctorId,
+                    StaffId = Doctor.StaffId,
                     Role = SelectedRole,
                     IsLogined = false,
                     IsDeleted = false

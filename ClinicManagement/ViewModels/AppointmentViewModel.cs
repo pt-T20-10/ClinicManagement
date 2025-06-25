@@ -133,8 +133,8 @@ namespace ClinicManagement.ViewModels
 
 
         // Doctor selection
-        private ObservableCollection<Doctor> _doctorList;
-        public ObservableCollection<Doctor> DoctorList
+        private ObservableCollection<Staff> _doctorList;
+        public ObservableCollection<Staff> DoctorList
         {
             get => _doctorList;
             set
@@ -144,8 +144,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private Doctor? _selectedDoctor;
-        public Doctor? SelectedDoctor
+        private Staff? _selectedDoctor;
+        public Staff? SelectedDoctor
         {
             get => _selectedDoctor;
             set
@@ -154,7 +154,7 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
                 // Remove the date/time reset and ValidateFormSequence call
                 // Just update the validation flag
-                _isDoctorSelected = value != null;
+                _isStaffselected = value != null;
             }
         }
 
@@ -328,7 +328,7 @@ namespace ClinicManagement.ViewModels
         private bool _isValidating = false;
 
         // Validation sequence flags
-        private bool _isDoctorSelected = false;
+        private bool _isStaffselected = false;
         private bool _isPatientInfoValid = false;
         private bool _isDateTimeValid = false;
         #endregion
@@ -351,7 +351,7 @@ namespace ClinicManagement.ViewModels
             // Initialize collections
             _ListAppointmentType = new ObservableCollection<AppointmentType>();
             _searchedPatients = new ObservableCollection<Patient>();
-            _doctorList = new ObservableCollection<Doctor>();
+            _doctorList = new ObservableCollection<Staff>();
             _appointmentTypes = new ObservableCollection<AppointmentType>();
 
             // These can be null
@@ -517,7 +517,7 @@ namespace ClinicManagement.ViewModels
                 // Load appointment with all related data
                 var fullAppointment = DataProvider.Instance.Context.Appointments
                     .Include(a => a.Patient)
-                    .Include(a => a.Doctor)
+                    .Include(a => a.Staff)
                         .ThenInclude(d => d.Specialty)
                     .Include(a => a.AppointmentType)
                     .FirstOrDefault(a => a.AppointmentId == appointmentInfo.AppointmentId);
@@ -882,8 +882,8 @@ namespace ClinicManagement.ViewModels
 
             SelectedAppointmentStatus = "Tất cả";
 
-            // Load doctors for dropdown
-            LoadDoctors();
+            // Load Staffs for dropdown
+            LoadStaffs();
 
             // Initialize other properties
             PatientSearch = string.Empty;
@@ -895,16 +895,16 @@ namespace ClinicManagement.ViewModels
             LoadAppointments();
         }
 
-        private void LoadDoctors()
+        private void LoadStaffs()
         {
             try
             {
-                var doctors = DataProvider.Instance.Context.Doctors
+                var Staffs = DataProvider.Instance.Context.Staffs
                     .Where(d => d.IsDeleted != true)
                     .OrderBy(d => d.FullName)
                     .ToList();
 
-                DoctorList = new ObservableCollection<Doctor>(doctors);
+                DoctorList = new ObservableCollection<Staff>(Staffs);
             }
             catch (Exception ex)
             {
@@ -912,7 +912,7 @@ namespace ClinicManagement.ViewModels
                     $"Đã xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}",
                     "Lỗi");
 
-                DoctorList = new ObservableCollection<Doctor>();
+                DoctorList = new ObservableCollection<Staff>();
             }
         }
 
@@ -928,7 +928,7 @@ namespace ClinicManagement.ViewModels
 
                 var query = DataProvider.Instance.Context.Appointments
                     .Include(a => a.Patient) // Ensure loading Patient to get FullName
-                    .Include(a => a.Doctor) // Include Doctor information
+                    .Include(a => a.Staff) // Include Doctor information
                     .Include(a => a.AppointmentType) // Include AppointmentType information
                     .Where(a =>
                         a.IsDeleted != true &&
@@ -946,7 +946,7 @@ namespace ClinicManagement.ViewModels
                     string searchLower = SearchText.ToLower().Trim();
                     query = query.Where(a =>
                         (a.Patient.FullName != null && a.Patient.FullName.ToLower().Contains(searchLower)) ||
-                        (a.Doctor.FullName != null && a.Doctor.FullName.ToLower().Contains(searchLower))
+                        (a.Staff.FullName != null && a. Staff.FullName.ToLower().Contains(searchLower))
                     );
                 }
 
@@ -1072,7 +1072,7 @@ namespace ClinicManagement.ViewModels
                 // Get doctor's appointments for that day
                 var doctorAppointments = DataProvider.Instance.Context.Appointments
                     .Where(a =>
-                        a.DoctorId == SelectedDoctor.DoctorId &&
+                        a.StaffId == SelectedDoctor.StaffId &&
                         a.IsDeleted != true &&
                         a.Status != "Đã hủy" &&
                         a.AppointmentDate.Date == appointmentDateTime.Date)
@@ -1285,7 +1285,7 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Validate doctor selection
-                if (!ValidateDoctorSelection()) 
+                if (!ValidateStaffselection()) 
                     return;
 
                 // Validate appointment type
@@ -1327,7 +1327,7 @@ namespace ClinicManagement.ViewModels
                 Appointment newAppointment = new Appointment
                 {
                     PatientId = SelectedPatient.PatientId,
-                    DoctorId = SelectedDoctor.DoctorId,
+                    StaffId = SelectedDoctor.StaffId,
                     AppointmentDate = appointmentDateTime,  // Use the properly constructed date/time
                     AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId,
                     Status = "Đang chờ",
@@ -1391,7 +1391,7 @@ namespace ClinicManagement.ViewModels
         /// <summary>
         /// Validates doctor selection and shows specific error if invalid
         /// </summary>
-        private bool ValidateDoctorSelection()
+        private bool ValidateStaffselection()
         {
             if (SelectedDoctor == null)
             {
@@ -1566,7 +1566,7 @@ namespace ClinicManagement.ViewModels
                 // Get doctor's appointments for that day
                 var doctorAppointments = DataProvider.Instance.Context.Appointments
                     .Where(a =>
-                        a.DoctorId == SelectedDoctor.DoctorId &&
+                        a.StaffId == SelectedDoctor.StaffId &&
                         a.IsDeleted != true &&
                         a.Status != "Đã hủy" &&
                         a.AppointmentDate.Date == appointmentDateTime.Date)
@@ -1647,7 +1647,7 @@ namespace ClinicManagement.ViewModels
             AppointmentNote = string.Empty;
 
             // Reset validation flags
-            _isDoctorSelected = false;
+            _isStaffselected = false;
             _isPatientInfoValid = false;
             _isDateTimeValid = false;
 
@@ -1692,7 +1692,7 @@ namespace ClinicManagement.ViewModels
                     case nameof(SelectedAppointmentTime):
                         if (!SelectedAppointmentTime.HasValue)
                             error = "Vui lòng chọn giờ hẹn";
-                        else if (_isDoctorSelected && _isPatientInfoValid &&
+                        else if (_isStaffselected && _isPatientInfoValid &&
                                  AppointmentDate.HasValue && !IsAppointmentTimeValid())
                             error = "Giờ hẹn không phù hợp với lịch làm việc của bác sĩ";
                         break;

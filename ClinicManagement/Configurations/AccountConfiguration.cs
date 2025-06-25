@@ -24,7 +24,7 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("VaiTro")
                 .HasMaxLength(50);
 
-            builder.Property(e => e.DoctorId)
+            builder.Property(e => e.StaffId)
                 .HasColumnName("MaBacSi");
 
             builder.Property(e => e.IsLogined)
@@ -35,9 +35,9 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("DaXoa")
                 .HasDefaultValue(false);
 
-            builder.HasOne(d => d.Doctor)
+            builder.HasOne(d => d.Staff)
                 .WithMany(p => p.Accounts)
-                .HasForeignKey(d => d.DoctorId)
+                .HasForeignKey(d => d.StaffId)
                 .HasConstraintName("FK_TaiKhoan_BacSi");
         }
     }

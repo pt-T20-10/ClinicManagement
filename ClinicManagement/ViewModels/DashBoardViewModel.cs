@@ -75,7 +75,7 @@ namespace ClinicManagement.ViewModels
             var appointments = DataProvider.Instance.Context.Appointments
           .Where(a => a.IsDeleted == false || a.IsDeleted == null)
           .Include(a => a.Patient)
-          .Include(a => a.Doctor)
+          .Include(a => a.Staff)
           .Include(a => a.AppointmentType)
           .ToList();
             int waitingCount = appointments.Count(a => a.Status == "Đang chờ");
@@ -86,7 +86,7 @@ namespace ClinicManagement.ViewModels
                     Appointment = appointment,
                     Initials = GetInitialsFromFullName(appointment.Patient?.FullName),
                     PatientName = appointment.Patient?.FullName,
-                    DoctorName = appointment.Doctor?.FullName,
+                    DoctorName = appointment.Staff?.FullName,
                     Notes = appointment.Notes,
                     Status = appointment.Status,
                     Time = appointment.AppointmentDate.TimeOfDay

@@ -639,7 +639,7 @@
                                         <TextBlock Grid.Row="0" Text="Số lượng bệnh nhân của từng bác sĩ" 
                                              FontWeight="Medium" Margin="0,0,0,15"/>
 
-                                        <lvc:CartesianChart Grid.Row="1" Series="{Binding PatientsByDoctorSeries}" 
+                                        <lvc:CartesianChart Grid.Row="1" Series="{Binding PatientsByStaffseries}" 
                                                       LegendLocation="Top" DisableAnimations="False">
                                             <lvc:CartesianChart.AxisX>
                                                 <lvc:Axis Title="Bác sĩ" Labels="{Binding DoctorLabels}" 

@@ -7,12 +7,11 @@
     <viewmodel:MainViewModel x:Key="MainVM"/>
     <viewmodel:LoginViewModel x:Key="LoginVM"/>
     <viewmodel:PatientViewModel x:Key="PatientVM"/>
-   
-    <viewmodel:DoctorViewModel x:Key="DoctorVM"/>
+    <viewmodel:StaffViewModel x:Key="StaffVM"/>
     <viewmodel:AppointmentViewModel x:Key="AppointmentVM"/>
     <viewmodel:StockMedicineViewModel x:Key="StockMedicineVM"/>
     <viewmodel:AddPatientViewModel x:Key="AddPatientVM"/>
-    <viewmodel:AddDoctorWindowViewModel x:Key="AddDoctorVM"/>
+    <viewmodel:AddDoctorWindowViewModel x:Key="AddStaffVM"/>
     <viewmodel:InvoiceViewModel x:Key="InvoiceVM"/>
     <viewmodel:MedicineSellViewModel x:Key="MedicineSellVM"/>
     <viewmodel:StatisticsViewModel x:Key="StatisticsVM"/>

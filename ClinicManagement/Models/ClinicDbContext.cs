@@ -22,7 +22,7 @@ public partial class ClinicDbContext : DbContext
 
     public virtual DbSet<AppointmentType> AppointmentTypes { get; set; }
 
-    public virtual DbSet<Doctor> Doctors { get; set; }
+    public virtual DbSet<Staff> Staffs { get; set; }
 
     public virtual DbSet<DoctorSpecialty> DoctorSpecialties { get; set; }
 
@@ -46,6 +46,8 @@ public partial class ClinicDbContext : DbContext
 
     public virtual DbSet<StockIn> StockIns { get; set; }
 
+    public DbSet<Role> Roles { get; set; }
+
     public virtual DbSet<Supplier> Suppliers { get; set; }
 
     public virtual DbSet<Unit> Units { get; set; }
@@ -62,7 +64,7 @@ public partial class ClinicDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AccountConfiguration());
         modelBuilder.ApplyConfiguration(new AppointmentConfiguration());
         modelBuilder.ApplyConfiguration(new AppointmentTypeConfiguration());
-        modelBuilder.ApplyConfiguration(new DoctorConfiguration());
+        modelBuilder.ApplyConfiguration(new StaffConfiguration());
         modelBuilder.ApplyConfiguration(new DoctorSpecialtyConfiguration());
         modelBuilder.ApplyConfiguration(new InvoiceConfiguration());
         modelBuilder.ApplyConfiguration(new InvoiceDetailConfiguration());
@@ -77,6 +79,7 @@ public partial class ClinicDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SupplierConfiguration());
         modelBuilder.ApplyConfiguration(new UnitConfiguration());
         modelBuilder.ApplyConfiguration(new MonthlyStockConfiguration());
+        modelBuilder.ApplyConfiguration(new RoleConfiguration());
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -54,8 +54,8 @@ namespace ClinicManagement.ViewModels
         }
 
         // Doctor info
-        private Doctor _doctor;
-        public Doctor Doctor
+        private Staff _doctor;
+        public Staff Doctor
         {
             get => _doctor;
             set
@@ -325,8 +325,8 @@ namespace ClinicManagement.ViewModels
             if (CurrentAccount == null || MedicalRecord == null) return;
 
             // Check if current user is the doctor who created this record
-            if (CurrentAccount.DoctorId.HasValue &&
-                MedicalRecord.DoctorId == CurrentAccount.DoctorId.Value)
+            if (CurrentAccount.StaffId.HasValue &&
+                MedicalRecord.StaffId == CurrentAccount.StaffId.Value)
             {
                 CanEdit = true;
             }

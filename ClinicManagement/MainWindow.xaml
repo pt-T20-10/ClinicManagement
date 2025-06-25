@@ -219,7 +219,7 @@
                                     <RowDefinition Height="auto"></RowDefinition>
                                 </Grid.RowDefinitions>
                                 <Grid Grid.Row="0">
-                                    <TextBlock Text="Bác sĩ " HorizontalAlignment="Center"></TextBlock>
+                                    <TextBlock Text="Nhân viên " HorizontalAlignment="Center"></TextBlock>
                                 </Grid>
                                 <Grid Grid.Row="1">
                                     <materialDesign:PackIcon HorizontalAlignment="Center" Width="24" Height="24"  Kind="Doctor" />
@@ -227,9 +227,8 @@
                             </Grid>
 
                         </TabItem.Header>
-                        <uc:DoctorUC DataContext="{StaticResource DoctorVM}"></uc:DoctorUC>
+                        <uc:StaffUC DataContext="{StaticResource StaffVM}"></uc:StaffUC>
                     </TabItem>
-
 
                     <TabItem Width="150" Height="80" x:Name="SettingsTab"
                              Visibility="{Binding CanViewSettings, Converter={StaticResource BoolToVisibilityConverter}}">

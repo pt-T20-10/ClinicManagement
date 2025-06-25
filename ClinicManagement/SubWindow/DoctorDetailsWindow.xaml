@@ -79,7 +79,7 @@
                                 <!-- Left Column -->
                                 <!-- Doctor ID -->
                                 <TextBox Grid.Row="0" Grid.Column="0"
-                                         Text="{Binding DoctorID, Mode=OneWay}"
+                                         Text="{Binding StaffId, Mode=OneWay}"
                                          IsReadOnly="True"
                                          materialDesign:HintAssist.Hint="ID bác sĩ"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"

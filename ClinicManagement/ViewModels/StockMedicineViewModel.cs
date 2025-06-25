@@ -1527,7 +1527,7 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Check if specialty is in use by any doctors
+                // Check if specialty is in use by any Staffs
                 bool isInUse = DataProvider.Instance.Context.MedicineCategories
                     .Any(d => d.CategoryId == SelectedCategory.CategoryId && (bool)d.IsDeleted == true);
 

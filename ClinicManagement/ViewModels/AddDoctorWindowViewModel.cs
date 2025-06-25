@@ -345,7 +345,7 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Check if phone number already exists
-                bool phoneExists = DataProvider.Instance.Context.Doctors
+                bool phoneExists = DataProvider.Instance.Context.Staffs
                     .Any(d => d.Phone == Phone.Trim() && (bool)!d.IsDeleted);
 
                 if (phoneExists)
@@ -358,7 +358,7 @@ namespace ClinicManagement.ViewModels
                 }
 
                 // Create and save Doctor object
-                var newDoctor = new Doctor
+                var newDoctor = new Staff
                 {
                     FullName = FullName.Trim(),
                     SpecialtyId = SelectedSpecialty?.SpecialtyId,
@@ -369,7 +369,7 @@ namespace ClinicManagement.ViewModels
                     IsDeleted = false
                 };
 
-                DataProvider.Instance.Context.Doctors.Add(newDoctor);
+                DataProvider.Instance.Context.Staffs.Add(newDoctor);
                 DataProvider.Instance.Context.SaveChanges();
 
                 // Create account if username is provided
@@ -394,7 +394,7 @@ namespace ClinicManagement.ViewModels
                         {
                             Username = UserName.Trim(),
                             Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)), // Hash default password
-                            DoctorId = newDoctor.DoctorId,
+                            StaffId = newDoctor.StaffId,
                             Role = SelectedRole,
                             IsLogined = false,
                             IsDeleted = false

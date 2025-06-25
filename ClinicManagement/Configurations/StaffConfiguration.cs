@@ -4,16 +4,16 @@ using ClinicManagement.Models;
 
 namespace ClinicManagement.Configurations
 {
-    public class DoctorConfiguration : IEntityTypeConfiguration<Doctor>
+    public class StaffConfiguration : IEntityTypeConfiguration<Staff>
     {
-        public void Configure(EntityTypeBuilder<Doctor> builder)
+        public void Configure(EntityTypeBuilder<Staff> builder)
         {
-            builder.ToTable("BacSi");
+            builder.ToTable("NhanVien");
 
-            builder.HasKey(e => e.DoctorId).HasName("PK_BacSi");
+            builder.HasKey(e => e.StaffId).HasName("PK_NhanVien");
 
-            builder.Property(e => e.DoctorId)
-                .HasColumnName("MaBacSi");
+            builder.Property(e => e.StaffId)
+                .HasColumnName("MaNhanVien");
 
             builder.Property(e => e.FullName)
                 .HasColumnName("HoTen")
@@ -46,8 +46,16 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("DiaChi")
                 .HasDefaultValue(false);
 
+            builder.Property(e => e.RoleId)
+           .HasColumnName("MaVaiTro");
+
+            builder.HasOne(d => d.Role)
+          .WithMany(p => p.Staffs)
+          .HasForeignKey(d => d.RoleId)
+          .HasConstraintName("FK_NhanVien_VaiTro");
+
             builder.HasOne(d => d.Specialty)
-                .WithMany(p => p.Doctors)
+                .WithMany(p => p.Staffs)
                 .HasForeignKey(d => d.SpecialtyId)
                 .HasConstraintName("FK_BacSi_ChuyenKhoa");
         }

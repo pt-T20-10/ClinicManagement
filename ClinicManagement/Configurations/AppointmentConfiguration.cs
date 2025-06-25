@@ -18,7 +18,7 @@ namespace ClinicManagement.Configurations
             builder.Property(e => e.PatientId)
                 .HasColumnName("MaBenhNhan");
 
-            builder.Property(e => e.DoctorId)
+            builder.Property(e => e.StaffId)
                 .HasColumnName("MaBacSi");
 
             builder.Property(e => e.AppointmentTypeId)
@@ -52,9 +52,9 @@ namespace ClinicManagement.Configurations
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_LichHen_BenhNhan");
 
-            builder.HasOne(d => d.Doctor)
+            builder.HasOne(d => d.Staff)
                 .WithMany(p => p.Appointments)
-                .HasForeignKey(d => d.DoctorId)
+                .HasForeignKey(d => d.StaffId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_LichHen_BacSi");
 

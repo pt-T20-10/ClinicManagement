@@ -11,13 +11,13 @@ using ClinicManagement.Services;
 
 namespace ClinicManagement.ViewModels
 {
-    public class DoctorViewModel : BaseViewModel
+    public class StaffViewModel : BaseViewModel
     {
         #region Properties
 
         #region DisplayProperties
-        private ObservableCollection<Doctor> _DoctorList;
-        public ObservableCollection<Doctor> DoctorList
+        private ObservableCollection<Staff> _DoctorList;
+        public ObservableCollection<Staff> DoctorList
         {
             get => _DoctorList;
             set
@@ -84,8 +84,8 @@ namespace ClinicManagement.ViewModels
                 ExecuteSearch();
             }
         }
-        private Doctor _selectedDoctor;
-        public Doctor SelectedDoctor
+        private Staff _selectedDoctor;
+        public Staff SelectedDoctor
         {
             get => _selectedDoctor;
             set
@@ -130,7 +130,7 @@ namespace ClinicManagement.ViewModels
         }
         #endregion
         
-        private ObservableCollection<Doctor> _allDoctors;
+        private ObservableCollection<Staff> _allStaffs;
         #endregion
 
         #region Commands
@@ -151,10 +151,8 @@ namespace ClinicManagement.ViewModels
         public ICommand DeleteCommand { get; set; }
         #endregion
 
-        public DoctorViewModel()
+        public StaffViewModel()
         {
-        
-             
                     LoadData();
                
 
@@ -186,7 +184,7 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
 
-            OpenDoctorDetailsCommand = new RelayCommand<Doctor>(
+            OpenDoctorDetailsCommand = new RelayCommand<Staff>(
                 (p) => OpenDoctorDetails(p),
                 (p) => p != null
             );
@@ -212,7 +210,7 @@ namespace ClinicManagement.ViewModels
                 (p) => SelectedItem != null
             );
         }
-        private void OpenDoctorDetails(Doctor doctor)
+        private void OpenDoctorDetails(Staff doctor)
         {
             if (doctor == null) return;
 
@@ -225,15 +223,16 @@ namespace ClinicManagement.ViewModels
         }
         public void LoadData()
         {
-            // Load doctors with their specialties
-            _allDoctors = new ObservableCollection<Doctor>(
-                DataProvider.Instance.Context.Doctors
+            // Load Staffs with their specialties
+            _allStaffs = new ObservableCollection<Staff>(
+                DataProvider.Instance.Context.Staffs
                     .Include(d => d.Specialty)
+                    .Include(d => d.Role)
                     .Where(d => (bool)!d.IsDeleted)
                     .ToList()
             );
 
-            DoctorList = new ObservableCollection<Doctor>(_allDoctors);
+            DoctorList = new ObservableCollection<Staff>(_allStaffs);
 
             // Load specialties
             ListSpecialty = new ObservableCollection<DoctorSpecialty>(
@@ -248,33 +247,33 @@ namespace ClinicManagement.ViewModels
             SearchText = string.Empty;
             SelectedSpecialty = null;
         
-            DoctorList = new ObservableCollection<Doctor>(_allDoctors);
+            DoctorList = new ObservableCollection<Staff>(_allStaffs);
         }
 
         private void ExecuteSearch()
         {
-            if (_allDoctors == null || _allDoctors.Count == 0)
+            if (_allStaffs == null || _allStaffs.Count == 0)
             {
-                DoctorList = new ObservableCollection<Doctor>();
+                DoctorList = new ObservableCollection<Staff >();
                 return;
             }
 
         
-            var filteredList = _allDoctors.AsEnumerable();
+            var filteredList = _allStaffs.AsEnumerable();
 
             if (SelectedSpecialtyId.HasValue)
-                filteredList = _allDoctors.Where(d => d.SpecialtyId == SelectedSpecialtyId && (bool)!d.IsDeleted);
+                filteredList = _allStaffs.Where(d => d.SpecialtyId == SelectedSpecialtyId && (bool)!d.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 var searchTerm = SearchText.ToLower().Trim();
-                filteredList = _allDoctors
+                filteredList = _allStaffs
                 .Where(d => d.FullName != null && d.FullName.ToLower().Contains(searchTerm))
                 .ToList();
             }
 
 
-            DoctorList = new ObservableCollection<Doctor>(filteredList);
+            DoctorList = new ObservableCollection<Staff >(filteredList);
         }
 
         private int GetSpecialtyIdByName(string specialtyName)
@@ -358,16 +357,16 @@ namespace ClinicManagement.ViewModels
 
                                 // Add data
                                 int row = headerRow + 1; // Start data from next row after header
-                                int totalDoctors = DoctorList.Count;
+                                int totalStaffs = DoctorList.Count;
 
                                 // Create data range (to apply borders later)
                                 var dataStartRow = row;
 
-                                for (int i = 0; i < totalDoctors; i++)
+                                for (int i = 0; i < totalStaffs; i++)
                                 {
                                     var doctor = DoctorList[i];
 
-                                    worksheet.Cell(row, 1).Value = doctor.DoctorId;
+                                    worksheet.Cell(row, 1).Value = doctor.StaffId;
                                     worksheet.Cell(row, 2).Value = doctor.FullName ?? "";
                                     worksheet.Cell(row, 3).Value = doctor.Specialty?.SpecialtyName ?? "";
                                     worksheet.Cell(row, 4).Value = doctor.Phone ?? "";
@@ -377,14 +376,14 @@ namespace ClinicManagement.ViewModels
 
                                     // Check if doctor has an account
                                     var account = DataProvider.Instance.Context.Accounts
-                                        .FirstOrDefault(a => a.DoctorId == doctor.DoctorId && a.IsDeleted != true);
+                                        .FirstOrDefault(a => a.StaffId == doctor.StaffId && a.IsDeleted != true);
 
                                     worksheet.Cell(row, 8).Value = account != null ? account.Username : "Không có";
 
                                     row++;
 
-                                    // Update progress based on percentage of doctors processed
-                                    int progressValue = 20 + (i * 60 / totalDoctors);
+                                    // Update progress based on percentage of Staffs processed
+                                    int progressValue = 20 + (i * 60 / totalStaffs);
                                     Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
 
                                     // Add a small delay to make the progress visible
@@ -395,7 +394,7 @@ namespace ClinicManagement.ViewModels
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
 
                                 // Apply borders to the data range
-                                if (totalDoctors > 0)
+                                if (totalStaffs > 0)
                                 {
                                     var dataRange = worksheet.Range(dataStartRow, 1, row - 1, 8);
                                     dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
@@ -410,7 +409,7 @@ namespace ClinicManagement.ViewModels
 
                                 // Add total row
                                 worksheet.Cell(row + 1, 1).Value = "Tổng số:";
-                                worksheet.Cell(row + 1, 2).Value = totalDoctors;
+                                worksheet.Cell(row + 1, 2).Value = totalStaffs;
                                 worksheet.Cell(row + 1, 2).Style.Font.Bold = true;
 
                                 // Auto-fit columns
@@ -609,8 +608,8 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Check if specialty is in use by any doctors
-                bool isInUse = DataProvider.Instance.Context.Doctors
+                // Check if specialty is in use by any Staffs
+                bool isInUse = DataProvider.Instance.Context.Staffs
                     .Any(d => d.SpecialtyId == SelectedItem.SpecialtyId && (bool)!d.IsDeleted);
 
                 if (isInUse)

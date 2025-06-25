@@ -29,7 +29,7 @@ namespace ClinicManagement.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("TenDangNhap");
 
-                    b.Property<int?>("DoctorId")
+                    b.Property<int?>("StaffId")
                         .HasColumnType("int")
                         .HasColumnName("MaBacSi");
 
@@ -59,7 +59,7 @@ namespace ClinicManagement.Migrations
                     b.HasKey("Username")
                         .HasName("PK_TaiKhoan");
 
-                    b.HasIndex("DoctorId");
+                    b.HasIndex("StaffId");
 
                     b.ToTable("TaiKhoan", (string)null);
                 });
@@ -89,7 +89,7 @@ namespace ClinicManagement.Migrations
                         .HasColumnName("NgayTao")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<int>("DoctorId")
+                    b.Property<int>("StaffId")
                         .HasColumnType("int")
                         .HasColumnName("MaBacSi");
 
@@ -119,7 +119,7 @@ namespace ClinicManagement.Migrations
 
                     b.HasIndex("AppointmentTypeId");
 
-                    b.HasIndex("DoctorId");
+                    b.HasIndex("StaffId");
 
                     b.HasIndex("PatientId");
 
@@ -160,12 +160,12 @@ namespace ClinicManagement.Migrations
 
             modelBuilder.Entity("ClinicManagement.Models.Doctor", b =>
                 {
-                    b.Property<int>("DoctorId")
+                    b.Property<int>("StaffId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("MaBacSi");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DoctorId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StaffId"));
 
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
@@ -201,7 +201,7 @@ namespace ClinicManagement.Migrations
                         .HasColumnType("int")
                         .HasColumnName("MaChuyenKhoa");
 
-                    b.HasKey("DoctorId")
+                    b.HasKey("StaffId")
                         .HasName("PK_BacSi");
 
                     b.HasIndex("SpecialtyId");
@@ -355,7 +355,7 @@ namespace ClinicManagement.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("LoiKhuyenBacSi");
 
-                    b.Property<int>("DoctorId")
+                    b.Property<int>("StaffId")
                         .HasColumnType("int")
                         .HasColumnName("MaBacSi");
 
@@ -386,7 +386,7 @@ namespace ClinicManagement.Migrations
                     b.HasKey("RecordId")
                         .HasName("PK_HoSoBenhAn");
 
-                    b.HasIndex("DoctorId");
+                    b.HasIndex("StaffId");
 
                     b.HasIndex("PatientId");
 
@@ -815,7 +815,7 @@ namespace ClinicManagement.Migrations
                 {
                     b.HasOne("ClinicManagement.Models.Doctor", "Doctor")
                         .WithMany("Accounts")
-                        .HasForeignKey("DoctorId")
+                        .HasForeignKey("StaffId")
                         .HasConstraintName("FK_TaiKhoan_BacSi");
 
                     b.Navigation("Doctor");
@@ -831,7 +831,7 @@ namespace ClinicManagement.Migrations
 
                     b.HasOne("ClinicManagement.Models.Doctor", "Doctor")
                         .WithMany("Appointments")
-                        .HasForeignKey("DoctorId")
+                        .HasForeignKey("StaffId")
                         .IsRequired()
                         .HasConstraintName("FK_LichHen_BacSi");
 
@@ -851,7 +851,7 @@ namespace ClinicManagement.Migrations
             modelBuilder.Entity("ClinicManagement.Models.Doctor", b =>
                 {
                     b.HasOne("ClinicManagement.Models.DoctorSpecialty", "Specialty")
-                        .WithMany("Doctors")
+                        .WithMany("Staffs")
                         .HasForeignKey("SpecialtyId")
                         .HasConstraintName("FK_BacSi_ChuyenKhoa");
 
@@ -907,7 +907,7 @@ namespace ClinicManagement.Migrations
                 {
                     b.HasOne("ClinicManagement.Models.Doctor", "Doctor")
                         .WithMany("MedicalRecords")
-                        .HasForeignKey("DoctorId")
+                        .HasForeignKey("StaffId")
                         .IsRequired()
                         .HasConstraintName("FK_HoSoBenhAn_BacSi");
 
@@ -1010,7 +1010,7 @@ namespace ClinicManagement.Migrations
 
             modelBuilder.Entity("ClinicManagement.Models.DoctorSpecialty", b =>
                 {
-                    b.Navigation("Doctors");
+                    b.Navigation("Staffs");
                 });
 
             modelBuilder.Entity("ClinicManagement.Models.Invoice", b =>
