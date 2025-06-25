@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:ClinicManagement.UserControlToUse"
              mc:Ignorable="d" 
+             xmlns:conver="clr-namespace:ClinicManagement.Converter"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              TextElement.Foreground="{DynamicResource MaterialDesignBody}"
              TextElement.FontWeight="Regular"
@@ -15,6 +16,9 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="StaffUc">
+    <UserControl.Resources>
+        <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
     <TabControl
                 materialDesign:ColorZoneAssist.Mode="PrimaryLight"
                 Style="{StaticResource MaterialDesignFilledTabControl}">
@@ -27,7 +31,7 @@
                                   FontWeight="Bold"
                                  />
                         <MenuItem Header="➕ Thêm nhân viên" 
-                                  Command="{Binding AddDoctorCommand}"
+                                  Command="{Binding AddStaffCommand}"
                                   FontWeight="Bold"/>
                     <MenuItem Header="📊 Xuất Excel" 
                                 Command="{Binding ExportExcelCommand}"
@@ -54,19 +58,28 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="5,0,5,0" VerticalAlignment="Center">
                             <!-- Add Doctor Button -->
                             <Button Height="45" Width="150" 
-                    Content="+ Thêm bác sĩ" 
+                    Content="+ Thêm nhân viên" 
                     Style="{StaticResource MaterialDesignRaisedButton}"
-                    Command="{Binding AddDoctorCommand}"
+                    Command="{Binding AddStaffCommand}"
                     Margin="5,0,15,0"/>
-
-                            <!-- Specialty ComboBox -->
                             <ComboBox Width="180"
-                          ItemsSource="{Binding ListSpecialty}"
-                          DisplayMemberPath="SpecialtyName"
-                          SelectedItem="{Binding SelectedSpecialty}"
-                          materialDesign:HintAssist.Hint="Chuyên khoa"
-                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          VerticalAlignment="Center"/>
+          ItemsSource="{Binding RoleList}"
+          DisplayMemberPath="RoleName"
+          SelectedItem="{Binding SelectedRole}"
+          materialDesign:HintAssist.Hint="Vai trò"
+          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+          VerticalAlignment="Center"/>
+
+                            <!-- Add visibility binding to the Specialty ComboBox -->
+                            <ComboBox Width="180"
+         Margin="15 0 0 0"
+         Visibility="{Binding IsSpecialtyVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+         ItemsSource="{Binding ListSpecialty}"
+         DisplayMemberPath="SpecialtyName"
+         SelectedItem="{Binding SelectedSpecialty}"
+         materialDesign:HintAssist.Hint="Chuyên khoa"
+         Style="{StaticResource MaterialDesignOutlinedComboBox}"
+         VerticalAlignment="Center"/>
                         </StackPanel>
                         <TextBox
                                 Grid.Column="1"

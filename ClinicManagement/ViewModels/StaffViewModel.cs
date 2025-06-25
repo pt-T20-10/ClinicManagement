@@ -62,9 +62,19 @@ namespace ClinicManagement.ViewModels
             {
                 _SelectedSpecialty = value;
                 OnPropertyChanged();
+
                 if (value != null)
                 {
-                    SelectedSpecialtyId = GetSpecialtyIdByName(value.SpecialtyName);
+                    // Handle the "All" option (SpecialtyId = -1)
+                    if (value.SpecialtyId == -1)
+                    {
+                        SelectedSpecialtyId = null; // Set to null to indicate no filtering by specialty
+                    }
+                    else
+                    {
+                        // Normal case: Set the selected specialty ID
+                        SelectedSpecialtyId = value.SpecialtyId;
+                    }
                 }
                 else
                 {
@@ -128,8 +138,84 @@ namespace ClinicManagement.ViewModels
                 ExecuteSearch();
             }
         }
+
+        // Add to your properties region
+        private ObservableCollection<Role> _roleList;
+        public ObservableCollection<Role> RoleList
+        {
+            get => _roleList;
+            set
+            {
+                _roleList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Role _selectedRole;
+        public Role SelectedRole
+        {
+            get => _selectedRole;
+            set
+            {
+                _selectedRole = value;
+                OnPropertyChanged();
+
+                if (value != null)
+                {
+                    // Handle the "All" option (RoleId = -1)
+                    if (value.RoleId == -1)
+                    {
+                        SelectedRoleId = null; // Set to null to indicate no filtering by role
+                        IsSpecialtyVisible = false; // Hide specialty when "All" is selected
+                    }
+                    else
+                    {
+                        // Normal case: Update filtering by role
+                        SelectedRoleId = value.RoleId;
+
+                        // Check if the selected role is a doctor (assuming "Bác sĩ" is the role name for doctors)
+                        IsSpecialtyVisible = value.RoleName.Contains("Bác sĩ");
+                    }
+                }
+                else
+                {
+                    SelectedRoleId = null;
+                    IsSpecialtyVisible = false;
+                }
+            }
+        }
+
+        private int? _selectedRoleId;
+        public int? SelectedRoleId
+        {
+            get => _selectedRoleId;
+            set
+            {
+                _selectedRoleId = value;
+                OnPropertyChanged();
+                ExecuteSearch();
+            }
+        }
+
+        // Add property to control Specialty ComboBox visibility
+        private bool _isSpecialtyVisible = false;
+        public bool IsSpecialtyVisible
+        {
+            get => _isSpecialtyVisible;
+            set
+            {
+                _isSpecialtyVisible = value;
+                OnPropertyChanged();
+
+                // If specialty shouldn't be visible, clear the selection
+                if (!value)
+                {
+                    SelectedSpecialty = null;
+                }
+            }
+        }
         #endregion
-        
+
         private ObservableCollection<Staff> _allStaffs;
         #endregion
 
@@ -137,7 +223,7 @@ namespace ClinicManagement.ViewModels
      
         
         // Doctor Commands
-        public ICommand AddDoctorCommand { get; set; }
+        public ICommand AddStaffCommand { get; set; }
         public ICommand EditDoctorCommand { get; set; }
         public ICommand DeleteDoctorCommand { get; set; }
         public ICommand SearchCommand { get; set; }
@@ -172,7 +258,7 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
 
-            AddDoctorCommand = new RelayCommand<object>(
+            AddStaffCommand = new RelayCommand<object>(
                 (p) =>
                 {
                     // Open window to add new doctor
@@ -221,66 +307,130 @@ namespace ClinicManagement.ViewModels
             detailsWindow.ShowDialog();
             LoadData(); // Refresh data after closing details window
         }
+        // Modify the LoadData method to include roles
         public void LoadData()
         {
-            // Load Staffs with their specialties
-            _allStaffs = new ObservableCollection<Staff>(
-                DataProvider.Instance.Context.Staffs
-                    .Include(d => d.Specialty)
-                    .Include(d => d.Role)
-                    .Where(d => (bool)!d.IsDeleted)
-                    .ToList()
-            );
+            try
+            {
+                // Use AsNoTracking for better performance when you're just reading data
+                _allStaffs = new ObservableCollection<Staff>(
+                    DataProvider.Instance.Context.Staffs
+                        .AsNoTracking()
+                        .Include(d => d.Specialty)
+                        .Include(d => d.Role)
+                        .Where(d => (bool)!d.IsDeleted)
+                        .ToList()
+                        .Select(d => {
+                            // Handle any potential null string properties
+                            d.FullName = d.FullName ?? "";
+                            d.Phone = d.Phone ?? "";
+                            d.Email = d.Email ?? "";
+                            d.Schedule = d.Schedule ?? "";
+                            d.Address = d.Address ?? "";
+                            d.CertificateLink = d.CertificateLink ?? "";
 
-            DoctorList = new ObservableCollection<Staff>(_allStaffs);
+                            return d;
+                        })
+                );
 
-            // Load specialties
-            ListSpecialty = new ObservableCollection<DoctorSpecialty>(
-                DataProvider.Instance.Context.DoctorSpecialties
+                DoctorList = new ObservableCollection<Staff>(_allStaffs);
+                // Load specialties with "All" option
+                var specialties = DataProvider.Instance.Context.DoctorSpecialties
+                    .AsNoTracking()
                     .Where(s => (bool)!s.IsDeleted)
                     .ToList()
-            );
+                    .Select(s => {
+                        s.SpecialtyName = s.SpecialtyName ?? "";
+                        s.Description = s.Description ?? "";
+                        return s;
+                    })
+                    .ToList();
+
+                // Add "All Specialties" option at the beginning of the list
+                specialties.Insert(0, new DoctorSpecialty
+                {
+                    SpecialtyId = -1,
+                    SpecialtyName = "-- Tất cả chuyên khoa --"
+                });
+
+                ListSpecialty = new ObservableCollection<DoctorSpecialty>(specialties);
+
+                // Load roles with "All" option
+                var roles = DataProvider.Instance.Context.Roles
+                    .AsNoTracking()
+                    .Where(r => (bool)!r.IsDeleted)
+                    .ToList()
+                    .Select(r => {
+                        r.RoleName = r.RoleName ?? "";
+                        r.Description = r.Description ?? "";
+                        return r;
+                    })
+                    .ToList();
+
+                // Add "All Roles" option at the beginning of the list
+                roles.Insert(0, new Role
+                {
+                    RoleId = -1,
+                    RoleName = "-- Tất cả vai trò --"
+                });
+
+                RoleList = new ObservableCollection<Role>(roles);
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi");
+
+                // Initialize with empty collections to avoid null reference exceptions
+                _allStaffs = new ObservableCollection<Staff>();
+                DoctorList = new ObservableCollection<Staff>();
+                ListSpecialty = new ObservableCollection<DoctorSpecialty>();
+                RoleList = new ObservableCollection<Role>();
+            }
         }
         private void ExecuteResetFilters()
         {
-          
             SearchText = string.Empty;
-            SelectedSpecialty = null;
-        
+
+            // Select "All" items in the ComboBoxes instead of setting to null
+            SelectedRole = RoleList?.FirstOrDefault(r => r.RoleId == -1);
+            SelectedSpecialty = IsSpecialtyVisible ?
+                ListSpecialty?.FirstOrDefault(s => s.SpecialtyId == -1) : null;
+
+            IsSpecialtyVisible = false;
+
             DoctorList = new ObservableCollection<Staff>(_allStaffs);
         }
-
         private void ExecuteSearch()
         {
             if (_allStaffs == null || _allStaffs.Count == 0)
             {
-                DoctorList = new ObservableCollection<Staff >();
+                DoctorList = new ObservableCollection<Staff>();
                 return;
             }
 
-        
             var filteredList = _allStaffs.AsEnumerable();
 
+            // Filter by specialty if selected
             if (SelectedSpecialtyId.HasValue)
-                filteredList = _allStaffs.Where(d => d.SpecialtyId == SelectedSpecialtyId && (bool)!d.IsDeleted);
+                filteredList = filteredList.Where(d => d.SpecialtyId == SelectedSpecialtyId && (bool)!d.IsDeleted);
 
+            // Filter by role if selected
+            if (SelectedRoleId.HasValue)
+                filteredList = filteredList.Where(d => d.RoleId == SelectedRoleId && (bool)!d.IsDeleted);
+
+            // Filter by search text if provided
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 var searchTerm = SearchText.ToLower().Trim();
-                filteredList = _allStaffs
-                .Where(d => d.FullName != null && d.FullName.ToLower().Contains(searchTerm))
-                .ToList();
+                filteredList = filteredList.Where(d =>
+                    (d.FullName != null && d.FullName.ToLower().Contains(searchTerm)) ||
+                    (d.Phone != null && d.Phone.ToLower().Contains(searchTerm)) ||
+                    (d.Email != null && d.Email.ToLower().Contains(searchTerm))
+                );
             }
 
-
-            DoctorList = new ObservableCollection<Staff >(filteredList);
-        }
-
-        private int GetSpecialtyIdByName(string specialtyName)
-        {
-            var specialty = DataProvider.Instance.Context.DoctorSpecialties
-                .FirstOrDefault(s => s.SpecialtyName.Trim().ToLower() == specialtyName.Trim().ToLower() && (bool)!s.IsDeleted);
-            return specialty?.SpecialtyId ?? 0;
+            DoctorList = new ObservableCollection<Staff>(filteredList);
         }
 
         private void ExportToExcel()
@@ -335,12 +485,13 @@ namespace ClinicManagement.ViewModels
                                 int headerRow = 6; // Row 6 (leaving 3 blank rows after title)
                                 worksheet.Cell(headerRow, 1).Value = "ID";
                                 worksheet.Cell(headerRow, 2).Value = "Họ và tên";
-                                worksheet.Cell(headerRow, 3).Value = "Chuyên khoa";
-                                worksheet.Cell(headerRow, 4).Value = "Điện thoại";
-                                worksheet.Cell(headerRow, 5).Value = "Email";
-                                worksheet.Cell(headerRow, 6).Value = "Lịch làm việc";
-                                worksheet.Cell(headerRow, 7).Value = "Địa chỉ";
-                                worksheet.Cell(headerRow, 8).Value = "Tài khoản";
+                                worksheet.Cell(headerRow, 3).Value = "Vai trò";  // Add role column
+                                worksheet.Cell(headerRow, 4).Value = "Chuyên khoa";  // Shift other c
+                                worksheet.Cell(headerRow, 5).Value = "Điện thoại";
+                                worksheet.Cell(headerRow, 6).Value = "Email";
+                                worksheet.Cell(headerRow, 7).Value = "Lịch làm việc";
+                                worksheet.Cell(headerRow, 8).Value = "Địa chỉ";
+                         
 
                                 // Style header row
                                 var headerRange = worksheet.Range(headerRow, 1, headerRow, 8);
@@ -368,11 +519,12 @@ namespace ClinicManagement.ViewModels
 
                                     worksheet.Cell(row, 1).Value = doctor.StaffId;
                                     worksheet.Cell(row, 2).Value = doctor.FullName ?? "";
-                                    worksheet.Cell(row, 3).Value = doctor.Specialty?.SpecialtyName ?? "";
-                                    worksheet.Cell(row, 4).Value = doctor.Phone ?? "";
-                                    worksheet.Cell(row, 5).Value = doctor.Email ?? "";
-                                    worksheet.Cell(row, 6).Value = doctor.Schedule ?? "";
-                                    worksheet.Cell(row, 7).Value = doctor.Address ?? "";
+                                    worksheet.Cell(row, 3).Value = doctor.Role?.RoleName ?? ""; 
+                                    worksheet.Cell(row, 4).Value = doctor.Specialty?.SpecialtyName ?? "";
+                                    worksheet.Cell(row, 5).Value = doctor.Phone ?? "";
+                                    worksheet.Cell(row, 6).Value = doctor.Email ?? "";
+                                    worksheet.Cell(row, 7).Value = doctor.Schedule ?? "";
+                                    worksheet.Cell(row, 8).Value = doctor.Address ?? "";
 
                                     // Check if doctor has an account
                                     var account = DataProvider.Instance.Context.Accounts
@@ -419,8 +571,8 @@ namespace ClinicManagement.ViewModels
                                 worksheet.Column(1).Width = 10; // ID
                                 worksheet.Column(2).Width = 25; // Name
                                 worksheet.Column(3).Width = 20; // Specialty
-                                worksheet.Column(6).Width = 80; // Schedule
-                                worksheet.Column(7).Width = 85; // Address
+                                worksheet.Column(7).Width = 80; // Schedule
+                                worksheet.Column(8).Width = 85; // Address
 
                                 // Report progress: 90% - Formatting complete
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));

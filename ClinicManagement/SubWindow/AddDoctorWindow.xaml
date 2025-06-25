@@ -50,10 +50,18 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="16">
                     <!-- Header -->
-                    <TextBlock Text="THÊM BÁC SĨ MỚI" 
+                    <TextBlock Text="THÊM NHÂN VIÊN MỚI" 
                                FontSize="20" FontWeight="Bold" 
                                HorizontalAlignment="Center"
                                Margin="0,0,0,24"/>
+                    <ComboBox 
+    Margin="0,0,0,16"
+    ItemsSource="{Binding RoleList}"
+    DisplayMemberPath="RoleName"
+    SelectedItem="{Binding SelectedRole}"
+    materialDesign:HintAssist.Hint="Vai trò *"
+    Style="{StaticResource MaterialDesignOutlinedComboBox}"
+    VerticalAlignment="Center"/>
 
                     <!-- Full Name -->
                     <StackPanel Margin="0,0,0,16">
@@ -63,12 +71,13 @@
                     </StackPanel>
 
                     <!-- Specialty -->
-                    <StackPanel Margin="0,0,0,16">
+                    <!-- Specialty ComboBox with visibility binding -->
+                    <StackPanel Margin="0,0,0,16" Visibility="{Binding IsSpecialtyVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ComboBox ItemsSource="{Binding SpecialtyList}"
-                                  DisplayMemberPath="SpecialtyName"
-                                  SelectedItem="{Binding SelectedSpecialty}"
-                                  materialDesign:HintAssist.Hint="Chuyên khoa *"
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+              DisplayMemberPath="SpecialtyName"
+              SelectedItem="{Binding SelectedSpecialty}"
+              materialDesign:HintAssist.Hint="Chuyên khoa *"
+              Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
                     </StackPanel>
 
                     <!-- Phone -->
@@ -131,16 +140,6 @@
                     Foreground="Gray"
                     Margin="0,5,0,10"
                   />
-
-
-                    <!-- Role -->
-                    <StackPanel Margin="0,0,0,16">
-                        <ComboBox ItemsSource="{Binding RoleList}"
-                                  SelectedItem="{Binding SelectedRole}"
-                                  materialDesign:HintAssist.Hint="Vai trò"
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-                    </StackPanel>
-
                     <!-- Required fields note -->
                     <TextBlock Text="* Thông tin bắt buộc" 
                                FontStyle="Italic"

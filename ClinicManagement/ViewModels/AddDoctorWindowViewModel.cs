@@ -1,5 +1,6 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.Services;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -141,26 +142,48 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Remove password and confirmPassword properties since we'll use a default password
-
-        private string _selectedRole;
-        public string SelectedRole
+        // Role properties
+        private Role _selectedRole;
+        public Role SelectedRole
         {
             get => _selectedRole;
             set
             {
                 _selectedRole = value;
                 OnPropertyChanged();
+
+                // Show/hide specialty selection based on role
+                if (value != null)
+                {
+                    // If role is Doctor, show specialty selection
+                    IsSpecialtyVisible = value.RoleName.Contains("Bác sĩ");
+                }
+                else
+                {
+                    IsSpecialtyVisible = false;
+                }
             }
         }
 
-        private ObservableCollection<string> _roleList;
-        public ObservableCollection<string> RoleList
+        private ObservableCollection<Role> _roleList;
+        public ObservableCollection<Role> RoleList
         {
             get => _roleList;
             set
             {
                 _roleList = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Add property to control Specialty ComboBox visibility
+        private bool _isSpecialtyVisible = true; // Default to true for backward compatibility
+        public bool IsSpecialtyVisible
+        {
+            get => _isSpecialtyVisible;
+            set
+            {
+                _isSpecialtyVisible = value;
                 OnPropertyChanged();
             }
         }
@@ -263,17 +286,64 @@ namespace ClinicManagement.ViewModels
             if (string.IsNullOrWhiteSpace(schedule))
                 return true; // Empty schedule is valid (not required)
 
-            // Pattern: Days (T2, T3, etc.) followed by colon, then hours (7h-13h)
-            string pattern = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h-\d{1,2}h$";
+            // Multiple pattern support
+            string pattern1 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
+            string pattern2 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
+            string pattern3 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
+            string pattern4 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
+            string pattern5 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h\d{2}-\d{1,2}h\d{2}(, \d{1,2}h\d{2}-\d{1,2}h\d{2})*$";
 
-            // Check if basic format matches
-            if (!Regex.IsMatch(schedule, pattern))
-                return false;
+            if (Regex.IsMatch(schedule, pattern1) ||
+                Regex.IsMatch(schedule, pattern2) ||
+                Regex.IsMatch(schedule, pattern3) ||
+                Regex.IsMatch(schedule, pattern4) ||
+                Regex.IsMatch(schedule, pattern5))
+            {
+                try
+                {
+                    // Parse all time slots and check each slot's start < end
+                    string[] parts = schedule.Split(':');
+                    if (parts.Length < 2)
+                        return false;
 
-            // Additional validation for time range can be added here if needed
-            // For example, checking that start time is before end time
+                    string timeSection = string.Join(":", parts.Skip(1)).Trim();
+                    var timeRanges = timeSection.Split(',');
 
-            return true;
+                    foreach (var range in timeRanges)
+                    {
+                        var times = range.Trim().Split('-');
+                        if (times.Length == 2)
+                        {
+                            var start = ParseTimeString(times[0].Trim());
+                            var end = ParseTimeString(times[1].Trim());
+                            if (start == TimeSpan.Zero && end == TimeSpan.Zero)
+                                return false; // Invalid time format
+                            if (start >= end)
+                                return false; // Start must be before end
+                        }
+                    }
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        // Helper: parses "8h", "8h30", "13h", "13h30" etc.
+        private TimeSpan ParseTimeString(string timeStr)
+        {
+            timeStr = timeStr.Replace("h", ":").Replace(" ", "");
+            if (timeStr.EndsWith(":")) timeStr += "00";
+            var parts = timeStr.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int h) && int.TryParse(parts[1], out int m))
+                return new TimeSpan(h, m, 0);
+            if (parts.Length == 1 && int.TryParse(parts[0], out h))
+                return new TimeSpan(h, 0, 0);
+            return TimeSpan.Zero;
         }
         #endregion
 
@@ -304,19 +374,34 @@ namespace ClinicManagement.ViewModels
                 .ToList()
             );
 
-            // Initialize role list
-            RoleList = new ObservableCollection<string>
+            // Load roles
+            var roles = DataProvider.Instance.Context.Roles
+                .Where(r => r.IsDeleted != true)
+                .ToList();
+
+            // Check if there's already an admin role assigned to any staff
+            bool hasAdmin = DataProvider.Instance.Context.Staffs
+                .Include(s => s.Role)
+                .Any(s => s.Role != null && s.Role.RoleName == "Quản lí" && s.IsDeleted != true);
+
+            // If there's already an admin, remove it from the available roles
+            if (hasAdmin)
             {
-                "Bác sĩ",
-                "Dược sĩ"
-            };
+                roles = roles.Where(r => r.RoleName != "Quản lí").ToList();
+            }
+
+            RoleList = new ObservableCollection<Role>(roles);
+
+            // Default to Doctor role
+            SelectedRole = RoleList.FirstOrDefault(r => r.RoleName == "Bác sĩ");
         }
 
         private bool CanSave()
         {
             return !string.IsNullOrWhiteSpace(FullName) &&
                    !string.IsNullOrWhiteSpace(Phone) &&
-                   SelectedSpecialty != null;
+                   SelectedRole != null &&
+                   (!IsSpecialtyVisible || SelectedSpecialty != null);
         }
 
         private void ExecuteSave()
@@ -338,9 +423,8 @@ namespace ClinicManagement.ViewModels
                 if (HasErrors)
                 {
                     MessageBoxService.ShowWarning(
-                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm bác sĩ.",
-                        "Lỗi thông tin")
-                     ;
+                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm nhân viên.",
+                        "Lỗi thông tin");
                     return;
                 }
 
@@ -351,25 +435,41 @@ namespace ClinicManagement.ViewModels
                 if (phoneExists)
                 {
                     MessageBoxService.ShowWarning(
-                        "Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
-                        "Lỗi Dữ Liệu"
-                     );
+                        "Số điện thoại này đã được sử dụng bởi một nhân viên khác.",
+                        "Lỗi Dữ Liệu");
                     return;
                 }
 
-                // Create and save Doctor object
-                var newDoctor = new Staff
+                // Check if email already exists (if provided)
+                if (!string.IsNullOrWhiteSpace(Email))
+                {
+                    bool emailExists = DataProvider.Instance.Context.Staffs
+                        .Any(d => d.Email == Email.Trim() && (bool)!d.IsDeleted);
+
+                    if (emailExists)
+                    {
+                        MessageBoxService.ShowWarning(
+                            "Email này đã được sử dụng bởi một nhân viên khác.",
+                            "Lỗi Dữ Liệu");
+                        return;
+                    }
+                }
+
+                // Create and save Staff object
+                var newStaff = new Staff
                 {
                     FullName = FullName.Trim(),
-                    SpecialtyId = SelectedSpecialty?.SpecialtyId,
+                    RoleId = SelectedRole.RoleId,
+                    SpecialtyId = IsSpecialtyVisible ? SelectedSpecialty?.SpecialtyId : null,
                     CertificateLink = CertificateLink?.Trim(),
                     Schedule = Schedule?.Trim(),
                     Phone = Phone.Trim(),
+                    Email = Email?.Trim(),
                     Address = Address?.Trim(),
                     IsDeleted = false
                 };
 
-                DataProvider.Instance.Context.Staffs.Add(newDoctor);
+                DataProvider.Instance.Context.Staffs.Add(newStaff);
                 DataProvider.Instance.Context.SaveChanges();
 
                 // Create account if username is provided
@@ -382,9 +482,8 @@ namespace ClinicManagement.ViewModels
                     if (usernameExists)
                     {
                         MessageBoxService.ShowWarning(
-                            "Tên đăng nhập đã tồn tại. Tài khoản không được tạo nhưng thông tin bác sĩ đã được lưu.",
-                            "Cảnh Báo"
-                           );
+                            "Tên đăng nhập đã tồn tại. Tài khoản không được tạo nhưng thông tin nhân viên đã được lưu.",
+                            "Cảnh Báo");
                     }
                     else
                     {
@@ -393,9 +492,9 @@ namespace ClinicManagement.ViewModels
                         var newAccount = new Account
                         {
                             Username = UserName.Trim(),
-                            Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)), // Hash default password
-                            StaffId = newDoctor.StaffId,
-                            Role = SelectedRole,
+                            Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
+                            StaffId = newStaff.StaffId,
+                            Role = SelectedRole.RoleName, // Use the selected role name
                             IsLogined = false,
                             IsDeleted = false
                         };
@@ -410,9 +509,8 @@ namespace ClinicManagement.ViewModels
                 }
 
                 MessageBoxService.ShowSuccess(
-                    "Đã thêm bác sĩ thành công!",
-                    "Thành Công"
-                 );
+                    $"Đã thêm {(SelectedRole.RoleName == "Bác sĩ" ? "bác sĩ" : "nhân viên")} thành công!",
+                    "Thành Công");
 
                 // Close the window
                 _window?.Close();
@@ -420,7 +518,7 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
-                    $"Đã xảy ra lỗi khi thêm bác sĩ: {ex.Message}",
+                    $"Đã xảy ra lỗi khi thêm nhân viên: {ex.Message}",
                     "Lỗi");
             }
         }
@@ -443,10 +541,14 @@ namespace ClinicManagement.ViewModels
             Address = string.Empty;
             CertificateLink = string.Empty;
             UserName = string.Empty;
-            SelectedRole = "Bác sĩ";
 
-            // Set default value for specialty if available
-            if (SpecialtyList != null && SpecialtyList.Count > 0)
+            // Set default values for Role and Specialty if available
+            if (RoleList != null && RoleList.Count > 0)
+            {
+                SelectedRole = RoleList.FirstOrDefault(r => r.RoleName == "Bác sĩ") ?? RoleList.FirstOrDefault();
+            }
+
+            if (SpecialtyList != null && SpecialtyList.Count > 0 && IsSpecialtyVisible)
             {
                 SelectedSpecialty = SpecialtyList.FirstOrDefault();
             }
@@ -458,3 +560,4 @@ namespace ClinicManagement.ViewModels
         #endregion
     }
 }
+    
