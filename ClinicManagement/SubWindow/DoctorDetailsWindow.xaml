@@ -221,7 +221,7 @@
 
                                 <!-- Action Buttons Row -->
                                 <Grid Grid.Row="1" Grid.Column="1">
-                                    <!-- Add Account Button -->
+                               
                                     <!-- Add Account Button -->
                                     <Button Command="{Binding AddDoctorAccountCommand}"
                                         Style="{StaticResource MaterialDesignRaisedButton}"

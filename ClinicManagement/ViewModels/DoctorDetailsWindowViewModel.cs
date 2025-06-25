@@ -385,16 +385,9 @@ namespace ClinicManagement.ViewModels
                 "Đã hủy"
             };
 
+
+
             SelectedAppointmentStatus = "Tất cả";
-
-            // Initialize role list for account creation
-            RoleList = new ObservableCollection<string>
-            {
-                "Bác sĩ",
-                "Dược sĩ"
-            };
-
-            SelectedRole = "Bác sĩ";
 
             // Initialize collections to prevent null references
             DoctorAppointments = new ObservableCollection<Appointment>();
@@ -409,7 +402,7 @@ namespace ClinicManagement.ViewModels
             StaffId = Doctor.StaffId;
             FullName = Doctor.FullName;
             Phone = Doctor.Phone ?? string.Empty;
-            Email = Doctor.Email ?? string.Empty;   
+            Email = Doctor.Email ?? string.Empty;
             Schedule = Doctor.Schedule ?? string.Empty;
             Address = Doctor.Address ?? string.Empty;
             CertificateLink = Doctor.CertificateLink ?? string.Empty;
@@ -424,26 +417,27 @@ namespace ClinicManagement.ViewModels
             // Set selected specialty
             SelectedSpecialty = SpecialtyList.FirstOrDefault(s => s.SpecialtyId == Doctor.SpecialtyId);
 
+            // Get staff's role name from the database
+            var staffRole = DataProvider.Instance.Context.Roles
+                .FirstOrDefault(r => r.RoleId == Doctor.RoleId && r.IsDeleted != true);
+
+            Role = staffRole?.RoleName ?? string.Empty;
+
+            // Check if staff has an account
             var account = DataProvider.Instance.Context.Accounts
-         .FirstOrDefault(a => a.StaffId == Doctor.StaffId && a.IsDeleted != true);
+                .FirstOrDefault(a => a.StaffId == Doctor.StaffId && a.IsDeleted != true);
 
             if (account != null)
             {
                 UserName = account.Username;
-                Role = account.Role ?? string.Empty;
-                NewUsername = account.Username; // Đồng bộ với tên hiện tại
-                HasAccount = true;  // Đặt HasAccount = true khi có tài khoản
-                                    // Cập nhật lại UI
+                NewUsername = account.Username; // Sync with current username
+                HasAccount = true;  // Set HasAccount to true when there's an account
                 CommandManager.InvalidateRequerySuggested();
             }
             else
             {
                 UserName = string.Empty;
-                Role = string.Empty;
-                HasAccount = false;  // Đặt HasAccount = false khi không có tài khoản
-                                     // Generate a suggested username from doctor's name
-               
-                // Cập nhật lại UI
+                HasAccount = false;  // Set HasAccount to false when there's no account
                 CommandManager.InvalidateRequerySuggested();
             }
 
@@ -454,6 +448,7 @@ namespace ClinicManagement.ViewModels
             _touchedFields.Clear();
             _isValidating = false;
         }
+
         #endregion
 
         #region Validation
@@ -933,11 +928,10 @@ namespace ClinicManagement.ViewModels
         {
             if (HasAccount)
                 return false;
-            // Chỉ cho phép thêm khi chưa có tài khoản và tên đăng nhập hợp lệ
+            // Only allow adding when there's no account and the username is valid
             bool isValidUsername = !string.IsNullOrWhiteSpace(NewUsername) && NewUsername.Trim().Length >= 4 && !HasUsernameErrors;
-            bool isValidRole = !string.IsNullOrEmpty(SelectedRole) && (SelectedRole == "Bác sĩ" || SelectedRole == "Dược sĩ");
 
-            return Doctor != null && !HasAccount && isValidUsername && isValidRole;
+            return Doctor != null && !HasAccount && isValidUsername && !string.IsNullOrEmpty(Role);
         }
 
         private void ExecuteAddDoctorAccount()
@@ -959,8 +953,7 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowError(
                         "Tên đăng nhập không hợp lệ. Vui lòng nhập tên đăng nhập có ít nhất 4 ký tự.",
                         "Lỗi thông tin"
-                         
-                          );
+                    );
                     return;
                 }
 
@@ -973,22 +966,20 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowError(
                         "Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.",
                         "Lỗi Dữ Liệu"
-                         
-                          );
+                    );
                     return;
                 }
 
                 // Ask for confirmation
-                 bool  result = MessageBoxService.ShowQuestion(
-                    $"Bạn có chắc muốn tạo tài khoản cho bác sĩ {FullName} không?\n" +
+                bool result = MessageBoxService.ShowQuestion(
+                    $"Bạn có chắc muốn tạo tài khoản cho {FullName} không?\n" +
                     $"Tên đăng nhập: {NewUsername.Trim()}\n" +
                     $"Mật khẩu mặc định: 1111\n" +
-                    $"Vai trò: {SelectedRole}",
+                    $"Vai trò: {Role}",
                     "Xác Nhận Tạo Tài Khoản"
-                     
-                      );
+                );
 
-                if ( !result)
+                if (!result)
                     return;
 
                 // Create account with default password "1111"
@@ -998,7 +989,7 @@ namespace ClinicManagement.ViewModels
                     Username = NewUsername.Trim(),
                     Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
                     StaffId = Doctor.StaffId,
-                    Role = SelectedRole,
+                    Role = Role, // Use the staff's role
                     IsLogined = false,
                     IsDeleted = false
                 };
@@ -1009,13 +1000,11 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowSuccess(
                     "Đã tạo tài khoản thành công với mật khẩu mặc định là \"1111\".",
                     "Thành Công"
-                     
-                     );
+                );
 
                 // Update UI to reflect new account
                 UserName = NewUsername.Trim();
-                Role = SelectedRole;
-                HasAccount = true;  // Cập nhật trạng thái đã có tài khoản
+                HasAccount = true;  // Update account status
 
                 // Refresh UI
                 OnPropertyChanged(nameof(HasAccount));
@@ -1026,8 +1015,7 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tạo tài khoản: {ex.Message}",
                     "Lỗi"
-                     
-                      );
+                );
             }
         }
         #endregion
