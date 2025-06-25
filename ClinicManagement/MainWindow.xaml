@@ -68,7 +68,8 @@
                              SelectionChanged="MainTabControl_SelectionChanged"
                            x:Name="MainTabControl" Grid.RowSpan="2">
                     
-                    <TabItem Width="150" Height="80" x:Name="StatisticsTab"
+                    
+                    <TabItem Width="130" Height="70" x:Name="StatisticsTab"
                              Visibility="{Binding CanViewStatistics, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
@@ -89,7 +90,7 @@
                     </TabItem>
 
                     <TabItem x:Name="PatientTab"
-                        Width="150" Height="80" Padding="0"
+                        Width="130" Height="70" Padding="0"
                              Visibility="{Binding CanViewPatient, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header>
                             <Grid>
@@ -110,8 +111,7 @@
 
                     </TabItem>
 
-
-                    <TabItem Width="150" Height="80" x:Name="ExamineTab"
+                    <TabItem Width="130" Height="70" x:Name="ExamineTab"
                              Visibility="{Binding CanViewExamine, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
@@ -131,7 +131,7 @@
                         <uc:ExamineUC ></uc:ExamineUC>
                     </TabItem>
  
-                   <TabItem x:Name="AppointmentTab" Width="150" Height="80"  Padding="0"
+                   <TabItem x:Name="AppointmentTab" Width="130" Height="70"  Padding="0"
                              Visibility="{Binding CanViewAppointment, Converter={StaticResource BoolToVisibilityConverter}}">
 
                         <TabItem.Header>
@@ -152,7 +152,7 @@
                         <uc:AppointmentUC DataContext="{StaticResource AppointmentVM}"></uc:AppointmentUC>
                     </TabItem>
                     
-                    <TabItem Width="150" Height="80" Padding="0" x:Name="StockTab"
+                    <TabItem Width="130" Height="70" Padding="0" x:Name="StockTab"
                              Visibility="{Binding CanViewInventory, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
@@ -172,7 +172,7 @@
                         <uc:StockUC DataContext="{StaticResource StockMedicineVM}"/>
                     </TabItem>
 
-                    <TabItem Width="150" Height="80"  Padding="0" x:Name="InvoiceTab"
+                    <TabItem Width="130" Height="70"  Padding="0" x:Name="InvoiceTab"
                              Visibility="{Binding CanViewInvoice, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
@@ -191,7 +191,7 @@
                         <uc:InvoiceUC DataContext="{StaticResource InvoiceVM}" ></uc:InvoiceUC>
                     </TabItem>
 
-                    <TabItem Width="150" Height="80" Padding="0" x:Name="MedicineSellTab"
+                    <TabItem Width="130" Height="70" Padding="0" x:Name="MedicineSellTab"
                              Visibility="{Binding CanViewMedicineSell, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
@@ -210,7 +210,7 @@
                         <uc:MedicincSellUC DataContext="{StaticResource MedicineSellVM}" Margin="0,17,0,-17"></uc:MedicincSellUC>
                     </TabItem>
 
-                    <TabItem Width="150" Height="80" Padding="0" x:Name="DoctorTab"
+                    <TabItem Width="130" Height="70" Padding="0" x:Name="DoctorTab"
                              Visibility="{Binding CanViewDoctor, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>
@@ -230,8 +230,7 @@
                         <uc:DoctorUC DataContext="{StaticResource DoctorVM}"></uc:DoctorUC>
                     </TabItem>
 
-
-                    <TabItem Width="150" Height="80" x:Name="SettingsTab"
+                    <TabItem Width="130" Height="70" x:Name="SettingsTab"
                              Visibility="{Binding CanViewSettings, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TabItem.Header >
                             <Grid>

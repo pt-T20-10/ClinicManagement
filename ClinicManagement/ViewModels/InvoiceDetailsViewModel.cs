@@ -313,7 +313,7 @@ namespace ClinicManagement.ViewModels
             );
             ExportInvoiceCommand = new RelayCommand<object>(
               p => ExportInvoiceToPdf(),
-              p => Invoice != null
+              p => Invoice != null && Invoice.InvoiceDetails != null && Invoice.InvoiceDetails.Any() && Invoice.Status == "Đã thanh toán"
           );
 
         
