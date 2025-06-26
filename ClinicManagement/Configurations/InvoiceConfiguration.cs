@@ -16,6 +16,13 @@ namespace ClinicManagement.Configurations
             builder.Property(e => e.InvoiceId)
                 .HasColumnName("MaHoaDon");
 
+
+            builder.Property(e => e.StaffPrescriberId)
+                .HasColumnName("NhanVienKeDon"); 
+
+            builder.Property(e => e.StaffCashierId)
+                .HasColumnName("NhanVienXacNhan");
+
             builder.Property(e => e.PatientId)
                 .HasColumnName("MaBenhNhan");
 
@@ -58,6 +65,19 @@ namespace ClinicManagement.Configurations
                 .HasForeignKey(d => d.PatientId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_HoaDon_BenhNhan");
+
+            builder.HasOne(d => d.StaffPrescriber)
+               .WithMany(p => p.InvoicesPrescribed)
+               .HasForeignKey(d => d.StaffPrescriberId)
+               .OnDelete(DeleteBehavior.SetNull)
+               .HasConstraintName("FK_HoaDon_NhanVienKeDon");
+
+
+            builder.HasOne(d => d.StaffCashier)
+               .WithMany(p => p.InvoicesConfirmed)
+               .HasForeignKey(d => d.StaffCashierId)
+               .OnDelete(DeleteBehavior.SetNull)
+               .HasConstraintName("FK_HoaDon_NhanVienXacNhan");
 
             builder.HasOne(d => d.MedicalRecord)
                 .WithMany(p => p.Invoices)

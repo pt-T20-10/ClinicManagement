@@ -15,11 +15,20 @@
              Background="{DynamicResource MaterialDesignPaper}"
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             Name="ExamineUc"
-            >
+             Name="ExamineUc">
+
+
     <UserControl.Resources>
         <conver:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </UserControl.Resources>
+
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" 
+                                  CommandParameter="{Binding ElementName=ExamineUc}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
     <UserControl.ContextMenu>
 
    

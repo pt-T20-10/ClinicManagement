@@ -9,6 +9,7 @@ using System.Windows.Input;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 using ClinicManagement.Services;
+using System.Windows.Controls;
 namespace ClinicManagement.ViewModels
 {
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
@@ -914,6 +915,59 @@ namespace ClinicManagement.ViewModels
         }
         #endregion
 
+        #region Authentication Properties
+        // Add properties for the current account and role-based permissions
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+                // Update permissions when account changes
+                UpdatePermissions();
+            }
+        }
+
+        // Property to check if user can edit stock
+        private bool _canEdit;
+        public bool CanEdit
+        {
+            get => _canEdit;
+            set
+            {
+                _canEdit = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Property to check if user can add new medicines
+        private bool _canAddNewMedicine;
+        public bool CanAddNewMedicine
+        {
+            get => _canAddNewMedicine;
+            set
+            {
+                _canAddNewMedicine = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Property to check if user can manage categories and units
+        private bool _canManageSettings;
+        public bool CanManageSettings
+        {
+            get => _canManageSettings;
+            set
+            {
+                _canManageSettings = value;
+                OnPropertyChanged();
+            }
+        }
+
+        #endregion
+
         #region Commands
         // Unit Commands
         public ICommand AddUnitCommand { get; set; }
@@ -956,8 +1010,9 @@ namespace ClinicManagement.ViewModels
         //StockIn Commands
         public ICommand AddNewMedicineCommand { get; set; }
         public ICommand RestartCommand { get; set; }
-    
         public ICommand ShowMedicineDetailsCommand { get; set; }
+
+        public ICommand LoadedUCCommand { get; set; }
 
         #endregion
         #endregion
@@ -989,38 +1044,57 @@ namespace ClinicManagement.ViewModels
         #region InitializeCommands
         private void InitializeCommands()
         {
+            LoadedUCCommand = new RelayCommand<UserControl>(
+                (userControl) => {
+                    if (userControl != null)
+                    {
+                        // Get the MainViewModel from Application resources
+                        var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+                        if (mainVM != null && mainVM.CurrentAccount != null)
+                        {
+                            // Update current account
+                            CurrentAccount = mainVM.CurrentAccount;
+                        }
+                    }
+                },
+                (userControl) => true
+            );
+
             // Unit Commands
             AddUnitCommand = new RelayCommand<object>(
                 (p) => AddUnit(),
-                (p) => !string.IsNullOrEmpty(UnitName)
+                (p) => !string.IsNullOrEmpty(UnitName) && CanManageSettings
             );
 
             EditUnitCommand = new RelayCommand<object>(
                 (p) => EditUnit(),
-                (p) => SelectedUnit != null && !string.IsNullOrEmpty(UnitName)
+                (p) => SelectedUnit != null && !string.IsNullOrEmpty(UnitName) && CanManageSettings
             );
 
             DeleteUnitCommand = new RelayCommand<object>(
                 (p) => DeleteUnit(),
-                (p) => SelectedUnit != null
+                (p) => SelectedUnit != null && CanManageSettings
             );
+
             RefreshUnitCommand = new RelayCommand<object>(
               (p) => ExecuteUnitRefresh(),
               (p) => true
-          );
+            );
 
             // Category Commands
             AddCategoryCommand = new RelayCommand<object>(
                 (p) => AddCategory(),
-                (p) => !string.IsNullOrEmpty(CategoryName)
+                (p) => !string.IsNullOrEmpty(CategoryName) && CanManageSettings
             );
+
             EditCategoryCommand = new RelayCommand<object>(
                 (p) => EditCategory(),
-                (p) => SelectedCategory != null && !string.IsNullOrEmpty(CategoryName)
+                (p) => SelectedCategory != null && !string.IsNullOrEmpty(CategoryName) && CanManageSettings
             );
+
             DeleteCategoryCommand = new RelayCommand<object>(
                 (p) => DeleteCategory(),
-                (p) => SelectedCategory != null
+                (p) => SelectedCategory != null && CanManageSettings
             );
 
             RefreshCatergoryCommand = new RelayCommand<object>(
@@ -1030,122 +1104,127 @@ namespace ClinicManagement.ViewModels
 
             // Supplier Commands
             AddSupplierCommand = new RelayCommand<object>(
-            (p) => AddSupplier(),
-            (p) => !string.IsNullOrEmpty(SupplierName)
-        );
+                (p) => AddSupplier(),
+                (p) => !string.IsNullOrEmpty(SupplierName) && CanManageSettings
+            );
 
             EditSupplierCommand = new RelayCommand<object>(
                 (p) => EditSupplier(),
-                (p) => SelectedSupplier != null && !string.IsNullOrEmpty(SupplierName)
+                (p) => SelectedSupplier != null && !string.IsNullOrEmpty(SupplierName) && CanManageSettings
             );
 
             DeleteSupplierCommand = new RelayCommand<object>(
                 (p) => DeleteSupplier(),
-                (p) => SelectedSupplier != null
+                (p) => SelectedSupplier != null && CanManageSettings
             );
+
             SetActiveStatusCommand = new RelayCommand<object>(
-           (p) =>
-           {
-               IsActive = true;
-               IsNotActive = false;
-           } 
-           ,
-           (p) => true
+                (p) => {
+                    IsActive = true;
+                    IsNotActive = false;
+                },
+                (p) => CanManageSettings
             );
+
             SetNoActiveStatusCommand = new RelayCommand<object>(
-          (p) =>
-             {
-                 IsActive = false;
-                 IsNotActive = true;
-             }
-             ,
-             (p) => true
-             );
+                (p) => {
+                    IsActive = false;
+                    IsNotActive = true;
+                },
+                (p) => CanManageSettings
+            );
+
             RefreshSulpierCommand = new RelayCommand<object>(
-           (p) => ExecuteSupplierRefresh(),
-           (p) => true
-       );
+                (p) => ExecuteSupplierRefresh(),
+                (p) => true
+            );
+
             // Initialize supplier filter commands
             SearchSupplierCommand = new RelayCommand<object>(
-        p => FilterSuppliers(),
-        p => true
-    );
+                p => FilterSuppliers(),
+                p => true
+            );
 
             RefreshSulpierCommand = new RelayCommand<object>(
                 p => ResetSupplierFilters(),
                 p => true
             );
-            ShowAllSuppliers = true;
-            //StockMedicine Commands
-            SearchStockMedicineCommand = new RelayCommand<object>
- (
-     (p) => {
-         // Thực hiện tìm kiếm theo chế độ xem hiện tại
-         if (IsMonthlyView)
-             FilterMonthlyStock();
-         else
-             FilterCurrentStock();
-     },
-     (p) => true
- );
-            ResetStockFiltersCommand = new RelayCommand<object>(
-     (p) => {
-         // Đặt lại các filter
-         SearchStockMedicine = "";
-         SelectedStockCategoryName = null;
-         SelectedStockSupplier = null;
-         SelectedStockUnit = null;
 
-         // Làm mới dữ liệu theo chế độ xem hiện tại
-         if (IsMonthlyView)
-             FilterMonthlyStock();
-         else
-             FilterCurrentStock();
-     },
-     (p) => true
- );
+            ShowAllSuppliers = true;
+
+            //StockMedicine Commands
+            SearchStockMedicineCommand = new RelayCommand<object>(
+                (p) => {
+                    // Thực hiện tìm kiếm theo chế độ xem hiện tại
+                    if (IsMonthlyView)
+                        FilterMonthlyStock();
+                    else
+                        FilterCurrentStock();
+                },
+                (p) => true
+            );
+
+            ResetStockFiltersCommand = new RelayCommand<object>(
+                (p) => {
+                    // Đặt lại các filter
+                    SearchStockMedicine = "";
+                    SelectedStockCategoryName = null;
+                    SelectedStockSupplier = null;
+                    SelectedStockUnit = null;
+
+                    // Làm mới dữ liệu theo chế độ xem hiện tại
+                    if (IsMonthlyView)
+                        FilterMonthlyStock();
+                    else
+                        FilterCurrentStock();
+                },
+                (p) => true
+            );
+
             // Add command to manually generate monthly stock data
             GenerateMonthlyStockCommand = new RelayCommand<object>(
                 p => GenerateMonthlyStock(SelectedYear, SelectedMonth),
-                p => true
+                p => CanEdit
             );
 
             // In the constructor, initialize the command:
             ExportStockExcelCommand = new RelayCommand<object>(
-      p => ExportToExcel(),
-      p => IsMonthlyView
-          ? MonthlyStockList?.Count > 0
-          : ListStockMedicine?.Count > 0
-  );
+                p => ExportToExcel(),
+                p => IsMonthlyView
+                    ? MonthlyStockList?.Count > 0
+                    : ListStockMedicine?.Count > 0
+            );
+
             // Add these lines to the InitializeCommands method
             AddNewMedicineCommand = new RelayCommand<object>(
                 (p) => ExecuteAddNewMedicine(),
-                (p) => CanExecuteAddNewMedicine()
+                (p) => CanExecuteAddNewMedicine() && CanAddNewMedicine
             );
 
             RestartCommand = new RelayCommand<object>(
                 (p) => ExecuteRestart(),
                 (p) => true
-            ); 
-          
+            );
+
             ShowMedicineDetailsCommand = new RelayCommand<Medicine>(
-              (medicine) => {
-                  if (medicine != null)
-                  {
-                      var detailsWindow = new MedicineDetailsWindow(medicine);
-                      detailsWindow.ShowDialog();
-                      LoadData(); // Reload data after closing the details window   
-                  }
-              },
-              (medicine) => medicine != null
-              );
+                (medicine) => {
+                    if (medicine != null)
+                    {
+                        var detailsWindow = new MedicineDetailsWindow(medicine);
+                        detailsWindow.ShowDialog();
+                        LoadData(); // Reload data after closing the details window   
+                    }
+                },
+                (medicine) => medicine != null
+            );
 
             DeleteMedicine = new RelayCommand<Medicine>(
                 (medicine) => ExecuteDeleteMedicine(medicine),
-                (medicine) => CanDeleteMedicine(medicine)
+                (medicine) => CanDeleteMedicine(medicine) && CanEdit
             );
-
         }
+
+        
     
 
        
@@ -3021,7 +3100,52 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi"    );
             }
         }
+        // Method dùng để phần quyền dựa trên Account 
+        private void UpdatePermissions()
+        {
+            if (CurrentAccount == null)
+            {
+                CanEdit = false;
+                CanAddNewMedicine = false;
+                CanManageSettings = false;
+                return;
+            }
 
+            string role = CurrentAccount.Role?.Trim() ?? "";
+
+            // Admin và Quản lí có thể có tất cả quyền
+            if (role == UserRoles.Admin || role == UserRoles.Manager)
+            {
+                CanEdit = true;
+                CanAddNewMedicine = true;
+                CanManageSettings = true;
+            }
+            // Dược sĩ có thể chỉnh sửa và thêm thuốc
+            else if (role == UserRoles.Pharmacist)
+            {
+                CanEdit = true;
+                CanAddNewMedicine = true;
+                CanManageSettings = false;
+            }
+            // Thu ngân chỉ có thể xem
+            else if (role == UserRoles.Cashier)
+            {
+                CanEdit = false;
+                CanAddNewMedicine = false;
+                CanManageSettings = false;
+            }
+            // Doctor can only view
+            else if (role == UserRoles.Doctor)
+            {
+                CanEdit = false;
+                CanAddNewMedicine = false;
+                CanManageSettings = false;
+            }
+           
+
+            // Refresh command can-execute state
+            CommandManager.InvalidateRequerySuggested();
+        }
 
         #endregion
 

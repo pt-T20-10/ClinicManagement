@@ -7,8 +7,14 @@
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
-           
+                xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
           >
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" 
+                                 CommandParameter="{Binding ElementName=StatisticUc}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <materialDesign:Card>
 
         <Grid>

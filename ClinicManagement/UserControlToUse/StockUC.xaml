@@ -26,7 +26,12 @@
         <conver:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <conver:MonthlyStockValueConverter x:Key="MonthlyStockValueConverter"/>
     </UserControl.Resources>
-
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" 
+                                  CommandParameter="{Binding ElementName=StockUc}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
  
 
         <TabControl

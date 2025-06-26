@@ -15,6 +15,13 @@
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              Name="AppointmentUc">
+    <!-- Add Interaction Trigger for Loaded event -->
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" 
+                                  CommandParameter="{Binding ElementName=AppointmentUc}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <materialDesign:Card>
         <TabControl
              materialDesign:ColorZoneAssist.Mode="PrimaryLight"

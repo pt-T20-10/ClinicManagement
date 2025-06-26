@@ -374,6 +374,8 @@ namespace ClinicManagement.ViewModels
                 // Tạo query để lấy danh sách hóa đơn từ cơ sở dữ liệu
                 var query = DataProvider.Instance.Context.Invoices
                     .Include(i => i.Patient)
+                    .Include(i => i.StaffPrescriber)
+                    .Include(i => i.StaffCashier)
                     .AsQueryable(); // AsQueryable() cho phép chúng ta áp dụng các bộ lọc và phân trang trên danh sách hóa đơn
 
                 // Áp dụng bộ lọc cho query
