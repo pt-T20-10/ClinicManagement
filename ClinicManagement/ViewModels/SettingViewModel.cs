@@ -324,37 +324,29 @@ namespace ClinicManagement.ViewModels
             return _mainViewModel != null && _mainViewModel.CurrentAccount != null;
         }
 
-        // Thực hiện đăng xuất
-        // Thực hiện đăng xuất
+
         private void ExecuteSignOut()
         {
             try
             {
-                if (_mainViewModel == null || _mainViewModel.CurrentAccount == null)
+                // Get the latest MainViewModel reference
+                var mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
+
+                if (mainViewModel == null || mainViewModel.CurrentAccount == null)
                 {
-                    MessageBoxService.ShowWarning("Không thể đăng xuất vào lúc này.",
-                        "Thông báo"     );
+                    MessageBoxService.ShowWarning("Không thể đăng xuất vào lúc này.", "Thông báo");
                     return;
                 }
 
                 // Hiển thị hộp thoại xác nhận
-                 bool  result = MessageBoxService.ShowQuestion(
+                bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn đăng xuất?",
-                    "Xác nhận đăng xuất"
-                     
-                      );
+                    "Xác nhận đăng xuất");
 
                 if (result)
                 {
-                    // Cập nhật trạng thái đăng nhập trong CSDL
-                    var accountToUpdate = DataProvider.Instance.Context.Accounts
-                        .FirstOrDefault(a => a.Username == _mainViewModel.CurrentAccount.Username);
-
-                    if (accountToUpdate != null)
-                    {
-                        accountToUpdate.IsLogined = false;
-                        DataProvider.Instance.Context.SaveChanges();
-                    }
+                    // Call MainViewModel's SignOut method instead of duplicating logic
+                    mainViewModel.SignOut();
 
                     // Lấy MainWindow
                     var mainWindow = Application.Current.MainWindow;
@@ -363,38 +355,37 @@ namespace ClinicManagement.ViewModels
                         // Ẩn MainWindow
                         mainWindow.Hide();
 
-                        // Reset CurrentAccount trong MainViewModel
-                        var oldAccount = _mainViewModel.CurrentAccount; // Lưu lại để kiểm tra sau này
-                        _mainViewModel.CurrentAccount = null;
-
                         // Hiển thị màn hình đăng nhập
                         LoginWindow loginWindow = new LoginWindow();
                         loginWindow.ShowDialog();
+
+                        // Get the latest MainViewModel reference again after login
+                        mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
 
                         // Kiểm tra kết quả đăng nhập
                         var loginVM = loginWindow.DataContext as LoginViewModel;
 
                         // Nếu đăng nhập thành công (IsLogin = true và CurrentAccount khác null), hiển thị lại MainWindow
-                        if (loginVM != null && loginVM.IsLogin && _mainViewModel.CurrentAccount != null)
+                        if (loginVM != null && loginVM.IsLogin && mainViewModel != null && mainViewModel.CurrentAccount != null)
                         {
                             mainWindow.Show();
+                            // No need for welcome message here - it's shown in LoginViewModel.Login
                         }
                         else
                         {
                             // Nếu đã ấn Cancel hoặc đóng cửa sổ đăng nhập mà không đăng nhập lại thành công
-                            // QUAN TRỌNG: Đảm bảo rằng chúng ta đóng MainWindow và thoát ứng dụng
-                            mainWindow.Close(); // Đóng cửa sổ chính
-                            Application.Current.Shutdown(); // Đảm bảo ứng dụng thoát hẳn
+                            mainWindow.Close();
+                            Application.Current.Shutdown();
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi đăng xuất: {ex.Message}",
-                    "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi đăng xuất: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void InitializeFontFamilies()
         {

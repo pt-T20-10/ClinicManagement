@@ -67,7 +67,6 @@ namespace ClinicManagement.ViewModels
             var account = DataProvider.Instance.Context.Accounts
                 .FirstOrDefault(u => u.Username == UserName && u.Password == password && u.IsDeleted != true);
 
-
             if (account != null)
             {
                 IsLogin = true;
@@ -76,7 +75,14 @@ namespace ClinicManagement.ViewModels
                 var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
                 if (mainVM != null)
                 {
+                    // Make sure to set the account to null first to force the property change event
+                    mainVM.CurrentAccount = null;
+
+                    // Now set the actual account
                     mainVM.CurrentAccount = account;
+
+                    // Show welcome message here where we know CurrentAccount is properly set
+                    MessageBoxService.ShowInfo($"Chào mừng {account.Username}!", "Thông báo đăng nhập thành công");
 
                     // Get the MainTabControl and ensure a valid tab is selected
                     var mainWindow = Application.Current.MainWindow;
@@ -94,8 +100,9 @@ namespace ClinicManagement.ViewModels
             }
             else
             {
-                MessageBoxService.ShowWarning("Tên đăng nhập hoặc mật khẩu không đúng!", "Thông báo"   );
+                MessageBoxService.ShowWarning("Tên đăng nhập hoặc mật khẩu không đúng!", "Thông báo");
             }
         }
+
     }
 }

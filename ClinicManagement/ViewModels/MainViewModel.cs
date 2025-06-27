@@ -125,37 +125,41 @@ namespace ClinicManagement.ViewModels
         // mọi thứ xử lý sẽ nằm trong này
         public MainViewModel()
         {
+            // In MainViewModel.cs - LoadedWindowCommand handler
             LoadedWindowCommand = new RelayCommand<Window>(
-                 (p) =>
-                 {
-                     Isloaded = true;
-                     if (p == null)
-                         return;
+                (p) =>
+                {
+                    Isloaded = true;
+                    if (p == null)
+                        return;
 
-                     // Đăng ký sự kiện Closing cho window
-                     p.Closing += MainWindow_Closing;
+                    // Register the closing event
+                    p.Closing -= MainWindow_Closing;
+                    p.Closing += MainWindow_Closing;
 
-                     p.Hide();
-                     LoginWindow loginWindow = new LoginWindow();
-                     loginWindow.ShowDialog();
-                     if (loginWindow.DataContext == null)
-                         return;
+                    p.Hide();
+                    LoginWindow loginWindow = new LoginWindow();
+                    loginWindow.ShowDialog();
 
-                     var loginVM = loginWindow.DataContext as LoginViewModel;
-                     if (loginVM.IsLogin)
-                     {
-                         p.Show();
+                    if (loginWindow.DataContext == null)
+                        return;
 
-                     }
-                     else
-                     {
-                         p.Close();
-                     }
-                 },
-                 (p) => true
+                    var loginVM = loginWindow.DataContext as LoginViewModel;
+                    if (loginVM.IsLogin)
+                    {
+                        // This is where the issue is: we show the window and then check CurrentAccount
+                        // Move the welcome message to LoginViewModel.Login where we can ensure CurrentAccount is set
+                        p.Show();
+                    }
+                    else
+                    {
+                        p.Close();
+                    }
+                },
+                (p) => true
             );
 
-            // Xử lý khi cửa sổ đóng
+
             // Xử lý khi cửa sổ đóng
             WindowClosingCommand = new RelayCommand<CancelEventArgs>(
                 (e) =>
@@ -184,7 +188,7 @@ namespace ClinicManagement.ViewModels
                 (e) => true
             );
 
-            // Cập nhật SignOutCommand để gọi phương thức SignOut
+            // In MainViewModel.cs - SignOutCommand
             SignOutCommand = new RelayCommand<Window>(
                 (window) =>
                 {
@@ -202,13 +206,18 @@ namespace ClinicManagement.ViewModels
                     if (loginWindow.DataContext is LoginViewModel loginVM && loginVM.IsLogin)
                     {
                         window.Show();
+                        // Add welcome message here for consistency
+                        if (CurrentAccount != null)
+                        {
+                            MessageBoxService.ShowInfo($"Chào mừng {CurrentAccount.Username}!", "Thông báo đăng nhập thành công");
+                        }
                     }
                     else
                     {
                         window.Close();
                     }
                 },
-                (p) => CurrentAccount != null // Chỉ cho phép đăng xuất khi đã đăng nhập
+                (p) => CurrentAccount != null
             );
 
             AddPatientCommand = new RelayCommand<Window>(
@@ -248,7 +257,7 @@ namespace ClinicManagement.ViewModels
         }
 
         // Phương thức đăng xuất tập trung
-        private void SignOut()
+        public void SignOut()
         {
             try
             {

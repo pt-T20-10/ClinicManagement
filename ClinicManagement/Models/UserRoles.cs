@@ -36,7 +36,7 @@ namespace ClinicManagement.Models
     {Pharmacist, new List<string>{"StockTab", "MedicineSellTab", "InvoiceTab", "SettingsTab"}},
 
             // Cashiers have access to these tabs
-    {Cashier, new List<string>{"PatientTab", "AppointmentTab", "InvoiceTab", "DoctorTab", "Settings"} }
+    {Cashier, new List<string>{"PatientTab", "AppointmentTab", "InvoiceTab", "DoctorTab", "SettingsTab"} }
 };
 
     }
