@@ -1,6 +1,7 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -241,7 +242,7 @@ namespace ClinicManagement.ViewModels
                 _discountAmount = value;
                 OnPropertyChanged();
                 // Update TotalAmount when DiscountAmount changes
-                OnPropertyChanged(nameof(TotalAmount));
+                OnPropertyChanged();
             }
         }
 
@@ -582,7 +583,6 @@ namespace ClinicManagement.ViewModels
             CalculateInvoiceTotals();
         }
 
-
         private void ProcessPayment()
         {
             if (Invoice == null || Invoice.Status == "Đã thanh toán") return;
@@ -828,17 +828,19 @@ namespace ClinicManagement.ViewModels
                 // Add payment information to notes
                 Invoice.Notes = existingNotes + $"Phương thức thanh toán:{paymentMethod};Ngày thanh toán:{paymentDate}";
 
-                // Update database
+                // Update database with payment info first
                 DataProvider.Instance.Context.SaveChanges();
+
+                // Update stock after payment is recorded
+                UpdateStockAfterPayment();
 
                 // Update view model properties
                 IsPaid = true;
                 IsNotPaid = false;
-                PaymentMethod = paymentMethod; 
+                PaymentMethod = paymentMethod;
                 PaymentDate = DateTime.Now;
 
-                MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công"
-                        );
+                MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công");
 
                 // Close payment dialog
                 paymentWindow?.Close();
@@ -846,9 +848,112 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi");
-
             }
         }
+
+        // Add this method to update stock after payment
+        // Add this to InvoiceDetailsViewModel.cs
+        private void UpdateStockAfterPayment()
+        {
+            try
+            {
+                
+                var context = DataProvider.Instance.Context;
+
+                // Get all invoice details with medicines for this invoice
+                var invoiceDetails = context.InvoiceDetails
+                    .Where(id => id.InvoiceId == Invoice.InvoiceId && id.MedicineId.HasValue)
+                    .Include(id => id.Medicine)
+                    .ToList();
+
+                
+
+                // Update stock for each medicine
+                foreach (var detail in invoiceDetails)
+                {
+                   
+
+                    // Detach any loaded entities to avoid EF tracking conflicts
+                    if (detail.Medicine != null)
+                        context.Entry(detail.Medicine).State = EntityState.Detached;
+
+                    // Get fresh medicine data with all relationships
+                    var medicine = context.Medicines
+                        .Include(m => m.StockIns)
+                        .Include(m => m.InvoiceDetails)
+                        .ThenInclude(id => id.Invoice) // Include Invoice to check status
+                        .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
+
+                    if (medicine == null)
+                    {
+                  
+                        continue;
+                    }
+
+                    // Clear cache to ensure fresh calculations
+                    medicine._availableStockInsCache = null;
+
+                    // Calculate correct physical stock quantity
+                    int totalStockIn = medicine.StockIns?.Sum(si => si.Quantity) ?? 0;
+                    int totalSold = medicine.InvoiceDetails
+                        .Where(id => id.Invoice.Status == "Đã thanh toán")
+                        .Sum(id => id.Quantity ?? 0);
+                    int actualQuantity = Math.Max(0, totalStockIn - totalSold);
+
+                    // Calculate usable quantity with proper expiry date filtering
+                    var today = DateOnly.FromDateTime(DateTime.Today);
+                    var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+
+                    var validStockIns = medicine.StockIns
+                        .Where(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
+                        .OrderBy(si => si.ImportDate);
+
+                    int usableStock = 0;
+                    int remainingToSubtract = totalSold;
+
+                    foreach (var stockIn in validStockIns)
+                    {
+                        int remainingInThisLot = stockIn.Quantity - Math.Min(remainingToSubtract, stockIn.Quantity);
+                        usableStock += Math.Max(0, remainingInThisLot);
+                        remainingToSubtract = Math.Max(0, remainingToSubtract - stockIn.Quantity);
+                    }
+
+
+                    // Update or create Stock record
+                    var stock = context.Stocks.FirstOrDefault(s => s.MedicineId == detail.MedicineId);
+                    if (stock != null)
+                    {
+                        stock.Quantity = actualQuantity;
+                        stock.UsableQuantity = usableStock;
+                        stock.LastUpdated = DateTime.Now;
+                 
+                    }
+                    else
+                    {
+                        var newStock = new Stock
+                        {
+                            MedicineId = detail.MedicineId.Value,
+                            Quantity = actualQuantity,
+                            UsableQuantity = usableStock,
+                            LastUpdated = DateTime.Now
+                        };
+                        context.Stocks.Add(newStock);
+                    
+                    }
+                }
+
+                // Save all changes at once
+                context.SaveChanges();
+          
+            }
+            catch (Exception ex)
+            {
+                
+                MessageBoxService.ShowError($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi");
+            }
+        }
+
+
 
         public bool CanEditMedicineSale => Invoice != null &&
                                     Invoice.Status == "Chưa thanh toán" &&

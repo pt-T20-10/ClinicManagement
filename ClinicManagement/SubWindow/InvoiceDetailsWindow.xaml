@@ -112,7 +112,11 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="Nhân viên:" FontWeight="SemiBold" Width="120"/>
+                            <TextBlock Text="{Binding Invoice.StaffCashier.FullName}"/>
                         </StackPanel>
+                    </StackPanel>
 
                         <!-- Column 1 Row 1: Thông tin khách hàng (nếu có)
                              Gồm họ tên, số điện thoại, mã BHYT, loại khách hàng   

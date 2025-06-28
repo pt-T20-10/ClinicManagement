@@ -17,10 +17,16 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("MaNhapKho");
 
             builder.Property(e => e.MedicineId)
-                .HasColumnName("MaThuoc");
+                .HasColumnName("MaThuoc"); 
+            
+            builder.Property(e => e.StaffId)
+                .HasColumnName("NguoiNhap");
+
+            builder.Property(e => e.RemainQuantity)
+                .HasColumnName("ConLai");
 
             builder.Property(e => e.Quantity)
-                .HasColumnName("SoLuong");
+               .HasColumnName("SoLuong");
 
             builder.Property(e => e.UnitPrice)
                 .HasColumnName("DonGia")
@@ -54,7 +60,13 @@ namespace ClinicManagement.Configurations
                 .WithMany(p => p.StockIns)
                 .HasForeignKey(d => d.MedicineId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_NhapKho_Thuoc");
+                .HasConstraintName("FK_NhapKho_Thuoc"); 
+            
+            builder.HasOne(d => d.Staff)
+                .WithMany(p => p.StockIns)
+                .HasForeignKey(d => d.StaffId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_NhapKho_NhanVien");
 
             builder.Property(e => e.SupplierId)
          .HasColumnName("MaNhaCungCap");

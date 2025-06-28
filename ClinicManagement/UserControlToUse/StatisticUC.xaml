@@ -7,6 +7,7 @@
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
+             Name="StatisticUc"
                 xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
           >
     <i:Interaction.Triggers>

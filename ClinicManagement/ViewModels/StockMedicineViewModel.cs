@@ -10,10 +10,13 @@ using ClosedXML.Excel;
 using Microsoft.Win32;
 using ClinicManagement.Services;
 using System.Windows.Controls;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace ClinicManagement.ViewModels
 {
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
     {
+
+        private bool IsLoading;
         public string Error => null;
 
         private HashSet<string> _touchedFields = new HashSet<string>();
@@ -1045,20 +1048,23 @@ namespace ClinicManagement.ViewModels
         private void InitializeCommands()
         {
             LoadedUCCommand = new RelayCommand<UserControl>(
-                (userControl) => {
-                    if (userControl != null)
+            (userControl) => {
+                if (userControl != null)
+                {
+                    // Get the MainViewModel from Application resources
+                    var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+                    if (mainVM != null && mainVM.CurrentAccount != null)
                     {
-                        // Get the MainViewModel from Application resources
-                        var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
-                        if (mainVM != null && mainVM.CurrentAccount != null)
-                        {
-                            // Update current account
-                            CurrentAccount = mainVM.CurrentAccount;
-                        }
+                        // Update current account
+                        CurrentAccount = mainVM.CurrentAccount;
                     }
-                },
-                (userControl) => true
-            );
+
+                    // Run the expiry date check when loading the view
+                    //UpdateUsableQuantitiesBasedOnExpiryDates();
+                }
+            },
+            (userControl) => true
+        );
 
             // Unit Commands
             AddUnitCommand = new RelayCommand<object>(
@@ -1185,7 +1191,7 @@ namespace ClinicManagement.ViewModels
             GenerateMonthlyStockCommand = new RelayCommand<object>(
                 p => GenerateMonthlyStock(SelectedYear, SelectedMonth),
                 p => CanEdit
-            );
+);
 
             // In the constructor, initialize the command:
             ExportStockExcelCommand = new RelayCommand<object>(
@@ -2489,7 +2495,7 @@ namespace ClinicManagement.ViewModels
 
                                         worksheet.Cell(row, column++).Value = item.Quantity;
                                         worksheet.Cell(row, column++).Value = medicine?.TotalStockQuantity ?? 0;
-                                        worksheet.Cell(row, column++).Value = medicine?.CalculatedRemainingQuantity ?? 0;
+                                     
 
                                         decimal totalValue = item.Quantity * (medicine?.CurrentUnitPrice ?? 0);
                                         worksheet.Cell(row, column++).Value = totalValue;
@@ -2586,64 +2592,38 @@ namespace ClinicManagement.ViewModels
         }
 
         // Add this method to the StockMedicineViewModel class
-
         /// <summary>
-        /// Checks if monthly stock generation is needed and performs it if necessary
+        /// Generates monthly stock data for the current month when called automatically
+        /// or for a specific month and year when called manually
         /// </summary>
-        public void CheckAndGenerateMonthlyStock()
-        {
-            try
-            {
-                // Get current date and time
-                var now = DateTime.Now;
-
-                // Get the last day of the current month
-                var lastDayOfMonth = new DateTime(now.Year, now.Month,
-                    DateTime.DaysInMonth(now.Year, now.Month));
-
-                // Only run this process on the last day of the month 
-                // or if there's no monthly stock record for the current month yet
-                string currentMonthYear = $"{now.Year:D4}-{now.Month:D2}";
-
-                // Check if we already have monthly records for this month
-                bool hasCurrentMonthRecords = DataProvider.Instance.Context.MonthlyStocks
-                    .Any(ms => ms.MonthYear == currentMonthYear);
-
-                // If it's the last day of month OR we don't have records for this month yet and it's near month end (e.g., day >= 25)
-                bool isLastDayOfMonth = now.Day == lastDayOfMonth.Day;
-                bool isNearMonthEnd = now.Day >= 25;
-
-                if (isLastDayOfMonth || (isNearMonthEnd && !hasCurrentMonthRecords))
-                {
-                    GenerateMonthlyStock(now.Year, now.Month);
-                    MessageBoxService.ShowSuccess(
-                        $"Đã tự động cập nhật dữ liệu tồn kho tháng {now.Month}/{now.Year}.",
-                        "Cập nhật tồn kho tháng"
-                         
-                          );
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError(
-                    $"Lỗi khi kiểm tra và tạo dữ liệu tồn kho tháng: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
-            }
-        }
-
-        /// <summary>
-        /// Generates monthly stock data for a specific month and year
-        /// </summary>
-        /// <param name="year">Year to generate data for</param>
-        /// <param name="month">Month to generate data for</param>
-        private void GenerateMonthlyStock(int year, int month)
+        /// <param name="year">Optional year parameter (defaults to current year if omitted)</param>
+        /// <param name="month">Optional month parameter (defaults to current month if omitted)</param>
+        /// <param name="isAutomatic">Whether this is an automatic generation at month end</param>
+        private void GenerateMonthlyStock(int? year = null, int? month = null, bool isAutomatic = false)
         {
             try
             {
                 var dbContext = DataProvider.Instance.Context;
-                string monthYearFormat = $"{year:D4}-{month:D2}";
+
+                // For automatic generation at month end, use the ending month
+                // For manual generation, use the provided month/year or selected values
+                DateTime now = DateTime.Now;
+                int targetYear, targetMonth;
+
+                if (isAutomatic)
+                {
+                    // When running automatically at month end, generate data for the ending month
+                    targetYear = now.Year;
+                    targetMonth = now.Month;
+                }
+                else
+                {
+                    // When manually triggered, use the provided values or UI selections
+                    targetYear = year ?? SelectedYear;
+                    targetMonth = month ?? SelectedMonth;
+                }
+
+                string monthYearFormat = $"{targetYear:D4}-{targetMonth:D2}";
 
                 // Check if monthly stock already exists for this month
                 if (dbContext.MonthlyStocks.Any(ms => ms.MonthYear == monthYearFormat))
@@ -2665,22 +2645,23 @@ namespace ClinicManagement.ViewModels
                 var medicines = dbContext.Medicines
                     .Where(m => m.IsDeleted != true)
                     .Include(m => m.StockIns)
-                    .Include(m => m.InvoiceDetails)
                     .ToList();
-
-                var today = DateOnly.FromDateTime(DateTime.Now);
-                var minimumExpiryDate = today.AddDays(8); // Define medicines that can still be used
 
                 foreach (var medicine in medicines)
                 {
                     // Reset cache to ensure fresh calculations
                     medicine._availableStockInsCache = null;
 
-                    // Calculate total physical stock (all stock regardless of expiry date)
-                    int totalQuantity = medicine.TotalPhysicalStockQuantity;
+                    // Use direct calculations with RemainQuantity from StockIn
+                    int totalQuantity = medicine.StockIns.Sum(si => si.RemainQuantity);
 
                     // Calculate usable stock (only stock with valid expiry date)
-                    int usableQuantity = medicine.TotalStockQuantity;
+                    var today = DateOnly.FromDateTime(DateTime.Today);
+                    var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+
+                    int usableQuantity = medicine.StockIns
+                        .Where(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
+                        .Sum(si => si.RemainQuantity);
 
                     // Only record medicines that have stock
                     if (totalQuantity > 0)
@@ -2690,23 +2671,101 @@ namespace ClinicManagement.ViewModels
                             MedicineId = medicine.MedicineId,
                             MonthYear = monthYearFormat,
                             Quantity = totalQuantity,
-                            CanUsed = usableQuantity,
+                            CanUsed = usableQuantity, // CanUsed field stores the usable quantity
                             RecordedDate = DateTime.Now
                         };
 
                         dbContext.MonthlyStocks.Add(monthlyStock);
+
+                        // Also update the current Stock record
+                        var stock = dbContext.Stocks.FirstOrDefault(s => s.MedicineId == medicine.MedicineId);
+                        if (stock != null)
+                        {
+                            stock.Quantity = totalQuantity;
+                            stock.UsableQuantity = usableQuantity;
+                            stock.LastUpdated = DateTime.Now;
+                        }
+                        else
+                        {
+                            // Create stock record if it doesn't exist
+                            dbContext.Stocks.Add(new Stock
+                            {
+                                MedicineId = medicine.MedicineId,
+                                Quantity = totalQuantity,
+                                UsableQuantity = usableQuantity,
+                                LastUpdated = DateTime.Now
+                            });
+                        }
                     }
                 }
 
                 dbContext.SaveChanges();
+
+                // Show success message only for manual operations, not automatic ones
+                if (!isAutomatic)
+                {
+                    MessageBoxService.ShowSuccess(
+                        $"Đã tạo dữ liệu tồn kho tháng {targetMonth}/{targetYear} thành công!",
+                        "Thành công"
+                    );
+                }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
-                    $"Lỗi khi tạo dữ liệu tồn kho tháng {month}/{year}: {ex.Message}",
+                    $"Lỗi khi tạo dữ liệu tồn kho tháng: {ex.Message}",
                     "Lỗi"
-                     
-                     );
+                );
+            }
+        }
+        /// <summary>
+        /// Checks if monthly stock generation is needed and performs it if necessary
+        /// </summary>
+        public void CheckAndGenerateMonthlyStock()
+        {
+            try
+            {
+                // Get current date and time
+                var now = DateTime.Now;
+
+                // Get the last day of the current month
+                var lastDayOfMonth = new DateTime(now.Year, now.Month,
+                    DateTime.DaysInMonth(now.Year, now.Month));
+
+                // Format for current month
+                string currentMonthYear = $"{now.Year:D4}-{now.Month:D2}";
+
+                // Check if we already have monthly records for this month
+                bool hasCurrentMonthRecords = DataProvider.Instance.Context.MonthlyStocks
+                    .Any(ms => ms.MonthYear == currentMonthYear);
+
+                // Only generate in these cases:
+                // 1. It's the last day of month OR
+                // 2. It's near month end (day >= 25) AND we don't have records yet
+                bool isLastDayOfMonth = now.Day == lastDayOfMonth.Day;
+                bool isNearMonthEnd = now.Day >= 25;
+
+                if (isLastDayOfMonth || (isNearMonthEnd && !hasCurrentMonthRecords))
+                {
+                    // Pass true to indicate this is automatic generation
+                    GenerateMonthlyStock(now.Year, now.Month, true);
+
+                    // Only show notification if we're on the last day
+                    if (isLastDayOfMonth)
+                    {
+                        MessageBoxService.ShowSuccess(
+                            $"Đã tự động cập nhật dữ liệu tồn kho tháng {now.Month}/{now.Year}.",
+                            "Cập nhật tồn kho tháng"
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError(
+                    $"Lỗi khi kiểm tra và tạo dữ liệu tồn kho tháng: {ex.Message}",
+                    "Lỗi"
+                );
             }
         }
 
@@ -2739,168 +2798,126 @@ namespace ClinicManagement.ViewModels
                             MessageBoxService.ShowWarning(
                                 "Nhà cung cấp này không hoạt động. Vui lòng chọn nhà cung cấp khác.",
                                 "Nhà Cung Cấp Không Hoạt Động"
-                                 
-                                  );
+                            );
                             return;
                         }
 
                         // Convert expiry date
-                        DateOnly expiryDateOnly = DateOnly.FromDateTime(StockinExpiryDate.Value);
+                        DateOnly? expiryDateOnly = null;
+                        if (StockinExpiryDate.HasValue)
+                        {
+                            expiryDateOnly = DateOnly.FromDateTime(StockinExpiryDate.Value);
+                        }
+
                         DateTime importDateTime = ImportDate ?? DateTime.Now;
 
-                        // Find medicine with exact matches (name, category, unit - KHÔNG bao gồm supplier)
-                        var existingExactMedicine = DataProvider.Instance.Context.Medicines
+                        // Find existing medicine or create new one
+                        var dbContext = DataProvider.Instance.Context;
+                        Medicine medicine;
+                        string resultMessage;
+
+                        // Find medicine with exact matches (name, category, unit)
+                        var existingExactMedicine = dbContext.Medicines
                             .Include(m => m.StockIns)
                             .FirstOrDefault(m => m.Name.ToLower() == StockinMedicineName.ToLower().Trim() &&
                                             m.UnitId == StockinSelectedUnit.UnitId &&
                                             m.CategoryId == StockinSelectedCategory.CategoryId &&
                                             (bool)!m.IsDeleted);
 
-                        // Find any medicine with the same name (regardless of other properties)
-                        var existingMedicineWithName = DataProvider.Instance.Context.Medicines
+                        // Find any medicine with the same name (for warning)
+                        var existingMedicineWithName = dbContext.Medicines
                             .FirstOrDefault(m => m.Name.ToLower() == StockinMedicineName.ToLower().Trim() &&
                                             (bool)!m.IsDeleted);
 
-                        Medicine medicine;
-                        string resultMessage = string.Empty;
-
                         if (existingExactMedicine != null)
                         {
-                            // Case 1: Found exact match (name, category, unit match)
-                            // Check if import date matches the existing medicine's latest import date
-                            DateTime? latestImportDate = existingExactMedicine.LatestImportDate;
-                            bool sameImportDate = latestImportDate.HasValue &&
-                                importDateTime.Date == latestImportDate.Value.Date;
-
-                            if (sameImportDate)
-                            {
-                                // If import dates match, ask if user wants to update with current date
-                                 bool  dateResult = MessageBoxService.ShowQuestion(
-                                    $"Ngày nhập hàng hiện tại ({importDateTime:dd/MM/yyyy}) trùng với ngày nhập gần nhất của thuốc này. " +
-                                    $"Bạn có muốn đổi sang ngày hiện tại không?",
-                                    "Xác nhận ngày nhập hàng"
-                                     
-                                      );
-
-                                if (!dateResult)
-                                {
-                                    // Update to current date if user confirms
-                                    importDateTime = DateTime.Now;
-                                }
-                            }
-
-                            // Check if the existing medicine's expiry date needs updating
-                            if (!existingExactMedicine.ExpiryDate.HasValue ||
-                                expiryDateOnly > existingExactMedicine.ExpiryDate.Value)
-                            {
-                                // Update the medicine's expiry date if the new one is further in the future
-                                existingExactMedicine.ExpiryDate = expiryDateOnly;
-                            }
-
-                            // Update BarCode and QRCode if provided
-                            if (!string.IsNullOrWhiteSpace(StockinBarCode))
-                            {
-                                existingExactMedicine.BarCode = StockinBarCode.Trim();
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(StockinQrCode))
-                            {
-                                existingExactMedicine.QrCode = StockinQrCode.Trim();
-                            }
-
-                             bool  result = MessageBoxService.ShowQuestion(
-                                $"Bạn có muốn nhập thêm '{StockinQuantity}' '{StockinSelectedCategory.CategoryName}' cho thuốc '{existingExactMedicine.Name}' hiện có không?",
-                                "Xác nhận"
-                                 
-                                  );
-
-                            if ( !result)
-                                return;
-
+                            // Case 1: Found exact match - add StockIn to existing medicine
                             medicine = existingExactMedicine;
-
-                            // Force refresh of the medicine's cache
-                            var refreshedDetails = medicine.GetDetailedStock();
-
-                            resultMessage = $"Đã nhập thêm '{StockinQuantity}' '{StockinSelectedCategory.CategoryName}' cho thuốc '{medicine.Name}' hiện có.";
+                            resultMessage = $"Đã nhập thêm '{StockinQuantity}' '{medicine.Unit?.UnitName ?? "đơn vị"}' cho thuốc '{medicine.Name}' hiện có.";
                         }
                         else if (existingMedicineWithName != null)
                         {
                             // Case 2: Found medicine with same name but different properties
                             string differences = GetDifferenceMessage(existingMedicineWithName);
 
-                             bool  result = MessageBoxService.ShowQuestion(
-                                $"Đã tồn tại thuốc có tên '{StockinMedicineName.Trim()}' nhưng {differences}. " +
-                                $"Bạn có muốn tạo thuốc mới không?",
-                                "Xác nhận"
-                                 
-                                  );
+                            bool result = MessageBoxService.ShowQuestion(
+                               $"Đã tồn tại thuốc có tên '{StockinMedicineName.Trim()}' nhưng {differences}. " +
+                               $"Bạn có muốn tạo thuốc mới không?",
+                               "Xác nhận"
+                           );
 
-                            if ( !result)
+                            if (!result)
                                 return;
 
-                            // Create a new medicine (không bao gồm SupplierId)
+                            // Create a new medicine
                             medicine = new Medicine
                             {
                                 Name = StockinMedicineName.Trim(),
                                 CategoryId = StockinSelectedCategory.CategoryId,
                                 UnitId = StockinSelectedUnit.UnitId,
-                                ExpiryDate = expiryDateOnly,
-                                BarCode = StockinBarCode?.Trim(),  // Add BarCode
-                                QrCode = StockinQrCode?.Trim(),    // Add QRCode
+                                BarCode = StockinBarCode?.Trim(),
+                                QrCode = StockinQrCode?.Trim(),
                                 IsDeleted = false
                             };
-                            DataProvider.Instance.Context.Medicines.Add(medicine);
-                            DataProvider.Instance.Context.SaveChanges();
+
+                            dbContext.Medicines.Add(medicine);
+                            dbContext.SaveChanges();
 
                             resultMessage = $"Đã thêm thuốc '{medicine.Name}' mới với thông tin khác.";
                         }
                         else
                         {
-                            // Case 3: This is a completely new medicine
+                            // Case 3: Completely new medicine
                             medicine = new Medicine
                             {
                                 Name = StockinMedicineName.Trim(),
                                 CategoryId = StockinSelectedCategory.CategoryId,
                                 UnitId = StockinSelectedUnit.UnitId,
-                                ExpiryDate = expiryDateOnly,
-                                BarCode = StockinBarCode?.Trim(),  // Add BarCode
-                                QrCode = StockinQrCode?.Trim(),    // Add QRCode
+                                BarCode = StockinBarCode?.Trim(),
+                                QrCode = StockinQrCode?.Trim(),
                                 IsDeleted = false
                             };
-                            DataProvider.Instance.Context.Medicines.Add(medicine);
-                            DataProvider.Instance.Context.SaveChanges();
+
+                            dbContext.Medicines.Add(medicine);
+                            dbContext.SaveChanges();
 
                             resultMessage = $"Đã thêm thuốc mới '{medicine.Name}'.";
                         }
 
-                        // Add new stock-in entry with potentially updated importDateTime
-                        // và bây giờ cung cấp SupplierId
+                        // Add new StockIn entry
                         var stockIn = new StockIn
                         {
                             MedicineId = medicine.MedicineId,
+                            StaffId = CurrentAccount.StaffId,
                             Quantity = StockinQuantity,
+                            RemainQuantity = StockinQuantity, // Initialize RemainQuantity equal to Quantity
                             ImportDate = importDateTime,
                             UnitPrice = StockinUnitPrice,
                             SellPrice = StockinSellPrice,
                             ProfitMargin = StockProfitMargin,
                             TotalCost = StockinUnitPrice * StockinQuantity,
-                            ExpiryDate = expiryDateOnly,  // Make sure this matches the medicine's expiry date
-                            SupplierId = StockinSelectedSupplier.SupplierId // Thêm SupplierId vào StockIn
+                            ExpiryDate = expiryDateOnly,
+                            SupplierId = StockinSelectedSupplier.SupplierId
                         };
 
-                        DataProvider.Instance.Context.StockIns.Add(stockIn);
-                        DataProvider.Instance.Context.SaveChanges();
+                        dbContext.StockIns.Add(stockIn);
 
-                        // Update or create stock entry
-                        var existingStock = DataProvider.Instance.Context.Stocks
+                        // Update or create stock record
+                        var existingStock = dbContext.Stocks
                             .FirstOrDefault(s => s.MedicineId == medicine.MedicineId);
+
+                        // Check if this new stock is usable based on expiry date
+                        var today = DateOnly.FromDateTime(DateTime.Today);
+                        var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+                        bool isUsable = !expiryDateOnly.HasValue || expiryDateOnly.Value >= minimumExpiryDate;
 
                         if (existingStock != null)
                         {
                             // Update existing stock
                             existingStock.Quantity += StockinQuantity;
-                            existingStock.LastUpdated = importDateTime;
+                            if (isUsable)
+                                existingStock.UsableQuantity += StockinQuantity;
+                            existingStock.LastUpdated = ImportDate ?? DateTime.Now;
                         }
                         else
                         {
@@ -2909,19 +2926,19 @@ namespace ClinicManagement.ViewModels
                             {
                                 MedicineId = medicine.MedicineId,
                                 Quantity = StockinQuantity,
-                                LastUpdated = importDateTime
+                                UsableQuantity = isUsable ? StockinQuantity : 0,
+                                LastUpdated = ImportDate ?? DateTime.Now
                             };
-                            DataProvider.Instance.Context.Stocks.Add(newStock);
+                            dbContext.Stocks.Add(newStock);
                         }
 
-                        DataProvider.Instance.Context.SaveChanges();
+                        dbContext.SaveChanges();
                         transaction.Commit();
 
                         MessageBoxService.ShowSuccess(
                             resultMessage,
                             "Thêm thuốc thành công"
-                             
-                              );
+                        );
 
                         // Refresh data
                         LoadData();
@@ -2939,10 +2956,10 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi: {ex.Message}",
                     "Lỗi"
-                     
-                     );
+                );
             }
         }
+
 
 
         // Helper method to generate a message describing differences
@@ -2995,48 +3012,97 @@ namespace ClinicManagement.ViewModels
         {
             if (medicine == null) return;
 
-            // Clear any cached data to ensure we get the fresh latest import date
-            var freshDetails = medicine.GetDetailedStock(); // This calls _availableStockInsCache = null first
+            // Clear any cached data to ensure we get fresh information
+            medicine._availableStockInsCache = null;
 
+            // Basic medicine information
             StockinMedicineName = medicine.Name;
-            StockinBarCode = medicine.BarCode; // Set BarCode from medicine
-            StockinQrCode = medicine.QrCode; // Set QRCode from medicine
+            StockinBarCode = medicine.BarCode;
+            StockinQrCode = medicine.QrCode;
             StockinSelectedCategory = medicine.Category;
             StockinSelectedUnit = medicine.Unit;
-            StockinUnitPrice = medicine.CurrentUnitPrice;
-            StockinSellPrice = medicine.CurrentSellPrice;
 
-            // Get the most recent stock-in for profit margin information and supplier
+            // Get the active StockIn following FIFO principles
+            var activeStockIn = medicine.ActiveStockIn;
+
+            // For new stock entries, use most recent stock entry as defaults
             var latestStockIn = medicine.StockIns?
                 .OrderByDescending(si => si.ImportDate)
                 .FirstOrDefault();
 
-            StockProfitMargin = latestStockIn?.ProfitMargin ?? 0;
-
-            // Lấy nhà cung cấp từ lần StockIn gần đây nhất
-            if (latestStockIn?.SupplierId != null)
+            if (latestStockIn != null)
             {
+                // Use the latest StockIn's values for default pricing/supplier
+                StockinUnitPrice = latestStockIn.UnitPrice;
+                StockinSellPrice = latestStockIn.SellPrice ?? latestStockIn.UnitPrice * 1.2m;
+                StockProfitMargin = latestStockIn.ProfitMargin;
+
+                // For supplier, use latest StockIn's supplier as default
                 StockinSelectedSupplier = SupplierList.FirstOrDefault(s => s.SupplierId == latestStockIn.SupplierId);
+
+                // Use current date as default for new entries
+                ImportDate = DateTime.Now;
+            }
+            else
+            {
+                // Default values if no previous StockIn exists
+                StockinUnitPrice = 0;
+                StockinSellPrice = 0;
+                StockProfitMargin = 20; // Default 20% markup
+                ImportDate = DateTime.Now;
             }
 
-            // Get the latest import date after refreshing the cache
-            ImportDate = medicine.LatestImportDate ?? DateTime.Now;
-
-            if (medicine.ExpiryDate.HasValue)
+            // Expiry date - try to get from active StockIn (FIFO) if exists
+            if (activeStockIn?.ExpiryDate.HasValue == true)
             {
                 try
                 {
                     StockinExpiryDate = new DateTime(
-                        medicine.ExpiryDate.Value.Year,
-                        medicine.ExpiryDate.Value.Month,
-                        medicine.ExpiryDate.Value.Day);
+                        activeStockIn.ExpiryDate.Value.Year,
+                        activeStockIn.ExpiryDate.Value.Month,
+                        activeStockIn.ExpiryDate.Value.Day);
+
+                    // Show warning if the active batch is nearing expiry
+                    var today = DateOnly.FromDateTime(DateTime.Today);
+                    if (activeStockIn.ExpiryDate.Value <= today)
+                    {
+                        MessageBoxService.ShowWarning(
+                            $"Lô thuốc {medicine.Name} hiện đang sử dụng đã hết hạn!",
+                            "Cảnh báo hết hạn"
+                        );
+                    }
+                    else if (activeStockIn.ExpiryDate.Value <= today.AddDays(Medicine.MinimumDaysBeforeExpiry))
+                    {
+                        var daysUntilExpiry = activeStockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
+                        MessageBoxService.ShowWarning(
+                            $"Lô thuốc {medicine.Name} hiện đang sử dụng sẽ hết hạn trong {daysUntilExpiry} ngày.",
+                            "Cảnh báo hết hạn"
+                        );
+                    }
                 }
                 catch
                 {
+                    // Default to one year from now if conversion fails
                     StockinExpiryDate = DateTime.Now.AddYears(1);
                 }
             }
+            else
+            {
+                // Default to one year from now if no active batch or no expiry date
+                StockinExpiryDate = DateTime.Now.AddYears(1);
+            }
+
+            // Show low stock warning if the active batch is running low
+            if (activeStockIn != null && activeStockIn.RemainQuantity <= 10)
+            {
+                MessageBoxService.ShowWarning(
+                    $"Lô thuốc {medicine.Name} hiện đang sử dụng chỉ còn {activeStockIn.RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}.",
+                    "Cảnh báo số lượng thấp"
+                );
+            }
         }
+
+
 
 
         private bool IsSupplierWorking(Supplier supplier)

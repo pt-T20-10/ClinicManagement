@@ -24,6 +24,8 @@ public class Staff
     public ICollection<Invoice> InvoicesPrescribed { get; set; }   // ✅ Dược sĩ lập hóa đơn
 
     public ICollection<Invoice> InvoicesConfirmed { get; set; }
+    public ICollection<StockIn> StockIns { get; set; }
+
     public ICollection<Account> Accounts { get; set; }
     public ICollection<Appointment> Appointments { get; set; }
     public ICollection<MedicalRecord> MedicalRecords { get; set; }

@@ -442,12 +442,19 @@ namespace ClinicManagement.ViewModels
             TabSelectionManager.Instance.RegisterTabReloadAction("StockTab", () =>
             {
                 var stockVM = Application.Current.Resources["StockMedicineVM"] as StockMedicineViewModel;
-                stockVM?.LoadData();
+                if (stockVM != null)
+                {
+                    //// First update the usable quantities
+                    //stockVM.UpdateUsableQuantitiesBasedOnExpiryDates();
+                    // Then do regular data loading
+                    stockVM.LoadData();
+                }
             });
 
             TabSelectionManager.Instance.RegisterTabReloadAction("InvoiceTab", () =>
             {
                 var invoiceVM = Application.Current.Resources["InvoiceVM"] as InvoiceViewModel;
+           
                 invoiceVM?.LoadInvoices();
             });
 

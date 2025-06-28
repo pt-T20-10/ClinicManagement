@@ -1539,6 +1539,7 @@ namespace ClinicManagement.ViewModels
                     .Where(m => m.IsDeleted != true)
                     .Include(m => m.StockIns)
                     .Include(m => m.InvoiceDetails)
+                        .ThenInclude(id => id.Invoice) // Include Invoice to check status
                     .Include(m => m.Unit)
                     .ToList();
 
@@ -1552,42 +1553,72 @@ namespace ClinicManagement.ViewModels
 
                 foreach (var medicine in medicines)
                 {
-                    // Force stock quantity calculation by accessing the property
-                    int currentStock = medicine.TotalStockQuantity;
+                    // Reset cache to ensure fresh calculations
+                    medicine._availableStockInsCache = null;
 
-                    // 1. Check for low stock (threshold of 10 items)
-                    if (currentStock <= 10)
-                    {
-                        lowStockWarnings.Add(new WarningMedicine
-                        {
-                            Id = medicine.MedicineId,
-                            Name = medicine.Name,
-                            WarningMessage = $"Còn {currentStock} {medicine.Unit?.UnitName ?? "đơn vị"} - Dưới mức tối thiểu"
-                        });
-                    }
+                    // Skip medicines with no stock ins
+                    if (!medicine.StockIns.Any()) continue;
 
-                    // 2. Check for expiry issues
-                    if (medicine.ExpiryDate.HasValue)
+                    // Get active StockIns (those with remaining quantity)
+                    var stockInsWithRemaining = medicine.GetDetailedStock()
+                        .Where(s => s.RemainingQuantity > 0)
+                        .OrderBy(s => s.StockIn.ImportDate)
+                        .ToList();
+
+                    // Skip if there are no StockIns with remaining quantity
+                    if (!stockInsWithRemaining.Any()) continue;
+
+                    // Get the currently active StockIn (oldest first - FIFO)
+                    var currentStockIn = stockInsWithRemaining.FirstOrDefault();
+
+                    if (currentStockIn != null)
                     {
-                        if (medicine.ExpiryDate.Value <= today)
+                        // 1. Check for low stock on the current active StockIn
+                        if (currentStockIn.RemainingQuantity <= 10)
                         {
-                            // Already expired
-                            expiryWarnings.Add(new WarningMedicine
+                            lowStockWarnings.Add(new WarningMedicine
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
-                                WarningMessage = "Đã hết hạn sử dụng"
+                                WarningMessage = $"Lô hiện tại còn {currentStockIn.RemainingQuantity} {medicine.Unit?.UnitName ?? "đơn vị"} - Sắp hết"
                             });
                         }
-                        else if (medicine.ExpiryDate.Value <= thirtyDaysLater)
+
+                        // 2. Check for expiry issues on the current active StockIn
+                        if (currentStockIn.StockIn.ExpiryDate.HasValue)
                         {
-                            // Expiring soon (within 30 days)
-                            int daysUntilExpiry = medicine.ExpiryDate.Value.DayNumber - today.DayNumber;
-                            expiryWarnings.Add(new WarningMedicine
+                            if (currentStockIn.StockIn.ExpiryDate.Value <= today)
+                            {
+                                // Already expired
+                                expiryWarnings.Add(new WarningMedicine
+                                {
+                                    Id = medicine.MedicineId,
+                                    Name = medicine.Name,
+                                    WarningMessage = "Lô hiện đang sử dụng đã hết hạn"
+                                });
+                            }
+                            else if (currentStockIn.StockIn.ExpiryDate.Value <= thirtyDaysLater)
+                            {
+                                // Expiring soon (within 30 days)
+                                int daysUntilExpiry = currentStockIn.StockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
+                                expiryWarnings.Add(new WarningMedicine
+                                {
+                                    Id = medicine.MedicineId,
+                                    Name = medicine.Name,
+                                    WarningMessage = $"Lô hiện đang sử dụng sẽ hết hạn trong {daysUntilExpiry} ngày"
+                                });
+                            }
+                        }
+
+                        // 3. Special case: If all StockIns combined are running low
+                        int totalRemaining = stockInsWithRemaining.Sum(s => s.RemainingQuantity);
+                        if (totalRemaining <= 20 && !lowStockWarnings.Any(w => w.Id == medicine.MedicineId))
+                        {
+                            lowStockWarnings.Add(new WarningMedicine
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
-                                WarningMessage = $"Hết hạn trong {daysUntilExpiry} ngày"
+                                WarningMessage = $"Tổng tồn kho chỉ còn {totalRemaining} {medicine.Unit?.UnitName ?? "đơn vị"} - Cần nhập thêm"
                             });
                         }
                     }
@@ -1625,13 +1656,13 @@ namespace ClinicManagement.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBoxService.ShowError($"Lỗi khi tải cảnh báo thuốc: {ex.Message}",
-                                   "Lỗi"    );
+                    MessageBoxService.ShowError($"Lỗi khi tải cảnh báo thuốc: {ex.Message}", "Lỗi");
                     WarningMedicines.Clear();
                     LowStockCount = 0;
                 });
             }
         }
+
 
 
 

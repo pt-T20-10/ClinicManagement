@@ -22,6 +22,9 @@ namespace ClinicManagement.Configurations
             builder.Property(e => e.Quantity)
                 .HasColumnName("SoLuong");
 
+            builder.Property(e => e.UsableQuantity)
+                .HasColumnName("SuDungDuoc");
+
             builder.Property(e => e.LastUpdated)
                 .HasColumnName("NgayCapNhat")
                 .HasDefaultValueSql("(getdate())")

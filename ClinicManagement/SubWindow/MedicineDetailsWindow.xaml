@@ -8,7 +8,7 @@
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         mc:Ignorable="d"
         Height="900" 
-        Width="1000"
+        Width="1100"
         Name="medicineDetailsWindow"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -20,7 +20,6 @@
         FontFamily="{DynamicResource MaterialDesignFont}"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
         WindowStyle="None"
-        ResizeMode="NoResize"
         Title="{Binding DialogTitle}">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -81,7 +80,7 @@
 
                 <!-- Expiry Date -->
                 <DatePicker Grid.Row="2" Grid.Column="1" 
-                            SelectedDate="{Binding ExpiryDateDateTime, Mode=TwoWay}" 
+                            SelectedDate="{Binding StockinExpiryDate, Mode=TwoWay}" 
                             materialDesign:HintAssist.Hint="Hạn sử dụng"
                             Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                             Width="220"
@@ -111,14 +110,14 @@
                        Grid.Column="1" Grid.Row="3"
                        Value="{Binding StockinQuantity, Mode=TwoWay}"
                        Minimum="0"
-                       Margin="3,0,8,8"
+                       Margin="0,0,8,8"
                        Width="220"
-                       HorizontalAlignment="Left"
+                       HorizontalAlignment="Center"
                        materialDesign:HintAssist.Hint="Số lượng"
                        Style="{StaticResource MaterialDesignOutlinedNumericUpDown}">
                 </materialDesign:NumericUpDown>
 
-                <!-- Nhà cung cấp gần nhất - Thay thế ComboBox nhà cung cấp -->
+                <!-- Nhà cung cấp gần nhất -->
                 <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,8,8">
                     <TextBlock 
                         Text="Nhà cung cấp gần nhất:" 
@@ -166,7 +165,7 @@
                     SelectedDate="{Binding ImportDate, Mode=TwoWay}"
                     Margin="0,0,8,8"
                     Width="220"
-                    HorizontalAlignment="Left"
+                    HorizontalAlignment="Center"
                     materialDesign:HintAssist.Hint="Ngày nhập"
                     Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
 
@@ -180,34 +179,48 @@
                         <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0"/>
                         <TextBlock Text="Làm mới"/>
                     </StackPanel>
-
                 </Button>
+
+                <!-- Help Box -->
                 <Border 
-BorderBrush="LightBlue" 
-BorderThickness="2" 
-Grid.Column="3" 
-Grid.Row="3"
-   
-CornerRadius="10"
-Padding="10"
-Background="#F0F8FF"  
-Margin="0 0 0 8"
-SnapsToDevicePixels="True"
->
+                    BorderBrush="LightBlue" 
+                    BorderThickness="2" 
+                    Grid.Column="3" 
+                    Grid.Row="3"
+                    CornerRadius="10"
+                    Padding="10"
+                    Background="#F0F8FF"  
+                    Margin="0 0 0 8"
+                    SnapsToDevicePixels="True">
                     <TextBlock 
-    TextWrapping="Wrap"
-    Style="{StaticResource MaterialDesignCaptionTextBlock}"
-    Text="Click chuột phải vào lô cần chỉnh sửa"
-    HorizontalAlignment="Center"
-    VerticalAlignment="Center"
-    TextAlignment="Center"
-    />
+                        TextWrapping="Wrap"
+                        Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                        Text="Click chuột phải vào lô cần chỉnh sửa"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        TextAlignment="Center"/>
                 </Border>
 
+                <!-- Save Changes Button --><!--
+                <Button Grid.Column="0" Grid.Row="0"
+                    Grid.ColumnSpan="1"
+                    HorizontalAlignment="Right"
+                    Command="{Binding SaveChangesCommand}"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Background="#4CAF50"
+                    BorderBrush="#4CAF50"
+                    Foreground="White"
+                    Width="120" Height="36" 
+                    Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
+                        <TextBlock Text="Lưu thay đổi"/>
+                    </StackPanel>
+                </Button>-->
             </Grid>
         </materialDesign:Card>
 
-        <!-- Stock History DataGrid - Cập nhật bổ sung cột nhà cung cấp -->
+        <!-- Stock History DataGrid -->
         <materialDesign:Card Grid.Row="2" Margin="16,8,16,8" Padding="8">
             <Grid>
                 <Grid.RowDefinitions>
@@ -242,29 +255,6 @@ SnapsToDevicePixels="True"
                                          CommandParameter="{Binding SelectedStockEntry}"/>
                             </ContextMenu>
                         </DataGrid.ContextMenu>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Ngày nhập" 
-                                               Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Số lượng nhập" 
-                                               Binding="{Binding StockIn.Quantity}" 
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Giá nhập" 
-                                               Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Giá bán" 
-                                               Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Nhà cung cấp" 
-                                               Binding="{Binding StockIn.Supplier.SupplierName}" 
-                                               Width="150"/>
-                            <DataGridTextColumn Header="Hạn sử dụng"
-                                               Binding="{Binding StockIn.Medicine.ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Còn lại" 
-                                               Binding="{Binding RemainingQuantity}" 
-                                               Width="100"/>
-                        </DataGrid.Columns>
 
                         <!-- Enhanced Visual Style -->
                         <DataGrid.Resources>
@@ -282,15 +272,56 @@ SnapsToDevicePixels="True"
                                 </Style.Triggers>
                             </Style>
                             <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
                                 <Setter Property="Background" Value="#ECEFF1"/>
                                 <Setter Property="Foreground" Value="#37474F"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                 <Setter Property="Height" Value="40"/>
                                 <Setter Property="Padding" Value="8,0"/>
-                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            </Style>
+
+                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Padding" Value="4,0"/>
                             </Style>
                         </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ngày nhập" 
+                                               Binding="{Binding StockIn.ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="120"/>
+                            <DataGridTextColumn Header="Người nhập" 
+                                                Binding="{Binding StockIn.Staff.FullName}" 
+                                                ElementStyle="{StaticResource CenteredCellStyle}"
+                                                Width="160"/>
+                            <DataGridTextColumn Header="Số lượng nhập" 
+                                               Binding="{Binding StockIn.Quantity}" 
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="120"/>
+                            <DataGridTextColumn Header="Giá nhập" 
+                                               Binding="{Binding StockIn.UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="120"/>
+                            <DataGridTextColumn Header="Giá bán" 
+                                               Binding="{Binding StockIn.SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="120"/>
+                            <DataGridTextColumn Header="Nhà cung cấp" 
+                                               Binding="{Binding StockIn.Supplier.SupplierName}"
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="150"/>
+                            <DataGridTextColumn Header="Hạn sử dụng"
+                                               Binding="{Binding StockIn.ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="120"/>
+                            <DataGridTextColumn Header="Còn lại" 
+                                               Binding="{Binding RemainingQuantity}" 
+                                               ElementStyle="{StaticResource CenteredCellStyle}"
+                                               Width="100"/>
+                        </DataGrid.Columns>
                     </DataGrid>
                 </ScrollViewer>
             </Grid>
@@ -322,7 +353,7 @@ SnapsToDevicePixels="True"
                 <!-- Import Date - Read Only -->
                 <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,8">
                     <TextBlock Text="Ngày nhập:" FontWeight="Medium" Margin="0,0,0,4"/>
-                    <TextBlock Text="{Binding SelectedStockEntry.ImportDate, StringFormat='dd/MM/yyyy'}" 
+                    <TextBlock Text="{Binding SelectedStockEntry.StockIn.ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
                                FontWeight="SemiBold" 
                                Foreground="#1976D2"/>
                 </StackPanel>
@@ -368,7 +399,7 @@ SnapsToDevicePixels="True"
                         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                 </StackPanel>
 
-                <!-- Nhà cung cấp ComboBox ở phần chỉnh sửa -->
+                <!-- Supplier ComboBox -->
                 <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,8,8,0">
                     <TextBlock Text="Nhà cung cấp:" FontWeight="Medium" Margin="0,0,0,4"/>
                     <ComboBox
@@ -378,6 +409,16 @@ SnapsToDevicePixels="True"
                         Width="180"
                         HorizontalAlignment="Left"
                         Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                </StackPanel>
+
+                <!-- Expiry Date -->
+                <StackPanel Grid.Row="2" Grid.Column="3" Margin="0,8,8,0">
+                    <TextBlock Text="Hạn sử dụng:" FontWeight="Medium" Margin="0,0,0,4"/>
+                    <DatePicker
+                        SelectedDate="{Binding EditExpiryDate}"
+                        Width="180"
+                        HorizontalAlignment="Left"
+                        Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
                 </StackPanel>
 
                 <!-- Action Buttons -->

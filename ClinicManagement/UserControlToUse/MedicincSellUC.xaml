@@ -14,7 +14,12 @@
              Background="{DynamicResource MaterialDesignPaper}"
              FontFamily="{DynamicResource MaterialDesignFont}"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-             Name="MedicineUc">
+             Name="MedicineSellUc">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" CommandParameter="{Binding ElementName=MedicineSellUc}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <materialDesign:Card>
 
         <Grid>
@@ -151,52 +156,47 @@
                                     <Setter Property="HorizontalContentAlignment" Value="Center"/>
                                     <Setter Property="VerticalContentAlignment" Value="Center"/>
                                 </Style>
-                      
-                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="Padding" Value="4,0"/>
-                                    </Style>
-                                </DataGrid.Resources>
+
+                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                    <Setter Property="Padding" Value="4,0"/>
+                                </Style>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
 
                                 <DataGridTextColumn Header="Tên thuốc" Binding="{Binding Name}" Width="200" ElementStyle="{StaticResource CenteredCellStyle}"/>
-
-
                                 <DataGridTextColumn Header="Loại" Binding="{Binding Category.CategoryName}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
-
                                 <DataGridTextColumn Header="Đơn giá" Binding="{Binding CurrentSellPrice, StringFormat='{}{0:N0} VNĐ'}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
-
                                 <DataGridTextColumn Header="Khả dụng" Binding="{Binding TotalStockQuantity}" Width="80" ElementStyle="{StaticResource CenteredCellStyle}"/>
-                     
 
-                                <DataGridTemplateColumn Header="Thêm vào giỏ" Width="200" >
+                                <!-- Quantity and Cart column, modified to include quantity selector -->
+                                <DataGridTemplateColumn Header="Thêm vào giỏ" Width="200">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Add to Cart Button -->
                                                 <Button
-                                                Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{StaticResource MaterialDesignIconButton}"
-                                                ToolTip="Thêm vào giỏ">
-                                                    <materialDesign:PackIcon Kind="CartPlus" Width="24" Height="24"/>
+                                                    Grid.Column="1"
+                                                    Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                                                    CommandParameter="{Binding}"
+                                                    Width="32"
+                                                    Height="32"
+                                                    Style="{StaticResource MaterialDesignIconButton}"
+                                                    ToolTip="Thêm vào giỏ"
+                                                    Foreground="#4CAF50">
+                                                    <materialDesign:PackIcon Kind="CartPlus" Width="20" Height="20"/>
                                                 </Button>
-
-                                                <i:Interaction.Triggers>
-                                                    <i:EventTrigger EventName="Loaded">
-                                                        <i:ChangePropertyAction TargetObject="{Binding}"
-                                                                          PropertyName="TempQuantity"
-                                                                          Value="{Binding ElementName=QuantitySelector, Path=Value}"/>
-                                                    </i:EventTrigger>
-                                                </i:Interaction.Triggers>
-                                            </StackPanel>
+                                            </Grid>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
-
-                         
                         </DataGrid>
                     </Grid>
                 </materialDesign:Card>
@@ -253,7 +253,7 @@
                                                 Foreground="#616161"
                                                 FontSize="12"/>
 
-                                                <!-- Quantity -->
+                                                <!-- Quantity Selector -->
                                                 <materialDesign:NumericUpDown
                                                 Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
                                                 Minimum="1"
@@ -291,8 +291,6 @@
                                         </materialDesign:Card>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-
-                           
                             </ItemsControl>
                         </ScrollViewer>
 
@@ -314,6 +312,14 @@
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Tổng số sản phẩm:" Margin="0,4"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalItems}" FontWeight="Medium" Margin="0,4"/>
 
+                                <!-- Discount Input -->
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Giảm giá (%):" Margin="0,4"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" 
+                                      Text="{Binding Discount, UpdateSourceTrigger=PropertyChanged}" 
+                                      Width="80"
+                                      materialDesign:HintAssist.Hint="Giảm giá"
+                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                      Margin="0,4"/>
 
                                 <!-- Total -->
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Thành tiền:" FontSize="16" FontWeight="Medium" Margin="0,8,0,16"/>
@@ -334,7 +340,7 @@
                                         Height="40"/>
 
                                     <Button Grid.Column="1"
-                                        Content="Tiền hành thanh toán"
+                                        Content="Tiến hành thanh toán"
                                         Command="{Binding CheckoutCommand}"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
                                         Background="#4CAF50"
