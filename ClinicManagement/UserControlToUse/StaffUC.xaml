@@ -19,50 +19,65 @@
     <UserControl.Resources>
         <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
-    <TabControl
+
+    <materialDesign:Card Margin="10">   
+        
+    <Grid >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+            <materialDesign:PackIcon Kind="Doctor" Width="24" Height="24" VerticalAlignment="Center"/>
+            <TextBlock Text="QUẢN LÍ NHÂN VIÊN" FontSize="24" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <TabControl
+        Grid.Row="1"
                 materialDesign:ColorZoneAssist.Mode="PrimaryLight"
                 Style="{StaticResource MaterialDesignFilledTabControl}">
-        <TabItem
+            <TabItem
         Header="Nhân viên">
-            <TabItem.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="🔄 Làm mới" 
+                <TabItem.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="🔄 Làm mới" 
                                   Command="{Binding ResetFiltersCommand}"
                                   FontWeight="Bold"
                                  />
                         <MenuItem Header="➕ Thêm nhân viên" 
                                   Command="{Binding AddStaffCommand}"
                                   FontWeight="Bold"/>
-                    <MenuItem Header="📊 Xuất Excel" 
+                        <MenuItem Header="📊 Xuất Excel" 
                                 Command="{Binding ExportExcelCommand}"
                                 FontWeight="Bold"/>
-                </ContextMenu>
-            </TabItem.ContextMenu>
-            <materialDesign:Card>
-                <Grid>
+                    </ContextMenu>
+                </TabItem.ContextMenu>
+                <materialDesign:Card>
+                    <Grid>
 
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
 
-                    <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="2" >
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="530"/>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
+                        <Grid HorizontalAlignment="Left" Grid.Row="0" Grid.ColumnSpan="2" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="530"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
 
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="5,0,5,0" VerticalAlignment="Center">
-                            <!-- Add Doctor Button -->
-                            <Button Height="45" Width="150" 
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="5,0,5,0" VerticalAlignment="Center">
+                                <!-- Add Doctor Button -->
+                                <Button Height="45" Width="150" 
                     Content="+ Thêm nhân viên" 
                     Style="{StaticResource MaterialDesignRaisedButton}"
                     Command="{Binding AddStaffCommand}"
                     Margin="5,0,15,0"/>
-                            <ComboBox Width="180"
+                                <ComboBox Width="180"
           ItemsSource="{Binding RoleList}"
           DisplayMemberPath="RoleName"
           SelectedItem="{Binding SelectedRole}"
@@ -70,8 +85,8 @@
           Style="{StaticResource MaterialDesignOutlinedComboBox}"
           VerticalAlignment="Center"/>
 
-                            <!-- Add visibility binding to the Specialty ComboBox -->
-                            <ComboBox Width="180"
+                                <!-- Add visibility binding to the Specialty ComboBox -->
+                                <ComboBox Width="180"
          Margin="15 0 0 0"
          Visibility="{Binding IsSpecialtyVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
          ItemsSource="{Binding ListSpecialty}"
@@ -80,8 +95,8 @@
          materialDesign:HintAssist.Hint="Chuyên khoa"
          Style="{StaticResource MaterialDesignOutlinedComboBox}"
          VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBox
+                            </StackPanel>
+                            <TextBox
                                 Grid.Column="1"
                                 Margin="20,0,0,0"
                                 VerticalAlignment="Center"
@@ -93,7 +108,7 @@
                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}" Grid.ColumnSpan="2"/>
 
-                        <Button
+                            <Button
                                 Grid.Column="1"
                                     HorizontalAlignment="Left"
                                     Style="{StaticResource MaterialDesignRaisedButton}" 
@@ -103,12 +118,12 @@
                                     IsDefault="True"
                                     ToolTip="Tìm kiếm theo tên bác sĩ"
                                     Command="{Binding SearchCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
-                                <TextBlock Text="Tìm kiếm"/>
-                            </StackPanel>
-                        </Button>
-                        <Button
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Search" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Tìm kiếm"/>
+                                </StackPanel>
+                            </Button>
+                            <Button
                         Grid.Column="3"
                         Command="{Binding ResetFiltersCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
@@ -117,14 +132,14 @@
                         HorizontalAlignment="Left"
                         Margin="0,0,10,0"
                         ToolTip="Đặt lại tất cả bộ lọc">
-                            <Button.Content>
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Refresh" Margin="0,0,5,0" Width="16" Height="16"/>
-                                    <TextBlock Text="Đặt lại"/>
-                                </StackPanel>
-                            </Button.Content>
-                        </Button>
-                        <Button 
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Refresh" Margin="0,0,5,0" Width="16" Height="16"/>
+                                        <TextBlock Text="Đặt lại"/>
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+                            <Button 
     Grid.Column="4"
     Margin="10,0,0,0"
     Command="{Binding ExportExcelCommand}"
@@ -133,16 +148,16 @@
     Height="32"
     HorizontalAlignment="Left"
     ToolTip="Xuất danh sách bác sĩ ra Excel">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" Width="16" Height="16"/>
-                                <TextBlock Text="Xuất Excel"/>
-                            </StackPanel>
-                        </Button>
-                    </Grid>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" Width="16" Height="16"/>
+                                    <TextBlock Text="Xuất Excel"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
 
-                    <Grid Grid.Row="1">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <DataGrid 
+                            <materialDesign:Card Grid.Row="1" Margin="8" UniformCornerRadius="8">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <DataGrid 
                             ItemsSource="{Binding DoctorList}" 
                             SelectedItem="{Binding SelectedDoctor, Mode=TwoWay}"
                             AutoGenerateColumns="False"
@@ -152,131 +167,131 @@
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
                             Background="White">
-                                <DataGrid.Resources>
-                                    <Style TargetType="DataGridColumnHeader">
-                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        <Setter Property="Background" Value="#ECEFF1"/>
-                                        <Setter Property="Foreground" Value="#37474F"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Height" Value="40"/>
-                                        <Setter Property="Padding" Value="8,0"/>
-                                    </Style>
+                                        <DataGrid.Resources>
+                                            <Style TargetType="DataGridColumnHeader">
+                                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                                <Setter Property="Background" Value="#ECEFF1"/>
+                                                <Setter Property="Foreground" Value="#37474F"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                <Setter Property="Height" Value="40"/>
+                                                <Setter Property="Padding" Value="8,0"/>
+                                            </Style>
 
-                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="Padding" Value="4,0"/>
-                                    </Style>
-                                </DataGrid.Resources>
+                                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                                <Setter Property="Padding" Value="4,0"/>
+                                            </Style>
+                                        </DataGrid.Resources>
 
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" 
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ID" 
                             Binding="{Binding StaffId}" 
                             Width="80"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Họ và tên" 
+                                            <DataGridTextColumn Header="Họ và tên" 
                             Binding="{Binding FullName}" 
                             Width="200"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Vai trò" 
+                                            <DataGridTextColumn Header="Vai trò" 
                                         Binding="{Binding Role.RoleName}" 
                                         Width="120"
                                         ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Chuyên khoa" 
+                                            <DataGridTextColumn Header="Chuyên khoa" 
                             Binding="{Binding Specialty.SpecialtyName}" 
                             Width="180"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Điện thoại" 
+                                            <DataGridTextColumn Header="Điện thoại" 
                             Binding="{Binding Phone}" 
                             Width="150"/>
 
-                                    <DataGridTextColumn Header="Email" 
+                                            <DataGridTextColumn Header="Email" 
                             Binding="{Binding Email}" 
                             Width="180"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
 
-                                    <DataGridTextColumn Header="Lịch làm việc" 
+                                            <DataGridTextColumn Header="Lịch làm việc" 
                             Binding="{Binding Schedule}" 
                             Width="300"
                             >
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                                <Setter Property="TextWrapping" Value="Wrap"/>
-                                                <Setter Property="Padding" Value="4,0"/>
-                                                <Setter Property="FontSize" Value="14"/>
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                                        <Setter Property="Padding" Value="4,0"/>
+                                                        <Setter Property="FontSize" Value="14"/>
 
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
 
 
 
-                                    <DataGridTextColumn Header="Địa chỉ" 
+                                            <DataGridTextColumn Header="Địa chỉ" 
                             Binding="{Binding Address}" 
                             Width="300"
                          >
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="HorizontalAlignment" Value="Left"/>
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                                <Setter Property="TextWrapping" Value="Wrap"/>
-                                                <Setter Property="Padding" Value="4,0"/>
-                                                <Setter Property="FontSize" Value="14"/>
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                                        <Setter Property="Padding" Value="4,0"/>
+                                                        <Setter Property="FontSize" Value="14"/>
 
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
 
-                                    <DataGridTemplateColumn Width="300">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Button Content="Xem chi tiết"
+                                            <DataGridTemplateColumn Width="300">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="Xem chi tiết"
                             Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.OpenDoctorDetailsCommand}"
                             CommandParameter="{Binding}"
                             Style="{StaticResource MaterialDesignRaisedButton}"
                             Width="120" Height="30"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
 
-                        </ScrollViewer>
-                    </Grid>
-                </Grid>
-            </materialDesign:Card>
-        </TabItem>
+                                </ScrollViewer>
+                            </materialDesign:Card>
+                        </Grid>
+                </materialDesign:Card>
+            </TabItem>
 
-        <TabItem
+            <TabItem
             Header="Quản lí chuyên khoa">
-            <Grid Margin="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="350"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- Left Panel - Unit Management Form -->
-                <materialDesign:Card 
+                    <!-- Left Panel - Unit Management Form -->
+                    <materialDesign:Card 
                      Grid.Column="0" 
                      Margin="0,0,10,0" 
                      Padding="16" 
                      UniformCornerRadius="8">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <!-- For Description -->
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <!-- For Description -->
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <!-- Header -->
-                        <TextBlock 
+                            <!-- Header -->
+                            <TextBlock 
                  Grid.Row="0"
                  Text="THÔNG TIN CHUYÊN KHOA"
                  FontSize="16"
@@ -284,8 +299,8 @@
                  Margin="0,0,0,20"
                  HorizontalAlignment="Center"/>
 
-                        <!-- Input Fields -->
-                        <TextBox 
+                            <!-- Input Fields -->
+                            <TextBox 
                  Grid.Row="1"
                  Text="{Binding SpecialtyName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                  materialDesign:HintAssist.Hint="Tên đơn vị đo"
@@ -294,8 +309,8 @@
                  Width="300"
                  HorizontalAlignment="Center"/>
 
-                        <!-- Description Field -->
-                        <TextBox 
+                            <!-- Description Field -->
+                            <TextBox 
                  Grid.Row="2"
                  Text="{Binding Description, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                  materialDesign:HintAssist.Hint="Mô tả chi tiết"
@@ -308,25 +323,25 @@
                  Width="300"
                  HorizontalAlignment="Center"/>
 
-                        <!-- Action Buttons -->
-                        <StackPanel 
+                            <!-- Action Buttons -->
+                            <StackPanel 
                  Grid.Row="3" 
                  Orientation="Horizontal" 
                  HorizontalAlignment="Center"
                  Margin="0,0,0,20">
-                            <Button 
+                                <Button 
                      Command="{Binding AddCommand}" 
                      Style="{StaticResource MaterialDesignRaisedButton}"
                      materialDesign:ButtonAssist.CornerRadius="5"
                      Margin="5" 
                      Width="90"
                      Height="36">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Thêm"/>
-                                </StackPanel>
-                            </Button>
-                            <Button 
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Thêm"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button 
                      Command="{Binding EditCommand}" 
                      Style="{StaticResource MaterialDesignRaisedButton}"
                      materialDesign:ButtonAssist.CornerRadius="5"
@@ -335,12 +350,12 @@
                      Margin="5" 
                      Width="90"
                      Height="36">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Sửa"/>
-                                </StackPanel>
-                            </Button>
-                            <Button 
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Sửa"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button 
                      Command="{Binding DeleteCommand}" 
                      Style="{StaticResource MaterialDesignRaisedButton}"
                      materialDesign:ButtonAssist.CornerRadius="5"
@@ -349,123 +364,127 @@
                      Margin="5" 
                      Width="90"
                      Height="36">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                    <TextBlock Text="Xóa"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Xóa"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
 
-                        <!-- Information Box -->
-                        <materialDesign:Card 
+                            <!-- Information Box -->
+                            <materialDesign:Card 
                  Height="200"
                  VerticalAlignment="Top"
                  Grid.Row="4" 
                  Margin="0,10,0,0"
                  UniformCornerRadius="5"
                  Background="#FFF5F5F5">
-                            <StackPanel Margin="16">
-                                <TextBlock 
+                                <StackPanel Margin="16">
+                                    <TextBlock 
                          Text="Hướng dẫn sử dụng:"
                          FontWeight="Medium"
                          Margin="0,0,0,8"/>
-                                <TextBlock 
+                                    <TextBlock 
                          Text="1. Chọn một chuyên khoa từ danh sách để sửa hoặc xóa." 
                          TextWrapping="Wrap"
                          Margin="0,4,0,4"/>
-                                <TextBlock 
+                                    <TextBlock 
                          Text="2. Điền tên chuyên khoa và mô tả, nhấn 'Thêm' để tạo chuyên khoa mới." 
                          TextWrapping="Wrap"
                          Margin="0,4,0,4"/>
-                                <TextBlock 
+                                    <TextBlock 
                          Text="3. Sửa thông tin chuyên khoa hiện tại và nhấn 'Sửa' để cập nhật." 
                          TextWrapping="Wrap"
                          Margin="0,4,0,4"/>
-                            </StackPanel>
-                        </materialDesign:Card>
-                    </Grid>
-                </materialDesign:Card>
+                                </StackPanel>
+                            </materialDesign:Card>
+                        </Grid>
+                    </materialDesign:Card>
 
-                <!-- Right Panel - Units List -->
-                <materialDesign:Card 
+                    <!-- Right Panel - Units List -->
+                    <materialDesign:Card 
          Grid.Column="1" 
          Margin="10,0,0,0"
          UniformCornerRadius="8">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <!-- List Header -->
-                        <Grid 
+                            <!-- List Header -->
+                            <Grid 
                  Grid.Row="0" 
                  Background="{DynamicResource PrimaryHueMidBrush}" 
                  Height="50">
-                            <TextBlock 
+                                <TextBlock 
                      Text="DANH SÁCH CHUYÊN KHOA" 
                      FontWeight="Medium" 
                      FontSize="16" 
                      Foreground="Black" 
                      VerticalAlignment="Center" 
                      HorizontalAlignment="Center"/>
-                        </Grid>
+                            </Grid>
 
-                        <!-- List View -->
-                        <ScrollViewer 
-                 Grid.Row="1" 
-                 VerticalScrollBarVisibility="Auto"
-                 Margin="0,5,0,0">
-                            <DataGrid 
-    ItemsSource="{Binding ListSpecialty}" 
-    SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-    AutoGenerateColumns="False"
-    IsReadOnly="True"
-    SelectionMode="Single"
-    SelectionUnit="FullRow"
-    CanUserAddRows="False"
-    CanUserDeleteRows="False"
-    Background="White">
-                                <DataGrid.Resources>
-                                    <Style TargetType="DataGridColumnHeader">
-                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        <Setter Property="Background" Value="#ECEFF1"/>
-                                        <Setter Property="Foreground" Value="#37474F"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Height" Value="40"/>
-                                        <Setter Property="Padding" Value="8,0"/>
-                                    </Style>
+                            <!-- List View -->
+                                <materialDesign:Card Grid.Row="1" Margin="8" UniformCornerRadius="8">
+                                    <ScrollViewer 
+                                 Grid.Row="1" 
+                                 VerticalScrollBarVisibility="Auto"
+                                 Margin="0,5,0,0">
+                                        <DataGrid 
+                                ItemsSource="{Binding ListSpecialty}" 
+                                SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                                AutoGenerateColumns="False"
+                                IsReadOnly="True"
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                Background="White">
+                                            <DataGrid.Resources>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                                    <Setter Property="Background" Value="#ECEFF1"/>
+                                                    <Setter Property="Foreground" Value="#37474F"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="Height" Value="40"/>
+                                                    <Setter Property="Padding" Value="8,0"/>
+                                                </Style>
 
-                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="Padding" Value="4,0"/>
-                                    </Style>
-                                </DataGrid.Resources>
+                                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                                    <Setter Property="Padding" Value="4,0"/>
+                                                </Style>
+                                            </DataGrid.Resources>
 
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" 
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="ID" 
                             Binding="{Binding SpecialtyId}" 
                             Width="100"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Tên chuyên khoa" 
+                                                <DataGridTextColumn Header="Tên chuyên khoa" 
                             Binding="{Binding SpecialtyName}" 
                             Width="180"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Mô tả" 
+                                                <DataGridTextColumn Header="Mô tả" 
                             Binding="{Binding Description}" 
                             Width="*"
                             ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
 
-                        </ScrollViewer>
-                    </Grid>
-                </materialDesign:Card>
-            </Grid>
-        </TabItem>
-    </TabControl>
+                                    </ScrollViewer>
+                                </materialDesign:Card>
+                            </Grid>
+                    </materialDesign:Card>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+    </materialDesign:Card>
 </UserControl>
 

@@ -39,7 +39,7 @@
     </UserControl.ContextMenu>
 
     <!-- Main Card-->
-    <materialDesign:Card>
+    <materialDesign:Card Margin="10">
                 
         <!--Main Grid có 3 Row-->
                 <Grid>
@@ -62,7 +62,7 @@
                             <!-- Tiêu đề -->
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                                 <materialDesign:PackIcon Kind="InvoiceOutline" Width="24" Height="24" VerticalAlignment="Center"/>
-                                <TextBlock Text="DANH SÁCH HÓA ĐƠN" FontSize="18" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="DANH SÁCH HÓA ĐƠN" FontSize="24" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
 
                             <!-- Bộ lọc -->
@@ -258,7 +258,7 @@
                         <DataGrid.Columns>
                            
                             <!-- TextColumn Mã hóa đơn Binding từ InvoiceId  -->
-                            <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="75"
+                            <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="80"
                                                  ElementStyle="{StaticResource CenteredCellStyle}"
                                                         />
 

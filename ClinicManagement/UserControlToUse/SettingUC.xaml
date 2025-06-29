@@ -15,7 +15,7 @@
             FontFamily="{DynamicResource MaterialDesignFont}"
             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
             Name="SettingUc">
-    <materialDesign:Card>
+    <materialDesign:Card Margin="10">
         
     <TabControl
         materialDesign:ColorZoneAssist.Mode="PrimaryLight"

@@ -22,11 +22,24 @@
                                   CommandParameter="{Binding ElementName=AppointmentUc}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <materialDesign:Card>
-        <TabControl
+    <materialDesign:Card Margin="10">
+        
+    <Grid >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+            <materialDesign:PackIcon Kind="Calendar" Width="24" Height="24" VerticalAlignment="Center"/>
+            <TextBlock Text="QUẢN LÍ LỊCH HẸN" FontSize="25" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <TabControl Grid.Row="1"
+            
              materialDesign:ColorZoneAssist.Mode="PrimaryLight"
  Style="{StaticResource MaterialDesignFilledTabControl}">
-
+        
             <TabItem Header="Lịch hẹn">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -850,5 +863,7 @@
                 </Grid>
             </TabItem>
         </TabControl>
+    </Grid>
     </materialDesign:Card>
+  
 </UserControl>

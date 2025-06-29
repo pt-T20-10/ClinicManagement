@@ -42,14 +42,18 @@
                 </ContextMenu>
        
     </UserControl.ContextMenu>
-    <materialDesign:Card Padding="16">
+    <materialDesign:Card Margin="10" Padding="16">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-
-            <Border Grid.Row="0" Padding="8" Margin="0,0,0,12" Background="#F5F5F5" CornerRadius="6">
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                <materialDesign:PackIcon Kind="ApplicationEditOutline" Width="24" Height="24" VerticalAlignment="Center"/>
+                <TextBlock Text="KHÁM BỆNH" FontSize="24" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <Border Grid.Row="1" Padding="8" Margin="0,0,0,12" Background="#F5F5F5" CornerRadius="6">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -58,10 +62,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <!-- Patient search - Row 0 -->
-                    <Grid Grid.Row="0" VerticalAlignment="Center" Grid.Column="0"  Margin="0,0,0,8">
+                 
+                 
+                    <Grid Grid.Row="1" VerticalAlignment="Center" Grid.Column="0"  Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -146,7 +151,7 @@
                     <!-- Patient details - Row 1 -->
                     <materialDesign:Card  
                               Grid.Column="1" 
-                               
+                              Grid.Row="1" 
                               Background="#E8F5E9"
                               Margin="22 12 12 12"
                               Visibility="{Binding SelectedPatient, Converter={StaticResource NullToVisibilityConverter}}">
@@ -304,7 +309,7 @@
             </Border>
 
             <!-- Row 1: Examination Form -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

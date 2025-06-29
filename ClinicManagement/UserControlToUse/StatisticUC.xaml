@@ -16,8 +16,8 @@
                                  CommandParameter="{Binding ElementName=StatisticUc}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <materialDesign:Card>
-
+    
+    <materialDesign:Card Margin="10">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>

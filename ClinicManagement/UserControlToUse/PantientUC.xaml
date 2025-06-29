@@ -20,8 +20,22 @@
             <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" CommandParameter="{Binding ElementName=PantientUc}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <materialDesign:Card>
+    <materialDesign:Card Margin="10">
+        
+    <Grid >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+            <materialDesign:PackIcon Kind="AccountMultiple" Width="24" Height="24" VerticalAlignment="Center"/>
+            <TextBlock Text="QUÁN LÍ BỆNH NHÂN" FontSize="24" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        
+        
         <TabControl
+            Grid.Row="1"
             materialDesign:ColorZoneAssist.Mode="PrimaryLight"
             Style="{StaticResource MaterialDesignFilledTabControl}">
 
@@ -153,8 +167,8 @@
                                         <TextBlock Text="Đặt lại"/>
                                     </StackPanel>
                                 </Button.Content>
-                                
-                                
+
+
                             </Button>
 
                             <!-- Add Export Excel Button -->
@@ -167,16 +181,16 @@
                          HorizontalAlignment="Left"
                          Margin="0,0,10,0"
                          ToolTip="Xuất danh sách bệnh nhân ra file Excel">
-                                                    <Button.Content>
+                                <Button.Content>
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,5,0" Width="16" Height="16"/>
                                         <TextBlock Text="Xuất Excel"/>
                                     </StackPanel>
                                 </Button.Content>
                             </Button>
-                            
-                            
-                            
+
+
+
                             <Grid Width="100"></Grid>
                             <Button
                                 DockPanel.Dock="Right"
@@ -198,10 +212,10 @@
                     </Grid>
 
 
-
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.ColumnSpan="2">
-                        <!-- Changed ListView to DataGrid -->
-                        <DataGrid Grid.Row="1" 
+                        <materialDesign:Card Grid.Row="1" Margin="8" UniformCornerRadius="8" Grid.ColumnSpan="2">
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" >
+                                <!-- Changed ListView to DataGrid -->
+                                <DataGrid Grid.Row="1" 
                             ItemsSource="{Binding PatientList}"
                             SelectedItem="{Binding SelectedPatient, Mode=TwoWay}"
                             Background="White"
@@ -216,87 +230,87 @@
                             CanUserDeleteRows="False"
                             CanUserReorderColumns="False">
 
-                            <!-- Add this style to highlight the entire row when selected -->
-                   
+                                    <!-- Add this style to highlight the entire row when selected -->
 
 
-                            <DataGrid.InputBindings>
-                                <MouseBinding MouseAction="LeftDoubleClick" 
+
+                                    <DataGrid.InputBindings>
+                                        <MouseBinding MouseAction="LeftDoubleClick" 
                           Command="{Binding OpenPatientDetailsCommand}" 
                           CommandParameter="{Binding SelectedPatient}"/>
-                                <KeyBinding Key="Enter"
+                                        <KeyBinding Key="Enter"
                         Command="{Binding OpenPatientDetailsCommand}"
                         CommandParameter="{Binding SelectedPatient}"/>
-                            </DataGrid.InputBindings>
+                                    </DataGrid.InputBindings>
 
-                            <!-- Thêm Resources để style cho header -->
-                            <DataGrid.Resources>
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                    <Setter Property="Background" Value="#ECEFF1"/>
-                                    <Setter Property="Foreground" Value="#37474F"/>
-                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                    <Setter Property="Height" Value="40"/>
-                                    <Setter Property="Padding" Value="8,0"/>
-                                </Style>
+                                    <!-- Thêm Resources để style cho header -->
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
 
-                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="Padding" Value="4,0"/>
-                                </Style>
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
 
 
-                            </DataGrid.Resources>
+                                    </DataGrid.Resources>
 
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Bảo hiểm y tế" 
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Bảo hiểm y tế" 
                                         Binding="{Binding InsuranceCode}" 
                                         Width="200"
                                         ElementStyle="{StaticResource CenteredCellStyle}"/>
 
 
-                                <DataGridTextColumn Header="Họ và tên" 
+                                        <DataGridTextColumn Header="Họ và tên" 
                                            Binding="{Binding FullName}" 
                                            Width="200"
                                            ElementStyle="{StaticResource CenteredCellStyle}"/>
 
 
-                                <DataGridTextColumn Header="Khách hàng" 
+                                        <DataGridTextColumn Header="Khách hàng" 
                                            Binding="{Binding PatientType.TypeName}" 
                                            Width="150"           
                                            ElementStyle="{StaticResource CenteredCellStyle}"/>
 
 
-                                <DataGridTextColumn Header="Điện thoại" 
+                                        <DataGridTextColumn Header="Điện thoại" 
                                        Binding="{Binding Phone}" 
                                        Width="150"
                                        ElementStyle="{StaticResource CenteredCellStyle}"/>
 
 
-                                <DataGridTextColumn Header="Địa chỉ" 
+                                        <DataGridTextColumn Header="Địa chỉ" 
                                        Binding="{Binding Address}" 
                                        Width="400"
                                        ElementStyle="{StaticResource CenteredCellStyle}"/>
 
-                                <DataGridTemplateColumn >
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Xem chi tiết"
+                                        <DataGridTemplateColumn >
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Xem chi tiết"
                                                 Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.OpenPatientDetailsCommand}"
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                                 Width="120" Height="30"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </ScrollViewer>
-
-                </Grid>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </ScrollViewer>
+                        </materialDesign:Card>
+                    </Grid>
             </TabItem>
             <TabItem Header="Quản lí loại bệnh nhân">
                 <Grid Margin="10">
@@ -455,9 +469,11 @@
                                     VerticalAlignment="Center" 
                                     HorizontalAlignment="Center"/>
                             </Grid>
+                                <materialDesign:Card Grid.Row="1" Margin="8" UniformCornerRadius="8"  Grid.ColumnSpan="2">
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
 
-                            <!-- Changed ListView to DataGrid -->
-                            <DataGrid 
+                                        <!-- Changed ListView to DataGrid -->
+                                        <DataGrid 
                                 Grid.Row="1"
                                 Background="White"
                                 ItemsSource="{Binding PatientTypeList}" 
@@ -475,48 +491,51 @@
                                 HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center"
                                 Margin="5,5,0,0">
-                                
-                                <DataGrid.Resources>
-                                    <Style TargetType="DataGridColumnHeader">
-                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        <Setter Property="Background" Value="#ECEFF1"/>
-                                        <Setter Property="Foreground" Value="#37474F"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Height" Value="40"/>
-                                        <Setter Property="Padding" Value="8,0"/>
-                                    </Style>
 
-                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                        <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        <Setter Property="VerticalAlignment" Value="Center"/>
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="Padding" Value="4,0"/>
-                                    </Style>
+                                            <DataGrid.Resources>
+                                                <Style TargetType="DataGridColumnHeader">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                                    <Setter Property="Background" Value="#ECEFF1"/>
+                                                    <Setter Property="Foreground" Value="#37474F"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="Height" Value="40"/>
+                                                    <Setter Property="Padding" Value="8,0"/>
+                                                </Style>
 
-                                </DataGrid.Resources>
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" 
+                                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                                    <Setter Property="Padding" Value="4,0"/>
+                                                </Style>
+
+                                            </DataGrid.Resources>
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="ID" 
                                                         
                                                        Binding="{Binding PatientTypeId}" 
                                                        Width="100"
                                                        ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Tên loại bệnh nhân" 
+                                                <DataGridTextColumn Header="Tên loại bệnh nhân" 
                                                        Binding="{Binding TypeName}" 
                                                        Width="180"
                                                        ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                    <DataGridTextColumn Header="Mức ưu đãi" 
+                                                <DataGridTextColumn Header="Mức ưu đãi" 
                                                        Binding="{Binding Discount}" 
                                                        Width="250"
                                                        ElementStyle="{StaticResource CenteredCellStyle}"/>
-                              
-                                </DataGrid.Columns>
-                             
-                            </DataGrid>
-                        </Grid>
+
+                                            </DataGrid.Columns>
+
+                                        </DataGrid>
+                                    </ScrollViewer>
+                                </materialDesign:Card>
+                            </Grid>
                     </materialDesign:Card>
                 </Grid>
             </TabItem>
         </TabControl>
+    </Grid>
     </materialDesign:Card>
 </UserControl>
