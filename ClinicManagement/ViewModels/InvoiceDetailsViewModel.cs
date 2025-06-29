@@ -20,7 +20,7 @@ namespace ClinicManagement.ViewModels
     public class InvoiceDetailsViewModel : BaseViewModel
     {
         #region Properties
-
+        private Window _paymentWindow;
         // The main invoice being displayed
         private Invoice _invoice;
         public Invoice Invoice
@@ -319,7 +319,7 @@ namespace ClinicManagement.ViewModels
 
         
             ConfirmPaymentCommand = new RelayCommand<Window>(
-                p => ConfirmPayment(p),
+                p => ConfirmPayment(null),
                 p => Invoice != null);
 
             ApplyPatientDiscountCommand = new RelayCommand<object>(
@@ -587,7 +587,7 @@ namespace ClinicManagement.ViewModels
         {
             if (Invoice == null || Invoice.Status == "Đã thanh toán") return;
 
-            var paymentWindow = new Window
+            _paymentWindow = new Window
             {
                 Title = "Thanh toán hóa đơn",
                 Width = 500,
@@ -597,8 +597,9 @@ namespace ClinicManagement.ViewModels
                 Content = CreatePaymentControl()
             };
 
-            paymentWindow.ShowDialog();
+            _paymentWindow.ShowDialog();
         }
+
 
         private UIElement CreatePaymentControl()
         {
@@ -728,8 +729,8 @@ namespace ClinicManagement.ViewModels
                 Background = System.Windows.Media.Brushes.Green,
                 Foreground = System.Windows.Media.Brushes.White
             };
-            qrConfirmButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "ConfirmPaymentCommand");
-            qrConfirmButton.CommandParameter = qrConfirmButton.TemplatedParent;
+            qrConfirmButton.SetBinding(System.Windows.Controls.Button.CommandProperty,
+                new System.Windows.Data.Binding("ConfirmPaymentCommand"));
             qrButtonsPanel.Children.Add(qrConfirmButton);
 
             // Thêm panel chứa nút vào panel QR
@@ -791,8 +792,8 @@ namespace ClinicManagement.ViewModels
                 Background = System.Windows.Media.Brushes.Green,
                 Foreground = System.Windows.Media.Brushes.White
             };
-            confirmButton.SetBinding(System.Windows.Controls.Button.CommandProperty, "ConfirmPaymentCommand");
-            confirmButton.CommandParameter = confirmButton.TemplatedParent;
+            confirmButton.SetBinding(System.Windows.Controls.Button.CommandProperty,
+                new System.Windows.Data.Binding("ConfirmPaymentCommand"));
             cashButtonsPanel.Children.Add(confirmButton);
 
             // Thêm panel chứa các nút vào panel chính
@@ -842,14 +843,18 @@ namespace ClinicManagement.ViewModels
 
                 MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công");
 
-                // Close payment dialog
-                paymentWindow?.Close();
+                // Đóng cửa sổ thanh toán
+                _paymentWindow?.Close();
+                _paymentWindow = null;
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi");
             }
         }
+
+
+
 
         // Add this method to update stock after payment
         // Add this to InvoiceDetailsViewModel.cs

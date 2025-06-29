@@ -201,22 +201,6 @@
                         TextAlignment="Center"/>
                 </Border>
 
-                <!-- Save Changes Button --><!--
-                <Button Grid.Column="0" Grid.Row="0"
-                    Grid.ColumnSpan="1"
-                    HorizontalAlignment="Right"
-                    Command="{Binding SaveChangesCommand}"
-                    Style="{StaticResource MaterialDesignRaisedButton}"
-                    Background="#4CAF50"
-                    BorderBrush="#4CAF50"
-                    Foreground="White"
-                    Width="120" Height="36" 
-                    Margin="0,0,16,0">
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
-                        <TextBlock Text="Lưu thay đổi"/>
-                    </StackPanel>
-                </Button>-->
             </Grid>
         </materialDesign:Card>
 
@@ -264,7 +248,25 @@
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </DataGrid.Resources>
+
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Background" Value="#ECEFF1"/>
+                                    <Setter Property="Foreground" Value="#37474F"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Height" Value="40"/>
+                                    <Setter Property="Padding" Value="8,0"/>
+                                </Style>
+
+                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                    <Setter Property="Padding" Value="4,0"/>
+                                </Style>
+                            </DataGrid.Resources>
+              
 
                         <DataGrid.ContextMenu>
                             <ContextMenu>
@@ -285,7 +287,7 @@
                             <DataGridTemplateColumn Header="Trạng thái" Width="120">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0">
                                             <!-- Icon đánh dấu lô đang bán -->
                                             <materialDesign:PackIcon 
                                                 Kind="ShoppingCart" 
@@ -307,22 +309,69 @@
                             <!-- Các cột khác như đã có -->
                             <DataGridTextColumn Header="Ngày nhập" 
                          Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                         Width="120"/>
+                         Width="120"
+                         ElementStyle="{StaticResource CenteredCellStyle}"
+                                                />
                             <DataGridTextColumn Header="Số lượng nhập" 
                                                 Binding="{Binding StockIn.Quantity}" 
+                                                   ElementStyle="{StaticResource CenteredCellStyle}"
                                                 Width="120"/>
                             <DataGridTextColumn Header="Hạn sử dụng"
                          Binding="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                                   ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="120"/>
                             <DataGridTextColumn Header="Số lượng còn lại" 
                          Binding="{Binding RemainingQuantity}" 
-                         Width="100"/>
+                                                   ElementStyle="{StaticResource CenteredCellStyle}"
+                         Width="120"/>
                             <DataGridTextColumn Header="Giá nhập" 
                          Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                                                   ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="130"/>
                             <DataGridTextColumn Header="Giá bán" 
                          Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                                                   ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="130"/>
+                            
+                            <!-- Cột chứa các nút thao tác -->
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal" >
+                                            <!-- Nút chỉnh sửa lô -->
+                                            <Button 
+                                                Style="{StaticResource MaterialDesignIconButton}" 
+                                                Command="{Binding DataContext.EditStockEntryCommand, 
+                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                Width="30" Height="30"
+                                                Padding="2"
+                                                Margin="0,0,4,0"
+                                                ToolTip="Chỉnh sửa lô">
+                                                <materialDesign:PackIcon 
+                                                    Kind="EditOutline" 
+                                                    Width="18" Height="18"
+                                                    Foreground="#1976D2"/>
+                                            </Button>
+                                            
+                                            <!-- Nút đặt làm lô đang bán -->
+                                            <Button 
+                                                Style="{StaticResource MaterialDesignIconButton}"
+                                                Command="{Binding DataContext.SetAsSellingBatchCommand, 
+                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                Width="30" Height="30" 
+                                                Padding="2"
+                                                ToolTip="Đặt làm lô đang bán">
+                                                <materialDesign:PackIcon 
+                                                    Kind="ShoppingCartPlus" 
+                                                    Width="18" Height="18"
+                                                    Foreground="#4CAF50"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
 
