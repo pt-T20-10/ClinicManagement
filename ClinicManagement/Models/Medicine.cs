@@ -8,7 +8,11 @@ namespace ClinicManagement.Models;
 
 public partial class Medicine : BaseViewModel
 {
-    public const int MinimumDaysBeforeExpiry = 30;
+    // Thời gian tối thiểu trước khi hết hạn để cảnh báo (60 ngày)
+    public const int MinimumDaysBeforeExpiry = 60;
+
+    // Thời gian tối thiểu trước khi chuyển sang lô mới (20 ngày)
+    public const int MinimumDaysBeforeSwitchingBatch = 20;
 
     private int _tempQuantity = 1;
 
@@ -34,6 +38,61 @@ public partial class Medicine : BaseViewModel
                 .OrderByDescending(si => si.ImportDate)
                 .FirstOrDefault();
             return latestStockIn?.Supplier;
+        }
+    }
+    /// <summary>
+    /// Lấy giá nhập của lô mới nhất (dùng cho màn hình nhập kho)
+    /// </summary>
+    public decimal LatestUnitPrice
+    {
+        get
+        {
+            var latestStockIn = StockIns?
+                .OrderByDescending(si => si.ImportDate)
+                .FirstOrDefault();
+            return latestStockIn?.UnitPrice ?? 0;
+        }
+    }
+
+    /// <summary>
+    /// Lấy giá bán của lô mới nhất (dùng cho màn hình nhập kho)
+    /// </summary>
+    public decimal LatestSellPrice
+    {
+        get
+        {
+            var latestStockIn = StockIns?
+                .OrderByDescending(si => si.ImportDate)
+                .FirstOrDefault();
+            return latestStockIn?.SellPrice ?? 0;
+        }
+    }
+
+    /// <summary>
+    /// Lấy lợi nhuận của lô mới nhất (dùng cho màn hình nhập kho)
+    /// </summary>
+    public decimal LatestProfitMargin
+    {
+        get
+        {
+            var latestStockIn = StockIns?
+                .OrderByDescending(si => si.ImportDate)
+                .FirstOrDefault();
+            return latestStockIn?.ProfitMargin ?? 20; // Mặc định 20% nếu không có dữ liệu
+        }
+    }
+
+    /// <summary>
+    /// Lấy ngày hết hạn của lô mới nhất (dùng cho màn hình nhập kho)
+    /// </summary>
+    public DateOnly? LatestExpiryDate
+    {
+        get
+        {
+            var latestStockIn = StockIns?
+                .OrderByDescending(si => si.ImportDate)
+                .FirstOrDefault();
+            return latestStockIn?.ExpiryDate;
         }
     }
 
@@ -71,26 +130,28 @@ public partial class Medicine : BaseViewModel
     {
         get
         {
-            // If there are no stock-ins, return null
+            // Nếu không có lô nhập, trả về null
             if (StockIns == null || !StockIns.Any())
                 return null;
 
-            // Get the most recent import date directly from StockIns
+            // Lấy ngày nhập gần nhất trực tiếp từ StockIns
             return StockIns.OrderByDescending(si => si.ImportDate).FirstOrDefault()?.ImportDate;
         }
     }
 
-    // Get Current Unit Price based on the most recent stock-in that has remaining stock
+    /// <summary>
+    /// Lấy giá nhập hiện tại dựa trên lô đang bán
+    /// </summary>
     public decimal CurrentUnitPrice
     {
         get
         {
-            // Get the oldest batch with remaining quantity
-            var activeStockIn = ActiveStockIn;
-            if (activeStockIn != null)
-                return activeStockIn.UnitPrice;
+            // Ưu tiên lô đánh dấu là đang bán
+            var sellingStockIn = SellingStockIn;
+            if (sellingStockIn != null)
+                return sellingStockIn.UnitPrice;
 
-            // If no active stock in, use the latest import's price
+            // Nếu không có lô đang bán, sử dụng giá của lô nhập gần nhất
             var latestStockIn = StockIns?
                 .OrderByDescending(si => si.ImportDate)
                 .FirstOrDefault();
@@ -98,16 +159,19 @@ public partial class Medicine : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Lấy giá bán hiện tại dựa trên lô đang bán
+    /// </summary>
     public decimal CurrentSellPrice
     {
         get
         {
-            // Get the oldest batch with remaining quantity
-            var activeStockIn = ActiveStockIn;
-            if (activeStockIn != null)
-                return activeStockIn.SellPrice ?? 0;
+            // Ưu tiên lô đánh dấu là đang bán
+            var sellingStockIn = SellingStockIn;
+            if (sellingStockIn != null)
+                return sellingStockIn.SellPrice ?? 0;
 
-            // If no active stock in, use the latest import's sell price
+            // Nếu không có lô đang bán, sử dụng giá bán của lô nhập gần nhất
             var latestStockIn = StockIns?
                 .OrderByDescending(si => si.ImportDate)
                 .FirstOrDefault();
@@ -115,16 +179,175 @@ public partial class Medicine : BaseViewModel
         }
     }
 
+
     /// <summary>
-    /// Cache for StockIn with remaining calculation
+    /// Kiểm tra xem lô đang sử dụng có phải là lô cuối cùng hay không
+    /// </summary>
+    public bool IsLastestStockIn
+    {
+        get
+        {
+            if (StockIns == null || !StockIns.Any())
+                return false;
+
+            var currentStockIn = ActiveStockIn;
+            if (currentStockIn == null)
+                return false;
+
+            // Lấy tất cả các lô có số lượng còn lại
+            var availableStockIns = StockIns
+                .Where(si => si.RemainQuantity > 0)
+                .OrderBy(si => si.ImportDate)
+                .ToList();
+
+            // Nếu chỉ có một lô có số lượng còn lại, thì đó là lô cuối cùng
+            if (availableStockIns.Count == 1)
+                return true;
+
+            // Kiểm tra xem lô hiện tại có phải là lô mới nhất không
+            var latestStockIn = availableStockIns
+                .OrderByDescending(si => si.ImportDate)
+                .FirstOrDefault();
+
+            return currentStockIn.StockInId == latestStockIn?.StockInId;
+        }
+    }
+
+    /// <summary>
+    /// Kiểm tra xem thuốc có lô nào sắp hết hạn không
+    /// </summary>
+    public bool HasNearExpiryStock
+    {
+        get
+        {
+            if (StockIns == null || !StockIns.Any())
+                return false;
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var minimumExpiryDate = today.AddDays(MinimumDaysBeforeExpiry);
+
+            return StockIns.Any(si =>
+                si.RemainQuantity > 0 &&
+                si.ExpiryDate.HasValue &&
+                si.ExpiryDate.Value > today &&
+                si.ExpiryDate.Value <= minimumExpiryDate);
+        }
+    }
+
+    /// <summary>
+    /// Kiểm tra xem thuốc có lô nào đã hết hạn nhưng vẫn còn số lượng không
+    /// </summary>
+    public bool HasExpiredStock
+    {
+        get
+        {
+            if (StockIns == null || !StockIns.Any())
+                return false;
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            return StockIns.Any(si =>
+                si.RemainQuantity > 0 &&
+                si.ExpiryDate.HasValue &&
+                si.ExpiryDate.Value <= today);
+        }
+    }
+
+    /// <summary>
+    /// Kiểm tra xem lô thuốc hiện tại có cần phải được chuyển sang lô mới không
+    /// Nếu lô hiện tại là lô cuối cùng, thì không cần chuyển
+    /// </summary>
+    public bool ShouldSwitchToNewBatch
+    {
+        get
+        {
+            // Nếu là lô cuối cùng, không cần chuyển
+            if (IsLastestStockIn)
+                return false;
+
+            var currentStockIn = ActiveStockIn;
+            if (currentStockIn == null)
+                return false;
+
+            // Kiểm tra hạn sử dụng của lô hiện tại
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            // Nếu không có hạn sử dụng, không cần chuyển
+            if (!currentStockIn.ExpiryDate.HasValue)
+                return false;
+
+            // Nếu số ngày còn lại ít hơn ngưỡng tối thiểu để chuyển lô
+            int daysUntilExpiry = currentStockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
+
+            // Nếu còn ít hơn số ngày tối thiểu hoặc đã hết hàng, cần chuyển lô
+            return daysUntilExpiry < MinimumDaysBeforeSwitchingBatch || currentStockIn.RemainQuantity <= 0;
+        }
+    }
+
+    /// <summary>
+    /// Lấy lô thuốc hiện có cuối cùng (bao gồm cả lô đã hết hạn hoặc sắp hết hạn)
+    /// để hiển thị và cảnh báo người dùng
+    /// </summary>
+    public StockIn LastAvailableStockIn
+    {
+        get
+        {
+            if (StockIns == null || !StockIns.Any())
+                return null;
+
+            // Lấy tất cả các lô còn số lượng, sắp xếp theo FIFO
+            var availableStockIns = StockIns
+                .Where(si => si.RemainQuantity > 0)
+                .OrderBy(si => si.ImportDate)
+                .ToList();
+
+            // Trả về lô có số lượng còn lại theo FIFO
+            var fifoStock = availableStockIns.FirstOrDefault();
+
+            // Nếu không có lô nào theo FIFO, trả về lô cuối cùng được nhập vào
+            if (fifoStock == null)
+            {
+                return StockIns.OrderByDescending(si => si.ImportDate).FirstOrDefault();
+            }
+
+            return fifoStock;
+        }
+    }
+
+    /// <summary>
+    /// Lô thuốc sẽ được sử dụng để bán hàng
+    /// Ưu tiên lô được đánh dấu là IsSelling=true, nếu không có thì sử dụng logic FIFO
+    /// </summary>
+    public StockIn SellingStockIn
+    {
+        get
+        {
+            if (StockIns == null || !StockIns.Any())
+                return null;
+
+            // Ưu tiên sử dụng lô được đánh dấu IsSelling
+            var sellingStockIn = StockIns
+                .FirstOrDefault(si => si.IsSelling && si.RemainQuantity > 0);
+
+            if (sellingStockIn != null)
+                return sellingStockIn;
+
+            // Nếu không có lô nào được đánh dấu hoặc lô được đánh dấu đã hết hàng, 
+            // sử dụng logic FIFO mặc định
+            return ActiveStockIn;
+        }
+    }
+
+    /// <summary>
+    /// Bộ nhớ đệm cho tính toán lô hàng còn lại
     /// </summary>
     public List<StockInWithRemaining> _availableStockInsCache;
 
     private bool _isCalculatingStockIns = false;
 
     /// <summary>
-    /// Gets the currently active StockIn according to FIFO principles
-    /// (oldest non-expired batch with remaining quantity)
+    /// Lấy lô thuốc đang hoạt động theo nguyên tắc FIFO
+    /// (lô cũ nhất chưa hết hạn có số lượng còn lại)
     /// </summary>
     public StockIn ActiveStockIn
     {
@@ -133,19 +356,19 @@ public partial class Medicine : BaseViewModel
             if (StockIns == null || !StockIns.Any())
                 return null;
 
-            // Get available stock entries with remaining quantity, in FIFO order
+            // Lấy các lô có số lượng còn lại, sắp xếp theo ngày nhập (FIFO)
             var availableStockIns = StockIns
                 .Where(si => si.RemainQuantity > 0)
                 .OrderBy(si => si.ImportDate)
                 .ToList();
 
-            // Return the oldest batch that has remaining quantity
+            // Trả về lô cũ nhất có số lượng còn lại
             return availableStockIns.FirstOrDefault();
         }
     }
 
     /// <summary>
-    /// Gets the currently active and non-expired StockIn according to FIFO principles
+    /// Lấy lô thuốc đang hoạt động và chưa hết hạn theo nguyên tắc FIFO
     /// </summary>
     public StockIn ActiveNonExpiredStockIn
     {
@@ -157,29 +380,29 @@ public partial class Medicine : BaseViewModel
             var today = DateOnly.FromDateTime(DateTime.Today);
             var minimumExpiryDate = today.AddDays(MinimumDaysBeforeExpiry);
 
-            // Get unexpired stock entries with remaining quantity, in FIFO order
+            // Lấy các lô chưa hết hạn có số lượng còn lại, sắp xếp theo ngày nhập (FIFO)
             var usableStockIns = StockIns
                 .Where(si => si.RemainQuantity > 0 &&
                         (!si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate))
                 .OrderBy(si => si.ImportDate)
                 .ToList();
 
-            // Return the oldest unexpired batch that has remaining quantity
+            // Trả về lô cũ nhất chưa hết hạn có số lượng còn lại
             return usableStockIns.FirstOrDefault();
         }
     }
 
     /// <summary>
-    /// Gets stock-ins with remaining quantity information
-    /// Uses StockIn.RemainQuantity which is maintained by the database
+    /// Lấy thông tin lô nhập kèm số lượng còn lại
+    /// Sử dụng StockIn.RemainQuantity được duy trì bởi cơ sở dữ liệu
     /// </summary>
     public IEnumerable<StockInWithRemaining> GetStockInsWithRemaining()
     {
-        // Return cache if available to prevent recursive calls
+        // Trả về bộ đệm nếu có sẵn để tránh gọi đệ quy
         if (_availableStockInsCache != null)
             return _availableStockInsCache;
 
-        // Guard against recursion
+        // Ngăn chặn đệ quy
         if (_isCalculatingStockIns)
             return Enumerable.Empty<StockInWithRemaining>();
 
@@ -190,17 +413,18 @@ public partial class Medicine : BaseViewModel
             if (StockIns == null || !StockIns.Any())
                 return Enumerable.Empty<StockInWithRemaining>();
 
-            // Create StockInWithRemaining objects directly from RemainQuantity values
+            // Tạo đối tượng StockInWithRemaining trực tiếp từ giá trị RemainQuantity
             var stockInsWithRemaining = StockIns
                 .OrderBy(si => si.ImportDate)
                 .Select(si => new StockInWithRemaining
                 {
                     StockIn = si,
-                    RemainingQuantity = si.RemainQuantity
+                    RemainingQuantity = si.RemainQuantity,
+                    IsCurrentSellingBatch = si.IsSelling
                 })
                 .ToList();
 
-            // Cache the result
+            // Lưu kết quả vào bộ đệm
             _availableStockInsCache = stockInsWithRemaining;
             return stockInsWithRemaining;
         }
@@ -220,17 +444,17 @@ public partial class Medicine : BaseViewModel
     /// </summary>
     public IEnumerable<StockInWithRemaining> GetDetailedStock()
     {
-        // Clear the cache to ensure we get fresh data
+        // Xóa bộ đệm để đảm bảo lấy dữ liệu mới
         _availableStockInsCache = null;
 
-        // Get all stock ins with remaining quantity
+        // Lấy tất cả lô có số lượng còn lại
         var allStockIns = GetStockInsWithRemaining();
 
-        // Filter by expiry date for valid entries only
+        // Lọc theo ngày hết hạn để chỉ lấy các mục còn hạn
         var today = DateOnly.FromDateTime(DateTime.Today);
         var minimumExpiryDate = today.AddDays(MinimumDaysBeforeExpiry);
 
-        // Return only items that aren't expired
+        // Chỉ trả về các mục chưa hết hạn
         return allStockIns.Where(s =>
             !s.StockIn.ExpiryDate.HasValue ||
             s.StockIn.ExpiryDate.Value >= minimumExpiryDate);
@@ -243,14 +467,14 @@ public partial class Medicine : BaseViewModel
     {
         get
         {
-            // First attempt: Use pre-calculated UsableQuantity from Stock table
+            // Ưu tiên sử dụng UsableQuantity từ bảng Stock
             var stockRecord = Stocks?.FirstOrDefault();
             if (stockRecord != null && stockRecord.UsableQuantity >= 0)
             {
                 return stockRecord.UsableQuantity;
             }
 
-            // Calculate directly using RemainQuantity and filtering by expiry date
+            // Tính trực tiếp sử dụng RemainQuantity và lọc theo ngày hết hạn
             var today = DateOnly.FromDateTime(DateTime.Today);
             var minimumExpiryDate = today.AddDays(MinimumDaysBeforeExpiry);
 
@@ -267,14 +491,14 @@ public partial class Medicine : BaseViewModel
     {
         get
         {
-            // First attempt: Use pre-calculated Quantity from Stock table
+            // Ưu tiên sử dụng Quantity từ bảng Stock
             var stockRecord = Stocks?.FirstOrDefault();
             if (stockRecord != null && stockRecord.Quantity >= 0)
             {
                 return stockRecord.Quantity;
             }
 
-            // Calculate directly from RemainQuantity values
+            // Tính trực tiếp từ giá trị RemainQuantity
             return StockIns?.Sum(si => si.RemainQuantity) ?? 0;
         }
     }
@@ -290,12 +514,13 @@ public partial class Medicine : BaseViewModel
     public StockIn CurrentStockIn => ActiveStockIn;
 
     /// <summary>
-    /// Class hỗ trợ lưu thông tin lô hàng còn lại
+    /// Lớp hỗ trợ lưu thông tin lô hàng còn lại
     /// </summary>
     public class StockInWithRemaining
     {
         public StockIn StockIn { get; set; }
         public int RemainingQuantity { get; set; }
+        public bool IsCurrentSellingBatch { get; set; }
 
         public decimal UnitPrice => StockIn.UnitPrice;
         public decimal? SellPrice => StockIn.SellPrice;
@@ -311,6 +536,20 @@ public partial class Medicine : BaseViewModel
                 var today = DateOnly.FromDateTime(DateTime.Today);
                 return StockIn.ExpiryDate.Value > today &&
                        StockIn.ExpiryDate.Value <= today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+            }
+        }
+
+        public string StatusDescription
+        {
+            get
+            {
+                if (IsCurrentSellingBatch)
+                    return "Đang bán";
+                if (IsExpired)
+                    return "Hết hạn";
+                if (IsNearExpiry)
+                    return "Sắp hết hạn";
+                return "Còn hạn";
             }
         }
     }

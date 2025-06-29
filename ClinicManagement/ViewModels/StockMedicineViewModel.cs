@@ -15,15 +15,43 @@ namespace ClinicManagement.ViewModels
 {
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
     {
+     public class StockViewModel
+{
+    public Medicine Medicine { get; set; }
+    public string Status { get; set; }
+    public string StatusColor { get; set; }
+    public string StatusMessage { get; set; }
+
+    // Thuộc tính bổ sung để hỗ trợ UI
+    public bool ShowLastBatchExpiryWarning => 
+        Medicine?.IsLastestStockIn == true && Medicine?.HasNearExpiryStock == true;
+
+    public bool ShowLastBatchQuantityWarning => 
+        Medicine?.IsLastestStockIn == true && 
+        (Medicine?.TotalPhysicalStockQuantity ?? 0) <= 10; // Giả sử 10 là ngưỡng tồn kho thấp
+}
 
         private bool IsLoading;
         public string Error => null;
+
 
         private HashSet<string> _touchedFields = new HashSet<string>();
         private bool _isValidating = false; // Flag to control when to validate
 
         #region Properties
         #region Initial Data
+        // Thêm thuộc tính mới để hiển thị trạng thái lô
+        private ObservableCollection<StockViewModel> _stockViewModels;
+        public ObservableCollection<StockViewModel> StockViewModels
+        {
+            get => _stockViewModels;
+            set
+            {
+                _stockViewModels = value;
+                OnPropertyChanged();
+            }
+        }
+
         private ObservableCollection<Stock> _ListMedicine;
         public ObservableCollection<Stock> ListMedicine
         {
@@ -3022,8 +3050,8 @@ namespace ClinicManagement.ViewModels
             StockinSelectedCategory = medicine.Category;
             StockinSelectedUnit = medicine.Unit;
 
-            // Get the active StockIn following FIFO principles
-            var activeStockIn = medicine.ActiveStockIn;
+            // Get the selling StockIn following our new logic
+            var sellingStockIn = medicine.SellingStockIn;
 
             // For new stock entries, use most recent stock entry as defaults
             var latestStockIn = medicine.StockIns?
@@ -3052,31 +3080,41 @@ namespace ClinicManagement.ViewModels
                 ImportDate = DateTime.Now;
             }
 
-            // Expiry date - try to get from active StockIn (FIFO) if exists
-            if (activeStockIn?.ExpiryDate.HasValue == true)
+            // Expiry date - try to get from selling StockIn if exists
+            if (sellingStockIn?.ExpiryDate.HasValue == true)
             {
                 try
                 {
                     StockinExpiryDate = new DateTime(
-                        activeStockIn.ExpiryDate.Value.Year,
-                        activeStockIn.ExpiryDate.Value.Month,
-                        activeStockIn.ExpiryDate.Value.Day);
+                        sellingStockIn.ExpiryDate.Value.Year,
+                        sellingStockIn.ExpiryDate.Value.Month,
+                        sellingStockIn.ExpiryDate.Value.Day);
 
-                    // Show warning if the active batch is nearing expiry
+                    // Show specific warnings based on stock status
                     var today = DateOnly.FromDateTime(DateTime.Today);
-                    if (activeStockIn.ExpiryDate.Value <= today)
+
+                    if (medicine.IsLastestStockIn && medicine.HasNearExpiryStock)
                     {
                         MessageBoxService.ShowWarning(
-                            $"Lô thuốc {medicine.Name} hiện đang sử dụng đã hết hạn!",
-                            "Cảnh báo hết hạn"
+                            $"Thuốc {medicine.Name} đang sử dụng lô cuối cùng và sẽ hết hạn trong " +
+                            $"{(sellingStockIn.ExpiryDate.Value.DayNumber - today.DayNumber)} ngày. " +
+                            $"Cần nhập thêm hàng ngay!",
+                            "Cảnh báo tồn kho và hạn sử dụng"
                         );
                     }
-                    else if (activeStockIn.ExpiryDate.Value <= today.AddDays(Medicine.MinimumDaysBeforeExpiry))
+                    else if (medicine.IsLastestStockIn)
                     {
-                        var daysUntilExpiry = activeStockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
                         MessageBoxService.ShowWarning(
-                            $"Lô thuốc {medicine.Name} hiện đang sử dụng sẽ hết hạn trong {daysUntilExpiry} ngày.",
-                            "Cảnh báo hết hạn"
+                            $"Thuốc {medicine.Name} đang sử dụng lô cuối cùng. Cần nhập thêm hàng.",
+                            "Cảnh báo tồn kho"
+                        );
+                    }
+                    else if (medicine.HasNearExpiryStock)
+                    {
+                        MessageBoxService.ShowWarning(
+                            $"Thuốc {medicine.Name} có lô sắp hết hạn. Hệ thống sẽ tự động chuyển sang lô mới " +
+                            $"khi còn {Medicine.MinimumDaysBeforeSwitchingBatch} ngày hoặc ít hơn.",
+                            "Cảnh báo hạn sử dụng"
                         );
                     }
                 }
@@ -3093,14 +3131,15 @@ namespace ClinicManagement.ViewModels
             }
 
             // Show low stock warning if the active batch is running low
-            if (activeStockIn != null && activeStockIn.RemainQuantity <= 10)
+            if (sellingStockIn != null && sellingStockIn.RemainQuantity <= 10)
             {
                 MessageBoxService.ShowWarning(
-                    $"Lô thuốc {medicine.Name} hiện đang sử dụng chỉ còn {activeStockIn.RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}.",
+                    $"Thuốc {medicine.Name} đang sử dụng chỉ còn {sellingStockIn.RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}.",
                     "Cảnh báo số lượng thấp"
                 );
             }
         }
+
 
 
 
@@ -3160,6 +3199,7 @@ namespace ClinicManagement.ViewModels
                 // Initialize stock medicine list and cache
                 _allStockMedicine = new ObservableCollection<Stock>(ListMedicine);
                 ListStockMedicine = new ObservableCollection<Stock>(ListMedicine);
+                UpdateStockStatus();
             }
             catch (Exception ex)
             {
@@ -3212,6 +3252,48 @@ namespace ClinicManagement.ViewModels
             // Refresh command can-execute state
             CommandManager.InvalidateRequerySuggested();
         }
+
+        private void UpdateStockStatus()
+        {
+            var stockViewModels = new ObservableCollection<StockViewModel>();
+
+            foreach (var stock in ListStockMedicine)
+            {
+                var medicine = stock.Medicine;
+                var statusViewModel = new StockViewModel { Medicine = medicine };
+
+                // Xác định trạng thái
+                if (medicine.HasExpiredStock)
+                {
+                    statusViewModel.Status = "Hết hạn";
+                    statusViewModel.StatusColor = "#E53935"; // Red
+                    statusViewModel.StatusMessage = "Có lô thuốc đã hết hạn nhưng vẫn còn hàng";
+                }
+                else if (medicine.HasNearExpiryStock)
+                {
+                    statusViewModel.Status = "Sắp hết hạn";
+                    statusViewModel.StatusColor = "#FFC107"; // Amber
+                    statusViewModel.StatusMessage = $"Có lô thuốc sẽ hết hạn trong {Medicine.MinimumDaysBeforeExpiry} ngày tới";
+                }
+                else if (medicine.IsLastestStockIn)
+                {
+                    statusViewModel.Status = "Lô cuối";
+                    statusViewModel.StatusColor = "#2196F3"; // Blue
+                    statusViewModel.StatusMessage = "Đang sử dụng lô cuối cùng, cần nhập thêm hàng";
+                }
+                else
+                {
+                    statusViewModel.Status = "Bình thường";
+                    statusViewModel.StatusColor = "#4CAF50"; // Green
+                    statusViewModel.StatusMessage = "Thuốc đang ở trạng thái bình thường";
+                }
+
+                stockViewModels.Add(statusViewModel);
+            }
+
+            StockViewModels = stockViewModels;
+        }
+
 
         #endregion
 

@@ -51,6 +51,10 @@ namespace ClinicManagement.Configurations
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
+            builder.Property(e => e.IsSelling)
+                .HasColumnName("DangBan")
+                .HasDefaultValue(false);
+
             builder.Property(e => e.ExpiryDate)
                .HasColumnName("HanSuDung")
             

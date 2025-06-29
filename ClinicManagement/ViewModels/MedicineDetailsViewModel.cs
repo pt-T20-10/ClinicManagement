@@ -393,6 +393,7 @@ namespace ClinicManagement.ViewModels
         public ICommand CloseCommand { get; set; }
         public ICommand SaveChangesCommand { get; set; }
         public ICommand RefreshDataCommand { get; set; }
+        public ICommand SetAsSellingBatchCommand { get; set; }
         // Commands for editing stock entries
         public ICommand EditStockEntryCommand { get; set; }
         public ICommand SaveStockEntryCommand { get; set; }
@@ -441,6 +442,10 @@ namespace ClinicManagement.ViewModels
             CancelEditStockEntryCommand = new RelayCommand<object>(
                 parameter => CancelEditStockEntry(),
                 parameter => IsEditingStockEntry
+            );
+            SetAsSellingBatchCommand = new RelayCommand<Medicine.StockInWithRemaining>(
+                parameter => SetAsSellingBatch(parameter),
+                parameter => parameter != null && parameter.RemainingQuantity > 0
             );
         }
         #endregion
@@ -509,11 +514,12 @@ namespace ClinicManagement.ViewModels
 
                         foreach (var si in stockIns)
                         {
-                            // Create a new StockInWithRemaining instance for each StockIn
+                            // Create a new StockInWithRemaining instance for each StockIn with selling status
                             var stockEntry = new Medicine.StockInWithRemaining
                             {
                                 StockIn = si,
-                                RemainingQuantity = si.RemainQuantity
+                                RemainingQuantity = si.RemainQuantity,
+                                IsCurrentSellingBatch = si.IsSelling
                             };
                             allStockEntries.Add(stockEntry);
                         }
@@ -553,6 +559,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+
         /// <summary>
         /// Refresh data from database without causing loops
         /// </summary>
@@ -586,7 +593,8 @@ namespace ClinicManagement.ViewModels
                         var stockEntry = new Medicine.StockInWithRemaining
                         {
                             StockIn = si,
-                            RemainingQuantity = si.RemainQuantity
+                            RemainingQuantity = si.RemainQuantity,
+                            IsCurrentSellingBatch = si.IsSelling
                         };
                         allStockEntries.Add(stockEntry);
                     }
@@ -620,6 +628,7 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi tải lại dữ liệu: {ex.Message}", "Lỗi");
             }
         }
+
 
         /// <summary>
         /// Update Medicine properties without triggering setter
@@ -959,6 +968,71 @@ namespace ClinicManagement.ViewModels
         private void CancelEditStockEntry()
         {
             IsEditingStockEntry = false;
+        }
+
+        // Phương thức để đặt lô được chọn làm lô đang bán
+        private void SetAsSellingBatch(Medicine.StockInWithRemaining stockEntry)
+        {
+            if (stockEntry == null) return;
+
+            try
+            {
+                var context = DataProvider.Instance.Context;
+
+                // Reset tất cả các lô thuốc của medicine này về false
+                var allBatches = context.StockIns
+                    .Where(si => si.MedicineId == Medicine.MedicineId)
+                    .ToList();
+
+                foreach (var batch in allBatches)
+                {
+                    batch.IsSelling = false;
+                }
+
+                // Đặt lô được chọn thành lô đang bán
+                var stockInToUpdate = context.StockIns.Find(stockEntry.StockIn.StockInId);
+                if (stockInToUpdate != null)
+                {
+                    stockInToUpdate.IsSelling = true;
+
+                    // Cập nhật trạng thái trong UI trước khi lưu database
+                    foreach (var item in DetailedStockList)
+                    {
+                        item.IsCurrentSellingBatch = (item.StockIn.StockInId == stockEntry.StockIn.StockInId);
+                    }
+
+                    // Kiểm tra nếu lô này gần hết hạn hoặc đã hết hạn
+                    if (stockEntry.IsExpired)
+                    {
+                        MessageBoxService.ShowWarning(
+                            "Bạn đang chọn một lô thuốc đã hết hạn làm lô đang bán.\n" +
+                            "Việc này có thể ảnh hưởng đến an toàn thuốc.",
+                            "Cảnh báo: Lô hết hạn"
+                        );
+                    }
+                    else if (stockEntry.IsNearExpiry)
+                    {
+                        MessageBoxService.ShowWarning(
+                            "Bạn đang chọn một lô thuốc sắp hết hạn làm lô đang bán.\n" +
+                            $"Lô thuốc này sẽ hết hạn vào ngày {stockEntry.ExpiryDate:dd/MM/yyyy}.",
+                            "Cảnh báo: Lô gần hết hạn"
+                        );
+                    }
+
+                    context.SaveChanges();
+                    MessageBoxService.ShowSuccess(
+                        $"Đã đặt lô thuốc (mã: {stockInToUpdate.StockInId}) làm lô đang bán.",
+                        "Thành công"
+                    );
+
+                    // Cập nhật lại thông tin hiển thị
+                    RefreshMedicineData();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi cập nhật lô thuốc đang bán: {ex.Message}", "Lỗi");
+            }
         }
 
         // Property để lưu StockEntry hiện tại

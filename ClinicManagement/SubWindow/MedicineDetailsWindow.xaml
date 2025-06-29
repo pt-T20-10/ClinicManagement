@@ -238,91 +238,94 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto">
                     <DataGrid ItemsSource="{Binding DetailedStockList}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              SelectedItem="{Binding SelectedStockEntry, Mode=TwoWay}"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              CanUserReorderColumns="True"
-                              CanUserResizeColumns="True"
-                              CanUserSortColumns="True"
-                              materialDesign:DataGridAssist.CellPadding="13 8 8 8"
-                              materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+          AutoGenerateColumns="False"
+          IsReadOnly="True"
+          SelectedItem="{Binding SelectedStockEntry, Mode=TwoWay}"
+          CanUserAddRows="False"
+          CanUserDeleteRows="False"
+          CanUserReorderColumns="True"
+          CanUserResizeColumns="True"
+          CanUserSortColumns="True">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <!-- Cập nhật trigger cho lô đang được bán -->
+                                    <DataTrigger Binding="{Binding IsCurrentSellingBatch}" Value="True">
+                                        <Setter Property="Background" Value="#B6F500" />
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                    </DataTrigger>
+                                    <!-- Lô sắp hết hạn -->
+                                    <DataTrigger Binding="{Binding IsNearExpiry}" Value="True">
+                                        <Setter Property="Background" Value="#FFF9C4" />
+                                    </DataTrigger>
+                                    <!-- Lô đã hết hạn -->
+                                    <DataTrigger Binding="{Binding IsExpired}" Value="True">
+                                        <Setter Property="Background" Value="#FFCDD2" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
+
                         <DataGrid.ContextMenu>
                             <ContextMenu>
+                                <!-- Menu item để chỉnh sửa thông tin lô -->
                                 <MenuItem Header="Chỉnh sửa lô" 
-                                         Command="{Binding EditStockEntryCommand}" 
-                                         CommandParameter="{Binding SelectedStockEntry}"/>
+                     Command="{Binding EditStockEntryCommand}" 
+                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
+
+                                <!-- Menu item để đặt làm lô đang bán -->
+                                <MenuItem Header="Đặt làm lô đang bán" 
+                     Command="{Binding SetAsSellingBatchCommand}" 
+                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
                             </ContextMenu>
                         </DataGrid.ContextMenu>
 
-                        <!-- Enhanced Visual Style -->
-                        <DataGrid.Resources>
-                            <Style TargetType="DataGridRow">
-                                <Setter Property="Height" Value="48"/>
-                                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#F0F8FF"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#E3F2FD"/>
-                                        <Setter Property="Foreground" Value="#1565C0"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                <Setter Property="Background" Value="#ECEFF1"/>
-                                <Setter Property="Foreground" Value="#37474F"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="Height" Value="40"/>
-                                <Setter Property="Padding" Value="8,0"/>
-                            </Style>
-
-                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="TextWrapping" Value="Wrap"/>
-                                <Setter Property="Padding" Value="4,0"/>
-                            </Style>
-                        </DataGrid.Resources>
                         <DataGrid.Columns>
+                            <!-- Cột hiển thị trạng thái lô -->
+                            <DataGridTemplateColumn Header="Trạng thái" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,0">
+                                            <!-- Icon đánh dấu lô đang bán -->
+                                            <materialDesign:PackIcon 
+                                                Kind="ShoppingCart" 
+                                                Width="16" Height="16"
+                                                Foreground="#1976D2"
+                                                Visibility="{Binding IsCurrentSellingBatch, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                ToolTip="Đang sử dụng để bán"
+                                                Margin="0,0,6,0"/>
+
+                                            <!-- Hiển thị trạng thái dạng text -->
+                                            <TextBlock 
+                                                Text="{Binding StatusDescription}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+
+                            <!-- Các cột khác như đã có -->
                             <DataGridTextColumn Header="Ngày nhập" 
-                                               Binding="{Binding StockIn.ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Người nhập" 
-                                                Binding="{Binding StockIn.Staff.FullName}" 
-                                                ElementStyle="{StaticResource CenteredCellStyle}"
-                                                Width="160"/>
+                         Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
+                         Width="120"/>
                             <DataGridTextColumn Header="Số lượng nhập" 
-                                               Binding="{Binding StockIn.Quantity}" 
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Giá nhập" 
-                                               Binding="{Binding StockIn.UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Giá bán" 
-                                               Binding="{Binding StockIn.SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Nhà cung cấp" 
-                                               Binding="{Binding StockIn.Supplier.SupplierName}"
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="150"/>
+                                                Binding="{Binding StockIn.Quantity}" 
+                                                Width="120"/>
                             <DataGridTextColumn Header="Hạn sử dụng"
-                                               Binding="{Binding StockIn.ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="120"/>
-                            <DataGridTextColumn Header="Còn lại" 
-                                               Binding="{Binding RemainingQuantity}" 
-                                               ElementStyle="{StaticResource CenteredCellStyle}"
-                                               Width="100"/>
+                         Binding="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                         Width="120"/>
+                            <DataGridTextColumn Header="Số lượng còn lại" 
+                         Binding="{Binding RemainingQuantity}" 
+                         Width="100"/>
+                            <DataGridTextColumn Header="Giá nhập" 
+                         Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                         Width="130"/>
+                            <DataGridTextColumn Header="Giá bán" 
+                         Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
+                         Width="130"/>
                         </DataGrid.Columns>
                     </DataGrid>
+
                 </ScrollViewer>
             </Grid>
         </materialDesign:Card>

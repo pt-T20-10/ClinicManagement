@@ -378,7 +378,6 @@ namespace ClinicManagement.ViewModels
             try
             {
                 var today = DateOnly.FromDateTime(DateTime.Today);
-                var minimumExpiryDate = today.AddDays(8);
 
                 // Load medicines with eager loading of related entities
                 var medicines = DataProvider.Instance.Context.Medicines
@@ -407,13 +406,30 @@ namespace ClinicManagement.ViewModels
                     medicine.TempQuantity = 1;
                 }
 
-                // Filter out medicines that don't have valid expiry dates or stock
+                // Filter out medicines that don't have valid stock
                 var validMedicines = medicines.Where(m =>
-                    m.StockIns.Any(si =>
-                        si.RemainQuantity > 0 &&
-                        (!si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
-                    )
+                    m.StockIns.Any(si => si.RemainQuantity > 0)
                 ).ToList();
+
+                // Check and warn about medicines that may be near/past expiry but still have stock
+                foreach (var medicine in validMedicines)
+                {
+                    if (medicine.HasExpiredStock)
+                    {
+                        MessageBoxService.ShowWarning(
+                            $"Lưu ý: {medicine.Name} có lô thuốc đã hết hạn nhưng vẫn còn hàng.",
+                            "Cảnh báo thuốc hết hạn"
+                        );
+                    }
+                    else if (medicine.HasNearExpiryStock && medicine.IsLastestStockIn)
+                    {
+                        // Cảnh báo nếu lô cuối cùng sắp hết hạn
+                        MessageBoxService.ShowWarning(
+                            $"Lưu ý: {medicine.Name} đang sử dụng lô cuối cùng và sắp hết hạn. Cần nhập thêm hàng.",
+                            "Cảnh báo hạn sử dụng"
+                        );
+                    }
+                }
 
                 MedicineList = new ObservableCollection<Medicine>(validMedicines);
 
@@ -432,6 +448,7 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void LoadCategories()
         {
@@ -562,6 +579,18 @@ namespace ClinicManagement.ViewModels
                 {
                     MessageBoxService.ShowError("Không thể tải thông tin thuốc từ cơ sở dữ liệu.", "Lỗi");
                     return;
+                }
+
+                // Reset cache to ensure fresh calculations
+                refreshedMedicine._availableStockInsCache = null;
+
+                // Kiểm tra xem đây có phải là lô cuối cùng không
+                if (refreshedMedicine.IsLastestStockIn)
+                {
+                    MessageBoxService.ShowWarning(
+                        $"Lưu ý: {refreshedMedicine.Name} đang sử dụng lô cuối cùng. Vui lòng nhập thêm hàng sớm.",
+                        "Cảnh báo tồn kho thấp"
+                    );
                 }
 
                 // Reset cache to ensure fresh calculations
@@ -716,7 +745,7 @@ namespace ClinicManagement.ViewModels
                     context.SaveChanges(); // Lưu để có InvoiceId
                 }
 
-                // 3. Thêm chi tiết hóa đơn và xác định StockInId theo FIFO
+                // 3. Thêm chi tiết hóa đơn và xác định StockInId từ lô đang bán
                 foreach (var item in CartItems)
                 {
                     // Load medicine with fresh StockIn data including RemainQuantity
@@ -726,21 +755,21 @@ namespace ClinicManagement.ViewModels
 
                     if (medicine != null)
                     {
-                        // Get active StockIn following FIFO principles
-                        medicine._availableStockInsCache = null; // Reset cache
-                        var activeStockIn = medicine.ActiveStockIn;
+                        medicine._availableStockInsCache = null;
+                        var sellingStockIn = medicine.SellingStockIn;
 
                         var invoiceDetail = item.ToInvoiceDetail(invoice.InvoiceId);
 
-                        // Assign StockInId from the active StockIn (FIFO)
-                        if (activeStockIn != null)
+                        // Assign StockInId from the selling stock in
+                        if (sellingStockIn != null)
                         {
-                            invoiceDetail.StockInId = activeStockIn.StockInId;
+                            invoiceDetail.StockInId = sellingStockIn.StockInId;
                         }
 
                         context.InvoiceDetails.Add(invoiceDetail);
                     }
                 }
+
 
                 // 4. Lưu thay đổi
                 context.SaveChanges();
