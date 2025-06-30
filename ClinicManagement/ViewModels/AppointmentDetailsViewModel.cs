@@ -382,6 +382,7 @@ namespace ClinicManagement.ViewModels
                     // Refresh the appointment data
                     OriginalAppointment = DataProvider.Instance.Context.Appointments
                         .Include(a => a.Patient)
+               
                         .Include(a => a.Staff)
                         .Include(a => a.AppointmentType)
                         .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);

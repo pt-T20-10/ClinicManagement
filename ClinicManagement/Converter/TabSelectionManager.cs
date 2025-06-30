@@ -1,5 +1,7 @@
-﻿using System;
+﻿using ClinicManagement.ViewModels;
+using System;
 using System.Collections.Generic;
+using System.Windows;
 
 namespace ClinicManagement.Services
 {
@@ -23,21 +25,23 @@ namespace ClinicManagement.Services
             _tabReloadActions[tabName] = reloadAction;
         }
 
-        // Handle tab selection change
+        /// Trong TabSelectionManager hoặc MainViewModel
         public void TabSelected(string tabName)
         {
-            if (string.IsNullOrEmpty(tabName))
-                return;
-
-            // Store the last active tab
-            _lastActiveTab = tabName;
-
-            // Execute the reload action if registered
-            if (_tabReloadActions.TryGetValue(tabName, out var reloadAction))
+            // Kiểm tra người dùng đã đăng nhập chưa
+            var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+            if (mainVM == null || mainVM.CurrentAccount == null)
             {
-                reloadAction();
+                return; // Chưa đăng nhập, không tải dữ liệu
+            }
+
+            // Tiến hành tải dữ liệu cho tab được chọn
+            if (_tabReloadActions.TryGetValue(tabName, out Action reloadAction))
+            {
+                reloadAction?.Invoke();
             }
         }
+
 
         // Get the name of the last active tab
         public string GetLastActiveTab()

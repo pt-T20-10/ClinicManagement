@@ -316,7 +316,7 @@ namespace ClinicManagement.ViewModels
 
             SellMedicineCommand = new RelayCommand<Invoice>(
                 p => SellMedicine(p),// Execute method SellMedicine để bán thuốc cho hóa đơn với Parameter truyền vào là Invoice
-                p => p != null && p.InvoiceType == "Khám và bán thuốc");// // CanExecute kiểm tra xem hóa đơn có khác null và loại hóa đơn là "Khám và bán thuốc" hay không, nếu đúng thì lệnh này có thể thực hiện được
+                p => p != null && p.InvoiceType == "Khám và bán thuốc" || p.InvoiceType == "Khám bệnh" );// // CanExecute kiểm tra xem hóa đơn có khác null và loại hóa đơn là "Khám và bán thuốc" hay không, nếu đúng thì lệnh này có thể thực hiện được
 
             // Pagination commands
             FirstPageCommand = new RelayCommand<object>(

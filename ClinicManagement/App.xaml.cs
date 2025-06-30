@@ -15,8 +15,7 @@ namespace ClinicManagement
         {
             base.OnStartup(e);
             QuestPDF.Settings.License = LicenseType.Community;
-            // Initialize shared ViewModels
-            // Initialize all shared ViewModels
+            
             Current.Resources["MainVM"] = new MainViewModel();
             Current.Resources["LoginVM"] = new LoginViewModel();
             Current.Resources["PatientVM"] = new PatientViewModel();

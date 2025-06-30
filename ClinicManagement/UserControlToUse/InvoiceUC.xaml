@@ -262,8 +262,8 @@
                                                  ElementStyle="{StaticResource CenteredCellStyle}"
                                                         />
 
-                            <DataGridTextColumn Header="Kê thuốc" Binding="{Binding StaffPrescriber.FullName}" Width="175" ElementStyle="{StaticResource CenteredCellStyle}"/>
-                            <DataGridTextColumn Header="Xác nhận" Binding="{Binding StaffCashier.FullName}" Width="175" ElementStyle="{StaticResource CenteredCellStyle}"/>
+                            <DataGridTextColumn Header="Kê thuốc" Binding="{Binding StaffPrescriber.FullName}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
+                            <DataGridTextColumn Header="Xác nhận" Binding="{Binding StaffCashier.FullName}" Width="120" ElementStyle="{StaticResource CenteredCellStyle}"/>
                             <!-- TextColumn Ngày lập InvoiceDate 
                                     tringFormat='{}{0:dd/MM/yyyy} để lấy định dạng ngày tháng là dd/MM/yyyy, ngày tháng năm không lấy giờ 
                                     -->
@@ -286,7 +286,7 @@
                                     <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" Width="130">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
                                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                             </Style>
@@ -429,11 +429,11 @@
                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.ViewInvoiceDetailsCommand}" 
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                        Margin="0,0,8,0" Width="50" Height="32"
+                                                        Margin="0,0,8,0" Width="40" Height="32" Padding="2"
                                                         ToolTip="Xem chi tiết"
                                                         >
                                                         <StackPanel Orientation="Horizontal">
-                                                            <materialDesign:PackIcon Kind="FileDocumentOutline" Margin="0,0,4,0"/>
+                                                            <materialDesign:PackIcon Kind="FileDocumentOutline" />
 
                                                         </StackPanel>
                                                     </Button>
@@ -443,11 +443,11 @@
                                                         Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.PrintInvoiceCommand}" 
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                        Margin="0,0,8,0" Width="50" Height="32"
+                                                        Margin="0,0,8,0" Width="40" Height="32" Padding="2"
                                                         ToolTip="In">
 
                                                         <StackPanel Orientation="Horizontal">
-                                                            <materialDesign:PackIcon Kind="Printer" Margin="0,0,4,0"/>
+                                                            <materialDesign:PackIcon Kind="Printer" />
 
                                                         </StackPanel>
                                                     </Button>
@@ -463,7 +463,8 @@
                                                         ToolTip="Thanh toán"
                                                         Background="#4CAF50"
                                                         BorderBrush="#388E3C"
-                                                        Width="50" Height="32"
+                                                        Width="40" Height="32"
+                                                        Padding="2"
                                                         Margin="0,0,8,0">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
@@ -476,7 +477,7 @@
                                                             </Style>
                                                         </Button.Style>
                                                         <StackPanel Orientation="Horizontal">
-                                                            <materialDesign:PackIcon Kind="CreditCardOutline" Margin="0,0,4,0"/>
+                                                            <materialDesign:PackIcon Kind="CreditCardOutline" />
 
                                                         </StackPanel>
                                                     </Button>
@@ -494,8 +495,8 @@
                                                         ToolTip="Bán thuốc"    
                                                         Background="#3F51B5"
                                                         BorderBrush="#303F9F"
-                                                        
-                                                        Width="50" Height="32">
+                                                        Padding="2"
+                                                        Width="40" Height="32">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -511,8 +512,8 @@
                                                             </Style>
                                                         </Button.Style>
                                                         <StackPanel Orientation="Horizontal">
-                                                            <materialDesign:PackIcon Kind="Pill" Margin="0,0,4,0"/>
-                                                            <TextBlock Text="Bán thuốc"/>
+                                                            <materialDesign:PackIcon Kind="Pill"/>
+                                                            
                                                         </StackPanel>
                                                     </Button>
                                                 </StackPanel>

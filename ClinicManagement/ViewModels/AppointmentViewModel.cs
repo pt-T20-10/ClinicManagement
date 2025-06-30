@@ -343,8 +343,7 @@ namespace ClinicManagement.ViewModels
         public void LoadData()
         {
             _filterDate = DateTime.Today;
-            _patientSearch = string.Empty;
-            _patientPhone = string.Empty;
+           
             _appointmentNote = string.Empty;
             _searchText = string.Empty;
 

@@ -71,6 +71,10 @@ namespace ClinicManagement.ViewModels
             {
                 IsLogin = true;
 
+                // Khởi tạo ViewModelLocator
+                var viewModelLocator = Application.Current.Resources["ViewModelLocator"] as ViewModelLocator;
+                viewModelLocator?.Initialize();
+
                 // Set the current account in MainViewModel
                 var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
                 if (mainVM != null)
@@ -81,6 +85,8 @@ namespace ClinicManagement.ViewModels
                     // Now set the actual account
                     mainVM.CurrentAccount = account;
 
+                    // Hiển thị thông báo chào mừng sau khi đăng nhập
+                    MessageBoxService.ShowInfo($"Chào mừng {account.Username}!", "Đăng nhập thành công");
 
                     // Get the MainTabControl and ensure a valid tab is selected
                     var mainWindow = Application.Current.MainWindow;
@@ -101,6 +107,7 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowWarning("Tên đăng nhập hoặc mật khẩu không đúng!", "Thông báo");
             }
         }
+
 
     }
 }

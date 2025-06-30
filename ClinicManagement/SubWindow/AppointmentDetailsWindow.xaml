@@ -37,7 +37,7 @@
         <Grid Grid.Row="0" >
             <uc:ControlBarUC/>
         </Grid>
-        <materialDesign:ColorZone Mode="PrimaryDark" Padding="16" CornerRadius="3" Grid.Row="1" Margin="5,20,5,0">
+        <materialDesign:ColorZone Mode="PrimaryDark" Padding="16" CornerRadius="3" Grid.Row="1" Margin="10,20,10,0">
             <StackPanel Orientation="Horizontal">
                 <materialDesign:PackIcon Kind="CalendarClock" Width="32" Height="32" VerticalAlignment="Center" />
                 <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="22" FontWeight="Medium">
@@ -47,7 +47,7 @@
         </materialDesign:ColorZone>
 
         <!-- Content -->
-        <materialDesign:Card Margin="5 0 5 0" Grid.Row="2" Padding="33 10" >
+        <materialDesign:Card Margin="10" Grid.Row="2" Padding="33 10" >
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -186,7 +186,7 @@
                                 <ColumnDefinition Width="200"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Bác sĩ:" FontWeight="Medium"/>
-                            <TextBox Grid.Column="1"  Text="{Binding OriginalAppointment.Doctor.FullName}" TextWrapping="Wrap" Margin="70,-10,-70,10"/>
+                            <TextBlock Grid.Column="1"  Text="{Binding OriginalAppointment.Staff.FullName}" TextWrapping="Wrap" Margin="70,-10,-70,10"/>
                         </Grid>
 
                         <Grid Margin="0,5">
@@ -195,7 +195,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Chuyên khoa:" FontWeight="Medium"/>
-                            <TextBlock Grid.Column="1"   Text="{Binding OriginalAppointment.Doctor.Specialty.SpecialtyName}" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Column="1"   Text="{Binding OriginalAppointment.Staff.Specialty.SpecialtyName}" TextWrapping="Wrap"/>
                         </Grid>
 
                         <Grid Margin="0,5">
@@ -204,7 +204,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Số điện thoại:" FontWeight="Medium"/>
-                            <TextBlock Grid.Column="1" Text="{Binding OriginalAppointment.Doctor.Phone}" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Column="1" Text="{Binding OriginalAppointment.Staff.Phone}" TextWrapping="Wrap"/>
                         </Grid>
                     </StackPanel>
 

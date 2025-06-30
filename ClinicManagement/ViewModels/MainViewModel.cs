@@ -277,15 +277,20 @@ namespace ClinicManagement.ViewModels
                     // Reset current account và danh sách tab được phép
                     CurrentAccount = null;
                     AllowedTabs.Clear();
+
+                    // Reset ViewModelLocator để các ViewModel được tạo mới khi đăng nhập lại
+                    var viewModelLocator = Application.Current.Resources["ViewModelLocator"] as ViewModelLocator;
+                    viewModelLocator?.Reset();
                 }
             }
             catch (Exception ex)
             {
-               MessageBoxService.ShowError(
-                    $"Lỗi khi đăng xuất: {ex.Message}",
-                    "Lỗi");
+                MessageBoxService.ShowError(
+                     $"Lỗi khi đăng xuất: {ex.Message}",
+                     "Lỗi");
             }
         }
+
 
         // Updated to use boolean properties
         public void EnsureValidTabSelected(System.Windows.Controls.TabControl tabControl)
@@ -433,11 +438,11 @@ namespace ClinicManagement.ViewModels
             });
 
 
-            TabSelectionManager.Instance.RegisterTabReloadAction("AppointmentTab", () =>
-            {
-                var appointmentVM = Application.Current.Resources["AppointmentVM"] as AppointmentViewModel;
-                appointmentVM?.LoadData();
-            });
+            //TabSelectionManager.Instance.RegisterTabReloadAction("AppointmentTab", () =>
+            //{
+            //    var appointmentVM = Application.Current.Resources["AppointmentVM"] as AppointmentViewModel;
+            //    appointmentVM?.LoadData();
+            //});
 
             TabSelectionManager.Instance.RegisterTabReloadAction("StockTab", () =>
             {
