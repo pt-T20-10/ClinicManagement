@@ -85,9 +85,6 @@ namespace ClinicManagement.ViewModels
                     // Now set the actual account
                     mainVM.CurrentAccount = account;
 
-                    // Hiển thị thông báo chào mừng sau khi đăng nhập
-                    MessageBoxService.ShowInfo($"Chào mừng {account.Username}!", "Đăng nhập thành công");
-
                     // Get the MainTabControl and ensure a valid tab is selected
                     var mainWindow = Application.Current.MainWindow;
                     if (mainWindow != null)

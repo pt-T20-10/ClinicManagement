@@ -13,7 +13,8 @@
         AllowsTransparency="True"
         Background="Transparent"
         MinWidth="350"
-        MaxWidth="500">
+        MaxWidth="500"
+        KeyDown="Window_KeyDown">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -36,8 +37,7 @@
     <Border BorderThickness="1" 
             BorderBrush="#DDDDDD" 
             CornerRadius="8" 
-            Background="White"
-      >
+            Background="White">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -137,33 +137,41 @@
                 </Grid>
 
                 <!-- Button area -->
-                <UniformGrid Grid.Row="2" 
-                             Columns="2" 
-                             HorizontalAlignment="Right">
-
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
                     <!-- Cancel Button (Visible only for Question type) -->
                     <Button x:Name="CancelButton"
                             Content="Hủy" 
-                            Width="60" 
+                            Width="80" 
                             Height="30"
-                            Margin="5"
+                            Margin="0,0,5,0"
+                            Grid.Column="1"
                             Background="#F5F5F5"
                             BorderBrush="#CCCCCC"
                             Foreground="#333333"
                             BorderThickness="1"
                             Click="CancelButton_Click"
+                            IsCancel="True"
                             Visibility="{Binding ShowCancelButton, Converter={StaticResource BoolToVis}}"/>
-                    <!-- OK Button -->
-                    <Button Content="OK" 
+
+                    <!-- OK Button (Always at the rightmost position) -->
+                    <Button x:Name="OkButton"
+                            Content="OK" 
                             Width="100" 
                             Height="30"
-                            Margin="5"
+                            Margin="5,0,0,0"
+                            Grid.Column="2"
                             Background="#3F51B5"
                             Foreground="White"
                             BorderThickness="0"
-                            Click="OkButton_Click"/>
-                </UniformGrid>
+                            Click="OkButton_Click"
+                            IsDefault="True"/>
+                </Grid>
             </Grid>
         </Grid>
     </Border>

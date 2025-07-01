@@ -1,17 +1,16 @@
 ﻿using ClinicManagement.Models;
+using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Input;
-using ClosedXML.Excel;
-using Microsoft.Win32;
-using ClinicManagement.Services;
 using System.Windows.Controls;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using DocumentFormat.OpenXml.InkML;
+using System.Windows.Input;
 namespace ClinicManagement.ViewModels
 {
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
@@ -2407,62 +2406,104 @@ namespace ClinicManagement.ViewModels
             return true;
         }
         // Phương thức xuất Excel cập nhật để hỗ trợ cả hai chế độ xem
+        /// <summary>
+        /// Xuất dữ liệu tồn kho ra tập tin Excel
+        /// </summary>
+        /// <summary>
+        /// Xuất dữ liệu tồn kho ra tập tin Excel, với bảng dữ liệu bắt đầu từ cột B
+        /// </summary>
         private void ExportToExcel()
         {
             try
             {
+                // Tạo hộp thoại lưu tập tin
                 var saveFileDialog = new SaveFileDialog
                 {
                     Filter = "Excel files (*.xlsx)|*.xlsx",
                     DefaultExt = "xlsx",
                     Title = "Chọn vị trí lưu file Excel",
                     FileName = IsMonthlyView
-                        ? $"TonKho_Thang_{SelectedMonth:D2}_{SelectedYear}.xlsx"
-                        : $"TonKho_HienTai_{DateTime.Now:yyyyMMdd}.xlsx"
+                        ? $"TonKho_Thang_{SelectedMonth:D2}_{SelectedYear}.xlsx"  // Đặt tên file theo tháng/năm nếu đang xem theo tháng
+                        : $"TonKho_HienTai_{DateTime.Now:yyyyMMdd}.xlsx"  // Đặt tên file theo ngày hiện tại nếu xem tồn kho hiện tại
                 };
 
+                // Kiểm tra người dùng đã chọn nơi lưu file chưa
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Hiển thị dialog tiến trình
+                    // Kiểm tra xem file đã tồn tại và có đang được sử dụng không
+                    if (File.Exists(saveFileDialog.FileName))
+                    {
+                        try
+                        {
+                            // Thử mở file để kiểm tra xem nó có đang bị khóa không
+                            using (FileStream fs = File.Open(saveFileDialog.FileName, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                            {
+                                // File không bị khóa, có thể đóng luồng ngay
+                                fs.Close();
+                            }
+                        }
+                        catch (IOException)
+                        {
+                            // File đang bị khóa (đang được sử dụng bởi một tiến trình khác)
+                            MessageBoxService.ShowError(
+                                "File này đang được mở bởi một chương trình khác. Vui lòng đóng file hoặc chọn tên file khác.",
+                                "Lỗi"
+                            );
+                            return;
+                        }
+                    }
+
+                    // Hiển thị hộp thoại tiến trình xuất Excel
                     ProgressDialog progressDialog = new ProgressDialog();
 
+                    // Chạy quá trình xuất Excel trong một luồng riêng biệt để không làm đứng giao diện
                     Task.Run(() =>
                     {
                         try
                         {
+                            // Sử dụng thư viện ClosedXML để tạo tập tin Excel
                             using (var workbook = new XLWorkbook())
                             {
+                                // Tạo một worksheet mới có tên "Tồn kho"
                                 var worksheet = workbook.Worksheets.Add("Tồn kho");
 
-                                // Report progress: 5% - Created workbook
+                                // Báo cáo tiến trình: 5% - Đã tạo workbook
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
-                                // Add title (merged cells)
-                                worksheet.Cell(1, 1).Value = IsMonthlyView
+                                // Đặt vị trí bắt đầu cho bảng là cột B (index 2)
+                                int startColumn = 2;
+
+                                // Xác định số cột dựa trên chế độ xem
+                                int totalColumns = IsMonthlyView ? 6 : 8;
+
+                                // Thêm tiêu đề (ô hợp nhất), bắt đầu từ cột B
+                                worksheet.Cell(1, startColumn).Value = IsMonthlyView
                                     ? $"DANH SÁCH TỒN KHO THÁNG {SelectedMonth}/{SelectedYear}"
                                     : "DANH SÁCH TỒN KHO HIỆN TẠI";
 
-                                var titleRange = worksheet.Range(1, 1, 1, IsMonthlyView ? 8 : 9);
+                                // Định dạng tiêu đề: hợp nhất ô, đậm, cỡ chữ lớn, căn giữa
+                                var titleRange = worksheet.Range(1, startColumn, 1, startColumn + totalColumns - 1);
                                 titleRange.Merge();
                                 titleRange.Style.Font.Bold = true;
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
-                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
-                                var dateRange = worksheet.Range(2, 1, 2, IsMonthlyView ? 8 : 9);
+                                // Thêm ngày xuất báo cáo, bắt đầu từ cột B
+                                worksheet.Cell(2, startColumn).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, startColumn, 2, startColumn + totalColumns - 1);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Report progress: 10% - Added title
+                                // Báo cáo tiến trình: 10% - Đã thêm tiêu đề
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Add headers
-                                int headerRow = 4;
-                                int column = 1;
+                                // Thêm tiêu đề cột
+                                int headerRow = 4;  // Bắt đầu từ dòng 4
+                                int column = startColumn;
 
-                                if (IsMonthlyView)
+                                // Tiêu đề cột khác nhau tùy theo chế độ xem
+                                if (IsMonthlyView)  // Chế độ xem theo tháng
                                 {
                                     worksheet.Cell(headerRow, column++).Value = "Tên thuốc";
                                     worksheet.Cell(headerRow, column++).Value = "Loại";
@@ -2470,45 +2511,44 @@ namespace ClinicManagement.ViewModels
                                     worksheet.Cell(headerRow, column++).Value = "Tháng/năm";
                                     worksheet.Cell(headerRow, column++).Value = "Tồn kho tổng";
                                     worksheet.Cell(headerRow, column++).Value = "Sử dụng được";
-                                    worksheet.Cell(headerRow, column++).Value = "Đơn giá";
-                                    worksheet.Cell(headerRow, column++).Value = "Giá trị tồn";
                                 }
-                                else
+                                else  // Chế độ xem hiện tại
                                 {
                                     worksheet.Cell(headerRow, column++).Value = "Tên thuốc";
                                     worksheet.Cell(headerRow, column++).Value = "Loại";
                                     worksheet.Cell(headerRow, column++).Value = "Đơn vị tính";
                                     worksheet.Cell(headerRow, column++).Value = "Ngày nhập mới nhất";
-                                    worksheet.Cell(headerRow, column++).Value = "Đơn giá hiện tại";
                                     worksheet.Cell(headerRow, column++).Value = "Tồn kho tổng";
                                     worksheet.Cell(headerRow, column++).Value = "Sử dụng được";
-                                    worksheet.Cell(headerRow, column++).Value = "Lô mới nhất";
-                                    worksheet.Cell(headerRow, column++).Value = "Thành tiền";
+                                    worksheet.Cell(headerRow, column++).Value = "Chi tiết lô thuốc (giá tiền: số lượng sử dụng được)";
+                                    worksheet.Cell(headerRow, column++).Value = "Giá trị còn lại";
                                 }
 
-                                // Style header row
-                                var headerRange = worksheet.Range(headerRow, 1, headerRow, IsMonthlyView ? 8 : 9);
+                                // Định dạng hàng tiêu đề: in đậm, nền xám, căn giữa, viền
+                                var headerRange = worksheet.Range(headerRow, startColumn, headerRow, startColumn + totalColumns - 1);
                                 headerRange.Style.Font.Bold = true;
                                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
                                 headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                 headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                 headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
-                                // Report progress: 20% - Headers added
+                                // Báo cáo tiến trình: 20% - Đã thêm tiêu đề cột
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(20));
 
-                                // Add data
-                                int row = headerRow + 1;
+                                // Thêm dữ liệu
+                                int row = headerRow + 1;  // Bắt đầu từ dòng sau tiêu đề cột
                                 int totalItems = IsMonthlyView ? MonthlyStockList.Count : ListStockMedicine.Count;
                                 var dataStartRow = row;
 
-                                if (IsMonthlyView)
+                                // Điền dữ liệu tùy theo chế độ xem
+                                if (IsMonthlyView)  // Chế độ xem theo tháng
                                 {
                                     for (int i = 0; i < totalItems; i++)
                                     {
                                         var item = MonthlyStockList[i];
-                                        column = 1;
+                                        column = startColumn;  // Bắt đầu từ cột B
 
+                                        // Điền các thông tin từ dữ liệu MonthlyStock
                                         worksheet.Cell(row, column++).Value = item.Medicine?.Name ?? "";
                                         worksheet.Cell(row, column++).Value = item.Medicine?.Category?.CategoryName ?? "";
                                         worksheet.Cell(row, column++).Value = item.Medicine?.Unit?.UnitName ?? "";
@@ -2516,140 +2556,215 @@ namespace ClinicManagement.ViewModels
                                         worksheet.Cell(row, column++).Value = item.Quantity;
                                         worksheet.Cell(row, column++).Value = item.CanUsed;
 
-                                        decimal unitPrice = item.Medicine?.CurrentUnitPrice ?? 0;
-                                        worksheet.Cell(row, column++).Value = unitPrice;
-                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
-
-                                        decimal stockValue = item.Quantity * unitPrice;
-                                        worksheet.Cell(row, column++).Value = stockValue;
-                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
-
                                         row++;
 
-                                        // Update progress
+                                        // Cập nhật tiến trình
                                         int progressValue = 20 + (i * 60 / totalItems);
                                         Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
-                                        Thread.Sleep(5); // Slight delay for visual feedback
+                                        Thread.Sleep(5);  // Tạm dừng nhỏ để hiển thị tiến trình
                                     }
                                 }
-                                else
+                                else  // Chế độ xem tồn kho hiện tại
                                 {
                                     for (int i = 0; i < totalItems; i++)
                                     {
                                         var item = ListStockMedicine[i];
                                         var medicine = item.Medicine;
-                                        column = 1;
+                                        column = startColumn;  // Bắt đầu từ cột B
 
+                                        // Điền các thông tin từ dữ liệu Stock và Medicine
                                         worksheet.Cell(row, column++).Value = medicine?.Name ?? "";
                                         worksheet.Cell(row, column++).Value = medicine?.Category?.CategoryName ?? "";
                                         worksheet.Cell(row, column++).Value = medicine?.Unit?.UnitName ?? "";
 
+                                        // Định dạng ngày nhập mới nhất
                                         if (medicine?.LatestImportDate.HasValue == true)
                                             worksheet.Cell(row, column++).Value = medicine.LatestImportDate.Value.ToString("dd/MM/yyyy");
                                         else
                                             worksheet.Cell(row, column++).Value = "";
 
-                                        worksheet.Cell(row, column++).Value = medicine?.CurrentSellPrice ?? 0;
-                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
-
+                                        // Thêm thông tin tồn kho
                                         worksheet.Cell(row, column++).Value = item.Quantity;
                                         worksheet.Cell(row, column++).Value = medicine?.TotalStockQuantity ?? 0;
-                                     
 
+                                        // Thêm thông tin chi tiết lô thuốc
+                                        if (medicine != null)
+                                        {
+                                            // Lấy tất cả các lô của thuốc và sắp xếp theo ngày nhập (mới nhất trước)
+                                            var stockBatches = DataProvider.Instance.Context.StockIns
+                                                .Where(si => si.MedicineId == medicine.MedicineId && si.RemainQuantity > 0)
+                                                .OrderByDescending(si => si.ImportDate)
+                                                .Select(si => new { Price = si.UnitPrice, Quantity = si.RemainQuantity })
+                                                .ToList();
+
+                                            // Tạo chuỗi thông tin chi tiết
+                                            string batchDetails = string.Join(", ",
+                                                stockBatches.Select(b => $"{b.Price:#,##0}: {b.Quantity}"));
+
+                                            worksheet.Cell(row, column++).Value = batchDetails;
+                                        }
+                                        else
+                                        {
+                                            worksheet.Cell(row, column++).Value = "";
+                                        }
+
+                                        // Tính và định dạng giá trị tồn kho
                                         decimal totalValue = item.Quantity * (medicine?.CurrentUnitPrice ?? 0);
                                         worksheet.Cell(row, column++).Value = totalValue;
-                                        worksheet.Cell(row, column).Style.NumberFormat.Format = "#,##0";
+                                        worksheet.Cell(row, column - 1).Style.NumberFormat.Format = "#,##0";
 
                                         row++;
 
-                                        // Update progress
+                                        // Cập nhật tiến trình
                                         int progressValue = 20 + (i * 60 / totalItems);
                                         Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
-                                        Thread.Sleep(5); // Slight delay for visual feedback
+                                        Thread.Sleep(5);  // Tạm dừng nhỏ để hiển thị tiến trình
                                     }
                                 }
 
-                                // Report progress: 80% - Data added
+                                // Báo cáo tiến trình: 80% - Đã thêm dữ liệu
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
 
-                                // Apply borders to data
+                                // Thêm viền cho phần dữ liệu
                                 if (totalItems > 0)
                                 {
-                                    var dataRange = worksheet.Range(dataStartRow, 1, row - 1, IsMonthlyView ? 8 : 9);
+                                    var dataRange = worksheet.Range(dataStartRow, startColumn, row - 1, startColumn + totalColumns - 1);
                                     dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                     dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
                                 }
 
-                                // Add totals row
-                                int totalCol = IsMonthlyView ? 5 : 6;
-                                int valueCol = IsMonthlyView ? 8 : 9;
+                                // Thêm dòng tổng cộng
+                                row++;  // Tăng dòng để thêm dòng tổng
+                                worksheet.Cell(row, startColumn).Value = "Tổng cộng";
+                                worksheet.Cell(row, startColumn).Style.Font.Bold = true;
 
-                                row++;
-                                worksheet.Cell(row, 1).Value = "Tổng cộng";
-                                worksheet.Cell(row, 1).Style.Font.Bold = true;
+                                // Xác định cột tổng số lượng dựa vào chế độ xem
+                                int totalQtyCol = startColumn + 4;  // Cột "Tồn kho tổng" 
+                                int usableQtyCol = startColumn + 5; // Cột "Sử dụng được"
 
-                                // Tổng số lượng
-                                worksheet.Cell(row, totalCol).Value = IsMonthlyView ? MonthlyTotalQuantity : CurrentTotalQuantity;
-                                worksheet.Cell(row, totalCol).Style.Font.Bold = true;
+                                // Thêm tổng số lượng tồn kho
+                                worksheet.Cell(row, totalQtyCol).Value = IsMonthlyView ? MonthlyTotalQuantity : CurrentTotalQuantity;
+                                worksheet.Cell(row, totalQtyCol).Style.Font.Bold = true;
 
-                                // Tổng giá trị
-                                worksheet.Cell(row, valueCol).Value = IsMonthlyView ? MonthlyTotalValue : CurrentTotalValue;
-                                worksheet.Cell(row, valueCol).Style.Font.Bold = true;
-                                worksheet.Cell(row, valueCol).Style.NumberFormat.Format = "#,##0";
+                                // Thêm tổng số lượng sử dụng được
+                                int totalUsableQty = IsMonthlyView
+                                    ? MonthlyStockList.Sum(ms => ms.CanUsed)
+                                    : ListStockMedicine.Sum(s => s.Medicine?.TotalStockQuantity ?? 0);
 
-                                // Auto-fit columns
+                                worksheet.Cell(row, usableQtyCol).Value = totalUsableQty;
+                                worksheet.Cell(row, usableQtyCol).Style.Font.Bold = true;
+
+                                // Chỉ thêm giá trị tổng cho chế độ xem hiện tại
+                                if (!IsMonthlyView)
+                                {
+                                    int valCol = startColumn + 7; // Cột "Thành tiền" 
+
+                                    // Thêm nhãn "Tổng giá trị còn lại" trước giá trị tổng
+                                    worksheet.Cell(row, valCol - 1).Value = "Tổng giá trị còn lại:";
+                                    worksheet.Cell(row, valCol - 1).Style.Font.Bold = true;
+                                    worksheet.Cell(row, valCol - 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                                    worksheet.Cell(row, valCol).Value = CurrentTotalValue;
+                                    worksheet.Cell(row, valCol).Style.Font.Bold = true;
+                                    worksheet.Cell(row, valCol).Style.NumberFormat.Format = "#,##0";
+                                }
+
+                                // Tự động điều chỉnh độ rộng cột cho phù hợp với nội dung
                                 worksheet.Columns().AdjustToContents();
 
-                                // Report progress: 90% - Formatting complete
+                                // Đặt độ rộng cho cột A để tạo khoảng trống bên trái
+                                worksheet.Column(1).Width = 3;
+
+                                // Đặt độ rộng tối đa cho cột Chi tiết lô thuốc (chỉ khi ở chế độ xem hiện tại)
+                                if (!IsMonthlyView)
+                                {
+                                    int batchDetailsCol = startColumn + 6;
+                                    if (worksheet.Column(batchDetailsCol).Width > 80)
+                                        worksheet.Column(batchDetailsCol).Width = 80;
+                                }
+
+                                // Báo cáo tiến trình: 90% - Hoàn thành định dạng
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
 
-                                // Save the workbook
-                                workbook.SaveAs(saveFileDialog.FileName);
-
-                                // Report progress: 100% - File saved
-                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                                Thread.Sleep(200); // Slight delay for visual feedback
-
-                                // Close progress dialog and show success message
-                                Application.Current.Dispatcher.Invoke(() =>
+                                try
                                 {
-                                    progressDialog.Close();
-                                    MessageBoxService.ShowSuccess(
-                                        $"Đã xuất danh sách tồn kho thành công!\nĐường dẫn: {saveFileDialog.FileName}",
-                                        "Thông báo"
-                                         
-                                          );
-                                });
+                                    // Lưu tập tin Excel
+                                    workbook.SaveAs(saveFileDialog.FileName);
+
+                                    // Báo cáo tiến trình: 100% - Đã lưu tập tin
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                    Thread.Sleep(200);  // Tạm dừng nhỏ để hiển thị tiến trình hoàn thành
+
+                                    // Đóng hộp thoại tiến trình và hiển thị thông báo thành công
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        progressDialog.Close();
+                                        MessageBoxService.ShowSuccess(
+                                            $"Đã xuất danh sách tồn kho thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                            "Thông báo"
+                                        );
+                                        // Open the Excel file with the default application
+                                        if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                        {
+                                            try
+                                            {
+                                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                                {
+                                                    FileName = saveFileDialog.FileName,
+                                                    UseShellExecute = true
+                                                });
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                            }
+                                        }
+                                    });
+                                }
+                                catch (IOException ex)
+                                {
+                                    // Xử lý lỗi truy cập file khi lưu
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        progressDialog.Close();
+                                        MessageBoxService.ShowError(
+                                            $"Không thể lưu file Excel. File đang được sử dụng bởi chương trình khác: {ex.Message}",
+                                            "Lỗi truy cập file"
+                                        );
+                                    });
+                                }
                             }
                         }
                         catch (Exception ex)
                         {
+                            // Xử lý lỗi trong quá trình xuất Excel
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
                                 MessageBoxService.ShowError(
                                     $"Lỗi khi xuất Excel: {ex.Message}",
                                     "Lỗi"
-                                     
-                                     );
+                                );
                             });
                         }
                     });
 
-                    // Show progress dialog
+                    // Hiển thị hộp thoại tiến trình - sẽ chặn cho đến khi hộp thoại được đóng
                     progressDialog.ShowDialog();
                 }
             }
             catch (Exception ex)
             {
+                // Xử lý lỗi chung
                 MessageBoxService.ShowError(
                     $"Lỗi khi xuất Excel: {ex.Message}",
                     "Lỗi"
-                     
-                     );
+                );
             }
         }
-     
+
+
+
         // Method to check if there's already a stock summary for current month
         private bool HasCurrentMonthStock(ClinicDbContext context = null)
         {

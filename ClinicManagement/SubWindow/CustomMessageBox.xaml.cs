@@ -75,7 +75,23 @@ namespace ClinicManagement.SubWindow
                 storyboard.Begin(this);
             };
         }
-
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                // Escape key triggers cancel/close
+                DialogResult = false;
+                Close();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Enter)
+            {
+                // Enter key triggers OK button
+                DialogResult = true;
+                Close();
+                e.Handled = true;
+            }
+        }
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
