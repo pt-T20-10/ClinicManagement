@@ -17,6 +17,8 @@ namespace ClinicManagement.ViewModels
     public class StatisticsViewModel : BaseViewModel
     {
         #region Basic Properties
+
+        public Func<double, string> CurrencyFormatter { get; set; }
         private bool _isLoading;
         public bool IsLoading
         {
@@ -577,15 +579,20 @@ namespace ClinicManagement.ViewModels
         public StatisticsViewModel()
         {
             InitializeCommands();
-            YFormatter = value => value.ToString("N0");
+
+            // Định dạng tiền tệ với 0 chữ số thập phân và đơn vị VNĐ
+            YFormatter = value => string.Format("{0:N0} VNĐ", value);
+            CurrencyFormatter = value => string.Format("{0:N0} VNĐ", value);
+
             InitializeCharts();
             LoadDashBoard();
-            // Load statistics after a short delay to ensure UI is rendered
+
             Application.Current.Dispatcher.BeginInvoke(
                 System.Windows.Threading.DispatcherPriority.Background,
                 new Action(() => FilterByMonth())
             );
         }
+
 
         private void InitializeCommands()
         {
@@ -624,46 +631,49 @@ namespace ClinicManagement.ViewModels
         {
             // Initialize chart series collections
             RevenueByMonthSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Thực tế",
-                    Values = new ChartValues<double>(new double[12]),
-                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243))
-                },
-                new LineSeries
-                {
-                    Title = "Mục tiêu",
-                    Values = new ChartValues<double>(new double[12]),
-                    PointGeometry = DefaultGeometries.Circle,
-                    StrokeThickness = 3,
-                    Stroke = new SolidColorBrush(Color.FromRgb(255, 82, 82))
-                }
-            };
+    {
+        new ColumnSeries
+        {
+            Title = "Thực tế",
+            Values = new ChartValues<double>(new double[12]),
+            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        },
+        new LineSeries
+        {
+            Title = "Mục tiêu",
+            Values = new ChartValues<double>(new double[12]),
+            PointGeometry = DefaultGeometries.Circle,
+            StrokeThickness = 3,
+            Stroke = new SolidColorBrush(Color.FromRgb(255, 82, 82)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        }
+    };
 
             RevenueByHourSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu theo giờ",
-                    Values = new ChartValues<double>(new double[24]),
-                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0))
-                }
-            };
+    {
+        new ColumnSeries
+        {
+            Title = "Doanh thu theo giờ",
+            Values = new ChartValues<double>(new double[24]),
+            Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        }
+    };
 
             // Initialize appointment status labels
             AppointmentStatusLabels = new[] { "Đang chờ", "Đã khám", "Đã hủy", "Đang khám" };
 
             // Initialize appointment status series
             AppointmentStatusSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Số lượng lịch hẹn",
-                    Values = new ChartValues<double>(new double[AppointmentStatusLabels.Length]),
-                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
-                }
-            };
+    {
+        new ColumnSeries
+        {
+            Title = "Số lượng lịch hẹn",
+            Values = new ChartValues<double>(new double[AppointmentStatusLabels.Length]),
+            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+        }
+    };
 
             // Initialize empty collections
             ProductDistributionSeries = new SeriesCollection();
@@ -672,14 +682,12 @@ namespace ClinicManagement.ViewModels
             InvoiceTypeSeries = new SeriesCollection();
             PatientTypeSeries = new SeriesCollection();
             ServiceRevenueSeries = new SeriesCollection();
-  
-
-           
             AppointmentPeakHoursSeries = new SeriesCollection();
             PatientsByStaffseries = new SeriesCollection();
             RevenueByCategorySeries = new SeriesCollection();
             CancellationRateSeries = new SeriesCollection();
         }
+
 
         public async void LoadStatisticsAsync()
         {
@@ -699,19 +707,21 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                // Use a dedicated DbContext for each operation
+                // Sử dụng một DbContext riêng cho mỗi tác vụ và AsNoTracking để cải thiện hiệu suất
                 using (var context = new ClinicDbContext())
                 {
-                    // Load basic statistics
+                    // Tải thống kê cơ bản
                     await Task.Run(() => LoadBasicStatistics(context));
                 }
 
-                // Update charts on UI thread
+                // Cập nhật biểu đồ trên luồng UI
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     using (var context = new ClinicDbContext())
                     {
-                        // Load revenue charts
+                        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
+                        // Tải các biểu đồ doanh thu
                         LoadRevenueByMonthChart(context);
                         LoadRevenueByHourChart(context);
                         LoadProductDistributionChart(context);
@@ -720,12 +730,13 @@ namespace ClinicManagement.ViewModels
                         LoadInvoiceTypeChart(context);
                         LoadServiceRevenueChart(context);
                         LoadRevenueByCategoryChart(context);
-                      
                     }
 
                     using (var context = new ClinicDbContext())
                     {
-                        // Load patient and appointment charts
+                        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
+                        // Tải biểu đồ về bệnh nhân và lịch hẹn
                         LoadPatientTypeChart(context);
                         LoadAppointmentStatusChart(context);
                         LoadAppointmentPeakHoursChart(context);
@@ -734,7 +745,9 @@ namespace ClinicManagement.ViewModels
 
                     using (var context = new ClinicDbContext())
                     {
-                        // Load financial data and product info
+                        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
+                        // Tải dữ liệu tài chính và thông tin sản phẩm
                         LoadTopSellingProducts(context);
                         LoadTopVIPPatients(context);
                         CalculateGrowthRates(context);
@@ -742,20 +755,21 @@ namespace ClinicManagement.ViewModels
 
                     using (var context = new ClinicDbContext())
                     {
-                        // Load medicine warnings (separate context to avoid LINQ translation issues)
+                        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
+                        // Tải cảnh báo thuốc (context riêng để tránh vấn đề dịch LINQ)
                         LoadWarningMedicines(context);
                     }
                 });
 
-                // Ensure commands can be requeried after data load
+                // Đảm bảo các command có thể được truy vấn lại sau khi tải dữ liệu
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBoxService.ShowError($"Lỗi khi tải thống kê: {ex.Message}",
-                                   "Lỗi"    );
+                    MessageBoxService.ShowError($"Lỗi khi tải thống kê: {ex.Message}", "Lỗi");
                 });
             }
             finally
@@ -764,6 +778,7 @@ namespace ClinicManagement.ViewModels
                 _isAsyncOperationRunning = false;
             }
         }
+
 
         #region Data Loading Methods
         private void LoadBasicStatistics(ClinicDbContext context)
@@ -823,7 +838,7 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 int medicineSoldCount = invoiceDetails.Sum(id => id.Quantity ?? 0);
 
-                // Calculate today's growth (compared to yesterday)
+                // Calculate today's growth compared to yesterday with better formatting
                 var yesterday = today.AddDays(-1);
                 var yesterdayInvoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
@@ -835,11 +850,18 @@ namespace ClinicManagement.ViewModels
                 double growthPercentage = 0;
                 if (yesterdayRevenue > 0)
                 {
+                    // Sửa công thức tính tăng trưởng
                     growthPercentage = (double)((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100);
                 }
-                else if (todayRevenue > 0)
+                else if (todayRevenue > 0 && yesterdayRevenue == 0)
                 {
-                    growthPercentage = 100;
+                    // Nếu hôm trước không có doanh thu nhưng hôm nay có
+                    growthPercentage = 100; // Hiển thị tăng trưởng 100%
+                }
+                else if (todayRevenue == 0 && yesterdayRevenue == 0)
+                {
+                    // Nếu cả hai ngày đều không có doanh thu
+                    growthPercentage = 0;
                 }
 
                 // Update UI elements on the UI thread
@@ -859,11 +881,11 @@ namespace ClinicManagement.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    MessageBoxService.ShowError($"Lỗi khi tải thống kê cơ bản: {ex.Message}",
-                                   "Lỗi"    );
+                    MessageBoxService.ShowError($"Lỗi khi tải thống kê cơ bản: {ex.Message}", "Lỗi");
                 });
             }
         }
+
 
         private void LoadRevenueByMonthChart(ClinicDbContext context)
         {
@@ -899,21 +921,25 @@ namespace ClinicManagement.ViewModels
                     {
                         actualValues.Clear();
                         actualValues.AddRange(monthlyRevenue);
+                        // Thêm định dạng tiền tệ cho LabelPoint
+                        actualSeries.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
                     }
 
                     if (targetSeries?.Values is ChartValues<double> targetValues)
                     {
                         targetValues.Clear();
                         targetValues.AddRange(monthlyTarget);
+                        // Thêm định dạng tiền tệ cho LabelPoint
+                        targetSeries.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo tháng: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo tháng: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void LoadRevenueByHourChart(ClinicDbContext context)
         {
@@ -945,15 +971,17 @@ namespace ClinicManagement.ViewModels
                     {
                         values.Clear();
                         values.AddRange(revenueByHour);
+                        // Thêm định dạng tiền tệ cho LabelPoint
+                        series.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo giờ: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo giờ: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void LoadProductDistributionChart(ClinicDbContext context)
         {
@@ -1050,7 +1078,9 @@ namespace ClinicManagement.ViewModels
                 {
                     Title = "Doanh thu",
                     Values = new ChartValues<double>(values),
-                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    // Thêm định dạng tiền tệ cho LabelPoint
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
                 }
             };
 
@@ -1059,10 +1089,10 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo ngày: {ex.Message}",
-                               "Lỗi");
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo ngày: {ex.Message}", "Lỗi");
             }
         }
+
 
 
         private void LoadRevenueTrendChart(ClinicDbContext context)
@@ -1196,7 +1226,8 @@ namespace ClinicManagement.ViewModels
                                 Title = type,
                                 Values = new ChartValues<double> { percentage },
                                 DataLabels = true,
-                                LabelPoint = chartPoint => $"{type}: {chartPoint.Y:0.0}%",
+                                // Định dạng hiển thị số liệu trên biểu đồ
+                                LabelPoint = chartPoint => $"{type}: {chartPoint.Y:0.0}% ({string.Format("{0:N0} VNĐ", typeRevenue)})",
                                 Fill = new SolidColorBrush(brushColor)
                             });
                         }
@@ -1207,10 +1238,10 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ tỷ lệ doanh thu theo dịch vụ: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ tỷ lệ doanh thu theo dịch vụ: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void LoadPatientTypeChart(ClinicDbContext context)
         {
@@ -1406,11 +1437,12 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Process in memory to avoid complex LINQ translation
+                // Sử dụng AsNoTracking cho hiệu suất tốt hơn với các truy vấn chỉ đọc
                 var invoiceDetails = context.InvoiceDetails
+                    .AsNoTracking()
                     .Include(id => id.Invoice)
                     .Include(id => id.Medicine)
-                    .ThenInclude(m => m.Category)
+                        .ThenInclude(m => m.Category)
                     .Where(id => id.Invoice.InvoiceDate >= StartDate &&
                            id.Invoice.InvoiceDate <= EndDate &&
                            id.Invoice.Status == "Đã thanh toán" &&
@@ -1455,10 +1487,10 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu sản phẩm bán chạy: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu sản phẩm bán chạy: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void LoadTopVIPPatients(ClinicDbContext context)
         {
@@ -1530,126 +1562,108 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Clear the change tracker to ensure fresh data
+                // Xóa dữ liệu theo dõi để đảm bảo dữ liệu mới
                 context.ChangeTracker.Clear();
 
-                // Fetch all non-deleted medicines with their related data
+                // Lấy tất cả các thuốc không bị xóa với dữ liệu liên quan
                 var medicines = context.Medicines
-                    .AsNoTracking()  // Force fresh data from database
+                    .AsNoTracking()
                     .Where(m => m.IsDeleted != true)
                     .Include(m => m.StockIns)
-                    .Include(m => m.InvoiceDetails)
-                        .ThenInclude(id => id.Invoice) // Include Invoice to check status
                     .Include(m => m.Unit)
                     .ToList();
 
-                // Prepare warning collections
-                var lowStockWarnings = new List<WarningMedicine>();
-                var expiryWarnings = new List<WarningMedicine>();
+                // Chuẩn bị danh sách cảnh báo
+                var warnings = new List<WarningMedicine>();
 
-                // Current date reference points
+                // Điểm tham chiếu ngày hiện tại
                 var today = DateOnly.FromDateTime(DateTime.Today);
                 var thirtyDaysLater = today.AddDays(30);
 
                 foreach (var medicine in medicines)
                 {
-                    // Reset cache to ensure fresh calculations
+                    // Đặt lại cache để đảm bảo tính toán mới
                     medicine._availableStockInsCache = null;
 
-                    // Skip medicines with no stock ins
+                    // Bỏ qua thuốc không có lô
                     if (!medicine.StockIns.Any()) continue;
 
-                    // Get active StockIns (those with remaining quantity)
-                    var stockInsWithRemaining = medicine.GetDetailedStock()
-                        .Where(s => s.RemainingQuantity > 0)
-                        .OrderBy(s => s.StockIn.ImportDate)
+                    // Lấy các lô có số lượng còn lại
+                    var stockInsWithRemaining = medicine.StockIns
+                        .Where(si => si.RemainQuantity > 0)
+                        .OrderBy(si => si.ImportDate)
                         .ToList();
 
-                    // Skip if there are no StockIns with remaining quantity
+                    // Bỏ qua nếu không có lô nào còn số lượng
                     if (!stockInsWithRemaining.Any()) continue;
 
-                    // Get the currently active StockIn (oldest first - FIFO)
-                    var currentStockIn = stockInsWithRemaining.FirstOrDefault();
+                    // Đếm tổng số thuốc còn lại
+                    int totalRemaining = stockInsWithRemaining.Sum(si => si.RemainQuantity);
 
-                    if (currentStockIn != null)
+                    // Kiểm tra các lô đang sử dụng
+                    foreach (var stockIn in stockInsWithRemaining.Take(2)) // Chỉ kiểm tra 2 lô đầu tiên (theo FIFO)
                     {
-                        // 1. Check for low stock on the current active StockIn
-                        if (currentStockIn.RemainingQuantity <= 10)
+                        // 1. Kiểm tra nếu là lô đã hết hạn
+                        if (stockIn.ExpiryDate.HasValue && stockIn.ExpiryDate.Value <= today)
                         {
-                            lowStockWarnings.Add(new WarningMedicine
+                            warnings.Add(new WarningMedicine
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
-                                WarningMessage = $"Lô hiện tại còn {currentStockIn.RemainingQuantity} {medicine.Unit?.UnitName ?? "đơn vị"} - Sắp hết"
+                                WarningMessage = $"LÔ HẾT HẠN: Lô thuốc đã hết hạn từ {stockIn.ExpiryDate.Value:dd/MM/yyyy} nhưng vẫn còn {stockIn.RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}"
+                            });
+                            break; // Ưu tiên cảnh báo hết hạn
+                        }
+                        // 2. Kiểm tra nếu là lô sắp hết hạn
+                        else if (stockIn.ExpiryDate.HasValue && stockIn.ExpiryDate.Value <= thirtyDaysLater)
+                        {
+                            int daysUntilExpiry = stockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
+                            warnings.Add(new WarningMedicine
+                            {
+                                Id = medicine.MedicineId,
+                                Name = medicine.Name,
+                                WarningMessage = $"LÔ SẮP HẾT HẠN: Còn {daysUntilExpiry} ngày đến hạn sử dụng ({stockIn.ExpiryDate.Value:dd/MM/yyyy})"
+                            });
+                            break; // Không kiểm tra các cảnh báo khác cho thuốc này
+                        }
+                    }
+
+                    // 3. Kiểm tra tồn kho thấp nếu chưa có cảnh báo nào cho thuốc này
+                    if (!warnings.Any(w => w.Id == medicine.MedicineId))
+                    {
+                        if (totalRemaining <= 10)
+                        {
+                            warnings.Add(new WarningMedicine
+                            {
+                                Id = medicine.MedicineId,
+                                Name = medicine.Name,
+                                WarningMessage = $"TỒN KHO THẤP: Chỉ còn {totalRemaining} {medicine.Unit?.UnitName ?? "đơn vị"} - Cần nhập thêm gấp"
                             });
                         }
-
-                        // 2. Check for expiry issues on the current active StockIn
-                        if (currentStockIn.StockIn.ExpiryDate.HasValue)
+                        else if (totalRemaining <= 20)
                         {
-                            if (currentStockIn.StockIn.ExpiryDate.Value <= today)
-                            {
-                                // Already expired
-                                expiryWarnings.Add(new WarningMedicine
-                                {
-                                    Id = medicine.MedicineId,
-                                    Name = medicine.Name,
-                                    WarningMessage = "Lô hiện đang sử dụng đã hết hạn"
-                                });
-                            }
-                            else if (currentStockIn.StockIn.ExpiryDate.Value <= thirtyDaysLater)
-                            {
-                                // Expiring soon (within 30 days)
-                                int daysUntilExpiry = currentStockIn.StockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
-                                expiryWarnings.Add(new WarningMedicine
-                                {
-                                    Id = medicine.MedicineId,
-                                    Name = medicine.Name,
-                                    WarningMessage = $"Lô hiện đang sử dụng sẽ hết hạn trong {daysUntilExpiry} ngày"
-                                });
-                            }
-                        }
-
-                        // 3. Special case: If all StockIns combined are running low
-                        int totalRemaining = stockInsWithRemaining.Sum(s => s.RemainingQuantity);
-                        if (totalRemaining <= 20 && !lowStockWarnings.Any(w => w.Id == medicine.MedicineId))
-                        {
-                            lowStockWarnings.Add(new WarningMedicine
+                            warnings.Add(new WarningMedicine
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
-                                WarningMessage = $"Tổng tồn kho chỉ còn {totalRemaining} {medicine.Unit?.UnitName ?? "đơn vị"} - Cần nhập thêm"
+                                WarningMessage = $"TỒN KHO THẤP: Chỉ còn {totalRemaining} {medicine.Unit?.UnitName ?? "đơn vị"} - Nên nhập thêm"
                             });
                         }
                     }
                 }
 
-                // Prioritize warnings and take unique medicines
-                // (one medicine might have both low stock and expiry issues)
-                var allWarnings = new Dictionary<int, WarningMedicine>();
-
-                // Add expiry warnings first (higher priority)
-                foreach (var warning in expiryWarnings)
-                {
-                    allWarnings[warning.Id] = warning;
-                }
-
-                // Then add low stock warnings (if not already added)
-                foreach (var warning in lowStockWarnings)
-                {
-                    if (!allWarnings.ContainsKey(warning.Id))
-                    {
-                        allWarnings[warning.Id] = warning;
-                    }
-                }
-
-                // Take top 10 warnings
-                var topWarnings = allWarnings.Values.Take(10).ToList();
+                // Sắp xếp cảnh báo theo mức độ nghiêm trọng (hết hạn > sắp hết hạn > tồn kho thấp)
+                var sortedWarnings = warnings
+                    .OrderByDescending(w => w.WarningMessage.Contains("HẾT HẠN"))
+                    .ThenByDescending(w => w.WarningMessage.Contains("SẮP HẾT HẠN"))
+                    .ThenByDescending(w => w.WarningMessage.Contains("TỒN KHO THẤP"))
+                    .Take(10)
+                    .ToList();
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    WarningMedicines = new ObservableCollection<WarningMedicine>(topWarnings);
-                    LowStockCount = topWarnings.Count;
+                    WarningMedicines = new ObservableCollection<WarningMedicine>(sortedWarnings);
+                    LowStockCount = sortedWarnings.Count;
                 });
             }
             catch (Exception ex)
@@ -1662,6 +1676,7 @@ namespace ClinicManagement.ViewModels
                 });
             }
         }
+
 
 
 
@@ -1691,18 +1706,33 @@ namespace ClinicManagement.ViewModels
                 var currentRevenue = currentPeriodInvoices.Sum(i => i.TotalAmount);
                 var previousRevenue = previousPeriodInvoices.Sum(i => i.TotalAmount);
 
-                // Set value for RevenueGrowth
+                // Set value for RevenueGrowth with better formatting
                 if (previousRevenue > 0)
                 {
                     var revenueGrowth = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
-                    RevenueGrowth = $"{revenueGrowth:+0.0;-0.0}%";
+
+                    // Chỉ hiển thị 1 số thập phân và đảm bảo hiển thị dấu + cho tăng trưởng dương
+                    if (revenueGrowth > 0)
+                        RevenueGrowth = $"+{revenueGrowth:0.0}%";
+                    else
+                        RevenueGrowth = $"{revenueGrowth:0.0}%";
+                }
+                else if (previousRevenue == 0 && currentRevenue > 0)
+                {
+                    // Nếu kỳ trước không có doanh thu nhưng kỳ này có
+                    RevenueGrowth = "+100.0%";
+                }
+                else if (previousRevenue == 0 && currentRevenue == 0)
+                {
+                    // Nếu cả hai kỳ đều không có doanh thu
+                    RevenueGrowth = "0.0%";
                 }
                 else
                 {
                     RevenueGrowth = "N/A";
                 }
 
-                // Calculate patient growth
+                // Calculate patient growth with similar improvements
                 var currentPeriodPatients = context.Patients
                     .Count(p => p.CreatedAt >= StartDate &&
                            p.CreatedAt <= EndDate &&
@@ -1716,7 +1746,20 @@ namespace ClinicManagement.ViewModels
                 if (previousPeriodPatients > 0)
                 {
                     var patientGrowth = ((currentPeriodPatients - previousPeriodPatients) / (double)previousPeriodPatients) * 100;
-                    PatientGrowth = $"{patientGrowth:+0.0;-0.0}%";
+
+                    // Định dạng tương tự như RevenueGrowth
+                    if (patientGrowth > 0)
+                        PatientGrowth = $"+{patientGrowth:0.0}%";
+                    else
+                        PatientGrowth = $"{patientGrowth:0.0}%";
+                }
+                else if (previousPeriodPatients == 0 && currentPeriodPatients > 0)
+                {
+                    PatientGrowth = "+100.0%";
+                }
+                else if (previousPeriodPatients == 0 && currentPeriodPatients == 0)
+                {
+                    PatientGrowth = "0.0%";
                 }
                 else
                 {
@@ -1725,13 +1768,13 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tính toán tỷ lệ tăng trưởng: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tính toán tỷ lệ tăng trưởng: {ex.Message}", "Lỗi");
                 RevenueGrowth = "N/A";
                 PatientGrowth = "N/A";
             }
         }
-  
+
+
 
 
         private void LoadRevenueByCategoryChart(ClinicDbContext context)
@@ -1799,37 +1842,52 @@ namespace ClinicManagement.ViewModels
 
         private void LoadDashBoard()
         {
-            CurrentDate = DateTime.Now.Date;
-            TodayAppointments = new ObservableCollection<TodayAppointment>();
-
-            var appointments = DataProvider.Instance.Context.Appointments
-          .Where(a => a.IsDeleted == false || a.IsDeleted == null)
-          .Include(a => a.Patient)
-          .Include(a => a.Staff)
-          .Include(a => a.AppointmentType)
-          .ToList();
-            int waitingCount = appointments.Count(a => a.Status == "Đang chờ");
-            foreach (var appointment in appointments)
+            try
             {
-                TodayAppointment app = new TodayAppointment
+                CurrentDate = DateTime.Now.Date;
+                TodayAppointments = new ObservableCollection<TodayAppointment>();
+
+                using (var context = new ClinicDbContext())
                 {
-                    Appointment = appointment,
-                    Initials = GetInitialsFromFullName(appointment.Patient?.FullName),
-                    PatientName = appointment.Patient?.FullName,
-                    DoctorName = appointment.Staff?.FullName,
-                    Notes = appointment.Notes,
-                    Status = appointment.Status,
-                    Time = appointment.AppointmentDate.TimeOfDay
-                };
-                TodayAppointments.Add(app);
+                    context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-                TotalAppointments = appointments.Count();
+                    var appointments = context.Appointments
+                        .AsNoTracking()
+                        .Where(a => a.IsDeleted == false || a.IsDeleted == null)
+                        .Include(a => a.Patient)
+                        .Include(a => a.Staff)
+                        .Include(a => a.AppointmentType)
+                        .OrderBy(a => a.AppointmentDate)
+                        .ToList();
 
+                    int waitingCount = appointments.Count(a => a.Status.Trim() == "Đang chờ");
+
+                    foreach (var appointment in appointments.Where(a => a.AppointmentDate.Date == CurrentDate.Date))
+                    {
+                        TodayAppointment app = new TodayAppointment
+                        {
+                            Appointment = appointment,
+                            Initials = GetInitialsFromFullName(appointment.Patient?.FullName),
+                            PatientName = appointment.Patient?.FullName,
+                            DoctorName = appointment.Staff?.FullName,
+                            Notes = appointment.Notes,
+                            Status = appointment.Status?.Trim(),
+                            Time = appointment.AppointmentDate.TimeOfDay
+                        };
+                        TodayAppointments.Add(app);
+                    }
+
+                    TotalAppointments = appointments.Count(a => a.AppointmentDate.Date == CurrentDate.Date);
+                    PendingAppointments = waitingCount.ToString();
+                    TotalPatients = context.Patients.Count(p => p.IsDeleted != true);
+                }
             }
-            var count = DataProvider.Instance.Context.Patients.Count();
-            PendingAppointments = waitingCount.ToString();
-            TotalPatients = count;
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi tải Dashboard: {ex.Message}", "Lỗi");
+            }
         }
+
 
         private string GetInitialsFromFullName(string fullName)
         {

@@ -11,6 +11,7 @@ using Microsoft.Win32;
 using ClinicManagement.Services;
 using System.Windows.Controls;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using DocumentFormat.OpenXml.InkML;
 namespace ClinicManagement.ViewModels
 {
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
@@ -1036,7 +1037,8 @@ namespace ClinicManagement.ViewModels
         public ICommand ResetStockFiltersCommand { get; set; }
         public ICommand DeleteMedicine { get; set; }
         public ICommand ExportStockExcelCommand { get;  set; }
-        public ICommand GenerateMonthlyStockCommand { get; private set; }
+        public ICommand ManualGenerateMonthlyStockCommand { get; private set; }
+        public ICommand UndoMonthlyStockCommand { get; private set; }
 
         //StockIn Commands
         public ICommand AddNewMedicineCommand { get; set; }
@@ -1066,8 +1068,7 @@ namespace ClinicManagement.ViewModels
             LoadData();
             InitializeCommands();
 
-            // Check if we need to generate monthly stock data
-            CheckAndGenerateMonthlyStock();
+        
         }
 
 
@@ -1085,6 +1086,7 @@ namespace ClinicManagement.ViewModels
                     {
                         // Update current account
                         CurrentAccount = mainVM.CurrentAccount;
+                        CheckMonthlyStockReminder();
                     }
 
                     // Run the expiry date check when loading the view
@@ -1093,7 +1095,15 @@ namespace ClinicManagement.ViewModels
             },
             (userControl) => true
         );
+            ManualGenerateMonthlyStockCommand = new RelayCommand<object>(
+               (p) => ExecuteManualGenerateMonthlyStock(),
+               (p) => CanManualGenerateMonthlyStock()
+                );
 
+            UndoMonthlyStockCommand = new RelayCommand<object>(
+               (p) => ExecuteUndoMonthlyStock(),
+               (p) => CanUndoMonthlyStock()
+            );
             // Unit Commands
             AddUnitCommand = new RelayCommand<object>(
                 (p) => AddUnit(),
@@ -1214,12 +1224,6 @@ namespace ClinicManagement.ViewModels
                 },
                 (p) => true
             );
-
-            // Add command to manually generate monthly stock data
-            GenerateMonthlyStockCommand = new RelayCommand<object>(
-                p => GenerateMonthlyStock(SelectedYear, SelectedMonth),
-                p => CanEdit
-);
 
             // In the constructor, initialize the command:
             ExportStockExcelCommand = new RelayCommand<object>(
@@ -2131,63 +2135,71 @@ namespace ClinicManagement.ViewModels
 
 
         // Phương thức lọc tồn kho theo tháng
+        // Suggested improvement for FilterMonthlyStock method
         public void FilterMonthlyStock()
         {
             try
             {
-                // Tạo định dạng tháng/năm
+                // Format month/year string for filtering
                 string monthYear = $"{SelectedYear:D4}-{SelectedMonth:D2}";
 
-                // Lấy dữ liệu từ database
-                var query = DataProvider.Instance.Context.MonthlyStocks
-                    .Include(ms => ms.Medicine)
-                    .ThenInclude(m => m.Category)
-                    .Include(ms => ms.Medicine.Unit)
-                    .Where(ms => ms.MonthYear == monthYear);
-
-                // Áp dụng các bộ lọc
-                if (SelectedStockCategoryId.HasValue && SelectedStockCategoryId.Value > 0)
+                // Use a fresh context to avoid stale data
+                using (var context = new ClinicDbContext())
                 {
-                    query = query.Where(ms => ms.Medicine.CategoryId == SelectedStockCategoryId.Value);
+                    // Query with all needed includes
+                    var query = context.MonthlyStocks
+                        .AsNoTracking() // For better performance
+                        .Include(ms => ms.Medicine)
+                        .ThenInclude(m => m.Category)
+                        .Include(ms => ms.Medicine.Unit)
+                        .Where(ms => ms.MonthYear == monthYear);
+
+                    // Apply category filter if selected
+                    if (SelectedStockCategoryId.HasValue && SelectedStockCategoryId.Value > 0)
+                    {
+                        query = query.Where(ms => ms.Medicine.CategoryId == SelectedStockCategoryId.Value);
+                    }
+
+                    // Apply unit filter if selected
+                    if (SelectedStockUnitId.HasValue && SelectedStockUnitId.Value > 0)
+                    {
+                        query = query.Where(ms => ms.Medicine.UnitId == SelectedStockUnitId.Value);
+                    }
+
+                    // Apply supplier filter if needed
+                    if (SelectedStockSupplierId.HasValue && SelectedStockSupplierId.Value > 0)
+                    {
+                        query = query.Where(ms =>
+                            ms.Medicine.StockIns != null &&
+                            ms.Medicine.StockIns.Any(si => si.SupplierId == SelectedStockSupplierId.Value));
+                    }
+
+                    // Apply name search filter
+                    if (!string.IsNullOrWhiteSpace(SearchStockMedicine))
+                    {
+                        var searchTerm = SearchStockMedicine.ToLower().Trim();
+                        query = query.Where(ms =>
+                            ms.Medicine.Name.ToLower().Contains(searchTerm));
+                    }
+
+                    // Execute query and update list
+                    var monthlyStockItems = query.ToList();
+                    MonthlyStockList = new ObservableCollection<MonthlyStock>(monthlyStockItems);
+
+                    // Update totals
+                    UpdateMonthlyTotals();
                 }
-
-                if (SelectedStockUnitId.HasValue && SelectedStockUnitId.Value > 0)
-                {
-                    query = query.Where(ms => ms.Medicine.UnitId == SelectedStockUnitId.Value);
-                }
-
-                if (SelectedStockSupplierId.HasValue && SelectedStockSupplierId.Value > 0)
-                {
-                    // Với tồn kho tháng, cần kiểm tra qua Medicine
-                    query = query.Where(ms =>
-                        ms.Medicine.StockIns != null &&
-                        ms.Medicine.StockIns.Any(si => si.SupplierId == SelectedStockSupplierId.Value));
-                }
-
-                // Tìm kiếm theo tên thuốc
-                if (!string.IsNullOrWhiteSpace(SearchStockMedicine))
-                {
-                    var searchTerm = SearchStockMedicine.ToLower().Trim();
-                    query = query.Where(ms =>
-                        ms.Medicine.Name.ToLower().Contains(searchTerm));
-                }
-
-                // Tải dữ liệu và cập nhật danh sách
-                var monthlyStockItems = query.ToList();
-                MonthlyStockList = new ObservableCollection<MonthlyStock>(monthlyStockItems);
-
-                // Cập nhật tổng số lượng và giá trị
-                UpdateMonthlyTotals();
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi lọc dữ liệu tồn kho theo tháng: {ex.Message}", "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi lọc dữ liệu tồn kho theo tháng: {ex.Message}", "Lỗi");
 
                 // In case of error, make sure MonthlyStockList is not null
                 if (MonthlyStockList == null)
                     MonthlyStockList = new ObservableCollection<MonthlyStock>();
             }
         }
+
 
 
         // Phương thức để cập nhật tổng số lượng và giá trị tồn kho hiện tại
@@ -2291,6 +2303,25 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region StockMedicine Methods
+
+
+        // Method to check if manual generation is possible
+        private bool CanManualGenerateMonthlyStock()
+        {
+            return CanManageSettings;
+        }
+
+
+        // Method to check if undo is possible
+        private bool CanUndoMonthlyStock()
+        {
+            // Create a fresh context for this check
+            using (var context = new ClinicDbContext())
+            {
+                return CanManageSettings && HasCurrentMonthStock(context);
+            }
+        }
+
         private void ExecuteSupplierRefresh()
         {
             SupplierList = new ObservableCollection<Supplier>(
@@ -2618,229 +2649,351 @@ namespace ClinicManagement.ViewModels
                      );
             }
         }
-
-        /// <summary>
-        /// Checks if monthly stock generation is needed and performs it if necessary,
-        /// following a more reliable timing strategy
-        /// </summary>
-        public void CheckAndGenerateMonthlyStock()
+     
+        // Method to check if there's already a stock summary for current month
+        private bool HasCurrentMonthStock(ClinicDbContext context = null)
         {
             try
             {
-                // Kiểm tra xem người dùng đã đăng nhập chưa
-                var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
-                if (mainVM == null || mainVM.CurrentAccount == null)
+                bool shouldDisposeContext = context == null;
+                context = context ?? DataProvider.Instance.Context;
+
+                var currentMonth = DateTime.Now.Month;
+                var currentYear = DateTime.Now.Year;
+                var monthYearString = $"{currentYear}-{currentMonth:D2}";
+
+                bool result = context.MonthlyStocks.Any(ms => ms.MonthYear == monthYearString);
+
+                // Only dispose if we created it
+                if (shouldDisposeContext && context != DataProvider.Instance.Context)
                 {
-                    // Nếu chưa đăng nhập, không thực hiện tác vụ này
-                    return;
+                    context.Dispose();
                 }
 
-                // Get current date and time
-                var now = DateTime.Now;
-
-                // ------- Bắt đầu logic cải tiến -------
-
-                // Tính tháng trước để biết tháng nào cần cập nhật tồn kho
-                var lastMonth = now.AddMonths(-1);
-                var previousMonthYear = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-
-                // Định dạng cho tháng cần kiểm tra
-                string previousMonthFormat = $"{previousMonthYear.Year:D4}-{previousMonthYear.Month:D2}";
-                string currentMonthFormat = $"{now.Year:D4}-{now.Month:D2}";
-
-                // Trường hợp 1: Đây là ngày đầu tháng (1-2) - cập nhật dữ liệu cho tháng trước nếu chưa có
-                bool isFirstDaysOfMonth = now.Day <= 2;
-
-                // Trường hợp 2: Đây là cuối ngày của tháng (sau 23:00) - cập nhật dữ liệu cho tháng hiện tại
-                var lastDayOfMonth = new DateTime(now.Year, now.Month,
-                    DateTime.DaysInMonth(now.Year, now.Month));
-                bool isLastDayOfMonth = now.Day == lastDayOfMonth.Day;
-                bool isLateEvening = now.Hour >= 23;
-
-                // Kiểm tra xem đã có dữ liệu cho tháng trước chưa (trường hợp đầu tháng)
-                bool hasPreviousMonthRecords = false;
-                if (isFirstDaysOfMonth)
-                {
-                    hasPreviousMonthRecords = DataProvider.Instance.Context.MonthlyStocks
-                        .Any(ms => ms.MonthYear == previousMonthFormat);
-                }
-
-                // Kiểm tra xem đã có dữ liệu cho tháng hiện tại chưa (trường hợp cuối tháng)
-                bool hasCurrentMonthRecords = false;
-                if (isLastDayOfMonth && isLateEvening)
-                {
-                    hasCurrentMonthRecords = DataProvider.Instance.Context.MonthlyStocks
-                        .Any(ms => ms.MonthYear == currentMonthFormat);
-                }
-
-                // ------- Quyết định cập nhật -------
-
-                // Trường hợp 1: Đầu tháng, chưa có dữ liệu tháng trước
-                if (isFirstDaysOfMonth && !hasPreviousMonthRecords)
-                {
-                    // Cập nhật dữ liệu tồn kho cho tháng TRƯỚC
-                    GenerateMonthlyStock(previousMonthYear.Year, previousMonthYear.Month, true);
-
-                    MessageBoxService.ShowInfo(
-                        $"Đã tự động cập nhật dữ liệu tồn kho cho tháng {previousMonthYear.Month}/{previousMonthYear.Year}.",
-                        "Cập nhật tồn kho tháng"
-                    );
-                    return;
-                }
-
-                // Trường hợp 2: Cuối tháng, sau 23:00, chưa có dữ liệu tháng hiện tại
-                if (isLastDayOfMonth && isLateEvening && !hasCurrentMonthRecords)
-                {
-                    // Cập nhật dữ liệu tồn kho cho tháng HIỆN TẠI
-                    GenerateMonthlyStock(now.Year, now.Month, true);
-
-                    MessageBoxService.ShowInfo(
-                        $"Đã tự động cập nhật dữ liệu tồn kho cho tháng {now.Month}/{now.Year}.",
-                        "Cập nhật tồn kho tháng"
-                    );
-                }
+                return result;
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError(
-                    $"Lỗi khi kiểm tra và tạo dữ liệu tồn kho tháng: {ex.Message}",
-                    "Lỗi"
-                );
+                Console.WriteLine($"Error checking monthly stock: {ex.Message}");
+                return false;
             }
         }
 
+        // Method to execute manual generation of monthly stock
+        /// <summary>
+        /// Executes manual generation of monthly stock with improved month selection logic
         /// </summary>
-        /// <param name="year">Optional year parameter (defaults to current year if omitted)</param>
-        /// <param name="month">Optional month parameter (defaults to current month if omitted)</param>
-        /// <param name="isAutomatic">Whether this is an automatic generation at month end</param>
-        private void GenerateMonthlyStock(int? year = null, int? month = null, bool isAutomatic = false)
+        private void ExecuteManualGenerateMonthlyStock()
         {
             try
             {
-                var dbContext = DataProvider.Instance.Context;
+                // Use the currently selected month and year from UI controls
+                int targetYear = SelectedYear;
+                int targetMonth = SelectedMonth;
 
-                // For automatic generation at month end, use the ending month
-                // For manual generation, use the provided month/year or selected values
-                DateTime now = DateTime.Now;
-                int targetYear, targetMonth;
+                // Format month and year for display
+                string monthYearFormat = $"{targetYear:D4}-{targetMonth:D2}";
+                string monthName = new DateTime(targetYear, targetMonth, 1).ToString("MMMM yyyy");
 
-                if (isAutomatic)
+                // Check if monthly stock data already exists for this month
+                bool hasExistingData = false;
+                using (var context = new ClinicDbContext())
                 {
-                    // When running automatically at month end, generate data for the ending month
-                    targetYear = now.Year;
-                    targetMonth = now.Month;
+                    hasExistingData = context.MonthlyStocks
+                        .Any(ms => ms.MonthYear == monthYearFormat);
+                }
+
+                // Prepare the confirmation message
+                string confirmMessage;
+                if (hasExistingData)
+                {
+                    confirmMessage = $"Đã tồn tại dữ liệu tổng kết tồn kho cho tháng {targetMonth}/{targetYear}.\n" +
+                                    $"Bạn có chắc chắn muốn cập nhật lại không?";
                 }
                 else
                 {
-                    // When manually triggered, use the provided values or UI selections
-                    targetYear = year ?? SelectedYear;
-                    targetMonth = month ?? SelectedMonth;
+                    confirmMessage = $"Bạn đang chuẩn bị tổng kết tồn kho cho tháng {targetMonth}/{targetYear}.\n" +
+                                    $"Bạn có chắc chắn muốn tiếp tục không?";
                 }
 
-                string monthYearFormat = $"{targetYear:D4}-{targetMonth:D2}";
+                // Show confirmation dialog
+                var result = MessageBoxService.ShowQuestion(
+                    confirmMessage,
+                    "Xác nhận tổng kết kho"
+                );
 
-                // Get all medicines that have stock
-                var medicines = dbContext.Medicines
-                    .Where(m => m.IsDeleted != true)
-                    .Include(m => m.StockIns)
-                    .ToList();
+                if (!result)
+                    return;
 
-                // Check which medicines already have monthly stock records for this month
-                var existingMedicineRecords = dbContext.MonthlyStocks
-                    .Where(ms => ms.MonthYear == monthYearFormat)
-                    .Select(ms => ms.MedicineId)
-                    .Distinct()
-                    .ToHashSet();
-
-                // Process each medicine
-                int generatedCount = 0;
-                foreach (var medicine in medicines)
+                try
                 {
-                    // Skip medicines that already have a record for this month
-                    if (existingMedicineRecords.Contains(medicine.MedicineId))
-                        continue;
+                    // Generate or update the monthly stock records
+                    GenerateOrUpdateMonthlyStock(targetYear, targetMonth);
 
-                    // Reset cache to ensure fresh calculations
-                    medicine._availableStockInsCache = null;
-
-                    // Use direct calculations with RemainQuantity from StockIn
-                    int totalQuantity = medicine.StockIns.Sum(si => si.RemainQuantity);
-
-                    // Calculate usable stock (only stock with valid expiry date)
-                    var today = DateOnly.FromDateTime(DateTime.Today);
-                    var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
-
-                    int usableQuantity = medicine.StockIns
-                        .Where(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
-                        .Sum(si => si.RemainQuantity);
-
-                    // Only record medicines that have stock
-                    if (totalQuantity > 0)
-                    {
-                        var monthlyStock = new MonthlyStock
-                        {
-                            MedicineId = medicine.MedicineId,
-                            MonthYear = monthYearFormat,
-                            Quantity = totalQuantity,
-                            CanUsed = usableQuantity, // CanUsed field stores the usable quantity
-                            RecordedDate = DateTime.Now
-                        };
-
-                        dbContext.MonthlyStocks.Add(monthlyStock);
-                        generatedCount++;
-
-                        // Also update the current Stock record
-                        var stock = dbContext.Stocks.FirstOrDefault(s => s.MedicineId == medicine.MedicineId);
-                        if (stock != null)
-                        {
-                            stock.Quantity = totalQuantity;
-                            stock.UsableQuantity = usableQuantity;
-                            stock.LastUpdated = DateTime.Now;
-                        }
-                        else
-                        {
-                            // Create stock record if it doesn't exist
-                            dbContext.Stocks.Add(new Stock
-                            {
-                                MedicineId = medicine.MedicineId,
-                                Quantity = totalQuantity,
-                                UsableQuantity = usableQuantity,
-                                LastUpdated = DateTime.Now
-                            });
-                        }
-                    }
-                }
-
-                // Only save if there are changes
-                if (generatedCount > 0)
-                {
-                    dbContext.SaveChanges();
-                }
-
-                // Show success message only for manual operations, not automatic ones
-                if (!isAutomatic && generatedCount > 0)
-                {
                     MessageBoxService.ShowSuccess(
-                        $"Đã tạo dữ liệu tồn kho tháng {targetMonth}/{targetYear} cho {generatedCount} loại thuốc!",
-                        "Thành công"
+                        $"Đã tổng kết tồn kho cho tháng {targetMonth}/{targetYear} thành công!",
+                        "Tổng kết tồn kho"
                     );
+                    FilterMonthlyStock();
+                   
                 }
-                else if (!isAutomatic && generatedCount == 0)
+                catch (ObjectDisposedException)
                 {
-                    MessageBoxService.ShowInfo(
-                        $"Tất cả thuốc đã có dữ liệu tồn kho cho tháng {targetMonth}/{targetYear}.",
-                        "Thông báo"
+                    // Handle the specific case where the context was disposed
+                    MessageBoxService.ShowError(
+                        "Lỗi kết nối cơ sở dữ liệu. Hãy thử lại sau vài giây.",
+                        "Lỗi cơ sở dữ liệu"
                     );
+
+                    // Reset the data provider context
+                    DataProvider.Instance.ResetContext();
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
-                    $"Lỗi khi tạo dữ liệu tồn kho tháng: {ex.Message}",
+                    $"Lỗi khi thực hiện tổng kết kho: {ex.Message}",
                     "Lỗi"
                 );
             }
         }
+        // Method to delete current month's stock records
+        private void DeleteCurrentMonthStock()
+        {
+            try
+            {
+                var currentMonth = DateTime.Now.Month;
+                var currentYear = DateTime.Now.Year;
+                var monthYearString = $"{currentYear}-{currentMonth:D2}";
+
+                // Use the DataProvider singleton for database operations
+                var context = DataProvider.Instance.Context;
+
+                var recordsToDelete = context.MonthlyStocks
+                    .Where(ms => ms.MonthYear == monthYearString)
+                    .ToList();
+
+                if (recordsToDelete.Any())
+                {
+                    context.MonthlyStocks.RemoveRange(recordsToDelete);
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError(
+                    $"Lỗi khi xóa dữ liệu tồn kho tháng hiện tại: {ex.Message}",
+                    "Lỗi"
+                );
+            }
+        }
+
+        private void GenerateOrUpdateMonthlyStock(int year, int month)
+        {
+            try
+            {
+                // Format for MonthYear field
+                string monthYearFormat = $"{year:D4}-{month:D2}";
+
+                // Create a fresh context for this operation
+                using (var context = new ClinicDbContext())
+                {
+                    // Begin a transaction for consistency
+                    using (var transaction = context.Database.BeginTransaction())
+                    {
+                        try
+                        {
+                            // Dictionary to track existing records for efficient updates
+                            Dictionary<int, MonthlyStock> existingRecords = new Dictionary<int, MonthlyStock>();
+
+                            // Check for existing records and load them into dictionary
+                            var currentRecords = context.MonthlyStocks
+                                .Where(ms => ms.MonthYear == monthYearFormat)
+                                .ToList();
+
+                            foreach (var record in currentRecords)
+                            {
+                                existingRecords[record.MedicineId] = record;
+                            }
+
+                            // Get all non-deleted medicines
+                            var medicines = context.Medicines
+                                .Where(m => m.IsDeleted != true)
+                                .Include(m => m.StockIns)
+                                .Include(m => m.Stocks)
+                                .ToList();
+
+                            // Track medicines with stock for cleanup
+                            HashSet<int> medicinesWithStock = new HashSet<int>();
+
+                            foreach (var medicine in medicines)
+                            {
+                                // Reset cache to ensure fresh calculations
+                                medicine._availableStockInsCache = null;
+
+                                // Calculate stock quantities
+                                int totalPhysicalQuantity = medicine.TotalPhysicalStockQuantity;
+                                int usableQuantity = medicine.TotalStockQuantity;
+
+                                // Only process medicines with stock
+                                if (totalPhysicalQuantity > 0)
+                                {
+                                    medicinesWithStock.Add(medicine.MedicineId);
+
+                                    if (existingRecords.TryGetValue(medicine.MedicineId, out MonthlyStock existingRecord))
+                                    {
+                                        // Update existing record
+                                        existingRecord.Quantity = totalPhysicalQuantity;
+                                        existingRecord.CanUsed = usableQuantity;
+                                        existingRecord.RecordedDate = DateTime.Now;
+                                    }
+                                    else
+                                    {
+                                        // Create new record
+                                        var monthlyStock = new MonthlyStock
+                                        {
+                                            MedicineId = medicine.MedicineId,
+                                            MonthYear = monthYearFormat,
+                                            Quantity = totalPhysicalQuantity,
+                                            CanUsed = usableQuantity,
+                                            RecordedDate = DateTime.Now
+                                        };
+                                        context.MonthlyStocks.Add(monthlyStock);
+                                    }
+
+                                    // Update current month's Stock records if applicable
+                                    if (month == DateTime.Now.Month && year == DateTime.Now.Year)
+                                    {
+                                        var stockRecord = context.Stocks.FirstOrDefault(s => s.MedicineId == medicine.MedicineId);
+                                        if (stockRecord != null)
+                                        {
+                                            stockRecord.Quantity = totalPhysicalQuantity;
+                                            stockRecord.UsableQuantity = usableQuantity;
+                                            stockRecord.LastUpdated = DateTime.Now;
+                                        }
+                                        else
+                                        {
+                                            context.Stocks.Add(new Stock
+                                            {
+                                                MedicineId = medicine.MedicineId,
+                                                Quantity = totalPhysicalQuantity,
+                                                UsableQuantity = usableQuantity,
+                                                LastUpdated = DateTime.Now
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Remove records for medicines that no longer have stock
+                            var recordsToDelete = currentRecords
+                                .Where(r => !medicinesWithStock.Contains(r.MedicineId))
+                                .ToList();
+
+                            if (recordsToDelete.Any())
+                            {
+                                context.MonthlyStocks.RemoveRange(recordsToDelete);
+                            }
+
+                            // Save all changes
+                            context.SaveChanges();
+                            transaction.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            throw new Exception($"Lỗi khi tạo hoặc cập nhật dữ liệu tồn kho tháng: {ex.Message}", ex);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError(
+                    $"Lỗi khi xử lý tồn kho tháng: {ex.Message}",
+                    "Lỗi"
+                );
+            }
+        }
+
+        private void ExecuteUndoMonthlyStock()
+        {
+            var confirmResult = MessageBoxService.ShowQuestion(
+                "Bạn có chắc chắn muốn hủy bỏ tổng kết tồn kho tháng hiện tại không?",
+                "Xác nhận hoàn tác"
+            );
+
+            if (!confirmResult)
+                return;
+
+            DeleteCurrentMonthStock();
+
+            MessageBoxService.ShowSuccess(
+                "Đã hủy bỏ tổng kết tồn kho tháng hiện tại thành công!",
+                "Hoàn tác tổng kết kho"
+            );
+
+            // Refresh data if in monthly view
+            if (IsMonthlyView)
+            {
+                FilterMonthlyStock();
+            }
+        }
+
+        // Method to check if it's time to remind about monthly stock summary
+        public void CheckMonthlyStockReminder()
+        {
+            try
+            {
+                var today = DateTime.Now;
+
+                // Use DataProvider.Instance.Context instead of creating a new context
+                var context = DataProvider.Instance.Context;
+
+                // Remind on last day of month
+                if (today.Day == DateTime.DaysInMonth(today.Year, today.Month))
+                {
+                    var currentMonth = today.Month;
+                    var currentYear = today.Year;
+                    var monthYearString = $"{currentYear}-{currentMonth:D2}";
+
+                    bool hasCurrentMonthStock = context.MonthlyStocks.Any(ms => ms.MonthYear == monthYearString);
+
+                    if (!hasCurrentMonthStock && CanManageSettings)
+                    {
+                        MessageBoxService.ShowInfo(
+                            "Hôm nay là ngày cuối tháng. Bạn nên thực hiện tổng kết tồn kho!",
+                            "Nhắc nhở tổng kết kho"
+                        );
+                    }
+                }
+
+                // Remind in first 2 days of new month if previous month not summarized
+                else if (today.Day <= 2)
+                {
+                    var previousMonth = today.AddMonths(-1);
+                    var prevMonth = previousMonth.Month;
+                    var prevYear = previousMonth.Year;
+                    var prevMonthYearString = $"{prevYear}-{prevMonth:D2}";
+
+                    bool hasPrevMonthStock = context.MonthlyStocks.Any(ms => ms.MonthYear == prevMonthYearString);
+
+                    if (!hasPrevMonthStock && CanManageSettings)
+                    {
+                        MessageBoxService.ShowInfo(
+                            $"Tháng {prevMonth}/{prevYear} chưa được tổng kết tồn kho. Bạn nên thực hiện tổng kết!",
+                            "Nhắc nhở tổng kết kho"
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in CheckMonthlyStockReminder: {ex.Message}");
+                // Don't show a message box to avoid disrupting the UI
+            }
+        }
+
         #endregion
 
         #region StockIn Methods
