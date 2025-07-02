@@ -40,14 +40,30 @@
                     <DatePicker Width="120" SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="Đến ngày"/>
                 </StackPanel>
 
-                <!-- Filter buttons -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Content="Hôm nay" Margin="5,0" Command="{Binding    }" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                    <Button Content="Tháng này" Margin="5,0" Command="{Binding FilterByMonthCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                    <Button Content="Quý này" Margin="5,0" Command="{Binding FilterByQuarterCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                    <Button Content="Năm này" Margin="5,0" Command="{Binding FilterByYearCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                    <Button Content="Làm mới" Margin="5,0" Command="{Binding RefreshCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                </StackPanel>
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Filter Buttons -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                        <Button Content="Hôm nay" Margin="5,0" Command="{Binding FilterByDayCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        <Button Content="Tháng này" Margin="5,0" Command="{Binding FilterByMonthCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        <Button Content="Quý này" Margin="5,0" Command="{Binding FilterByQuarterCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        <Button Content="Năm này" Margin="5,0" Command="{Binding FilterByYearCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        <Button Content="Làm mới" Margin="5,0" Command="{Binding RefreshCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                    </StackPanel>
+
+                    <!-- Filter Status TextBlock -->
+                    <TextBlock Grid.Row="1" 
+               Text="{Binding CurrentFilterText}" 
+               FontStyle="Italic" 
+               Foreground="#757575" 
+               FontSize="12" 
+               Margin="5,2,0,0" 
+               HorizontalAlignment="Right"/>
+                </Grid> 
             </Grid>
 
             <!-- Key Performance Indicators -->
@@ -92,23 +108,43 @@
                     </StackPanel>
                 </materialDesign:Card>
 
-                <!-- Tỷ lệ tăng trưởng KPI -->
+                <!-- Số lượng lịch hẹn hôm nay/hôm qua KPI -->
                 <materialDesign:Card Grid.Column="2" Margin="8" UniformCornerRadius="8">
                     <StackPanel Margin="15">
-                        <TextBlock Text="Tỷ lệ tăng trưởng" 
-                             FontWeight="Medium" Opacity="0.8"/>
-                        <TextBlock Text="{Binding GrowthPercentage, StringFormat={}{0:+0.0;-0.0}%}" 
-                             FontSize="20" FontWeight="Bold" Margin="0,8,0,0"/>
-                        <ProgressBar Value="{Binding GrowthPercentage, Mode=OneWay}" 
-                               Minimum="-100" Maximum="100" 
-                               Height="4" Margin="0,8,0,0">
+                        <TextBlock Text="Lịch hẹn hôm nay/hôm qua" 
+                 FontWeight="Medium" Opacity="0.8"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="{Binding TodayAppointmentCount}" 
+                     FontSize="20" FontWeight="Bold"/>
+                            <TextBlock Text=" / " FontSize="18" Margin="2,0"/>
+                            <TextBlock Text="{Binding YesterdayAppointmentCount}" 
+                     FontSize="18" Opacity="0.8"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding AppointmentGrowth}" 
+                 Margin="0,4,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AppointmentPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="True">
+                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding AppointmentPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="False">
+                                            <Setter Property="Foreground" Value="#F44336"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ProgressBar Value="{Binding AppointmentPercentage, Mode=OneWay}" 
+                   Minimum="-100" Maximum="100" 
+                   Height="4" Margin="0,8,0,0">
                             <ProgressBar.Style>
                                 <Style TargetType="ProgressBar" BasedOn="{StaticResource MaterialDesignLinearProgressBar}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding GrowthPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="True">
+                                        <DataTrigger Binding="{Binding AppointmentPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="True">
                                             <Setter Property="Foreground" Value="#4CAF50"/>
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding GrowthPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="False">
+                                        <DataTrigger Binding="{Binding AppointmentPercentage, Converter={StaticResource GreaterThanZeroConverter}}" Value="False">
                                             <Setter Property="Foreground" Value="#F44336"/>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -117,6 +153,7 @@
                         </ProgressBar>
                     </StackPanel>
                 </materialDesign:Card>
+
 
                 <!-- Cảnh báo tồn kho KPI -->
                 <materialDesign:Card Grid.Column="3" Margin="8" UniformCornerRadius="8">
@@ -600,10 +637,13 @@
                                          FontWeight="Medium" Margin="0,0,0,15"/>
 
                                     <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentStatusSeries}" 
-                                                  LegendLocation="Top" DisableAnimations="False">
+                                              LegendLocation="Top" DisableAnimations="False">
                                         <lvc:CartesianChart.AxisX>
                                             <lvc:Axis Title="Trạng thái" Labels="{Binding AppointmentStatusLabels}"/>
                                         </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis Title="Số lượng" LabelFormatter="{Binding IntegerFormatter}" MinValue="0" />
+                                        </lvc:CartesianChart.AxisY>
                                     </lvc:CartesianChart>
                                 </Grid>
                             </materialDesign:Card>

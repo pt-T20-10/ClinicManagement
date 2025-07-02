@@ -300,9 +300,9 @@ namespace ClinicManagement.ViewModels
         {
             if (doctor == null) return;
 
-            var detailsWindow = new DoctorDetailsWindow
+            var detailsWindow = new StaffDetailsWindow
             {
-                DataContext = new DoctorDetailsWindowViewModel { Doctor = doctor }
+                DataContext = new StaffDetailsWindowViewModel { Doctor = doctor }
             };
             detailsWindow.ShowDialog();
             LoadData(); // Refresh data after closing details window

@@ -91,7 +91,7 @@ namespace ClinicManagement.ViewModels
         }
 
       private string _email;
-public string Email
+    public string Email
 {
     get => _email;
     set

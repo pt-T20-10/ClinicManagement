@@ -13,7 +13,7 @@ using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
-    public class DoctorDetailsWindowViewModel : BaseViewModel, IDataErrorInfo
+    public class StaffDetailsWindowViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
         private ObservableCollection<AppointmentDisplayInfo>? _doctorAppointmentsDisplay;
@@ -252,30 +252,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private string _selectedRole = "Bác sĩ";
-        public string SelectedRole
-        {
-            get => _selectedRole;
-            set
-            {
-                _selectedRole = value;
-                OnPropertyChanged();
-                // Refresh AddDoctorAccountCommand can-execute when role changes
-                CommandManager.InvalidateRequerySuggested();
-            }
-        }
-
-        private ObservableCollection<string> _roleList = new();
-        public ObservableCollection<string> RoleList
-        {
-            get => _roleList;
-            set
-            {
-                _roleList = value;
-                OnPropertyChanged();
-            }
-        }
-
         // Appointment Properties
         private DateTime _appointmentStartDate = DateTime.Today.AddMonths(-1);
         public DateTime AppointmentStartDate
@@ -343,7 +319,7 @@ namespace ClinicManagement.ViewModels
         public ICommand AddDoctorAccountCommand { get; set; }
         #endregion
 
-        public DoctorDetailsWindowViewModel()
+        public StaffDetailsWindowViewModel()
         {
             InitializeCommands();
             InitializeData();

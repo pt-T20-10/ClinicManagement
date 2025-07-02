@@ -1,4 +1,4 @@
-﻿<Window x:Class="ClinicManagement.SubWindow.DoctorDetailsWindow"
+﻿<Window x:Class="ClinicManagement.SubWindow.StaffDetailsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -18,14 +18,14 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
         WindowStyle="None"
         ResizeMode="NoResize"
-        Name="doctordetailsWindow"
+        Name="StaffDetailswindow"
         Style="{StaticResource MaterialDesignWindow}"
         WindowStartupLocation="CenterScreen"
         Width="1200" Height="700">
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
-            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=doctordetailsWindow}"/>
+            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=StaffDetailswindow}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>
@@ -39,7 +39,7 @@
 
         <!-- Control Bar -->
         <Grid Grid.Row="0">
-            <uc:ControlBarUC Tag="{Binding Title, ElementName=doctordetailsWindow}"/>
+            <uc:ControlBarUC Tag="{Binding Title, ElementName=StaffDetailsWindow}"/>
         </Grid>
 
         <!-- Main Content -->
@@ -212,11 +212,13 @@
 
 
                                     <!-- New Account Role Selection -->
-                                    <ComboBox ItemsSource="{Binding RoleList}"
-                                               materialDesign:HintAssist.Hint="Vai trò"
-                      SelectedItem="{Binding SelectedRole, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                      Margin="15,10,5,10"/>
+                                    <TextBox 
+                                        Text="{Binding Role, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                        materialDesign:HintAssist.Hint="Vai trò"
+                                        IsReadOnly="True"
+                                        Margin="15,10,5,10"/>
+
                                 </Grid>
 
                                 <!-- Action Buttons Row -->

@@ -78,18 +78,54 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        // Growth Percentage
-        private double _growthPercentage;
-        public double GrowthPercentage
+        // Today's Appointment Count
+        private int _todayAppointmentCount;
+        public int TodayAppointmentCount
         {
-            get => _growthPercentage;
+            get => _todayAppointmentCount;
             set
             {
-                _growthPercentage = value;
+                _todayAppointmentCount = value;
                 OnPropertyChanged();
             }
         }
+
+        // Yesterday's Appointment Count
+        private int _yesterdayAppointmentCount;
+        public int YesterdayAppointmentCount
+        {
+            get => _yesterdayAppointmentCount;
+            set
+            {
+                _yesterdayAppointmentCount = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Appointment Growth Rate
+        private string _appointmentGrowth;
+        public string AppointmentGrowth
+        {
+            get => _appointmentGrowth;
+            set
+            {
+                _appointmentGrowth = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Appointment Growth Percentage
+        private double _appointmentPercentage;
+        public double AppointmentPercentage
+        {
+            get => _appointmentPercentage;
+            set
+            {
+                _appointmentPercentage = value;
+                OnPropertyChanged();
+            }
+        }
+
 
         // New Patients Count
         private int _newPatients;
@@ -515,7 +551,16 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        private string _currentFilterText = "Đang xem: Tháng này";
+        public string CurrentFilterText
+        {
+            get => _currentFilterText;
+            set
+            {
+                _currentFilterText = value;
+                OnPropertyChanged();
+            }
+        }
 
 
         #endregion
@@ -592,7 +637,8 @@ namespace ClinicManagement.ViewModels
                 new Action(() => FilterByMonth())
             );
         }
-
+        // Add this property to your class
+        public Func<double, string> IntegerFormatter { get; set; }
 
         private void InitializeCommands()
         {
@@ -671,22 +717,149 @@ namespace ClinicManagement.ViewModels
         {
             Title = "Số lượng lịch hẹn",
             Values = new ChartValues<double>(new double[AppointmentStatusLabels.Length]),
-            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+            LabelPoint = point => string.Format("{0:N0}", point.Y)
         }
     };
 
-            // Initialize empty collections
-            ProductDistributionSeries = new SeriesCollection();
-            TopRevenueDaysSeries = new SeriesCollection();
-            RevenueTrendSeries = new SeriesCollection();
-            InvoiceTypeSeries = new SeriesCollection();
-            PatientTypeSeries = new SeriesCollection();
-            ServiceRevenueSeries = new SeriesCollection();
-            AppointmentPeakHoursSeries = new SeriesCollection();
-            PatientsByStaffseries = new SeriesCollection();
-            RevenueByCategorySeries = new SeriesCollection();
-            CancellationRateSeries = new SeriesCollection();
+            // Initialize empty collections with default "No data" placeholders
+            ProductDistributionSeries = new SeriesCollection
+    {
+        new PieSeries
+        {
+            Title = "Không có dữ liệu",
+            Values = new ChartValues<double> { 100 },
+            DataLabels = true,
+            LabelPoint = chartPoint => "Không có dữ liệu",
+            Fill = new SolidColorBrush(Colors.Gray)
         }
+    };
+
+            // Default for top revenue days chart
+            TopRevenueDaysSeries = new SeriesCollection
+    {
+        new ColumnSeries
+        {
+            Title = "Doanh thu",
+            Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
+            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        }
+    };
+
+            // Default labels for days
+            TopRevenueDaysLabels = Enumerable.Range(1, 7)
+                .Select(i => DateTime.Now.AddDays(-i).ToString("dd/MM"))
+                .Reverse()
+                .ToArray();
+
+            // Default for revenue trend chart
+            RevenueTrendSeries = new SeriesCollection
+    {
+        new LineSeries
+        {
+            Title = "Xu hướng doanh thu",
+            Values = new ChartValues<double>(new double[12]),
+            PointGeometry = null,
+            LineSmoothness = 1,
+            Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+            Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        }
+    };
+            RevenueTrendLabels = MonthLabels;
+
+            // Default for invoice type series
+            InvoiceTypeSeries = new SeriesCollection
+    {
+        new ColumnSeries
+        {
+            Title = "Doanh thu",
+            Values = new ChartValues<double>(new double[] { 0, 0, 0 }),
+            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        }
+    };
+            InvoiceTypeLabels = new[] { "Khám bệnh", "Bán thuốc", "Khám và bán thuốc" };
+
+            // Default for patient type series
+            PatientTypeSeries = new SeriesCollection
+    {
+        new PieSeries
+        {
+            Title = "Không có dữ liệu",
+            Values = new ChartValues<double> { 100 },
+            DataLabels = true,
+            LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
+            Fill = new SolidColorBrush(Colors.Gray)
+        }
+    };
+
+            // Default for service revenue
+            ServiceRevenueSeries = new SeriesCollection
+    {
+        new PieSeries
+        {
+            Title = "Không có dữ liệu",
+            Values = new ChartValues<double> { 100 },
+            DataLabels = true,
+            LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
+            Fill = new SolidColorBrush(Colors.Gray)
+        }
+    };
+
+            // Default for appointment peak hours
+            AppointmentPeakHoursSeries = new SeriesCollection
+    {
+        new ColumnSeries
+        {
+            Title = "Số lịch hẹn",
+            Values = new ChartValues<double>(new double[24]),
+            Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+            LabelPoint = point => string.Format("{0:N0}", point.Y)
+        }
+    };
+
+            // Default for patients by staff series
+            PatientsByStaffseries = new SeriesCollection
+    {
+        new ColumnSeries
+        {
+            Title = "Số bệnh nhân",
+            Values = new ChartValues<double> { 0 },
+            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+            LabelPoint = point => string.Format("{0:N0}", point.Y)
+        }
+    };
+            DoctorLabels = new[] { "Không có dữ liệu" };
+
+            // Default for revenue by category
+            RevenueByCategorySeries = new SeriesCollection
+    {
+        new ColumnSeries
+        {
+            Title = "Doanh thu",
+            Values = new ChartValues<double> { 0 },
+            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+        }
+    };
+            CategoryLabels = new[] { "Không có dữ liệu" };
+
+            // Default for cancellation rate
+            CancellationRateSeries = new SeriesCollection
+    {
+        new PieSeries
+        {
+            Title = "Không có dữ liệu",
+            Values = new ChartValues<double> { 100 },
+            DataLabels = true,
+            LabelPoint = chartPoint => "Không có dữ liệu",
+            Fill = new SolidColorBrush(Colors.Gray)
+        }
+    };
+        }
+
 
 
         public async void LoadStatisticsAsync()
@@ -787,7 +960,43 @@ namespace ClinicManagement.ViewModels
             {
                 var today = DateTime.Today;
                 var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+                var yesterday = today.AddDays(-1);
 
+                // Calculate today's appointments
+                int todayAppointments = context.Appointments
+                    .Count(a => a.AppointmentDate.Date == today && a.IsDeleted != true);
+
+                // Calculate yesterday's appointments
+                int yesterdayAppointments = context.Appointments
+                    .Count(a => a.AppointmentDate.Date == yesterday && a.IsDeleted != true);
+
+                // Calculate appointment growth percentage
+                double appointmentPercentage = 0;
+                string appointmentGrowth = "0.0%";
+
+                if (yesterdayAppointments > 0)
+                {
+                    appointmentPercentage = ((todayAppointments - yesterdayAppointments) / (double)yesterdayAppointments) * 100;
+
+                    // Format with + sign for positive growth
+                    if (appointmentPercentage > 0)
+                        appointmentGrowth = $"+{appointmentPercentage:0.0}%";
+                    else
+                        appointmentGrowth = $"{appointmentPercentage:0.0}%";
+                }
+                else if (yesterdayAppointments == 0 && todayAppointments > 0)
+                {
+                    // If yesterday had no appointments but today has some
+                    appointmentGrowth = "+100.0%";
+                    appointmentPercentage = 100.0;
+                }
+                else if (yesterdayAppointments == 0 && todayAppointments == 0)
+                {
+                    // If both days have no appointments
+                    appointmentGrowth = "0.0%";
+                    appointmentPercentage = 0;
+                }
+       
                 // Today's revenue
                 var todayInvoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
@@ -838,35 +1047,15 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 int medicineSoldCount = invoiceDetails.Sum(id => id.Quantity ?? 0);
 
-                // Calculate today's growth compared to yesterday with better formatting
-                var yesterday = today.AddDays(-1);
-                var yesterdayInvoices = context.Invoices
-                    .Where(i => i.InvoiceDate.HasValue &&
-                           i.InvoiceDate.Value.Date == yesterday &&
-                           i.Status == "Đã thanh toán")
-                    .ToList();
-                decimal yesterdayRevenue = yesterdayInvoices.Sum(i => i.TotalAmount);
-
-                double growthPercentage = 0;
-                if (yesterdayRevenue > 0)
-                {
-                    // Sửa công thức tính tăng trưởng
-                    growthPercentage = (double)((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100);
-                }
-                else if (todayRevenue > 0 && yesterdayRevenue == 0)
-                {
-                    // Nếu hôm trước không có doanh thu nhưng hôm nay có
-                    growthPercentage = 100; // Hiển thị tăng trưởng 100%
-                }
-                else if (todayRevenue == 0 && yesterdayRevenue == 0)
-                {
-                    // Nếu cả hai ngày đều không có doanh thu
-                    growthPercentage = 0;
-                }
-
+        
+   
                 // Update UI elements on the UI thread
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    TodayAppointmentCount = todayAppointments;
+                    YesterdayAppointmentCount = yesterdayAppointments;
+                    AppointmentGrowth = appointmentGrowth;
+                    AppointmentPercentage = appointmentPercentage;
                     TodayRevenue = todayRevenue;
                     MonthRevenue = monthRevenue;
                     TotalRevenue = totalRevenue;
@@ -874,7 +1063,7 @@ namespace ClinicManagement.ViewModels
                     TotalPatients = totalPatientsCount;
                     TotalAppointments = totalAppointmentsCount;
                     TotalMedicineSold = medicineSoldCount;
-                    GrowthPercentage = growthPercentage;
+                  
                 });
             }
             catch (Exception ex)
@@ -1020,10 +1209,10 @@ namespace ClinicManagement.ViewModels
 
                 var totalSales = categorySales.Sum(c => c.TotalSales);
 
-                if (totalSales > 0)
-                {
-                    var newSeries = new SeriesCollection();
+                var newSeries = new SeriesCollection();
 
+                if (totalSales > 0 && categorySales.Any())
+                {
                     foreach (var category in categorySales)
                     {
                         double percentage = (double)((category.TotalSales / totalSales) * 100);
@@ -1037,14 +1226,25 @@ namespace ClinicManagement.ViewModels
                             Fill = GetRandomBrush()
                         });
                     }
-
-                    ProductDistributionSeries = newSeries;
                 }
+                else
+                {
+                    // Add a default "No Data" segment when there's no data
+                    newSeries.Add(new PieSeries
+                    {
+                        Title = "Không có dữ liệu",
+                        Values = new ChartValues<double> { 100 },
+                        DataLabels = true,
+                        LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
+                        Fill = new SolidColorBrush(Colors.Gray)
+                    });
+                }
+
+                ProductDistributionSeries = newSeries;
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ phân bố sản phẩm: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ phân bố sản phẩm: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1086,12 +1286,35 @@ namespace ClinicManagement.ViewModels
 
                     TopRevenueDaysLabels = labels;
                 }
+                else
+                {
+                    // Handle empty data case - provide default values
+                    var defaultLabels = Enumerable.Range(1, 7)
+                        .Select(i => DateTime.Now.AddDays(-i).ToString("dd/MM"))
+                        .Reverse()
+                        .ToArray();
+
+                    // Initialize with zero values but proper formatting
+                    TopRevenueDaysSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
+
+                    TopRevenueDaysLabels = defaultLabels;
+                }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo ngày: {ex.Message}", "Lỗi");
             }
         }
+
 
 
 
@@ -1119,24 +1342,24 @@ namespace ClinicManagement.ViewModels
                 }
 
                 RevenueTrendSeries = new SeriesCollection
-                {
-                    new LineSeries
-                    {
-                        Title = "Xu hướng doanh thu",
-                        Values = new ChartValues<double>(monthlyRevenue),
-                        PointGeometry = null,
-                        LineSmoothness = 1,
-                        Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                        Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54))
-                    }
-                };
+        {
+            new LineSeries
+            {
+                Title = "Xu hướng doanh thu",
+                Values = new ChartValues<double>(monthlyRevenue),
+                PointGeometry = null,
+                LineSmoothness = 1,
+                Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54)),
+                LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+            }
+        };
 
                 RevenueTrendLabels = MonthLabels;
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ xu hướng doanh thu: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ xu hướng doanh thu: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1166,22 +1389,40 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                InvoiceTypeSeries = new SeriesCollection
+                // Check if we have any data
+                if (revenueByType.Sum() > 0)
                 {
-                    new ColumnSeries
-                    {
-                        Title = "Doanh thu",
-                        Values = new ChartValues<double>(revenueByType),
-                        Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80))
-                    }
-                };
+                    InvoiceTypeSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(revenueByType),
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
+                }
+                else
+                {
+                    // Add a default series with zero values
+                    InvoiceTypeSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(new double[] { 0, 0, 0 }),
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
+                }
 
                 InvoiceTypeLabels = invoiceTypes;
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo loại hóa đơn: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo loại hóa đơn: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1200,10 +1441,10 @@ namespace ClinicManagement.ViewModels
 
                 var totalRevenue = invoices.Sum(i => i.TotalAmount);
 
+                var seriesCollection = new SeriesCollection();
+
                 if (totalRevenue > 0)
                 {
-                    var seriesCollection = new SeriesCollection();
-
                     foreach (var type in invoiceTypes)
                     {
                         var typeRevenue = invoices
@@ -1226,15 +1467,27 @@ namespace ClinicManagement.ViewModels
                                 Title = type,
                                 Values = new ChartValues<double> { percentage },
                                 DataLabels = true,
-                                // Định dạng hiển thị số liệu trên biểu đồ
                                 LabelPoint = chartPoint => $"{type}: {chartPoint.Y:0.0}% ({string.Format("{0:N0} VNĐ", typeRevenue)})",
                                 Fill = new SolidColorBrush(brushColor)
                             });
                         }
                     }
-
-                    ServiceRevenueSeries = seriesCollection;
                 }
+
+                // If no data, add a default segment
+                if (seriesCollection.Count == 0)
+                {
+                    seriesCollection.Add(new PieSeries
+                    {
+                        Title = "Không có dữ liệu",
+                        Values = new ChartValues<double> { 100 },
+                        DataLabels = true,
+                        LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
+                        Fill = new SolidColorBrush(Colors.Gray)
+                    });
+                }
+
+                ServiceRevenueSeries = seriesCollection;
             }
             catch (Exception ex)
             {
@@ -1251,57 +1504,66 @@ namespace ClinicManagement.ViewModels
                     .Where(pt => pt.IsDeleted != true)
                     .ToList();
 
-                if (patientTypes.Any())
+                var seriesCollection = new SeriesCollection();
+
+                // Process in memory
+                var patients = context.Patients
+                    .Where(p => p.IsDeleted != true &&
+                          p.CreatedAt >= StartDate &&
+                          p.CreatedAt <= EndDate)
+                    .ToList();
+
+                var totalPatients = patients.Count;
+
+                if (totalPatients > 0 && patientTypes.Any())
                 {
-                    var seriesCollection = new SeriesCollection();
-
-                    // Process in memory
-                    var patients = context.Patients
-                        .Where(p => p.IsDeleted != true &&
-                               p.CreatedAt >= StartDate &&
-                               p.CreatedAt <= EndDate)
-                        .ToList();
-
-                    var totalPatients = patients.Count;
-
-                    if (totalPatients > 0)
+                    foreach (var type in patientTypes)
                     {
-                        foreach (var type in patientTypes)
+                        var patientCount = patients.Count(p => p.PatientTypeId == type.PatientTypeId);
+                        double percentage = Math.Round((double)(patientCount * 100) / totalPatients, 1);
+
+                        if (percentage > 0)
                         {
-                            var patientCount = patients.Count(p => p.PatientTypeId == type.PatientTypeId);
-                            double percentage = Math.Round((double)(patientCount * 100) / totalPatients, 1);
-
-                            if (percentage > 0)
+                            var colorIndex = type.PatientTypeId % 5;
+                            var colors = new[]
                             {
-                                var colorIndex = type.PatientTypeId % 5;
-                                var colors = new[]
-                                {
-                                    Color.FromRgb(244, 67, 54),
-                                    Color.FromRgb(33, 150, 243),
-                                    Color.FromRgb(76, 175, 80),
-                                    Color.FromRgb(255, 152, 0),
-                                    Color.FromRgb(156, 39, 176)
-                                };
+                        Color.FromRgb(244, 67, 54),
+                        Color.FromRgb(33, 150, 243),
+                        Color.FromRgb(76, 175, 80),
+                        Color.FromRgb(255, 152, 0),
+                        Color.FromRgb(156, 39, 176)
+                    };
 
-                                seriesCollection.Add(new PieSeries
-                                {
-                                    Title = type.TypeName,
-                                    Values = new ChartValues<double> { percentage },
-                                    DataLabels = true,
-                                    LabelPoint = chartPoint => $"{type.TypeName}: {chartPoint.Y:0.0}%",
-                                    Fill = new SolidColorBrush(colors[colorIndex])
-                                });
-                            }
+                            seriesCollection.Add(new PieSeries
+                            {
+                                Title = type.TypeName,
+                                Values = new ChartValues<double> { percentage },
+                                DataLabels = true,
+                                LabelPoint = chartPoint => $"{type.TypeName}: {chartPoint.Y:0.0}%",
+                                Fill = new SolidColorBrush(colors[colorIndex])
+                            });
                         }
-
-                        PatientTypeSeries = seriesCollection;
                     }
                 }
+
+                // If there's no data, add a default segment
+                if (seriesCollection.Count == 0)
+                {
+                    seriesCollection.Add(new PieSeries
+                    {
+                        Title = "Không có dữ liệu",
+                        Values = new ChartValues<double> { 100 },
+                        DataLabels = true,
+                        LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
+                        Fill = new SolidColorBrush(Colors.Gray)
+                    });
+                }
+
+                PatientTypeSeries = seriesCollection;
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ phân loại bệnh nhân: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ phân loại bệnh nhân: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1335,14 +1597,26 @@ namespace ClinicManagement.ViewModels
                     if (series?.Values is ChartValues<double> values)
                     {
                         values.Clear();
-                        values.AddRange(statusCounts);
+
+                        // Check if we have any data
+                        if (statusCounts.Sum() > 0)
+                        {
+                            values.AddRange(statusCounts);
+                        }
+                        else
+                        {
+                            // Add zero values if no data
+                            values.AddRange(Enumerable.Repeat(0.0, AppointmentStatusLabels.Length));
+                        }
+
+                        // Ensure we have a proper label formatter
+                        series.LabelPoint = point => string.Format("{0:N0}", Math.Round(point.Y, 0));
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ trạng thái lịch hẹn: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ trạng thái lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1368,35 +1642,68 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                AppointmentPeakHoursSeries = new SeriesCollection
+                // Check if we have any appointments
+                if (appointments.Any())
                 {
-                    new ColumnSeries
-                    {
-                        Title = "Số lịch hẹn",
-                        Values = new ChartValues<double>(appointmentsByHour),
-                        Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0))
-                    }
-                };
+                    AppointmentPeakHoursSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Số lịch hẹn",
+                    Values = new ChartValues<double>(appointmentsByHour),
+                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+                    LabelPoint = point => string.Format("{0:N0}", Math.Round(point.Y, 0))
+                }
+            };
+                }
+                else
+                {
+                    // Create a series with all zeros if there's no data
+                    AppointmentPeakHoursSeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Số lịch hẹn",
+                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, 24)),
+                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+                    LabelPoint = point => string.Format("{0:N0}", Math.Round(point.Y, 0))
+                }
+            };
+                }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ giờ cao điểm lịch hẹn: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ giờ cao điểm lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void LoadPatientsByDoctorChart(ClinicDbContext context)
         {
             try
             {
                 // Get all Staffs
-                var Staffs = context.Staffs
+                var staffs = context.Staffs
                     .Where(d => d.IsDeleted != true)
                     .Take(10)
                     .ToList();
 
-                if (!Staffs.Any())
+                if (!staffs.Any())
+                {
+                    // No doctors found - create empty chart
+                    PatientsByStaffseries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Số bệnh nhân",
+                    Values = new ChartValues<double>(),
+                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                    LabelPoint = point => string.Format("{0:N0}", point.Y)
+                }
+            };
+                    DoctorLabels = new string[] { "Không có dữ liệu" };
                     return;
+                }
 
                 // Get appointments in the date range
                 var appointments = context.Appointments
@@ -1408,28 +1715,28 @@ namespace ClinicManagement.ViewModels
                 var doctorNames = new List<string>();
                 var patientCounts = new List<double>();
 
-                foreach (var doctor in Staffs)
+                foreach (var doctor in staffs)
                 {
                     doctorNames.Add(doctor.FullName);
                     patientCounts.Add(appointments.Count(a => a.StaffId == doctor.StaffId));
                 }
 
                 PatientsByStaffseries = new SeriesCollection
-                {
-                    new ColumnSeries
-                    {
-                        Title = "Số bệnh nhân",
-                        Values = new ChartValues<double>(patientCounts),
-                        Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243))
-                    }
-                };
+        {
+            new ColumnSeries
+            {
+                Title = "Số bệnh nhân",
+                Values = new ChartValues<double>(patientCounts),
+                Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                LabelPoint = point => string.Format("{0:N0}", point.Y)
+            }
+        };
 
                 DoctorLabels = doctorNames.ToArray();
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ bệnh nhân theo bác sĩ: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ bệnh nhân theo bác sĩ: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1681,6 +1988,23 @@ namespace ClinicManagement.ViewModels
 
 
 
+        /// <summary>
+        /// Tính toán tỷ lệ tăng trưởng doanh thu và bệnh nhân mới giữa kỳ hiện tại và kỳ trước đó.
+        /// </summary>
+        /// <param name="context">Context cơ sở dữ liệu để truy xuất dữ liệu</param>
+        /// <remarks>
+        /// Phương thức này thực hiện các tính toán sau:
+        /// 1. Xác định khoảng thời gian của kỳ trước đó (có cùng độ dài với kỳ hiện tại)
+        /// 2. Tính toán doanh thu của cả hai kỳ từ các hóa đơn đã thanh toán
+        /// 3. Tính toán số lượng bệnh nhân mới trong cả hai kỳ
+        /// 4. Tính tỷ lệ tăng trưởng doanh thu và bệnh nhân dưới dạng phần trăm
+        /// 5. Định dạng kết quả với dấu +/- phù hợp và một chữ số thập phân
+        /// 
+        /// Các trường hợp đặc biệt:
+        /// - Kỳ trước có doanh thu bằng 0, kỳ này có doanh thu: hiển thị "+100.0%"
+        /// - Cả hai kỳ đều có doanh thu bằng 0: hiển thị "0.0%"
+        /// - Có lỗi trong quá trình tính toán: hiển thị "N/A"
+        /// </remarks>
         private void CalculateGrowthRates(ClinicDbContext context)
         {
             try
@@ -1774,9 +2098,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
-
         private void LoadRevenueByCategoryChart(ClinicDbContext context)
         {
             try
@@ -1820,23 +2141,42 @@ namespace ClinicManagement.ViewModels
                     revenueValues.Add((double)categoryRevenue.TotalRevenue);
                 }
 
-                // Tạo biểu đồ doanh thu theo danh mục
-                RevenueByCategorySeries = new SeriesCollection
-        {
-            new ColumnSeries
+                // Check if we have any data
+                if (revenueValues.Any())
+                {
+                    RevenueByCategorySeries = new SeriesCollection
             {
-                Title = "Doanh thu",
-                Values = new ChartValues<double>(revenueValues),
-                Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243))
-            }
-        };
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(revenueValues),
+                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
 
-                CategoryLabels = categoryNames.ToArray();
+                    CategoryLabels = categoryNames.ToArray();
+                }
+                else
+                {
+                    // Create a default chart with no data
+                    RevenueByCategorySeries = new SeriesCollection
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double> { 0 },
+                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
+
+                    CategoryLabels = new[] { "Không có dữ liệu" };
+                }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo danh mục: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo danh mục: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1919,6 +2259,7 @@ namespace ClinicManagement.ViewModels
         {
             StartDate = DateTime.Now.Date;
             EndDate = DateTime.Now;
+            CurrentFilterText = "Đang xem: Hôm nay";
             LoadStatisticsAsync();
         }
 
@@ -1926,6 +2267,7 @@ namespace ClinicManagement.ViewModels
         {
             StartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             EndDate = DateTime.Now;
+            CurrentFilterText = "Đang xem: Tháng này";
             LoadStatisticsAsync();
         }
 
@@ -1937,6 +2279,7 @@ namespace ClinicManagement.ViewModels
 
             StartDate = new DateTime(DateTime.Now.Year, quarterStartMonth, 1);
             EndDate = DateTime.Now;
+            CurrentFilterText = $"Đang xem: Quý {quarterNumber}";
             LoadStatisticsAsync();
         }
 
@@ -1944,6 +2287,7 @@ namespace ClinicManagement.ViewModels
         {
             StartDate = new DateTime(DateTime.Now.Year, 1, 1);
             EndDate = DateTime.Now;
+            CurrentFilterText = $"Đang xem: Năm {DateTime.Now.Year}";
             LoadStatisticsAsync();
         }
 

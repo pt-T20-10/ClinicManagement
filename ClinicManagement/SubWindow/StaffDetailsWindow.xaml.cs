@@ -15,11 +15,11 @@ using System.Windows.Shapes;
 namespace ClinicManagement.SubWindow
 {
     /// <summary>
-    /// Interaction logic for DoctorDetailsWindow.xaml
+    /// Interaction logic for StaffDetailsWindow.xaml
     /// </summary>
-    public partial class DoctorDetailsWindow : Window
+    public partial class StaffDetailsWindow : Window
     {
-        public DoctorDetailsWindow()
+        public StaffDetailsWindow()
         {
             InitializeComponent();
         }
