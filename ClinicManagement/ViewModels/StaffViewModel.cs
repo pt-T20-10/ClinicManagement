@@ -443,7 +443,7 @@ namespace ClinicManagement.ViewModels
                     Filter = "Excel files (*.xlsx)|*.xlsx",
                     DefaultExt = "xlsx",
                     Title = "Chọn vị trí lưu file Excel",
-                    FileName = $"DanhSachBacSi_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                    FileName = $"DanhSachNhanVien_{DateTime.Now:dd-MM-yyyy}.xlsx"
                 };
 
                 if (saveFileDialog.ShowDialog() == true)
@@ -458,22 +458,47 @@ namespace ClinicManagement.ViewModels
                         {
                             using (var workbook = new XLWorkbook())
                             {
-                                var worksheet = workbook.Worksheets.Add("Danh sách bác sĩ");
+                                var worksheet = workbook.Worksheets.Add("Danh sách nhân viên");
 
                                 // Report progress: 5% - Created workbook
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
-                                // Add title (merged cells)
-                                worksheet.Cell(1, 1).Value = "DANH SÁCH BÁC SĨ";
-                                var titleRange = worksheet.Range(1, 1, 1, 8);
+                                // Set column B as starting point (similar to StockMedicineViewModel)
+                                int startColumn = 2;
+                                int totalColumns = 8;
+
+                                // Determine title based on filter settings
+                                string title = "DANH SÁCH NHÂN VIÊN";
+                                if (SelectedRoleId.HasValue)
+                                {
+                                    var roleName = RoleList.FirstOrDefault(r => r.RoleId == SelectedRoleId)?.RoleName;
+                                    if (!string.IsNullOrEmpty(roleName))
+                                    {
+                                        title = $"DANH SÁCH {roleName.ToUpper()}";
+
+                                        // Add specialty information if applicable
+                                        if (IsSpecialtyVisible && SelectedSpecialtyId.HasValue)
+                                        {
+                                            var specialtyName = ListSpecialty.FirstOrDefault(s => s.SpecialtyId == SelectedSpecialtyId)?.SpecialtyName;
+                                            if (!string.IsNullOrEmpty(specialtyName) && specialtyName != "-- Tất cả chuyên khoa --")
+                                            {
+                                                title += $" - {specialtyName.ToUpper()}";
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Add title (merged cells), starting from column B
+                                worksheet.Cell(1, startColumn).Value = title;
+                                var titleRange = worksheet.Range(1, startColumn, 1, startColumn + totalColumns - 1);
                                 titleRange.Merge();
                                 titleRange.Style.Font.Bold = true;
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
-                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
-                                var dateRange = worksheet.Range(2, 1, 2, 8);
+                                // Add current date, starting from column B
+                                worksheet.Cell(2, startColumn).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, startColumn, 2, startColumn + totalColumns - 1);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -483,18 +508,19 @@ namespace ClinicManagement.ViewModels
 
                                 // Add headers (with spacing of 4 cells from title)
                                 int headerRow = 6; // Row 6 (leaving 3 blank rows after title)
-                                worksheet.Cell(headerRow, 1).Value = "ID";
-                                worksheet.Cell(headerRow, 2).Value = "Họ và tên";
-                                worksheet.Cell(headerRow, 3).Value = "Vai trò";  // Add role column
-                                worksheet.Cell(headerRow, 4).Value = "Chuyên khoa";  // Shift other c
-                                worksheet.Cell(headerRow, 5).Value = "Điện thoại";
-                                worksheet.Cell(headerRow, 6).Value = "Email";
-                                worksheet.Cell(headerRow, 7).Value = "Lịch làm việc";
-                                worksheet.Cell(headerRow, 8).Value = "Địa chỉ";
-                         
+                                int column = startColumn;
+
+                                worksheet.Cell(headerRow, column++).Value = "ID";
+                                worksheet.Cell(headerRow, column++).Value = "Họ và tên";
+                                worksheet.Cell(headerRow, column++).Value = "Vai trò";
+                                worksheet.Cell(headerRow, column++).Value = "Chuyên khoa";
+                                worksheet.Cell(headerRow, column++).Value = "Điện thoại";
+                                worksheet.Cell(headerRow, column++).Value = "Email";
+                                worksheet.Cell(headerRow, column++).Value = "Lịch làm việc";
+                                worksheet.Cell(headerRow, column++).Value = "Địa chỉ";
 
                                 // Style header row
-                                var headerRange = worksheet.Range(headerRow, 1, headerRow, 8);
+                                var headerRange = worksheet.Range(headerRow, startColumn, headerRow, startColumn + totalColumns - 1);
                                 headerRange.Style.Font.Bold = true;
                                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
                                 headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -516,21 +542,16 @@ namespace ClinicManagement.ViewModels
                                 for (int i = 0; i < totalStaffs; i++)
                                 {
                                     var doctor = DoctorList[i];
+                                    column = startColumn;
 
-                                    worksheet.Cell(row, 1).Value = doctor.StaffId;
-                                    worksheet.Cell(row, 2).Value = doctor.FullName ?? "";
-                                    worksheet.Cell(row, 3).Value = doctor.Role?.RoleName ?? ""; 
-                                    worksheet.Cell(row, 4).Value = doctor.Specialty?.SpecialtyName ?? "";
-                                    worksheet.Cell(row, 5).Value = doctor.Phone ?? "";
-                                    worksheet.Cell(row, 6).Value = doctor.Email ?? "";
-                                    worksheet.Cell(row, 7).Value = doctor.Schedule ?? "";
-                                    worksheet.Cell(row, 8).Value = doctor.Address ?? "";
-
-                                    // Check if doctor has an account
-                                    var account = DataProvider.Instance.Context.Accounts
-                                        .FirstOrDefault(a => a.StaffId == doctor.StaffId && a.IsDeleted != true);
-
-                                    worksheet.Cell(row, 8).Value = account != null ? account.Username : "Không có";
+                                    worksheet.Cell(row, column++).Value = doctor.StaffId;
+                                    worksheet.Cell(row, column++).Value = doctor.FullName ?? "";
+                                    worksheet.Cell(row, column++).Value = doctor.Role?.RoleName ?? "";
+                                    worksheet.Cell(row, column++).Value = doctor.Specialty?.SpecialtyName ?? "";
+                                    worksheet.Cell(row, column++).Value = doctor.Phone ?? "";
+                                    worksheet.Cell(row, column++).Value = doctor.Email ?? "";
+                                    worksheet.Cell(row, column++).Value = doctor.Schedule ?? "";
+                                    worksheet.Cell(row, column++).Value = doctor.Address ?? "";
 
                                     row++;
 
@@ -539,7 +560,7 @@ namespace ClinicManagement.ViewModels
                                     Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
 
                                     // Add a small delay to make the progress visible
-                                    Thread.Sleep(30);
+                                    Thread.Sleep(20);
                                 }
 
                                 // Report progress: 80% - Data added
@@ -548,31 +569,32 @@ namespace ClinicManagement.ViewModels
                                 // Apply borders to the data range
                                 if (totalStaffs > 0)
                                 {
-                                    var dataRange = worksheet.Range(dataStartRow, 1, row - 1, 8);
+                                    var dataRange = worksheet.Range(dataStartRow, startColumn, row - 1, startColumn + totalColumns - 1);
                                     dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                     dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
                                     // Center-align certain columns
-                                    worksheet.Column(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // ID
-                                    worksheet.Column(3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Specialty
-                                    worksheet.Column(4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Phone
-                                    worksheet.Column(8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Account
+                                    worksheet.Column(startColumn).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // ID
+                                    worksheet.Column(startColumn + 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Role
+                                    worksheet.Column(startColumn + 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Specialty
+                                    worksheet.Column(startColumn + 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center; // Phone
                                 }
 
                                 // Add total row
-                                worksheet.Cell(row + 1, 1).Value = "Tổng số:";
-                                worksheet.Cell(row + 1, 2).Value = totalStaffs;
-                                worksheet.Cell(row + 1, 2).Style.Font.Bold = true;
+                                worksheet.Cell(row + 1, startColumn).Value = "Tổng số:";
+                                worksheet.Cell(row + 1, startColumn + 1).Value = totalStaffs;
+                                worksheet.Cell(row + 1, startColumn + 1).Style.Font.Bold = true;
 
                                 // Auto-fit columns
                                 worksheet.Columns().AdjustToContents();
 
-                                // Set minimum widths for better readability
-                                worksheet.Column(1).Width = 10; // ID
-                                worksheet.Column(2).Width = 25; // Name
-                                worksheet.Column(3).Width = 20; // Specialty
-                                worksheet.Column(7).Width = 80; // Schedule
-                                worksheet.Column(8).Width = 85; // Address
+                                // Set minimum widths for better readability and set column A width for spacing
+                                worksheet.Column(1).Width = 3; // Spacing column
+                                worksheet.Column(startColumn).Width = 10; // ID
+                                worksheet.Column(startColumn + 1).Width = 25; // Name
+                                worksheet.Column(startColumn + 3).Width = 20; // Specialty
+                                worksheet.Column(startColumn + 6).Width = 80; // Schedule
+                                worksheet.Column(startColumn + 7).Width = 50; // Address
 
                                 // Report progress: 90% - Formatting complete
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
@@ -593,8 +615,25 @@ namespace ClinicManagement.ViewModels
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     MessageBoxService.ShowSuccess(
-                                     $"Đã xuất danh sách bác sĩ thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                     $"Đã xuất danh sách nhân viên thành công!\nĐường dẫn: {saveFileDialog.FileName}",
                                      "Thành công");
+
+                                    // Ask if user wants to open the Excel file
+                                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                    {
+                                        try
+                                        {
+                                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                            {
+                                                FileName = saveFileDialog.FileName,
+                                                UseShellExecute = true
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                        }
+                                    }
                                 });
                             }
                         }
@@ -604,11 +643,9 @@ namespace ClinicManagement.ViewModels
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
-
                                 MessageBoxService.ShowError(
                                     $"Lỗi khi xuất Excel: {ex.Message}",
                                     "Lỗi");
-                              
                             });
                         }
                     });
@@ -624,6 +661,7 @@ namespace ClinicManagement.ViewModels
                                    "Lỗi");
             }
         }
+
 
 
         #region Specialty Methods

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClinicManagement.SubWindow"
         mc:Ignorable="d"
+        xmlns:conver ="clr-namespace:ClinicManagement.Converter" 
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
        TextElement.FontWeight="Regular"
@@ -15,17 +16,19 @@
        FontFamily="{DynamicResource MaterialDesignFont}"
        xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
        WindowStyle="None"
-       ResizeMode="NoResize"
        Name="medicalRecordWindow"
        Style="{StaticResource MaterialDesignWindow}"
        xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
        WindowStartupLocation="CenterScreen"
-       Width="900" Height="1000">
+       Width="1200" Height="1000">
+
+
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=medicalRecordWindow}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
+    <!-- Add this style definition to the Window.Resources section in PatientDetailsWindow.xaml -->
 
 
     <Grid>
@@ -91,7 +94,7 @@
                                    FontWeight="SemiBold"/>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,24,8" Grid.Row="0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,24,0" Grid.Row="0">
                             <TextBlock Text="BHYT:" FontWeight="Medium" Margin="5 0 0 0 "/>
                             <TextBlock Text="{Binding SelectedPatient.InsuranceCode}" 
                                      FontWeight="SemiBold"/>
@@ -106,8 +109,8 @@
 
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Column="0" 
@@ -118,10 +121,10 @@
                         <DatePicker Grid.Column="1"
                                Width="190" 
                                Height="30"
-                                Padding="5"
+                               Padding="5"
                                SelectedDate="{Binding RecordDate, Mode=OneWay}" 
                                Style="{StaticResource MaterialDesignDatePicker}" 
-                              
+                              Margin="0 0 0 8"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Center"/>
 
@@ -141,7 +144,7 @@
                 </Grid>
             </materialDesign:Card>
 
-            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Visible">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -156,7 +159,7 @@
 
 
                     <!-- Vital Signs - Top Left -->
-                    <GroupBox Grid.Column="0" Grid.Row="0" Header="Khám Bệnh" 
+                    <GroupBox Grid.Column="0" Grid.Row="0" Header="Sinh Hiệu" 
           Style="{StaticResource MaterialDesignCardGroupBox}" 
           Margin="8,0,8,16">
                         <Grid Margin="15">

@@ -1144,11 +1144,11 @@ namespace ClinicManagement.ViewModels
                             // Clinic information
                             row.RelativeItem().Column(col =>
                             {
-                                col.Item().Text("PHÒNG KHÁM CLINIC MANAGEMENT")
+                                col.Item().Text("PHÒNG KHÁM ABC")
                                     .FontSize(18).Bold();
-                                col.Item().Text("Địa chỉ: 123 Đường Khám Bệnh, Q1, TP.HCM")
+                                col.Item().Text("Địa chỉ: 123 Đường 456, Quận 789, TP.XYZ")
                                     .FontSize(10);
-                                col.Item().Text("SĐT: 028.1234.5678 | Email: info@clinicmanagement.com")
+                                col.Item().Text("SĐT: 028.1234.5678 | Email: email@gmail.com")
                                     .FontSize(10);
                             });
 
@@ -1168,20 +1168,35 @@ namespace ClinicManagement.ViewModels
 
                         // PATIENT INFORMATION
                         column.Item().PaddingTop(10)
-                            .Column(patientCol =>
+                            .Row(patientRow =>
                             {
-                                patientCol.Item().Text("THÔNG TIN BỆNH NHÂN").Bold();
-                                patientCol.Item().PaddingTop(5).Text($"Họ tên: {SelectedPatient.FullName}");
-                                patientCol.Item().Text($"Ngày sinh: {(SelectedPatient.DateOfBirth.HasValue ? SelectedPatient.DateOfBirth.Value.ToString("dd/MM/yyyy") : "Không có")}");
-                                patientCol.Item().Text($"Giới tính: {SelectedPatient.Gender ?? "Không có"}");
-                                patientCol.Item().Text($"Số điện thoại: {SelectedPatient.Phone ?? "Không có"}");
+                                // Left column
+                                patientRow.RelativeItem().Column(leftCol =>
+                                {
+                                    leftCol.Item().Text("THÔNG TIN BỆNH NHÂN").Bold().FontSize(12);
+                                    leftCol.Item().PaddingTop(5).Text($"Họ tên: {SelectedPatient.FullName}");
+                                    leftCol.Item().Text($"Ngày sinh: {(SelectedPatient.DateOfBirth.HasValue ? SelectedPatient.DateOfBirth.Value.ToString("dd/MM/yyyy") : "Không có")}");
+                                    leftCol.Item().Text($"Giới tính: {SelectedPatient.Gender ?? "Không có"}");
+                                });
 
-                                if (!string.IsNullOrEmpty(SelectedPatient.InsuranceCode))
-                                    patientCol.Item().Text($"Mã BHYT: {SelectedPatient.InsuranceCode}");
+                                // Right column
+                                patientRow.RelativeItem().Column(rightCol =>
+                                {
+                                    rightCol.Item().Text(" ").Bold(); // Empty placeholder to align with the header in left column
+                                    rightCol.Item().PaddingTop(5).Text($"Số điện thoại: {SelectedPatient.Phone ?? "Không có"}");
 
-                                if (SelectedPatient.PatientType != null)
-                                    patientCol.Item().Text($"Loại khách hàng: {SelectedPatient.PatientType.TypeName}");
+                                    if (!string.IsNullOrEmpty(SelectedPatient.InsuranceCode))
+                                        rightCol.Item().Text($"Mã BHYT: {SelectedPatient.InsuranceCode}");
+                                    else
+                                        rightCol.Item().Text("Mã BHYT: Không có");
+
+                                    if (SelectedPatient.PatientType != null)
+                                        rightCol.Item().Text($"Loại khách hàng: {SelectedPatient.PatientType.TypeName}");
+                                    else
+                                        rightCol.Item().Text("Loại khách hàng: Không có");
+                                });
                             });
+
 
                         // VITAL SIGNS
                         if (!string.IsNullOrWhiteSpace(Pulse) ||
@@ -1194,7 +1209,7 @@ namespace ClinicManagement.ViewModels
                             column.Item().PaddingTop(20)
                                 .Column(vitalCol =>
                                 {
-                                    vitalCol.Item().Text("DẤU HIỆU SINH TỒN").Bold();
+                                    vitalCol.Item().Text("SINH HIỆU").Bold();
 
                                     if (!string.IsNullOrWhiteSpace(Pulse) && int.TryParse(Pulse, out _))
                                         vitalCol.Item().Text($"Mạch: {Pulse} lần/ph");

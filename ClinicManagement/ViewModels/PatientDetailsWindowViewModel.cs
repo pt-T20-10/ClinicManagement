@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
@@ -372,9 +373,9 @@ namespace ClinicManagement.ViewModels
         public ICommand ViewTestResultsCommand { get; set; }
         public ICommand OpenRecordCommand { get; set; }
         public ICommand ViewInvoiceCommand { get; set; }
-        public ICommand PrintInvoiceCommand { get; set; }
+  
         public ICommand AddAppointmentCommand { get; set; }
-        public ICommand EditAppointmentCommand { get; set; }
+        public ICommand ViewAppointmentCommand { get; set; }
         public ICommand CancelAppointmentCommand { get; set; }
         public ICommand LoadedWindowCommand { get; set; }
         #endregion
@@ -439,25 +440,26 @@ namespace ClinicManagement.ViewModels
                 (invoice) => invoice != null
             );
 
-            PrintInvoiceCommand = new RelayCommand<Invoice>(
-                (invoice) => PrintInvoice(invoice),
-                (invoice) => invoice != null
-            );
+       
 
             AddAppointmentCommand = new RelayCommand<object>(
                 (p) => AddNewAppointment(),
                 (p) => Patient != null
             );
 
-            EditAppointmentCommand = new RelayCommand<Appointment>(
-                (appointment) => EditExistingAppointment(appointment),
-                (appointment) => appointment != null && appointment.Status != "Completed" && appointment.Status != "Canceled"
+            ViewAppointmentCommand = new RelayCommand<Appointment>(
+                (appointment) => ViewAppointment(appointment),
+                (appointment) => appointment != null
             );
 
             CancelAppointmentCommand = new RelayCommand<Appointment>(
-                (appointment) => CancelExistingAppointment(appointment),
-                (appointment) => appointment != null && appointment.Status != "Completed" && appointment.Status != "Canceled"
-            );
+       (appointment) => CancelExistingAppointment(appointment),
+       (appointment) => appointment != null &&
+                        appointment.Status != "Đã hủy" &&
+                        appointment.Status != "Đã khám" &&
+                        appointment.Status != "Đang khám"
+   );
+
         }
 
         #region Validation
@@ -966,43 +968,140 @@ namespace ClinicManagement.ViewModels
         }
 
 
-
         private void ViewInvoice(Invoice invoice)
         {
-            // Open invoice details window
-            // You would need to implement this window
-            MessageBoxService.ShowWarning("Chức năng xem hóa đơn chi tiết đang được phát triển.", "Thông báo"     );
+            if (invoice == null) return;
+
+            try
+            {
+                // Create new invoice details window
+                var invoiceDetailsWindow = new InvoiceDetailsWindow();
+
+                // Create the view model with the invoice
+                var viewModel = new InvoiceDetailsViewModel(invoice);
+
+                // Set the DataContext
+                invoiceDetailsWindow.DataContext = viewModel;
+
+                // Show dialog
+                invoiceDetailsWindow.ShowDialog();
+
+                // Refresh invoice list after viewing (in case changes were made)
+                FilterInvoices();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi mở chi tiết hóa đơn: {ex.Message}", "Lỗi");
+            }
         }
 
-        private void PrintInvoice(Invoice invoice)
-        {
-            // Implement printing functionality
-            MessageBoxService.ShowWarning("Chức năng in hóa đơn đang được phát triển.", "Thông báo"     );
-        }
-
+      
         private void AddNewAppointment()
         {
-            // Open add appointment window
-            // You would need to implement this window
-            MessageBoxService.ShowWarning("Chức năng thêm lịch hẹn mới đang được phát triển.", "Thông báo"     );
+            try
+            {
+                // Create data for new appointment
+                var newAppointment = new Appointment
+                {
+                    PatientId = Patient.PatientId,
+                    AppointmentDate = DateTime.Now.AddDays(1), // Default to tomorrow
+                    Status = "Đang chờ"
+                };
+
+                // Get tab control from main window to switch to appointment tab
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow == null) return;
+
+                var tabControl = LogicalTreeHelper.FindLogicalNode(mainWindow, "MainTabControl") as TabControl;
+                if (tabControl == null) return;
+
+                // Find appointment tab and switch to it
+                foreach (var item in tabControl.Items)
+                {
+                    if (item is TabItem tabItem && tabItem.Name == "AppointmentTab")
+                    {
+                        // Get the AppointmentViewModel
+                        var appointmentVM = Application.Current.Resources["AppointmentVM"] as AppointmentViewModel;
+                        if (appointmentVM != null)
+                        {
+                            // Set the selected patient in the appointment VM
+                            appointmentVM.SelectedPatient = Patient;
+
+                            // Switch to the appointments tab
+                            tabControl.SelectedItem = tabItem;
+
+                            // Close the current window
+                            _window?.Close();
+                            return;
+                        }
+                    }
+                }
+
+                // If we can't find the tab
+                MessageBoxService.ShowWarning("Không thể chuyển đến tab Lịch hẹn.", "Thông báo");
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi thêm lịch hẹn mới: {ex.Message}", "Lỗi");
+            }
+        }
+        // Example usage in PatientDetailsWindowViewModel.cs:
+        private void ViewAppointment(Appointment appointment)
+        {
+            if (appointment == null) return;
+
+            try
+            {
+                // Only allow editing appointments that are not "Đã khám" (completed)
+                if (appointment.Status == "Đã khám")
+                {
+                    MessageBoxService.ShowWarning(
+                        "Không thể chỉnh sửa lịch hẹn đã khám.",
+                        "Thông báo");
+                    return;
+                }
+
+                // Create appointment details view model with the selected appointment
+                var appointmentDetailsViewModel = new AppointmentDetailsViewModel(appointment);
+
+                // Create and show the window
+                var appointmentDetailsWindow = new AppointmentDetailsWindow();
+                appointmentDetailsWindow.DataContext = appointmentDetailsViewModel;
+                appointmentDetailsWindow.ShowDialog();
+
+                // Refresh appointments after the window closes
+                FilterAppointments();
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi mở cửa sổ sửa lịch hẹn: {ex.Message}", "Lỗi");
+            }
         }
 
-        private void EditExistingAppointment(Appointment appointment)
-        {
-            // Open edit appointment window
-            // You would need to implement this window
-            MessageBoxService.ShowWarning("Chức năng sửa lịch hẹn đang được phát triển.", "Thông báo"     );
-        }
 
         private void CancelExistingAppointment(Appointment appointment)
         {
             try
             {
-                 bool  result = MessageBoxService.ShowQuestion(
+                if (appointment == null) return;
+
+                // Hiển thị hộp thoại xác nhận và yêu cầu lý do hủy
+                string reason = Microsoft.VisualBasic.Interaction.InputBox(
+                    "Vui lòng nhập lý do hủy lịch hẹn:",
+                    "Xác nhận hủy",
+                    appointment.Notes ?? "");
+
+                if (string.IsNullOrWhiteSpace(reason))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng nhập lý do hủy lịch hẹn.",
+                        "Thiếu thông tin");
+                    return;
+                }
+
+                bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
-                    "Xác nhận hủy"
-                     
-                    );
+                    "Xác nhận hủy");
 
                 if (result)
                 {
@@ -1011,25 +1110,26 @@ namespace ClinicManagement.ViewModels
 
                     if (appointmentToUpdate != null)
                     {
-                        appointmentToUpdate.Status = "Canceled";
+                        appointmentToUpdate.Status = "Đã hủy";  // Use "Đã hủy" instead of "Canceled"
+                        appointmentToUpdate.Notes = reason;
                         DataProvider.Instance.Context.SaveChanges();
 
                         // Refresh appointments list
                         FilterAppointments();
 
-                        MessageBoxService.ShowSuccess("Đã hủy lịch hẹn thành công!", "Thông báo"     );
+                        MessageBoxService.ShowSuccess(
+                            "Đã hủy lịch hẹn thành công!",
+                            "Thông báo");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi");
             }
-
         }
 
-     
-    
+
     }
    
 }

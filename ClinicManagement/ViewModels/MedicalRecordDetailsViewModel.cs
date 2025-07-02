@@ -12,10 +12,13 @@ using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel quản lý chi tiết hồ sơ bệnh án
+    /// </summary>
     public class MedicalRecordDetailsViewModel : BaseViewModel
     {
         #region Properties
-        // Current logged in account
+        // Tài khoản người dùng hiện tại
         private Account _currentAccount;
         public Account CurrentAccount
         {
@@ -24,11 +27,11 @@ namespace ClinicManagement.ViewModels
             {
                 _currentAccount = value;
                 OnPropertyChanged();
-                CheckEditPermission();
+                CheckEditPermission(); // Kiểm tra quyền chỉnh sửa khi thay đổi tài khoản
             }
         }
 
-        // The medical record being viewed/edited
+        // Hồ sơ bệnh án đang xem/chỉnh sửa
         private MedicalRecord _medicalRecord;
         public MedicalRecord MedicalRecord
         {
@@ -37,11 +40,10 @@ namespace ClinicManagement.ViewModels
             {
                 _medicalRecord = value;
                 OnPropertyChanged();
-              
             }
         }
 
-        // Patient info
+        // Thông tin bệnh nhân
         private Patient _selectedPatient;
         public Patient SelectedPatient
         {
@@ -53,7 +55,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Doctor info
+        // Thông tin bác sĩ
         private Staff _doctor;
         public Staff Doctor
         {
@@ -65,7 +67,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Record date
+        // Ngày tạo hồ sơ
         private DateTime? _recordDate;
         public DateTime? RecordDate
         {
@@ -77,7 +79,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Permission to edit
+        // Quyền chỉnh sửa
         private bool _canEdit;
         public bool CanEdit
         {
@@ -89,7 +91,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Medical record fields
+        // Các trường thông tin hồ sơ bệnh án
+        // Chẩn đoán
         private string _diagnosis;
         public string Diagnosis
         {
@@ -102,6 +105,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Đơn thuốc
         private string _prescription;
         public string Prescription
         {
@@ -114,6 +118,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Kết quả xét nghiệm
         private string _testResults;
         public string TestResults
         {
@@ -126,6 +131,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Lời dặn của bác sĩ
         private string _doctorAdvice;
         public string DoctorAdvice
         {
@@ -138,7 +144,8 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Vital signs
+        // Các chỉ số sinh hiệu
+        // Mạch
         private string _pulse;
         public string Pulse
         {
@@ -150,6 +157,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Nhịp thở
         private string _respiration;
         public string Respiration
         {
@@ -161,6 +169,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Nhiệt độ
         private string _temperature;
         public string Temperature
         {
@@ -172,6 +181,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Cân nặng
         private string _weight;
         public string Weight
         {
@@ -183,6 +193,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Huyết áp tâm thu
         private string _systolicPressure;
         public string SystolicPressure
         {
@@ -194,6 +205,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Huyết áp tâm trương
         private string _diastolicPressure;
         public string DiastolicPressure
         {
@@ -205,36 +217,46 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Window reference
+        // Tham chiếu đến cửa sổ
         private Window _window;
         #endregion
 
         #region Commands
+        // Lệnh lưu hồ sơ
         public ICommand SaveRecordCommand { get; set; }
+        // Lệnh đặt lại hồ sơ
         public ICommand ResetRecordCommand { get; set; }
+        // Lệnh khi cửa sổ được tải
         public ICommand LoadedWindowCommand { get; set; }
+        // Lệnh xuất PDF
         public ICommand ExportPDFCommand { get; set; }
         #endregion
 
+        /// <summary>
+        /// Constructor mặc định
+        /// </summary>
         public MedicalRecordDetailsViewModel()
         {
             InitializeCommands();
 
-            // Get current account from MainViewModel
+            // Lấy tài khoản hiện tại từ MainViewModel
             var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
             if (mainVM != null && mainVM.CurrentAccount != null)
             {
                 CurrentAccount = mainVM.CurrentAccount;
             }
-       
+
         }
 
-        // 1. Sửa constructor để gọi LoadMedicalRecordData sau khi set record
+        /// <summary>
+        /// Constructor với hồ sơ bệnh án
+        /// </summary>
+        /// <param name="record">Hồ sơ bệnh án cần hiển thị</param>
         public MedicalRecordDetailsViewModel(MedicalRecord record)
         {
             InitializeCommands();
 
-            // Get current account from MainViewModel
+            // Lấy tài khoản hiện tại từ MainViewModel
             var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
             if (mainVM != null && mainVM.CurrentAccount != null)
             {
@@ -242,47 +264,56 @@ namespace ClinicManagement.ViewModels
             }
 
             MedicalRecord = record;
-            LoadMedicalRecordData(); // Thêm dòng này
+            LoadMedicalRecordData(); // Tải dữ liệu hồ sơ bệnh án
         }
 
+        /// <summary>
+        /// Khởi tạo các lệnh
+        /// </summary>
         private void InitializeCommands()
         {
+            // Lệnh khi cửa sổ được tải
             LoadedWindowCommand = new RelayCommand<Window>(
                 p =>
                 {
                     _window = p;
                     if (MedicalRecord != null)
                     {
-                        LoadMedicalRecordData(); // Load dữ liệu khi window được mở
+                        LoadMedicalRecordData(); // Tải dữ liệu khi cửa sổ được mở
                     }
                 },
                 p => true
             );
 
+            // Lệnh lưu hồ sơ
             SaveRecordCommand = new RelayCommand<object>(
                 p => SaveMedicalRecord(),
                 p => CanEdit && MedicalRecord != null && !string.IsNullOrWhiteSpace(Diagnosis)
             );
 
-          
-
+            // Lệnh đặt lại hồ sơ
             ResetRecordCommand = new RelayCommand<object>(
                 p => ResetFields(),
                 p => CanEdit && MedicalRecord != null
             );
+
+            // Lệnh xuất PDF
             ExportPDFCommand = new RelayCommand<object>(
                   p => ExportToPDF(),
                   p => MedicalRecord != null
               );
         }
 
+        /// <summary>
+        /// Tải dữ liệu hồ sơ bệnh án
+        /// </summary>
         private void LoadMedicalRecordData()
         {
             if (MedicalRecord == null) return;
-           
+
             try
             {
-                // Ensure we have the complete record with related entities
+                // Đảm bảo có đầy đủ thông tin bệnh án và các đối tượng liên quan
                 MedicalRecord = DataProvider.Instance.Context.MedicalRecords
                     .Include(m => m.Doctor)
                     .Include(m => m.Patient)
@@ -290,87 +321,107 @@ namespace ClinicManagement.ViewModels
 
                 if (MedicalRecord == null) return;
 
-                // Load patient information
+                // Tải thông tin bệnh nhân
                 SelectedPatient = MedicalRecord.Patient;
 
-                // Load doctor information
+                // Tải thông tin bác sĩ
                 Doctor = MedicalRecord.Doctor;
 
-                // Load medical record details
+                // Tải chi tiết hồ sơ bệnh án
                 RecordDate = MedicalRecord.RecordDate;
                 Diagnosis = MedicalRecord.Diagnosis ?? "";
                 Prescription = MedicalRecord.Prescription ?? "";
                 TestResults = MedicalRecord.TestResults ?? "";
                 DoctorAdvice = MedicalRecord.DoctorAdvice ?? "";
 
-          
+                // Phân tích các chỉ số sinh hiệu từ dữ liệu kết quả xét nghiệm
                 ParseVitalSigns();
 
-                // Check if the current user has permission to edit
+                // Kiểm tra quyền chỉnh sửa của người dùng hiện tại
                 CheckEditPermission();
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi tải dữ liệu hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi"    );
+                    "Lỗi");
             }
         }
 
+        /// <summary>
+        /// Kiểm tra quyền chỉnh sửa hồ sơ bệnh án
+        /// </summary>
         private void CheckEditPermission()
         {
-            // By default, nobody can edit
+            // Mặc định không ai có quyền chỉnh sửa
             CanEdit = false;
 
-            // Check if both account and medical record are available
+            // Kiểm tra xem tài khoản và hồ sơ bệnh án có tồn tại không
             if (CurrentAccount == null || MedicalRecord == null) return;
 
-            // Check if current user is the doctor who created this record
+            // Kiểm tra xem người dùng hiện tại có phải là bác sĩ tạo hồ sơ này không
             if (CurrentAccount.StaffId.HasValue &&
                 MedicalRecord.StaffId == CurrentAccount.StaffId.Value)
             {
                 CanEdit = true;
             }
-
-            // Admin can also edit
-            if (CurrentAccount.Role != null &&
-                CurrentAccount.Role.ToLower().Contains("admin"))
+            // Admin cũng có thể chỉnh sửa
+            else if (CurrentAccount.Role != null &&
+                     CurrentAccount.Role.ToLower().Contains("admin"))
+            {
+                CanEdit = true;
+            }
+            // Nếu người dùng có vai trò bác sĩ và là bác sĩ trong hồ sơ
+            else if (CurrentAccount.StaffId.HasValue &&
+                     CurrentAccount.Role != null &&
+                     CurrentAccount.Role.ToLower().Contains("bác sĩ") &&
+                     MedicalRecord.Doctor != null &&
+                     MedicalRecord.Doctor.StaffId == CurrentAccount.StaffId.Value)
             {
                 CanEdit = true;
             }
 
-            // Update command can-execute status
+            // Cập nhật trạng thái của các lệnh
             CommandManager.InvalidateRequerySuggested();
         }
 
+        /// <summary>
+        /// Đặt lại các trường dữ liệu về trạng thái ban đầu
+        /// </summary>
         private void ResetFields()
         {
             try
             {
-                // Reload data from database to reset any changes
+                // Tải lại dữ liệu từ cơ sở dữ liệu để đặt lại các thay đổi
                 LoadMedicalRecordData();
 
                 MessageBoxService.ShowSuccess("Đã làm mới dữ liệu hồ sơ bệnh án.",
-                    "Thông báo"     );
+                    "Thông báo");
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi làm mới hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi"    );
+                    "Lỗi");
             }
         }
 
+        /// <summary>
+        /// Thiết lập hồ sơ bệnh án để hiển thị
+        /// </summary>
+        /// <param name="record">Hồ sơ bệnh án cần hiển thị</param>
         public void SetRecord(MedicalRecord record)
         {
             MedicalRecord = record;
             LoadMedicalRecordData();
         }
 
-
+        /// <summary>
+        /// Phân tích các chỉ số sinh hiệu từ chuỗi kết quả xét nghiệm
+        /// </summary>
         private void ParseVitalSigns()
         {
             if (MedicalRecord == null || string.IsNullOrWhiteSpace(MedicalRecord.TestResults))
             {
-                // Đặt giá trị mặc định
+                // Đặt giá trị mặc định cho các chỉ số sinh hiệu
                 Pulse = "";
                 Respiration = "";
                 Temperature = "";
@@ -382,23 +433,23 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                // Parse vital signs from TestResults
+                // Phân tích các chỉ số sinh hiệu từ chuỗi kết quả xét nghiệm
                 string testResults = MedicalRecord.TestResults;
 
-                // Parse pulse (Mạch)
+                // Phân tích mạch
                 Pulse = ExtractValue(testResults, "Mạch: (\\d+) lần/ph");
 
-                // Parse respiration (Nhịp thở)
+                // Phân tích nhịp thở
                 Respiration = ExtractValue(testResults, "Nhịp thở: (\\d+) lần/ph");
 
-                // Parse temperature (Nhiệt độ)
+                // Phân tích nhiệt độ
                 Temperature = ExtractValue(testResults, "Nhiệt độ: ([\\d.]+)°C");
 
-                // Parse weight (Cân nặng)
+                // Phân tích cân nặng
                 Weight = ExtractValue(testResults, "Cân nặng: ([\\d.]+)kg");
 
-                // Parse blood pressure (Huyết áp)
-                // Parse blood pressure (Huyết áp) - Cải thiện phương thức để xử lý huyết áp
+                // Phân tích huyết áp
+                // Cải thiện phương thức để xử lý huyết áp
                 var match = Regex.Match(testResults, "Huyết áp: (\\d+)/(\\d+) mmHg");
                 if (match.Success && match.Groups.Count > 2)
                 {
@@ -423,12 +474,12 @@ namespace ClinicManagement.ViewModels
                         OnPropertyChanged(nameof(DiastolicPressure));
                     }
                 }
-            
-                }
+
+            }
             catch (Exception ex)
             {
                 // Nếu có lỗi khi parse, sử dụng giá trị mặc định
-                MessageBoxService.ShowError($"Lỗi khi phân tích thông số sinh hiệu: {ex.Message}", "Lỗi"     );
+                MessageBoxService.ShowError($"Lỗi khi phân tích thông số sinh hiệu: {ex.Message}", "Lỗi");
                 Pulse = "";
                 Respiration = "";
                 Temperature = "";
@@ -438,7 +489,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Phương thức trích xuất giá trị từ chuỗi sử dụng regex
+        /// <summary>
+        /// Trích xuất giá trị từ chuỗi sử dụng regex
+        /// </summary>
+        /// <param name="input">Chuỗi đầu vào</param>
+        /// <param name="pattern">Mẫu regex</param>
+        /// <returns>Giá trị được trích xuất</returns>
         private string ExtractValue(string input, string pattern)
         {
             var match = Regex.Match(input, pattern);
@@ -449,36 +505,39 @@ namespace ClinicManagement.ViewModels
             return "";
         }
 
-        // Phương thức định dạng thông số sinh hiệu
+        /// <summary>
+        /// Định dạng các thông số sinh hiệu thành chuỗi
+        /// </summary>
+        /// <returns>Chuỗi các thông số sinh hiệu đã định dạng</returns>
         private string FormatVitalSigns()
         {
             List<string> vitalSigns = new List<string>();
 
-            // Add pulse if available
+            // Thêm mạch nếu có
             if (!string.IsNullOrWhiteSpace(Pulse) && int.TryParse(Pulse, out _))
             {
                 vitalSigns.Add($"Mạch: {Pulse} lần/ph");
             }
 
-            // Add respiration if available
+            // Thêm nhịp thở nếu có
             if (!string.IsNullOrWhiteSpace(Respiration) && int.TryParse(Respiration, out _))
             {
                 vitalSigns.Add($"Nhịp thở: {Respiration} lần/ph");
             }
 
-            // Add temperature if available
+            // Thêm nhiệt độ nếu có
             if (!string.IsNullOrWhiteSpace(Temperature) && decimal.TryParse(Temperature, out _))
             {
                 vitalSigns.Add($"Nhiệt độ: {Temperature}°C");
             }
 
-            // Add weight if available
+            // Thêm cân nặng nếu có
             if (!string.IsNullOrWhiteSpace(Weight) && decimal.TryParse(Weight, out _))
             {
                 vitalSigns.Add($"Cân nặng: {Weight}kg");
             }
 
-            // Add blood pressure if available
+            // Thêm huyết áp nếu có
             if (!string.IsNullOrWhiteSpace(SystolicPressure) || !string.IsNullOrWhiteSpace(DiastolicPressure))
             {
                 string bloodPressure = CombineBloodPressure(SystolicPressure, DiastolicPressure);
@@ -488,10 +547,16 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Join all vital signs with commas
+            // Nối tất cả các chỉ số sinh hiệu bằng dấu phẩy
             return vitalSigns.Count > 0 ? string.Join(", ", vitalSigns) + "." : "";
         }
 
+        /// <summary>
+        /// Kết hợp huyết áp tâm thu và tâm trương thành một chuỗi
+        /// </summary>
+        /// <param name="systolic">Huyết áp tâm thu</param>
+        /// <param name="diastolic">Huyết áp tâm trương</param>
+        /// <returns>Chuỗi huyết áp đã định dạng</returns>
         private string CombineBloodPressure(string systolic, string diastolic)
         {
             if (string.IsNullOrWhiteSpace(systolic) && string.IsNullOrWhiteSpace(diastolic))
@@ -500,14 +565,16 @@ namespace ClinicManagement.ViewModels
             return $"{systolic ?? "?"}/{diastolic ?? "?"} mmHg";
         }
 
-        // Sửa lại phương thức SaveMedicalRecord để kết hợp thông số sinh hiệu
+        /// <summary>
+        /// Lưu thông tin hồ sơ bệnh án vào cơ sở dữ liệu
+        /// </summary>
         private void SaveMedicalRecord()
         {
             try
             {
                 if (MedicalRecord == null) return;
 
-                // Check if user has permission to edit
+                // Kiểm tra quyền chỉnh sửa
                 if (!CanEdit)
                 {
                     MessageBoxService.ShowWarning("Bạn không có quyền chỉnh sửa hồ sơ bệnh án này!",
@@ -515,50 +582,52 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Find the medical record in database
+                // Tìm hồ sơ bệnh án trong cơ sở dữ liệu
                 var recordToUpdate = DataProvider.Instance.Context.MedicalRecords
                     .FirstOrDefault(m => m.RecordId == MedicalRecord.RecordId);
 
                 if (recordToUpdate == null)
                 {
                     MessageBoxService.ShowError("Không tìm thấy hồ sơ bệnh án trong cơ sở dữ liệu!",
-                        "Lỗi"    );
+                        "Lỗi");
                     return;
                 }
-                
-                // Format vital signs
+
+                // Định dạng các thông số sinh hiệu
                 string formattedVitalSigns = FormatVitalSigns();
 
-                // Extract existing test results without vital signs
+                // Trích xuất kết quả xét nghiệm không phải thông số sinh hiệu
                 string existingTestResults = ExtractNonVitalSignResults(recordToUpdate.TestResults);
 
-                // Combine formatted vital signs with existing test results
+                // Kết hợp các thông số sinh hiệu với kết quả xét nghiệm hiện có
                 string combinedTestResults = formattedVitalSigns;
                 if (!string.IsNullOrWhiteSpace(existingTestResults))
                 {
                     combinedTestResults += formattedVitalSigns.Length > 0 ? "\n\n" + existingTestResults : existingTestResults;
                 }
 
-                // Update record fields
+                // Cập nhật các trường của hồ sơ bệnh án
                 recordToUpdate.Diagnosis = Diagnosis?.Trim();
                 recordToUpdate.Prescription = Prescription?.Trim();
-                recordToUpdate.TestResults = combinedTestResults;  // Use combined results
+                recordToUpdate.TestResults = combinedTestResults;  // Sử dụng kết quả đã kết hợp
                 recordToUpdate.DoctorAdvice = DoctorAdvice?.Trim();
 
-                // Save changes to database
+                // Lưu thay đổi vào cơ sở dữ liệu
                 DataProvider.Instance.Context.SaveChanges();
 
-                MessageBoxService.ShowSuccess("Đã lưu thông tin hồ sơ bệnh án thành công!"
-                       );
+                MessageBoxService.ShowSuccess("Đã lưu thông tin hồ sơ bệnh án thành công!");
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi lưu hồ sơ bệnh án: {ex.Message}",
-                    "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi lưu hồ sơ bệnh án: {ex.Message}", "Lỗi");
             }
         }
 
-        // Phương thức trích xuất phần kết quả xét nghiệm không phải thông số sinh hiệu
+        /// <summary>
+        /// Trích xuất phần kết quả xét nghiệm không phải thông số sinh hiệu
+        /// </summary>
+        /// <param name="testResults">Chuỗi kết quả xét nghiệm gốc</param>
+        /// <returns>Phần kết quả xét nghiệm không bao gồm thông số sinh hiệu</returns>
         private string ExtractNonVitalSignResults(string testResults)
         {
             if (string.IsNullOrWhiteSpace(testResults))
@@ -589,22 +658,26 @@ namespace ClinicManagement.ViewModels
         }
 
         #region PDF
+        /// <summary>
+        /// Xuất hồ sơ bệnh án ra file PDF
+        /// </summary>
         private void ExportToPDF()
         {
             try
             {
-                // Confirm with the user before proceeding
+                // Xác nhận với người dùng trước khi tiếp tục
                 bool result = MessageBoxService.ShowQuestion(
                     "Bạn có muốn xuất phiếu khám bệnh này thành PDF không?",
                     "Xuất phiếu khám bệnh"
                 );
 
                 if (!result)
-                    return; // User cancelled the operation
+                    return; // Người dùng hủy thao tác
 
+                // Cấu hình giấy phép QuestPDF
                 QuestPDF.Settings.License = LicenseType.Community;
 
-                // Create save file dialog to let the user choose where to save the PDF
+                // Tạo hộp thoại lưu file để cho phép người dùng chọn nơi lưu PDF
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
                     Filter = "PDF files (*.pdf)|*.pdf",
@@ -617,48 +690,48 @@ namespace ClinicManagement.ViewModels
                 {
                     string filePath = saveFileDialog.FileName;
 
-                    // Create and show progress dialog
+                    // Tạo và hiển thị hộp thoại tiến trình
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Generate PDF in background thread with progress reporting
+                    // Tạo PDF trong luồng nền với báo cáo tiến trình
                     Task.Run(() =>
                     {
                         try
                         {
-                            // Report progress: 10% - Starting
+                            // Báo cáo tiến trình: 10% - Bắt đầu
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
-                            Thread.Sleep(100); // Small delay for visibility
+                            Thread.Sleep(100); // Độ trễ nhỏ để hiển thị
 
-                            // Report progress: 30% - Preparing data
+                            // Báo cáo tiến trình: 30% - Chuẩn bị dữ liệu
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
-                            Thread.Sleep(100); // Small delay for visibility
+                            Thread.Sleep(100); // Độ trễ nhỏ để hiển thị
 
-                            // Report progress: 50% - Generating document
+                            // Báo cáo tiến trình: 50% - Tạo tài liệu
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
 
-                            // Create the PDF document
+                            // Tạo tài liệu PDF
                             GenerateMedicalRecordPdf(filePath);
 
-                            // Report progress: 90% - Saving file
+                            // Báo cáo tiến trình: 90% - Lưu file
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
-                            Thread.Sleep(100); // Small delay for visibility
+                            Thread.Sleep(100); // Độ trễ nhỏ để hiển thị
 
-                            // Report progress: 100% - Complete
+                            // Báo cáo tiến trình: 100% - Hoàn thành
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                            Thread.Sleep(300); // Show 100% briefly
+                            Thread.Sleep(300); // Hiển thị 100% trong thời gian ngắn
 
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                // Close progress dialog
+                                // Đóng hộp thoại tiến trình
                                 progressDialog.Close();
 
-                                // Show success message
+                                // Hiển thị thông báo thành công
                                 MessageBoxService.ShowSuccess(
                                     $"Đã xuất phiếu khám bệnh thành công!\nĐường dẫn: {filePath}",
                                     "Xuất phiếu khám"
                                 );
 
-                                // Ask if user wants to open the PDF
+                                // Hỏi người dùng có muốn mở file PDF không
                                 if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
                                 {
                                     try
@@ -689,7 +762,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // Hiển thị hộp thoại - sẽ chặn cho đến khi hộp thoại đóng
                     progressDialog.ShowDialog();
                 }
             }
@@ -702,33 +775,38 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tạo file PDF cho hồ sơ bệnh án
+        /// </summary>
+        /// <param name="filePath">Đường dẫn lưu file PDF</param>
         private void GenerateMedicalRecordPdf(string filePath)
         {
             Document.Create(document =>
             {
                 document.Page(page =>
                 {
+                    // Thiết lập kích thước và lề trang
                     page.Size(PageSizes.A4);
                     page.Margin(50);
                     page.DefaultTextStyle(x => x.FontSize(11));
 
                     page.Content().Column(column =>
                     {
-                        // HEADER
+                        // PHẦN ĐẦU TRANG
                         column.Item().Row(row =>
                         {
-                            // Clinic information
+                            // Thông tin phòng khám
                             row.RelativeItem().Column(col =>
                             {
-                                col.Item().Text("PHÒNG KHÁM CLINIC MANAGEMENT")
+                                col.Item().Text("PHÒNG KHÁM ABC")
                                     .FontSize(18).Bold();
-                                col.Item().Text("Địa chỉ: 123 Đường Khám Bệnh, Q1, TP.HCM")
+                                col.Item().Text("Địa chỉ: 123 Đường 456, Quận 789, TP.XYZ")
                                     .FontSize(10);
-                                col.Item().Text("SĐT: 028.1234.5678 | Email: info@clinicmanagement.com")
+                                col.Item().Text("SĐT: 028.1234.5678 | Email: email@gmail.com")
                                     .FontSize(10);
                             });
 
-                            // Date information
+                            // Thông tin ngày khám
                             row.RelativeItem().Column(col =>
                             {
                                 col.Item().AlignRight().Text($"Ngày khám: {MedicalRecord.RecordDate?.ToString("dd/MM/yyyy") ?? "N/A"}")
@@ -736,30 +814,44 @@ namespace ClinicManagement.ViewModels
                             });
                         });
 
-                        // TITLE
+                        // TIÊU ĐỀ
                         column.Item().PaddingVertical(20)
                             .Text("PHIẾU KHÁM BỆNH")
                             .FontSize(16).Bold()
                             .AlignCenter();
 
-                        // PATIENT INFORMATION
+                        // THÔNG TIN BỆNH NHÂN
                         column.Item().PaddingTop(10)
-                            .Column(patientCol =>
+                            .Row(patientRow =>
                             {
-                                patientCol.Item().Text("THÔNG TIN BỆNH NHÂN").Bold();
-                                patientCol.Item().PaddingTop(5).Text($"Họ tên: {MedicalRecord.Patient?.FullName ?? "N/A"}");
-                                patientCol.Item().Text($"Ngày sinh: {(MedicalRecord.Patient?.DateOfBirth?.ToString("dd/MM/yyyy") ?? "Không có")}");
-                                patientCol.Item().Text($"Giới tính: {MedicalRecord.Patient?.Gender ?? "Không có"}");
-                                patientCol.Item().Text($"Số điện thoại: {MedicalRecord.Patient?.Phone ?? "Không có"}");
+                                // Cột trái
+                                patientRow.RelativeItem().Column(leftCol =>
+                                {
+                                    leftCol.Item().Text("THÔNG TIN BỆNH NHÂN").Bold().FontSize(12);
+                                    leftCol.Item().PaddingTop(5).Text($"Họ tên: {MedicalRecord.Patient?.FullName ?? "N/A"}");
+                                    leftCol.Item().Text($"Ngày sinh: {(MedicalRecord.Patient?.DateOfBirth?.ToString("dd/MM/yyyy") ?? "Không có")}");
+                                    leftCol.Item().Text($"Giới tính: {MedicalRecord.Patient?.Gender ?? "Không có"}");
+                                });
 
-                                if (!string.IsNullOrEmpty(MedicalRecord.Patient?.InsuranceCode))
-                                    patientCol.Item().Text($"Mã BHYT: {MedicalRecord.Patient.InsuranceCode}");
+                                // Cột phải
+                                patientRow.RelativeItem().Column(rightCol =>
+                                {
+                                    rightCol.Item().Text(" ").Bold(); // Placeholder trống để căn chỉnh với tiêu đề bên trái
+                                    rightCol.Item().PaddingTop(5).Text($"Số điện thoại: {MedicalRecord.Patient?.Phone ?? "Không có"}");
 
-                                if (MedicalRecord.Patient?.PatientType != null)
-                                    patientCol.Item().Text($"Loại khách hàng: {MedicalRecord.Patient.PatientType.TypeName}");
+                                    if (!string.IsNullOrEmpty(MedicalRecord.Patient?.InsuranceCode))
+                                        rightCol.Item().Text($"Mã BHYT: {MedicalRecord.Patient.InsuranceCode}");
+                                    else
+                                        rightCol.Item().Text("Mã BHYT: Không có");
+
+                                    if (MedicalRecord.Patient?.PatientType != null)
+                                        rightCol.Item().Text($"Loại khách hàng: {MedicalRecord.Patient.PatientType.TypeName}");
+                                    else
+                                        rightCol.Item().Text("Loại khách hàng: Không có");
+                                });
                             });
 
-                        // VITAL SIGNS - Parse from formatted vital signs
+                        // DẤU HIỆU SINH TỒN
                         if (!string.IsNullOrWhiteSpace(Pulse) ||
                             !string.IsNullOrWhiteSpace(Respiration) ||
                             !string.IsNullOrWhiteSpace(Temperature) ||
@@ -792,10 +884,10 @@ namespace ClinicManagement.ViewModels
                                 });
                         }
 
-                        // Extract non-vital sign test results for display
+                        // Trích xuất kết quả xét nghiệm không phải dấu hiệu sinh tồn
                         string extraTestResults = ExtractNonVitalSignResults(MedicalRecord.TestResults);
 
-                        // TEST RESULTS
+                        // KẾT QUẢ XÉT NGHIỆM
                         if (!string.IsNullOrWhiteSpace(extraTestResults))
                         {
                             column.Item().PaddingTop(20)
@@ -806,7 +898,7 @@ namespace ClinicManagement.ViewModels
                                 });
                         }
 
-                        // DIAGNOSIS
+                        // CHẨN ĐOÁN
                         column.Item().PaddingTop(20)
                             .Column(diagCol =>
                             {
@@ -814,7 +906,7 @@ namespace ClinicManagement.ViewModels
                                 diagCol.Item().Text(Diagnosis ?? "");
                             });
 
-                        // PRESCRIPTION
+                        // ĐƠN THUỐC
                         if (!string.IsNullOrWhiteSpace(Prescription))
                         {
                             column.Item().PaddingTop(20)
@@ -825,7 +917,7 @@ namespace ClinicManagement.ViewModels
                                 });
                         }
 
-                        // DOCTOR ADVICE
+                        // LỜI DẶN CỦA BÁC SĨ
                         if (!string.IsNullOrWhiteSpace(DoctorAdvice))
                         {
                             column.Item().PaddingTop(20)
@@ -836,7 +928,7 @@ namespace ClinicManagement.ViewModels
                                 });
                         }
 
-                        // DOCTOR SIGNATURE
+                        // CHỮ KÝ BÁC SĨ
                         column.Item().PaddingTop(40)
                             .Row(row =>
                             {
@@ -874,8 +966,7 @@ namespace ClinicManagement.ViewModels
             })
             .GeneratePdf(filePath);
         }
+
         #endregion
     }
 }
-    
-

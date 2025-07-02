@@ -28,7 +28,16 @@
         <conver:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
         <conver:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
         <conver:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
+        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Padding" Value="4,0" />
+        </Style>
     </Window.Resources>
+ 
+
+        <!-- Add this style definition -->
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -242,28 +251,56 @@
               VerticalScrollBarVisibility="Auto"
               HorizontalScrollBarVisibility="Auto">
                                 <DataGrid ItemsSource="{Binding MedicalRecords}"
-                                     AutoGenerateColumns="False"
-                                     IsReadOnly="True"
-                                     CanUserAddRows="False"
-                                     CanUserDeleteRows="False"
-                                     CanUserReorderColumns="True"
-                                     CanUserResizeColumns="True"
-                                     CanUserSortColumns="True"
-                                     GridLinesVisibility="All"
-                                     RowHeaderWidth="0"
+              AutoGenerateColumns="False"
+              IsReadOnly="True"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              CanUserReorderColumns="True"
+              CanUserResizeColumns="True"
+              CanUserSortColumns="True"
+              GridLinesVisibility="All"
+              RowHeaderWidth="0"
+              AlternatingRowBackground="#F5F5F5"
+              BorderThickness="1"
+              BorderBrush="{DynamicResource MaterialDesignDivider}"
+              Background="White">
 
-                                     AlternatingRowBackground="#F5F5F5"
-                                     BorderThickness="1"
-                                     BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                     Background="White">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Height" Value="48"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F0F8FF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                    <Setter Property="Foreground" Value="#1565C0"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        </Style>
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
                                     <DataGrid.Columns>
-                                        <DataGridTemplateColumn Header="Mã hồ sơ"  Width="140">
+                                        <DataGridTemplateColumn Header="Mã hồ sơ" Width="140">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding RecordId}"
-                                                      VerticalAlignment="Center"
-                                                      HorizontalAlignment="Center"
-                                                      TextAlignment="Center"/>
+                                   Style="{StaticResource CenteredCellStyle}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -272,33 +309,26 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding RecordDate, StringFormat='dd/MM/yyyy'}"
-                                                           VerticalAlignment="Center"
-                                                           HorizontalAlignment="Center"
-                                                           TextAlignment="Center"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn Header="Bác sĩ" Width="150">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Doctor.FullName}"
-                                                           VerticalAlignment="Center"
-                                                           HorizontalAlignment="Center"
-                                                           TextAlignment="Center"/>
+                                   Style="{StaticResource CenteredCellStyle}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
 
-                                
+                                        <DataGridTemplateColumn Header="Bác sĩ" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Doctor.FullName}"
+                                   Style="{StaticResource CenteredCellStyle}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
 
                                         <DataGridTemplateColumn Header="Chẩn đoán" Width="300">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Diagnosis}"
                                    TextWrapping="Wrap"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center"
-                                   TextAlignment="Center"/>
+                                   Style="{StaticResource CenteredCellStyle}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -344,31 +374,6 @@
                                         </DataGridTemplateColumn>
                                     </DataGrid.Columns>
 
-                                    <DataGrid.Resources>
-                                        <Style TargetType="DataGridRow">
-                                            <Setter Property="Height" Value="48"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#F0F8FF"/>
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#E3F2FD"/>
-                                                    <Setter Property="Foreground" Value="#1565C0"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                        <Style TargetType="DataGridColumnHeader">
-                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                            <Setter Property="Foreground" Value="#37474F"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Height" Value="40"/>
-                                            <Setter Property="Padding" Value="8,0"/>
-                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGrid.Resources>
                                 </DataGrid>
                             </ScrollViewer>
 
@@ -430,54 +435,79 @@
 
                             <!-- Invoices List -->
                             <ScrollViewer Grid.Row="1" Grid.ColumnSpan="3"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Auto">
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Auto">
                                 <DataGrid ItemsSource="{Binding Invoices}"
-                                     AutoGenerateColumns="False"
-                                     IsReadOnly="True"
-                                     CanUserAddRows="False"
-                                     CanUserDeleteRows="False"
-                                     CanUserReorderColumns="True"
-                                     CanUserResizeColumns="True"
-                                     CanUserSortColumns="True"
-                                     GridLinesVisibility="All"
-                                     RowHeaderWidth="0"
-                                     AlternatingRowBackground="#F5F5F5"
-                                     BorderThickness="1"
-                                     BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                     Background="White">
+              AutoGenerateColumns="False"
+              IsReadOnly="True"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              CanUserReorderColumns="True"
+              CanUserResizeColumns="True"
+              CanUserSortColumns="True"
+              GridLinesVisibility="All"
+              RowHeaderWidth="0"
+              AlternatingRowBackground="#F5F5F5"
+              BorderThickness="1"
+              BorderBrush="{DynamicResource MaterialDesignDivider}"
+              Background="White">
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridRow">
+                                            <Setter Property="Height" Value="48"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F0F8FF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#E3F2FD"/>
+                                                    <Setter Property="Foreground" Value="#1565C0"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                        </Style>
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
                                     <DataGrid.Columns>
                                         <!-- Mã hóa đơn -->
-                                        <DataGridTemplateColumn Header="Mã hóa đơn"  Width="140">
+                                        <DataGridTemplateColumn Header="Mã hóa đơn" Width="140">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text= "{Binding InvoiceId}"
-                                                          VerticalAlignment="Center"
-                                                          HorizontalAlignment="Center"
-                                                          TextAlignment="Center"/>
+                                                    <TextBlock Text="{Binding InvoiceId}"
+                                   Style="{StaticResource CenteredCellStyle}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
 
                                         <!-- Ngày lập -->
-                                        <DataGridTextColumn Header="Ngày lập" Binding="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}" Width="150">
-                                            <DataGridTextColumn.ElementStyle>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                                                    <Setter Property="TextAlignment" Value="Center"/>
-                                                </Style>
-                                            </DataGridTextColumn.ElementStyle>
-                                        </DataGridTextColumn>
+                                        <DataGridTemplateColumn Header="Ngày lập" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding InvoiceDate, StringFormat='dd/MM/yyyy'}"
+                                   Style="{StaticResource CenteredCellStyle}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
 
                                         <!-- Tổng tiền -->
                                         <DataGridTemplateColumn Header="Tổng tiền" Width="150">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" 
-                                                      TextWrapping="Wrap"
-                                                      HorizontalAlignment="Center"
-                                                      TextAlignment="Center"
-                                                      VerticalAlignment="Center"/>
+                                   Style="{StaticResource CenteredCellStyle}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -580,10 +610,8 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Notes}" 
-                                                       TextWrapping="Wrap"
-                                                       TextAlignment="Center"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"/>
+                                   TextWrapping="Wrap"
+                                   Style="{StaticResource CenteredCellStyle}"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -594,23 +622,13 @@
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                         <Button Command="{Binding DataContext.ViewInvoiceCommand, 
-                                                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}" 
-                                                                    CommandParameter="{Binding}"
-                                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                    Margin="0,0,8,0" Width="90" Height="32">
+                                        RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}" 
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Margin="0,0,8,0" Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                                 <materialDesign:PackIcon Kind="FileDocumentOutline" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Xem"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                        <Button Command="{Binding DataContext.PrintInvoiceCommand, 
-                                                                    RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}" 
-                                                                    CommandParameter="{Binding}"
-                                                                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                                    Width="90" Height="32">
-                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                                <materialDesign:PackIcon Kind="Printer" Margin="0,0,4,0"/>
-                                                                <TextBlock Text="In"/>
                                                             </StackPanel>
                                                         </Button>
                                                     </StackPanel>
@@ -619,33 +637,10 @@
                                         </DataGridTemplateColumn>
                                     </DataGrid.Columns>
 
-                                    <DataGrid.Resources>
-                                        <Style TargetType="DataGridRow">
-                                            <Setter Property="Height" Value="48"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#F0F8FF"/>
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#E3F2FD"/>
-                                                    <Setter Property="Foreground" Value="#1565C0"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                        <Style TargetType="DataGridColumnHeader">
-                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                            <Setter Property="Foreground" Value="#37474F"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Height" Value="40"/>
-                                            <Setter Property="Padding" Value="8,0"/>
-                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGrid.Resources>
+                                
                                 </DataGrid>
                             </ScrollViewer>
+
 
 
 
@@ -676,50 +671,92 @@
                                          Width="180" Height="48" Margin="0,0,16,0"
                                          VerticalAlignment="Center"
                                          materialDesign:HintAssist.Hint="Trạng thái lịch hẹn"/>
-
-                                <!-- Add New Appointment --><!--
-                                <Button Grid.Column="2" Command="{Binding AddAppointmentCommand}" 
-                                        Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Width="150" Height="36" HorizontalAlignment="Right">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="CalendarPlus" Margin="0,0,8,0"/>
-                                        <TextBlock Text="Thêm lịch hẹn"/>
-                                    </StackPanel>
-                                </Button>-->
                             </Grid>
 
                             <!-- Appointments List -->
+                            <!-- Appointments List -->
                             <ScrollViewer Grid.Row="1" 
-                                          VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Auto">
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Auto">
                                 <DataGrid ItemsSource="{Binding Appointments}"
-                                          AutoGenerateColumns="False"
-                                          IsReadOnly="True"
-                                          CanUserAddRows="False"
-                                          CanUserDeleteRows="False"
-                                          CanUserReorderColumns="True"
-                                          CanUserResizeColumns="True"
-                                          CanUserSortColumns="True"
-                                          GridLinesVisibility="All"
-                                          RowHeaderWidth="0"
-                                         
-                                          AlternatingRowBackground="#F5F5F5"
-                                          BorderThickness="1"
-                                          BorderBrush="{DynamicResource MaterialDesignDivider}"
-                                          Background="White">
+              AutoGenerateColumns="False"
+              IsReadOnly="True"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              CanUserReorderColumns="True"
+              CanUserResizeColumns="True"
+              CanUserSortColumns="True"
+              GridLinesVisibility="All"
+              RowHeaderWidth="0"
+              AlternatingRowBackground="#F5F5F5"
+              BorderThickness="1"
+              BorderBrush="{DynamicResource MaterialDesignDivider}"
+              Background="White">
+
+                                    <!-- Resources for styling -->
+                                    <DataGrid.Resources>
+                                        <Style TargetType="DataGridColumnHeader">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                            <Setter Property="Background" Value="#ECEFF1"/>
+                                            <Setter Property="Foreground" Value="#37474F"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Height" Value="40"/>
+                                            <Setter Property="Padding" Value="8,0"/>
+                                        </Style>
+
+                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="Wrap"/>
+                                            <Setter Property="Padding" Value="4,0"/>
+                                        </Style>
+                                    </DataGrid.Resources>
+
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Ngày hẹn" Binding="{Binding AppointmentDate, StringFormat='dd/MM/yyyy HH:mm'}" Width="150"/>
-                                        <DataGridTextColumn Header="Bác sĩ" Binding="{Binding Doctor.FullName}" Width="160"/>
-                                        <DataGridTextColumn Header="Loại hẹn" Binding="{Binding AppointmentType.TypeName}" Width="160"/>
+                                        <!-- Replace DataGridTextColumn with DataGridTemplateColumn for Appointment Date -->
+                                        <DataGridTemplateColumn Header="Ngày hẹn" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding AppointmentDate, StringFormat='dd/MM/yyyy HH:mm'}" 
+                                   Style="{StaticResource CenteredCellStyle}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Replace DataGridTextColumn with DataGridTemplateColumn for Doctor -->
+                                        <DataGridTemplateColumn Header="Bác sĩ" Width="160">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Staff.FullName}" 
+                                   Style="{StaticResource CenteredCellStyle}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Replace DataGridTextColumn with DataGridTemplateColumn for Appointment Type -->
+                                        <DataGridTemplateColumn Header="Loại hẹn" Width="160">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding AppointmentType.TypeName}" 
+                                   Style="{StaticResource CenteredCellStyle}"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <!-- Notes column (already a DataGridTemplateColumn) -->
                                         <DataGridTemplateColumn Header="Ghi chú" Width="400">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Notes}" 
-                                                       TextWrapping="Wrap" 
-                                                       VerticalAlignment="Center"/>
+                                   TextWrapping="Wrap" 
+                                   VerticalAlignment="Center"
+                                   Padding="8,4"/>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
+
+                                        <!-- Status column (already a DataGridTemplateColumn) -->
                                         <DataGridTemplateColumn Header="Trạng thái" Width="140">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
@@ -778,18 +815,20 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTemplateColumn >
+
+                                        <!-- Actions column (already a DataGridTemplateColumn) -->
+                                        <DataGridTemplateColumn>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <Button Command="{Binding DataContext.EditAppointmentCommand, 
-                                                            RelativeSource={RelativeSource FindAncestor, 
-                                                            AncestorType={x:Type DataGrid}}}" 
-                                                            CommandParameter="{Binding}"
-                                                            Margin="0,0,8,0" Width="90" Height="32">
+                                                        <Button Command="{Binding DataContext.ViewAppointmentCommand, 
+                                RelativeSource={RelativeSource FindAncestor, 
+                                AncestorType={x:Type DataGrid}}}" 
+                                CommandParameter="{Binding}"
+                                Margin="0,0,8,0" Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarEdit" Margin="0,0,4,0"/>
-                                                                <TextBlock Text="Sửa"/>
+                                                                <TextBlock Text="Xem"/>
                                                             </StackPanel>
                                                             <Button.Style>
                                                                 <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
@@ -806,10 +845,10 @@
                                                             </Button.Style>
                                                         </Button>
                                                         <Button Command="{Binding DataContext.CancelAppointmentCommand, 
-                                                            RelativeSource={RelativeSource FindAncestor, 
-                                                            AncestorType={x:Type DataGrid}}}" 
-                                                            CommandParameter="{Binding}"
-                                                            Width="90" Height="32">
+                                RelativeSource={RelativeSource FindAncestor, 
+                                AncestorType={x:Type DataGrid}}}" 
+                                CommandParameter="{Binding}"
+                                Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarRemove" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Hủy"/>
@@ -833,35 +872,9 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                     </DataGrid.Columns>
-
-                                    <!-- Enhanced Visual Style -->
-                                    <DataGrid.Resources>
-                                        <Style TargetType="DataGridRow">
-                                            <Setter Property="Height" Value="48"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#F0F8FF"/>
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#E3F2FD"/>
-                                                    <Setter Property="Foreground" Value="#1565C0"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                        <Style TargetType="DataGridColumnHeader">
-                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                            <Setter Property="Foreground" Value="#37474F"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Height" Value="40"/>
-                                            <Setter Property="Padding" Value="8,0"/>
-                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGrid.Resources>
                                 </DataGrid>
                             </ScrollViewer>
+
 
                         </Grid>
                     </TabItem>

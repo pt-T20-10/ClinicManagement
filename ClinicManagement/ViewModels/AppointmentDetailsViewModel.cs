@@ -160,6 +160,23 @@ namespace ClinicManagement.ViewModels
             LoadStaffs();
             LoadAppointmentTypes();
         }
+        /// <summary>
+        /// Constructor that accepts an Appointment object to initialize the view model
+        /// </summary>
+        /// <param name="appointment">The appointment to be viewed or edited</param>
+        public AppointmentDetailsViewModel(Appointment appointment)
+        {
+            // Load all necessary data first
+            InitializeCommands();
+            LoadStaffs();
+            LoadAppointmentTypes();
+
+            // Set the appointment after loading dependencies
+            OriginalAppointment = appointment;
+
+            // The LoadAppointmentData method will be called from the property setter
+            // of OriginalAppointment, so we don't need to call it again here
+        }
 
         #region Initialization Methods
         private void InitializeCommands()
