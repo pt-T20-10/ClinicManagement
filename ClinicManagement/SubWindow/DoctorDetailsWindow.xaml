@@ -21,7 +21,7 @@
         Name="doctordetailsWindow"
         Style="{StaticResource MaterialDesignWindow}"
         WindowStartupLocation="CenterScreen"
-        Width="1100" Height="700">
+        Width="1200" Height="700">
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -316,35 +316,114 @@
 
                     <!-- Appointments List -->
                     <DataGrid Grid.Row="1"
-                             ItemsSource="{Binding DoctorAppointmentsDisplay}"
-                             AutoGenerateColumns="False"
-                             IsReadOnly="True"
-                             CanUserAddRows="False"
-                             materialDesign:DataGridAssist.CellPadding="13 8 8 8"
-                             materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+         ItemsSource="{Binding DoctorAppointmentsDisplay}"
+         AutoGenerateColumns="False"
+         IsReadOnly="True"
+         CanUserAddRows="False"
+         CanUserDeleteRows="False"
+         CanUserReorderColumns="False"
+         CanUserResizeRows="False"
+         SelectionMode="Single"
+         SelectionUnit="FullRow"
+         BorderThickness="1"
+         BorderBrush="{DynamicResource MaterialDesignDivider}"
+         Background="White"
+         VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+         HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+         RowHeight="48"
+         ColumnHeaderHeight="48"
+         GridLinesVisibility="All"
+         materialDesign:DataGridAssist.CellPadding="13 8 8 8"
+         materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="Background" Value="#E3F2FD" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                <Setter Property="Padding" Value="8" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                <Setter Property="BorderThickness" Value="0,0,1,0" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#E8F5E9" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding AppointmentId}" Width="80"/>
-                            <DataGridTextColumn Header="Bệnh nhân" Binding="{Binding PatientName}" Width="200"/>
-                            <DataGridTextColumn Header="Ngày hẹn" Binding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120"/>
-                            <DataGridTextColumn Header="Giờ hẹn" Binding="{Binding AppointmentTimeString}" Width="100"/>
-                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="120"/>
-                            <DataGridTextColumn Header="Lý do khám" Binding="{Binding Reason}" Width="*"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding AppointmentId}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Bệnh nhân" Binding="{Binding PatientName}" Width="200">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Ngày hẹn" Binding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Giờ hẹn" Binding="{Binding AppointmentTimeString}" Width="100">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="120">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Lý do khám" Binding="{Binding Reason}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
 
                             <!-- Action Buttons -->
                             <DataGridTemplateColumn Width="130">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Content="Xem chi tiết"
-                                              Command="{Binding DataContext.ViewAppointmentDetailsCommand, 
-                                                       RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
-                                              CommandParameter="{Binding}"
-                                              Style="{StaticResource MaterialDesignRaisedButton}"
-                                              Width="120" Height="30"/>
+                          Command="{Binding DataContext.ViewAppointmentDetailsCommand, 
+                                   RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
+                          CommandParameter="{Binding}"
+                          Style="{StaticResource MaterialDesignRaisedButton}"
+                          Background="#4CAF50"
+                          Foreground="White"
+                          Width="120" Height="30"
+                          materialDesign:ButtonAssist.CornerRadius="5"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+
                 </Grid>
             </TabItem>
         </TabControl>

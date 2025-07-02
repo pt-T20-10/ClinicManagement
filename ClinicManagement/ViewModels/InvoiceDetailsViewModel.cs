@@ -1072,224 +1072,234 @@ namespace ClinicManagement.ViewModels
                     page.Margin(50);
                     page.DefaultTextStyle(x => x.FontSize(11));
 
-                    // Tất cả nội dung trong một container duy nhất
+                    // Main content container - use Column to allow adding multiple items
                     page.Content().Column(column =>
                     {
-                        // HEADER
+                        // HEADER SECTION with Row layout
                         column.Item().Row(row =>
                         {
-                            // Clinic information
-                            row.RelativeItem().Column(col =>
+                            // Left side - clinic info
+                            row.RelativeItem(2).Column(col =>
                             {
-                                col.Item().Text("PHÒNG KHÁM CLINIC MANAGEMENT")
-                                    .FontSize(18).Bold();
-                                col.Item().Text("Địa chỉ: 123 Đường Khám Bệnh, Q1, TP.HCM")
+                                col.Item().Text("PHÒNG KHÁM ABC")
+                                    .FontSize(16).Bold();
+                                col.Item().Text("Địa chỉ: 123 Đường 456, Quận 789, TP.XYZ")
                                     .FontSize(10);
-                                col.Item().Text("SĐT: 028.1234.5678 | Email: info@clinicmanagement.com")
+                                col.Item().Text("SĐT: 028.1234.5678 | Email: email@gmail.com")
                                     .FontSize(10);
                             });
-
-                            // Invoice information
-                            row.RelativeItem().Column(col =>
+                       
+                            // Right side - invoice info
+                            row.RelativeItem(1).Column(col =>
                             {
                                 col.Item().AlignRight().Text($"HÓA ĐƠN #{Invoice.InvoiceId}")
                                     .FontSize(16).Bold().FontColor(Colors.Blue.Medium);
                                 col.Item().AlignRight().Text($"Ngày: {Invoice.InvoiceDate:dd/MM/yyyy HH:mm}")
                                     .FontSize(10);
+                                col.Item().AlignRight().Text($"Loại hóa đơn: {Invoice.InvoiceType}")
+                                     .FontSize(10);
                                 col.Item().AlignRight().Text($"Trạng thái: {Invoice.Status}")
                                     .FontSize(10)
                                     .FontColor(Invoice.Status == "Đã thanh toán" ? Colors.Green.Medium : Colors.Orange.Medium);
+
                             });
                         });
 
-                        // Separator
+                        // Separator line
                         column.Item().PaddingVertical(10)
-                              .BorderBottom(1).BorderColor(Colors.Grey.Lighten2);
+                            .BorderBottom(1).BorderColor(Colors.Grey.Lighten2);
 
-                        // CONTENT - Invoice type
-                        column.Item().PaddingTop(20)
-                              .Text($"Loại hóa đơn: {Invoice.InvoiceType}")
-                              .FontSize(12).Bold();
-
-                        // Patient information
+                        // Patient information with 2 columns
                         if (HasPatient)
                         {
-                            column.Item().PaddingTop(10)
-                                  .Border(1).BorderColor(Colors.Grey.Lighten3)
-                                  .Padding(10)
-                                  .Column(patientCol =>
-                                  {
-                                      patientCol.Item().Text("THÔNG TIN KHÁCH HÀNG").Bold();
-                                      patientCol.Item().PaddingTop(5).Text($"Họ tên: {Invoice.Patient?.FullName}");
-                                      patientCol.Item().Text($"Số điện thoại: {Invoice.Patient?.Phone}");
+                            column.Item().PaddingTop(15).Border(1)
+                                .BorderColor(Colors.Grey.Lighten3)
+                                .Background(Colors.Grey.Lighten5)
+                                .Padding(10)
+                                .Column(patientCol =>
+                                {
+                                    patientCol.Item().Text("THÔNG TIN KHÁCH HÀNG").Bold();
 
-                                      if (!string.IsNullOrEmpty(Invoice.Patient?.InsuranceCode))
-                                          patientCol.Item().Text($"Mã BHYT: {Invoice.Patient?.InsuranceCode}");
+                                    patientCol.Item().PaddingTop(5).Row(patientInfoRow =>
+                                    {
+                                        // Left column of patient info
+                                        patientInfoRow.RelativeItem().Column(leftCol =>
+                                        {
+                                            leftCol.Item().Text($"Họ tên: {Invoice.Patient?.FullName}");
+                                            leftCol.Item().Text($"Số điện thoại: {Invoice.Patient?.Phone}");
+                                        });
 
-                                      if (Invoice.Patient?.PatientType != null)
-                                          patientCol.Item().Text($"Loại khách hàng: {Invoice.Patient?.PatientType?.TypeName}");
-                                  });
+                                        // Right column of patient info
+                                        patientInfoRow.RelativeItem().Column(rightCol =>
+                                        {
+                                            if (!string.IsNullOrEmpty(Invoice.Patient?.InsuranceCode))
+                                                rightCol.Item().Text($"Mã BHYT: {Invoice.Patient?.InsuranceCode}");
+
+                                            if (Invoice.Patient?.PatientType != null)
+                                                rightCol.Item().Text($"Loại khách hàng: {Invoice.Patient?.PatientType?.TypeName}");
+                                        });
+                                    });
+                                });
                         }
 
-                        // Invoice details
-                        column.Item().PaddingTop(20)
-                              .Column(detailCol =>
-                              {
-                                  detailCol.Item().Text("CHI TIẾT HÓA ĐƠN").Bold().FontSize(12);
+                        // Invoice details section
+                        column.Item().PaddingTop(20).Column(detailsCol =>
+                        {
+                            detailsCol.Item().Text("CHI TIẾT HÓA ĐƠN").Bold().FontSize(12);
 
-                                  detailCol.Item().PaddingTop(5)
-                                         .Table(table =>
-                                         {
-                                             // Define columns
-                                             table.ColumnsDefinition(columns =>
-                                             {
-                                                 columns.RelativeColumn(3); // Item name
-                                                 columns.RelativeColumn(1); // Quantity
-                                                 columns.RelativeColumn((float)1.5); // Unit price
-                                                 columns.RelativeColumn((float)1.5); // Total price
-                                             });
+                            detailsCol.Item().PaddingTop(5).Table(table =>
+                            {
+                                // Define columns
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3); // Item name
+                                    columns.RelativeColumn(1); // Quantity
+                                    columns.RelativeColumn(2); // Unit price
+                                    columns.RelativeColumn(2); // Total price
+                                });
 
-                                             // Add header row
-                                             table.Header(header =>
-                                             {
-                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Tên thuốc/dịch vụ").Bold();
-                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignCenter().Text("Số lượng").Bold();
-                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Đơn giá").Bold();
-                                                 header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Thành tiền").Bold();
-                                             });
+                                // Add header row
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Tên thuốc/dịch vụ").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignCenter().Text("Số lượng").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Đơn giá").Bold();
+                                    header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Thành tiền").Bold();
+                                });
 
-                                             // Add data rows
-                                             foreach (var detail in InvoiceDetails)
-                                             {
-                                                 string itemName = !string.IsNullOrEmpty(detail.ServiceName)
-                                                     ? detail.ServiceName
-                                                     : detail.Medicine?.Name ?? "Không xác định";
+                                // Add data rows
+                                foreach (var detail in InvoiceDetails)
+                                {
+                                    string itemName = !string.IsNullOrEmpty(detail.ServiceName)
+                                        ? detail.ServiceName
+                                        : detail.Medicine?.Name ?? "Không xác định";
 
-                                                 int quantity = detail.Quantity ?? 1;
-                                                 decimal unitPrice = detail.SalePrice ?? 0;
-                                                 decimal totalPrice = unitPrice * quantity;
+                                    int quantity = detail.Quantity ?? 1;
+                                    decimal unitPrice = detail.SalePrice ?? 0;
+                                    decimal totalPrice = unitPrice * quantity;
 
-                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                                      .Padding(5).Text(itemName);
-                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                                      .Padding(5).AlignCenter().Text(quantity.ToString());
-                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                                      .Padding(5).AlignRight().Text($"{unitPrice:N0} VNĐ");
-                                                 table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                                      .Padding(5).AlignRight().Text($"{totalPrice:N0} VNĐ");
-                                             }
-                                         });
-                              });
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                        .Padding(5).Text(itemName);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                        .Padding(5).AlignCenter().Text(quantity.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                        .Padding(5).AlignRight().Text($"{unitPrice:N0} VNĐ");
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                        .Padding(5).AlignRight().Text($"{totalPrice:N0} VNĐ");
+                                }
+                            });
+                        });
 
                         // Payment Summary
-                        column.Item().PaddingTop(20)
-                              .AlignRight()
-                              .Table(table =>
-                              {
-                                  // Define the table columns
-                                  table.ColumnsDefinition(columns =>
-                                  {
-                                      columns.RelativeColumn(1); // Label column
-                                      columns.RelativeColumn(1); // Value column
-                                  });
+                        column.Item().PaddingTop(20).AlignRight().Table(summaryTable =>
+                        {
+                            // Define table columns
+                            summaryTable.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(1); // Label column
+                                columns.RelativeColumn(1); // Value column
+                            });
 
-                                  // Subtotal row
-                                  table.Cell().AlignRight().Text("Tạm tính:").Bold();
-                                  table.Cell().AlignRight().Text($"{SubTotal:N0} VNĐ");
+                            // Subtotal row
+                            summaryTable.Cell().AlignRight().Padding(8).Text("Tạm tính:").Bold();
+                            summaryTable.Cell().AlignRight().Padding(8).Text($"{SubTotal:N0} VNĐ");
 
-                                  // Discount row (if applicable)
-                                  if (DiscountAmount > 0)
-                                  {
-                                      table.Cell().AlignRight().Text("Giảm giá:").Bold();
-                                      table.Cell().AlignRight().Text($"{DiscountAmount:N0} VNĐ").FontColor(Colors.Green.Medium);
-                                  }
+                            // Discount row (if applicable)
+                            if (DiscountAmount > 0)
+                            {
+                                summaryTable.Cell().AlignRight().Padding(8).Text("Giảm giá:").Bold();
+                                summaryTable.Cell().AlignRight().Padding(8).Text($"{DiscountAmount:N0} VNĐ").FontColor(Colors.Green.Medium);
+                            }
 
-                                  // Tax row (if applicable)
-                                  if (TaxAmount > 0)
-                                  {
-                                      table.Cell().AlignRight().Text($"Thuế VAT ({Invoice.Tax}%):").Bold();
-                                      table.Cell().AlignRight().Text($"{TaxAmount:N0} VNĐ");
-                                  }
+                            // Tax row (if applicable)
+                            if (TaxAmount > 0)
+                            {
+                                summaryTable.Cell().AlignRight().Padding(8).Text($"Thuế VAT ({Invoice.Tax}%):").Bold();
+                                summaryTable.Cell().AlignRight().Padding(8).Text($"{TaxAmount:N0} VNĐ");
+                            }
 
-                                  // Separator
-                                  table.Cell().ColumnSpan(2).BorderBottom(1)
-                                       .BorderColor(Colors.Grey.Lighten2)
-                                       .PaddingVertical(5);
+                            // Separator
+                            summaryTable.Cell().ColumnSpan(2).BorderBottom(2)
+                                .BorderColor(Colors.Grey.Medium)
+                                .PaddingVertical(8);
 
-                                  // Total amount row
-                                  table.Cell().AlignRight().Text("TỔNG CỘNG:").Bold().FontSize(12);
-                                  table.Cell().AlignRight().Text($"{TotalAmount:N0} VNĐ")
-                                       .Bold().FontSize(12).FontColor(Colors.Red.Medium);
-                              });
+                            // Total amount row
+                            summaryTable.Cell().AlignRight().Padding(8).Text("TỔNG CỘNG:").Bold().FontSize(12);
+                            summaryTable.Cell().AlignRight().Padding(8).Text($"{TotalAmount:N0} VNĐ")
+                                .Bold().FontSize(12).FontColor(Colors.Red.Medium);
+                        });
 
                         // Payment Information
                         if (IsPaid && PaymentDate.HasValue)
                         {
                             column.Item().PaddingTop(10)
-                                  .AlignRight()
-                                  .Text($"Thanh toán bằng {PaymentMethod} ngày {PaymentDate:dd/MM/yyyy HH:mm}")
-                                  .FontColor(Colors.Green.Medium);
+                                .AlignCenter()
+                                .Text($"Thanh toán bằng {PaymentMethod} ngày {PaymentDate:dd/MM/yyyy HH:mm}")
+                                .FontColor(Colors.Green.Medium);
                         }
 
-                        // Doctor's notes (if applicable) - simplified
-                        if (HasMedicalRecord && MedicalRecord != null)
+                        // Doctor's notes (if applicable)
+                        if (HasMedicalRecord && MedicalRecord != null && !string.IsNullOrWhiteSpace(MedicalRecord.DoctorAdvice))
                         {
-                            column.Item().PaddingTop(20)
-                                  .Border(1).BorderColor(Colors.Grey.Lighten3)
-                                  .Padding(10)
-                                  .Column(notesCol =>
-                                  {
-                                      notesCol.Item().Text("LỜI DẶN CỦA BÁC SĨ").Bold().FontSize(12);
-
-                                      string notes = !string.IsNullOrEmpty(MedicalRecord.DoctorAdvice)
-                                          ? MedicalRecord.DoctorAdvice
-                                          : "Không có lời dặn";
-
-                                      notesCol.Item().PaddingTop(5)
-                                             .Text(notes)
-                                             .FontSize(10)
-                                             .FontColor(string.IsNullOrEmpty(MedicalRecord.DoctorAdvice)
-                                                 ? Colors.Grey.Medium
-                                                 : Colors.Black);
-
-                                      notesCol.Item().PaddingTop(10)
-                                             .AlignRight()
-                                             .Text($"Bác sĩ: {MedicalRecord.Doctor?.FullName ?? "Không xác định"}")
-                                             .Bold();
-                                  });
+                            column.Item().PaddingTop(15)
+                                .Border(1).BorderColor(Colors.Grey.Lighten3)
+                                .Padding(10)
+                                .Column(notesCol =>
+                                {
+                                    notesCol.Item().Text("LỜI DẶN CỦA BÁC SĨ").Bold().FontSize(11);
+                                    notesCol.Item().PaddingTop(5).Text(MedicalRecord.DoctorAdvice).FontSize(10);
+                                    notesCol.Item().PaddingTop(5).AlignRight()
+                                        .Text($"Bác sĩ: {MedicalRecord.Doctor?.FullName ?? "Không xác định"}")
+                                        .FontSize(10).Bold();
+                                });
                         }
 
-                        // FOOTER
+                        // Footer
                         column.Item().PaddingTop(20)
-                              .BorderTop(1).BorderColor(Colors.Grey.Lighten2)
-                              .PaddingTop(10)
-                              .Row(row =>
-                              {
-                                  row.RelativeItem().Column(footerCol =>
-                                  {
-                                      footerCol.Item().Text("Xin cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!")
-                                          .FontSize(10).Italic();
+                            .BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                            .PaddingTop(10)
+                            .Row(footerRow =>
+                            {
+                                footerRow.RelativeItem().Column(footerCol =>
+                                {
+                                    footerCol.Item().Text("Xin cám ơn quý khách đã sử dụng dịch vụ của phòng khám chúng tôi!")
+                                        .FontSize(9).Italic();
 
-                                      if (!string.IsNullOrEmpty(Invoice.Notes))
-                                      {
-                                          footerCol.Item().Text($"Ghi chú: {Invoice.Notes}")
-                                              .FontSize(9).FontColor(Colors.Grey.Medium);
-                                      }
-                                  });
+                                    // Display notes if available
+                                    if (!string.IsNullOrEmpty(Invoice.Notes))
+                                    {
+                                        string displayNotes = Invoice.Notes;
+                                        // Remove payment info from displayed notes
+                                        if (displayNotes.Contains("Phương thức thanh toán:"))
+                                        {
+                                            int index = displayNotes.IndexOf("Phương thức thanh toán:");
+                                            displayNotes = displayNotes.Substring(0, index).Trim();
+                                        }
 
-                                  row.RelativeItem().AlignRight().Text(text =>
-                                  {
-                                      text.Span("Trang ").FontSize(10);
-                                      text.CurrentPageNumber().FontSize(10);
-                                      text.Span(" / ").FontSize(10);
-                                      text.TotalPages().FontSize(10);
-                                  });
-                              });
+                                        if (!string.IsNullOrWhiteSpace(displayNotes))
+                                        {
+                                            footerCol.Item().Text($"Ghi chú: {displayNotes}")
+                                                .FontSize(8).FontColor(Colors.Grey.Medium);
+                                        }
+                                    }
+                                });
+
+                                footerRow.RelativeItem().AlignRight().Text(text =>
+                                {
+                                    text.Span("Trang ").FontSize(9);
+                                    text.CurrentPageNumber().FontSize(9);
+                                    text.Span(" / ").FontSize(9);
+                                    text.TotalPages().FontSize(9);
+                                });
+                            });
                     });
                 });
             })
             .GeneratePdf(filePath);
         }
+
+
+
         #endregion
 
     }

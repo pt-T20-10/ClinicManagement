@@ -513,6 +513,8 @@ namespace ClinicManagement.ViewModels
                     // Mark field as touched when user starts typing
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_supplierCode))
                         _touchedFields.Add(nameof(SupplierCode));
+                    else
+                        _touchedFields.Remove(nameof(SupplierCode));
 
                     _supplierCode = value;
                     OnPropertyChanged(nameof(SupplierCode));
@@ -531,6 +533,8 @@ namespace ClinicManagement.ViewModels
                     // Mark field as touched when user starts typing
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_supplierName))
                         _touchedFields.Add(nameof(SupplierName));
+                    else
+                        _touchedFields.Remove(nameof(SupplierName));
 
                     _supplierName = value;
                     OnPropertyChanged(nameof(SupplierName));
@@ -560,6 +564,8 @@ namespace ClinicManagement.ViewModels
                     // Mark field as touched when user starts typing
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_supplierPhone))
                         _touchedFields.Add(nameof(SupplierPhone));
+                    else
+                        _touchedFields.Remove(nameof(SupplierPhone));
 
                     _supplierPhone = value;
                     OnPropertyChanged(nameof(SupplierPhone));
@@ -578,6 +584,8 @@ namespace ClinicManagement.ViewModels
                     // Mark field as touched when user starts typing
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_supplierEmail))
                         _touchedFields.Add(nameof(SupplierEmail));
+                    else
+                        _touchedFields.Remove(nameof(SupplierEmail));
 
                     _supplierEmail = value;
                     OnPropertyChanged(nameof(SupplierEmail));
@@ -596,6 +604,8 @@ namespace ClinicManagement.ViewModels
                     // Mark field as touched when user starts typing
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_supplierTaxCode))
                         _touchedFields.Add(nameof(SupplierTaxCode));
+                    else
+                        _touchedFields.Remove(nameof(SupplierTaxCode));
 
                     _supplierTaxCode = value;
                     OnPropertyChanged(nameof(SupplierTaxCode));

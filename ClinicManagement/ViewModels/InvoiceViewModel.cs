@@ -264,7 +264,7 @@ namespace ClinicManagement.ViewModels
 
         public ICommand ViewInvoiceDetailsCommand { get; set; }// Command để xem chi tiết hóa đơn, sẽ được liên kết với sự kiện chọn hóa đơn trong DataGrid
 
-        public ICommand PrintInvoiceCommand { get; set; }// Command để in hóa đơn, sẽ được liên kết với nút in trong giao diện người dùng
+      
 
         public ICommand ProcessPaymentCommand { get; set; }// Command để xử lý thanh toán hóa đơn, sẽ được liên kết với nút thanh toán trong giao diện người dùng
 
@@ -306,17 +306,13 @@ namespace ClinicManagement.ViewModels
                 p => ViewInvoiceDetails(p),//Execute method ViewInvoiceDetails để xem chi tiết hóa đơn với Parameter truyền vào là Invoice
                 p => p != null);//CanExecute kiểm tra xem hóa đơn có khác null hay không, nếu khác null thì lệnh này có thể thực hiện được
 
-            PrintInvoiceCommand = new RelayCommand<Invoice>(
-                p => PrintInvoice(p),// Execute method PrintInvoice để in hóa đơn với Parameter truyền vào là Invoice
-                p => p != null);// CanExecute kiểm tra xem hóa đơn có khác null hay không, nếu khác null thì lệnh này có thể thực hiện được
-
             ProcessPaymentCommand = new RelayCommand<Invoice>(
                 p => ProcessPayment(p),//Execute method ProcessPayment để xử lý thanh toán hóa đơn với Parameter truyền vào là Invoice
                 p => p != null && p.Status == "Chưa thanh toán"); //CanExecute kiểm tra xem hóa đơn có khác null và trạng thái là "Chưa thanh toán" hay không, nếu đúng thì lệnh này có thể thực hiện được
 
             SellMedicineCommand = new RelayCommand<Invoice>(
                 p => SellMedicine(p),// Execute method SellMedicine để bán thuốc cho hóa đơn với Parameter truyền vào là Invoice
-                p => p != null && p.InvoiceType == "Khám và bán thuốc" || p.InvoiceType == "Khám bệnh" );// // CanExecute kiểm tra xem hóa đơn có khác null và loại hóa đơn là "Khám và bán thuốc" hay không, nếu đúng thì lệnh này có thể thực hiện được
+                p => p != null && p.Status == "Chưa thanh toán" && p.InvoiceType == "Khám bệnh" );// // CanExecute kiểm tra xem hóa đơn có khác null và loại hóa đơn là "Khám và bán thuốc" hay không, nếu đúng thì lệnh này có thể thực hiện được
 
             // Pagination commands
             FirstPageCommand = new RelayCommand<object>(
@@ -506,18 +502,8 @@ namespace ClinicManagement.ViewModels
             LoadInvoices();
         }
 
-        // Phương thức PrintInvoice để in hóa đơn do PrintInvoiceCommand gọi
-        private void PrintInvoice(Invoice invoice)
-        {
-            if (invoice == null) return;
-
-            MessageBoxService.ShowInfo($"Đang in hóa đơn #{invoice.InvoiceId} - {invoice.Patient?.FullName}",
-                           "In hóa đơn"
-                            
-                             );
-
-            
-        }
+    
+       
         // Phương thức ProcessPayment để xử lý thanh toán hóa đơn do ProcessPaymentCommand gọi
         private void ProcessPayment(Invoice invoice)
         {

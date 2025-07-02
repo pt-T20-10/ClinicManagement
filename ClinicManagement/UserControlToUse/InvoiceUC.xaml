@@ -438,19 +438,6 @@
                                                         </StackPanel>
                                                     </Button>
 
-                                            <!-- Nút xem in hóa hóa đơn tất cả các hóa đơn đều có  -->
-                                                    <Button 
-                                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.PrintInvoiceCommand}" 
-                                                        CommandParameter="{Binding}"
-                                                        Style="{StaticResource MaterialDesignOutlinedButton}"
-                                                        Margin="0,0,8,0" Width="40" Height="32" Padding="2"
-                                                        ToolTip="In">
-
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <materialDesign:PackIcon Kind="Printer" />
-
-                                                        </StackPanel>
-                                                    </Button>
 
                                             <!-- Nút thanh toán với strigger set Visibility theo Status của hóa đơn 
                                                     Nếu đã thanh toán thì nút này sẽ ẩn đi 
@@ -501,7 +488,7 @@
                                                             <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding InvoiceType}" Value="Khám và bán thuốc">
+                                                                    <DataTrigger Binding="{Binding InvoiceType}" Value="Khám bệnh">
                                                                         <Setter Property="Visibility" Value="Visible"/>
                                                                         
                                                                     </DataTrigger>

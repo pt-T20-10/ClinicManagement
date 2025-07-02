@@ -496,7 +496,15 @@ namespace ClinicManagement.ViewModels
                             error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
                         }
                         break;
-
+                    case nameof(Patient.InsuranceCode):
+                        if (!string.IsNullOrWhiteSpace(Patient.InsuranceCode))
+                        {
+                            if (!Regex.IsMatch(Patient.InsuranceCode.Trim(), @"^\d{10}$"))
+                            {
+                                error = "Mã BHYT phải có đúng 10 chữ số";
+                            }
+                        }
+                        break;
                     case nameof(Patient.DateOfBirth):
                         if (Patient.DateOfBirth.HasValue)
                         {
@@ -646,8 +654,6 @@ namespace ClinicManagement.ViewModels
             );
         }
 
-
-
         private void LoadAppointments()
         {
             Appointments = new ObservableCollection<Appointment>(
@@ -696,7 +702,6 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-
 
         private bool CanUpdatePatient()
         {
@@ -903,9 +908,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
-
         private void FilterAppointments()
         {
             try
@@ -967,7 +969,6 @@ namespace ClinicManagement.ViewModels
             medicalRecordWindow.ShowDialog();
         }
 
-
         private void ViewInvoice(Invoice invoice)
         {
             if (invoice == null) return;
@@ -995,7 +996,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-      
         private void AddNewAppointment()
         {
             try
@@ -1077,7 +1077,6 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi mở cửa sổ sửa lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
-
 
         private void CancelExistingAppointment(Appointment appointment)
         {

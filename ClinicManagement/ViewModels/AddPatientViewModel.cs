@@ -51,15 +51,20 @@ namespace ClinicManagement.ViewModels
             {
                 if (_fullName != value)
                 {
-                    // Mark field as touched when user starts typing
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_fullName))
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_fullName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(FullName));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(FullName));
 
                     _fullName = value;
                     OnPropertyChanged();
                 }
             }
         }
+
         private DateTime? _birthDate = DateTime.Now;
         public DateTime? BirthDate
         {
@@ -70,6 +75,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (value.HasValue || _birthDate.HasValue)
                         _touchedFields.Add(nameof(BirthDate));
+                    else
+                        _touchedFields.Remove(nameof(BirthDate));
 
                     _birthDate = value;
                     OnPropertyChanged();
@@ -132,9 +139,13 @@ namespace ClinicManagement.ViewModels
             {
                 if (_phone != value)
                 {
-                    // Mark field as touched when user starts typing
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_phone))
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_phone);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(Phone));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Phone));
 
                     _phone = value;
                     OnPropertyChanged();
@@ -150,8 +161,13 @@ namespace ClinicManagement.ViewModels
             {
                 if (_email != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_email))
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_email);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(Email));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Email));
 
                     _email = value;
                     OnPropertyChanged();
@@ -170,16 +186,32 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private string _insuranceNumber;
-        public string InsuranceNumber
+        // Insurance Code
+        private string _insuranceCode;
+        public string InsuranceCode
         {
-            get => _insuranceNumber;
+            get => _insuranceCode;
             set
             {
-                _insuranceNumber = value;
-                OnPropertyChanged();
+                if (_insuranceCode != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_insuranceCode);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(InsuranceCode));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(InsuranceCode));
+
+                    _insuranceCode = value;
+                    OnPropertyChanged();
+
+  
+                }
             }
         }
+
+
 
         private Patient _newPatient;
         public Patient NewPatient
@@ -257,10 +289,21 @@ namespace ClinicManagement.ViewModels
                             error = "Email không đúng định dạng";
                         }
                         break;
+
                     case nameof(BirthDate):
                         if (_birthDate.HasValue && _birthDate.Value > DateTime.Now)
                         {
                             error = "Ngày sinh không được lớn hơn ngày hiện tại";
+                        }
+                        break;
+
+                    case nameof(InsuranceCode):
+                        if (!string.IsNullOrWhiteSpace(InsuranceCode))
+                        {
+                            if (!Regex.IsMatch(InsuranceCode.Trim(), @"^\d{10}$"))
+                            {
+                                error = "Mã BHYT phải có đúng 10 chữ số";
+                            }
                         }
                         break;
                 }
@@ -269,6 +312,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+
         public bool HasErrors
         {
             get
@@ -276,9 +320,11 @@ namespace ClinicManagement.ViewModels
                 return !string.IsNullOrEmpty(this[nameof(FullName)]) ||
                        !string.IsNullOrEmpty(this[nameof(Phone)]) ||
                        !string.IsNullOrEmpty(this[nameof(Email)]) ||
-                       !string.IsNullOrEmpty(this[nameof(BirthDate)]);
+                       !string.IsNullOrEmpty(this[nameof(BirthDate)]) ||
+                       !string.IsNullOrEmpty(this[nameof(InsuranceCode)]);
             }
         }
+
         #endregion
 
         #region Methods
@@ -310,10 +356,12 @@ namespace ClinicManagement.ViewModels
                 _isValidating = true;
                 _touchedFields.Add(nameof(FullName));
                 _touchedFields.Add(nameof(Phone));
+                _touchedFields.Add(nameof(InsuranceCode));
 
                 // Trigger validation check for required fields
                 OnPropertyChanged(nameof(FullName));
                 OnPropertyChanged(nameof(Phone));
+                OnPropertyChanged(nameof(InsuranceCode));
 
                 // Check for validation errors
                 if (HasErrors)
@@ -321,8 +369,40 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowWarning(
                         "Vui lòng sửa các lỗi nhập liệu trước khi thêm bệnh nhân.",
                         "Lỗi thông tin"
-                   );
+                    );
                     return;
+                }
+
+                // Check if phone number already exists
+                if (!string.IsNullOrWhiteSpace(Phone))
+                {
+                    bool phoneExists = DataProvider.Instance.Context.Patients
+                        .Any(p => p.Phone == Phone.Trim() && (p.IsDeleted == null || p.IsDeleted == false));
+
+                    if (phoneExists)
+                    {
+                        MessageBoxService.ShowError(
+                            "Số điện thoại này đã được sử dụng bởi một bệnh nhân khác.",
+                            "Lỗi dữ liệu"
+                        );
+                        return;
+                    }
+                }
+
+                // Check if insurance number already exists (if provided)
+                if (!string.IsNullOrWhiteSpace(InsuranceCode))
+                {
+                    bool insuranceExists = DataProvider.Instance.Context.Patients
+                        .Any(p => p.InsuranceCode == InsuranceCode.Trim() && (p.IsDeleted == null || p.IsDeleted == false));
+
+                    if (insuranceExists)
+                    {
+                        MessageBoxService.ShowError(
+                            "Mã BHYT này đã được sử dụng bởi một bệnh nhân khác.",
+                            "Lỗi dữ liệu"
+                        );
+                        return;
+                    }
                 }
 
                 // Create new patient object
@@ -338,9 +418,8 @@ namespace ClinicManagement.ViewModels
                     DateOfBirth = birthDate,
                     Gender = Gender,
                     Phone = Phone?.Trim(),
-
                     Address = Address?.Trim(),
-                    InsuranceCode = InsuranceNumber?.Trim(),
+                    InsuranceCode = InsuranceCode?.Trim(),
                     PatientTypeId = SelectedPatientType?.PatientTypeId,
                     CreatedAt = DateTime.Now,
                     IsDeleted = false
@@ -358,8 +437,7 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowSuccess(
                     "Đã thêm bệnh nhân thành công!",
                     "Thành Công"
-                
-                     );
+                );
 
                 // Close window
                 _window?.Close();
@@ -371,6 +449,7 @@ namespace ClinicManagement.ViewModels
                     "Lỗi");
             }
         }
+
 
 
         private void ExecuteCancel()
@@ -392,7 +471,7 @@ namespace ClinicManagement.ViewModels
             Phone = string.Empty;
             Email = string.Empty;
             Address = string.Empty;
-            InsuranceNumber = string.Empty;
+            InsuranceCode = string.Empty;
 
             // Reset patient type to default
             SelectedPatientType = PatientTypeList.FirstOrDefault(pt =>

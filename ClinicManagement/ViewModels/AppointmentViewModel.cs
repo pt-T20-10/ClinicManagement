@@ -41,13 +41,19 @@ namespace ClinicManagement.ViewModels
             get => _SelectedAppointmentType;
             set
             {
-                _SelectedAppointmentType = value;
-                OnPropertyChanged(nameof(SelectedAppointmentType));
-                if (value != null)
+                if (_SelectedAppointmentType != value)
                 {
-                    TypeDisplayName = value.TypeName;
-                    TypeDescription = value.Description;
-                    TypePrice = value.Price;
+                    if (value != null)
+                        _touchedFields.Add(nameof(SelectedAppointmentType));
+
+                    _SelectedAppointmentType = value;
+                    OnPropertyChanged();
+                    if (value != null)
+                    {
+                        TypeDisplayName = value.TypeName;
+                        TypeDescription = value.Description;
+                        TypePrice = value.Price;
+                    }
                 }
             }
         }
@@ -89,16 +95,22 @@ namespace ClinicManagement.ViewModels
                 #region Appointment Form Properties
                 // Patient search
         private string _patientSearch;
-        // Patient search
         public string PatientSearch
         {
             get => _patientSearch;
             set
             {
-                _patientSearch = value;
-                OnPropertyChanged();
-                SearchPatients();
-                // Remove the auto-find code that caused stack overflow
+                if (_patientSearch != value)
+                {
+                    if (!string.IsNullOrEmpty(value))
+                        _touchedFields.Add(nameof(PatientSearch));
+                    else
+                        _touchedFields.Remove(nameof(PatientSearch)); // Xóa khỏi touchedFields khi giá trị trống
+
+                    _patientSearch = value;
+                    OnPropertyChanged();
+                    SearchPatients();
+                }
             }
         }
 
@@ -150,11 +162,15 @@ namespace ClinicManagement.ViewModels
             get => _selectedDoctor;
             set
             {
-                _selectedDoctor = value;
-                OnPropertyChanged();
-                // Remove the date/time reset and ValidateFormSequence call
-                // Just update the validation flag
-                _isStaffselected = value != null;
+                if (_selectedDoctor != value)
+                {
+                    if (value != null)
+                        _touchedFields.Add(nameof(SelectedDoctor));
+
+                    _selectedDoctor = value;
+                    OnPropertyChanged();
+                    _isStaffselected = value != null;
+                }
             }
         }
 
@@ -177,29 +193,42 @@ namespace ClinicManagement.ViewModels
             get => _appointmentDate;
             set
             {
-                _appointmentDate = value;
-                OnPropertyChanged();
-                if (value.HasValue)
+                if (_appointmentDate != value)
                 {
-                    // Reset time when date changes to ensure validation
-                    SelectedAppointmentTime = null;
+                    if (value.HasValue)
+                        _touchedFields.Add(nameof(AppointmentDate));
+
+                    _appointmentDate = value;
+                    OnPropertyChanged();
+                    if (value.HasValue)
+                    {
+                        // Reset time when date changes to ensure validation
+                        SelectedAppointmentTime = null;
+                    }
                 }
             }
         }
 
         // Patient phone
         private string _patientPhone;
-        public string PatientPhone
+    public string PatientPhone
+{
+    get => _patientPhone;
+    set
+    {
+        if (_patientPhone != value)
         {
-            get => _patientPhone;
-            set
-            {
-                _patientPhone = value;
-                OnPropertyChanged();
+            if (!string.IsNullOrEmpty(value))
                 _touchedFields.Add(nameof(PatientPhone));
-                // Remove the auto-find code that caused stack overflow
-            }
+            else
+                _touchedFields.Remove(nameof(PatientPhone));
+
+            _patientPhone = value;
+            OnPropertyChanged();
         }
+    }
+}
+
 
         // Appointment notes
         private string _appointmentNote;
@@ -267,8 +296,15 @@ namespace ClinicManagement.ViewModels
             get => _selectedAppointmentTime;
             set
             {
-                _selectedAppointmentTime = value;
-                OnPropertyChanged();
+                if (_selectedAppointmentTime != value)
+                {
+                    if (value.HasValue)
+                        _touchedFields.Add(nameof(SelectedAppointmentTime));
+
+                    _selectedAppointmentTime = value;
+                    OnPropertyChanged();
+                    _isDateTimeValid = value.HasValue && AppointmentDate.HasValue && IsAppointmentTimeValid();
+                }
             }
         }
         // Add these to your existing commands in AppointmentViewModel.cs
@@ -597,36 +633,27 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Validate input data before proceeding
-                if (string.IsNullOrWhiteSpace(PatientSearch))
+                // Validate basic input data before proceeding
+                if (string.IsNullOrWhiteSpace(PatientSearch) && string.IsNullOrWhiteSpace(PatientPhone))
                 {
                     if (!silentMode)
                     {
                         MessageBoxService.ShowWarning(
-                            "Vui lòng nhập tên hoặc mã bảo hiểm của bệnh nhân.",
+                            "Vui lòng nhập tên/mã BHYT hoặc số điện thoại của bệnh nhân.",
                             "Thiếu thông tin");
                     }
                     return;
                 }
 
-                // Check if it looks like an insurance code (contains digits and no spaces)
-                bool looksLikeInsuranceCode = PatientSearch.Any(char.IsDigit) && !PatientSearch.Contains(" ");
+                // Check if it looks like an insurance code (contains only digits and is exactly 10 characters)
+                bool looksLikeInsuranceCode = !string.IsNullOrWhiteSpace(PatientSearch) &&
+                                              PatientSearch.All(char.IsDigit) &&
+                                              PatientSearch.Length == 10;
 
-                // Only validate phone if not searching by insurance code
-                if (!looksLikeInsuranceCode && string.IsNullOrWhiteSpace(PatientPhone))
-                {
-                    if (!silentMode)
-                    {
-                        MessageBoxService.ShowWarning(
-                            "Vui lòng nhập số điện thoại của bệnh nhân.",
-                            "Thiếu thông tin"
-                         );
-                    }
-                    return;
-                }
-
-                // Validate phone number format only if it's provided
-                if (!string.IsNullOrWhiteSpace(PatientPhone) &&
+                // If searching by insurance code, we don't need phone number
+                // If not searching by insurance code, then validate phone if provided
+                if (!looksLikeInsuranceCode &&
+                    !string.IsNullOrWhiteSpace(PatientPhone) &&
                     !Regex.IsMatch(PatientPhone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
                 {
                     if (!silentMode)
@@ -634,7 +661,7 @@ namespace ClinicManagement.ViewModels
                         MessageBoxService.ShowWarning(
                             "Số điện thoại không đúng định dạng. Vui lòng nhập số điện thoại hợp lệ (VD: 0901234567).",
                             "Số điện thoại không hợp lệ"
-                      );
+                        );
                     }
                     return;
                 }
@@ -650,8 +677,7 @@ namespace ClinicManagement.ViewModels
                     {
                         MessageBoxService.ShowInfo(
                             $"Đã tìm thấy bệnh nhân: {patient.FullName}"
-                      
-                          );
+                        );
                     }
                     return;
                 }
@@ -667,7 +693,7 @@ namespace ClinicManagement.ViewModels
                         $"Không tìm thấy bệnh nhân với mã bảo hiểm '{PatientSearch.Trim()}'.\n" +
                         "Bạn có muốn tạo hồ sơ bệnh nhân mới không?",
                         "Mã bảo hiểm không tồn tại"
-                  );
+                    );
 
                     if (!result)
                         return;
@@ -731,18 +757,15 @@ namespace ClinicManagement.ViewModels
                 var standardResult = MessageBoxService.ShowQuestion(
                     "Không tìm thấy bệnh nhân với thông tin đã nhập. Bạn có muốn tạo mới không?",
                     "Tạo bệnh nhân mới?"
-                
-                   );
+                );
 
                 if (standardResult)
                 {
-                    
-     
                     string name = PatientSearch.Trim();
                     string insuranceCode = null;
 
-                    // If it looks like an insurance code (contains digits and is less than 20 chars),
-                    // ask for patient's name
+                    // If it looks like an insurance code but not exactly 10 digits, 
+                    // ask for patient's name and proper insurance code
                     if (PatientSearch.Any(char.IsDigit) && PatientSearch.Length < 20)
                     {
                         var nameResult = Microsoft.VisualBasic.Interaction.InputBox(
@@ -750,16 +773,31 @@ namespace ClinicManagement.ViewModels
 
                         if (string.IsNullOrWhiteSpace(nameResult))
                         {
-                             MessageBoxService.ShowWarning(
+                            MessageBoxService.ShowWarning(
                                 "Không thể tạo bệnh nhân mới vì thiếu họ tên.",
                                 "Thiếu thông tin"
-                                
-                                );
+                            );
                             return; // User cancelled or provided empty name
                         }
 
                         name = nameResult.Trim();
-                        insuranceCode = PatientSearch.Trim();
+
+                        // Ask for proper insurance code
+                        var insuranceResult = Microsoft.VisualBasic.Interaction.InputBox(
+                            "Nhập mã BHYT (10 số) nếu có:", "Thông tin bệnh nhân", "");
+
+                        if (!string.IsNullOrWhiteSpace(insuranceResult))
+                        {
+                            // Validate insurance code format
+                            if (insuranceResult.All(char.IsDigit) && insuranceResult.Length == 10)
+                                insuranceCode = insuranceResult.Trim();
+                            else
+                            {
+                                MessageBoxService.ShowWarning(
+                                    "Mã BHYT không hợp lệ. Mã BHYT phải có đúng 10 chữ số.",
+                                    "Mã BHYT không hợp lệ");
+                            }
+                        }
                     }
 
                     // Additional validation for name
@@ -826,45 +864,82 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Finds a patient based on PatientSearch (name or insurance code) and Phone
+        /// Finds a patient based on PatientSearch (name or insurance code) and/or Phone
         /// </summary>
         private Patient? FindPatient()
         {
-            if (string.IsNullOrWhiteSpace(PatientSearch))
+            // Check for empty search criteria
+            if (string.IsNullOrWhiteSpace(PatientSearch) && string.IsNullOrWhiteSpace(PatientPhone))
                 return null;
 
-            // First try to find by exact match of insurance code only (without requiring phone)
-            var patientByInsurance = DataProvider.Instance.Context.Patients
-                .FirstOrDefault(p =>
-                    p.IsDeleted != true &&
-                    p.InsuranceCode == PatientSearch.Trim());
+            // Try to find by insurance code if it looks like one (exactly 10 digits)
+            if (!string.IsNullOrWhiteSpace(PatientSearch) &&
+                PatientSearch.All(char.IsDigit) &&
+                PatientSearch.Length == 10)
+            {
+                var patientByInsurance = DataProvider.Instance.Context.Patients
+                    .FirstOrDefault(p =>
+                        p.IsDeleted != true &&
+                        p.InsuranceCode == PatientSearch.Trim());
 
-            if (patientByInsurance != null)
-                return patientByInsurance;
+                if (patientByInsurance != null)
+                    return patientByInsurance;
+            }
 
-            // If no match by insurance code, require phone number for the rest of the searches
-            if (string.IsNullOrWhiteSpace(PatientPhone))
-                return null;
+            // Try by phone number only
+            if (!string.IsNullOrWhiteSpace(PatientPhone))
+            {
+                var patientByPhone = DataProvider.Instance.Context.Patients
+                    .FirstOrDefault(p =>
+                        p.IsDeleted != true &&
+                        p.Phone == PatientPhone.Trim());
 
-            // Try by name + phone
-            var patient = DataProvider.Instance.Context.Patients
-                .FirstOrDefault(p =>
-                    p.IsDeleted != true &&
-                    p.Phone == PatientPhone.Trim() &&
-                    p.FullName.ToLower() == PatientSearch.Trim().ToLower());
+                if (patientByPhone != null)
+                    return patientByPhone;
+            }
 
-            if (patient != null)
-                return patient;
+            // Try by name + phone if both are provided
+            if (!string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone))
+            {
+                // First try exact name match
+                var patientByNameAndPhone = DataProvider.Instance.Context.Patients
+                    .FirstOrDefault(p =>
+                        p.IsDeleted != true &&
+                        p.Phone == PatientPhone.Trim() &&
+                        p.FullName.ToLower() == PatientSearch.Trim().ToLower());
 
-            // Try partial name match + phone if full name match failed
-            patient = DataProvider.Instance.Context.Patients
-                .FirstOrDefault(p =>
-                    p.IsDeleted != true &&
-                    p.Phone == PatientPhone.Trim() &&
-                    p.FullName.ToLower().Contains(PatientSearch.Trim().ToLower()));
+                if (patientByNameAndPhone != null)
+                    return patientByNameAndPhone;
 
-            return patient;
+                // Then try partial name match
+                patientByNameAndPhone = DataProvider.Instance.Context.Patients
+                    .FirstOrDefault(p =>
+                        p.IsDeleted != true &&
+                        p.Phone == PatientPhone.Trim() &&
+                        p.FullName.ToLower().Contains(PatientSearch.Trim().ToLower()));
+
+                if (patientByNameAndPhone != null)
+                    return patientByNameAndPhone;
+            }
+
+            // Try by name only if it's not a number string
+            if (!string.IsNullOrWhiteSpace(PatientSearch) && !PatientSearch.All(char.IsDigit))
+            {
+                var patientsByName = DataProvider.Instance.Context.Patients
+                    .Where(p =>
+                        p.IsDeleted != true &&
+                        p.FullName.ToLower().Contains(PatientSearch.Trim().ToLower()))
+                    .ToList();
+
+                // If there's only one exact match by name, return it
+                if (patientsByName.Count == 1)
+                    return patientsByName[0];
+            }
+
+            // No patient found with the given criteria
+            return null;
         }
+
 
         private void InitializeData()
         {
@@ -1255,18 +1330,43 @@ namespace ClinicManagement.ViewModels
             };
         }
 
-        // Update the AddNewAppointment method to use the silentMode parameter
         private void AddNewAppointment()
         {
             try
             {
                 // Enable validation for required fields
                 _isValidating = true;
+                _touchedFields.Add(nameof(PatientSearch));
+                _touchedFields.Add(nameof(PatientPhone));
+                _touchedFields.Add(nameof(SelectedDoctor));
+                _touchedFields.Add(nameof(SelectedAppointmentType));
+                _touchedFields.Add(nameof(AppointmentDate));
+                _touchedFields.Add(nameof(SelectedAppointmentTime));
+
+                // Trigger validation check for required fields
+                OnPropertyChanged(nameof(PatientSearch));
+                OnPropertyChanged(nameof(PatientPhone));
+                OnPropertyChanged(nameof(SelectedDoctor));
+                OnPropertyChanged(nameof(SelectedAppointmentType));
+                OnPropertyChanged(nameof(AppointmentDate));
+                OnPropertyChanged(nameof(SelectedAppointmentTime));
+                // Check for validation errors on the required fields
+                if (!string.IsNullOrEmpty(this[nameof(PatientSearch)]) ||
+                    !string.IsNullOrEmpty(this[nameof(PatientPhone)]) ||
+                    !string.IsNullOrEmpty(this[nameof(SelectedDoctor)]) ||
+                    !string.IsNullOrEmpty(this[nameof(SelectedAppointmentType)]) ||
+                    !string.IsNullOrEmpty(this[nameof(AppointmentDate)]) ||
+                    !string.IsNullOrEmpty(this[nameof(SelectedAppointmentTime)]))
+                {
+                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi thêm lịch hẹn.", "Lỗi thông tin");
+                    return;
+                }
+
 
                 // Validate patient selection or find/create patient if needed
                 if (SelectedPatient == null &&
-                    !string.IsNullOrWhiteSpace(PatientSearch) &&
-                    !string.IsNullOrWhiteSpace(PatientPhone))
+            !string.IsNullOrWhiteSpace(PatientSearch) &&
+            !string.IsNullOrWhiteSpace(PatientPhone))
                 {
                     // Find patient silently (true for silentMode)
                     FindOrCreatePatient(true);
@@ -1362,9 +1462,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        /// <summary>
-        /// Validates patient selection and shows specific error if invalid
-        /// </summary>
         private bool ValidatePatientSelection()
         {
             _touchedFields.Add(nameof(PatientSearch));
@@ -1387,9 +1484,6 @@ namespace ClinicManagement.ViewModels
             return true;
         }
 
-        /// <summary>
-        /// Validates doctor selection and shows specific error if invalid
-        /// </summary>
         private bool ValidateStaffselection()
         {
             if (SelectedDoctor == null)
@@ -1403,9 +1497,7 @@ namespace ClinicManagement.ViewModels
 
             return true;
         }
-        /// <summary>
-        /// Validates appointment type selection and shows specific error if invalid
-        /// </summary>
+
         private bool ValidateAppointmentType()
         {
             if (SelectedAppointmentType == null)
@@ -1420,9 +1512,6 @@ namespace ClinicManagement.ViewModels
             return true;
         }
 
-        /// <summary>
-        /// Validates date and time selection and shows specific error messages
-        /// </summary>
         private bool ValidateDateTimeSelection()
         {
             // Check if date is selected
@@ -1615,10 +1704,6 @@ namespace ClinicManagement.ViewModels
             return true;
         }
 
-
-        /// <summary>
-        /// Convert DayOfWeek to Vietnamese day name
-        /// </summary>
         private string GetVietnameseDayName(DayOfWeek dayOfWeek)
         {
             return dayOfWeek switch
@@ -1644,8 +1729,6 @@ namespace ClinicManagement.ViewModels
             SelectedAppointmentTime = null;
             PatientPhone = string.Empty;
             AppointmentNote = string.Empty;
-
-            // Reset validation flags
             _isStaffselected = false;
             _isPatientInfoValid = false;
             _isDateTimeValid = false;
@@ -1670,30 +1753,58 @@ namespace ClinicManagement.ViewModels
                 {
                     case nameof(PatientSearch):
                         if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(PatientSearch))
-                            error = "Vui lòng nhập tên hoặc mã bảo hiểm của bệnh nhân";
+                        {
+                            error = "Vui lòng nhập tên hoặc mã BHYT của bệnh nhân";
+                        }
                         break;
 
                     case nameof(PatientPhone):
                         if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(PatientPhone))
+                        {
                             error = "Vui lòng nhập số điện thoại";
+                        }
                         else if (!string.IsNullOrWhiteSpace(PatientPhone) &&
                                 !Regex.IsMatch(PatientPhone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
-                            error = "Số điện thoại không hợp lệ";
+                        {
+                            error = "Số điện thoại không hợp lệ (VD: 0901234567)";
+                        }
+                        break;
+
+                    case nameof(SelectedDoctor):
+                        if (_touchedFields.Contains(columnName) && SelectedDoctor == null)
+                        {
+                            error = "Vui lòng chọn bác sĩ";
+                        }
+                        break;
+
+                    case nameof(SelectedAppointmentType):
+                        if (_touchedFields.Contains(columnName) && SelectedAppointmentType == null)
+                        {
+                            error = "Vui lòng chọn loại lịch hẹn";
+                        }
                         break;
 
                     case nameof(AppointmentDate):
-                        if (!AppointmentDate.HasValue)
+                        if (_touchedFields.Contains(columnName) && !AppointmentDate.HasValue)
+                        {
                             error = "Vui lòng chọn ngày hẹn";
-                        else if (AppointmentDate.Value < DateTime.Today)
+                        }
+                        else if (AppointmentDate.HasValue && AppointmentDate.Value < DateTime.Today)
+                        {
                             error = "Ngày hẹn không hợp lệ";
+                        }
                         break;
 
                     case nameof(SelectedAppointmentTime):
-                        if (!SelectedAppointmentTime.HasValue)
+                        if (_touchedFields.Contains(columnName) && !SelectedAppointmentTime.HasValue)
+                        {
                             error = "Vui lòng chọn giờ hẹn";
+                        }
                         else if (_isStaffselected && _isPatientInfoValid &&
-                                 AppointmentDate.HasValue && !IsAppointmentTimeValid())
-                            error = "Giờ hẹn không phù hợp với lịch làm việc của bác sĩ";
+                                AppointmentDate.HasValue && SelectedAppointmentTime.HasValue && !IsAppointmentTimeValid())
+                        {
+                            error = "Giờ hẹn không phù hợp với lịch làm việc";
+                        }
                         break;
                 }
 

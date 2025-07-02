@@ -69,6 +69,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_fullName))
                         _touchedFields.Add(nameof(FullName));
+                    else
+                        _touchedFields.Remove(nameof(FullName)); // Remove if empty
 
                     _fullName = value;
                     OnPropertyChanged();
@@ -108,7 +110,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_phone))
                         _touchedFields.Add(nameof(Phone));
-
+                    else
+                        _touchedFields.Remove(nameof(Phone));
                     _phone = value;
                     OnPropertyChanged();
                 }
@@ -125,6 +128,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_schedule))
                         _touchedFields.Add(nameof(Schedule));
+                    else
+                        _touchedFields.Remove(nameof(Schedule));
 
                     _schedule = value;
                     OnPropertyChanged();
@@ -142,6 +147,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_address))
                         _touchedFields.Add(nameof(Address));
+                    else
+                        _touchedFields.Remove(nameof(Address));
 
                     _address = value;
                     OnPropertyChanged();
@@ -159,6 +166,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_email))
                         _touchedFields.Add(nameof(Email));
+                    else
+                        _touchedFields.Remove(nameof(Email));
 
                     _email = value;
                     OnPropertyChanged();
@@ -176,6 +185,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_certificateLink))
                         _touchedFields.Add(nameof(CertificateLink));
+                    else
+                        _touchedFields.Remove(nameof(CertificateLink));
 
                     _certificateLink = value;
                     OnPropertyChanged();
@@ -230,6 +241,8 @@ namespace ClinicManagement.ViewModels
                 {
                     if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_newUsername))
                         _touchedFields.Add(nameof(NewUsername));
+                    else
+                        _touchedFields.Remove(nameof(NewUsername));
 
                     _newUsername = value;
                     OnPropertyChanged();

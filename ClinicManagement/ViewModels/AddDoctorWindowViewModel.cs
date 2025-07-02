@@ -32,8 +32,13 @@ namespace ClinicManagement.ViewModels
             {
                 if (_fullName != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_fullName))
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_fullName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(FullName));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(FullName));
 
                     _fullName = value;
                     OnPropertyChanged();
@@ -71,8 +76,13 @@ namespace ClinicManagement.ViewModels
             {
                 if (_phone != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_phone))
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_phone);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(Phone));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Phone));
 
                     _phone = value;
                     OnPropertyChanged();
@@ -80,16 +90,27 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private string _email;
-        public string Email
+      private string _email;
+public string Email
+{
+    get => _email;
+    set
+    {
+        if (_email != value)
         {
-            get => _email;
-            set
-            {
-                _email = value;
-                OnPropertyChanged();
-            }
+            bool wasEmpty = string.IsNullOrWhiteSpace(_email);
+            bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+            if (wasEmpty && !isEmpty)
+                _touchedFields.Add(nameof(Email));
+            else if (!wasEmpty && isEmpty)
+                _touchedFields.Remove(nameof(Email));
+
+            _email = value;
+            OnPropertyChanged();
         }
+    }
+}
 
         private string _schedule;
         public string Schedule
@@ -99,8 +120,13 @@ namespace ClinicManagement.ViewModels
             {
                 if (_schedule != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_schedule))
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_schedule);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(Schedule));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Schedule));
 
                     _schedule = value;
                     OnPropertyChanged();
@@ -130,15 +156,26 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Account Information
+
         private string _userName;
         public string UserName
         {
             get => _userName;
             set
             {
-                _userName = value;
-                OnPropertyChanged();
+                if (_userName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_userName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(UserName));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(UserName));
+
+                    _userName = value;
+                    OnPropertyChanged();
+                }
             }
         }
 

@@ -222,14 +222,22 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto">
                     <DataGrid ItemsSource="{Binding DetailedStockList}"
-          AutoGenerateColumns="False"
-          IsReadOnly="True"
-          SelectedItem="{Binding SelectedStockEntry, Mode=TwoWay}"
-          CanUserAddRows="False"
-          CanUserDeleteRows="False"
-          CanUserReorderColumns="True"
-          CanUserResizeColumns="True"
-          CanUserSortColumns="True">
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectedItem="{Binding SelectedStockEntry, Mode=TwoWay}"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserReorderColumns="True"
+                          CanUserResizeColumns="True"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
+                          BorderThickness="1"
+                         BorderBrush="{DynamicResource MaterialDesignDivider}"
+                         Background="White"
+                         VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                         HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                              
+                          CanUserSortColumns="True">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridRow">
                                 <Style.Triggers>
@@ -248,18 +256,16 @@
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="Background" Value="#E3F2FD" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                <Setter Property="Padding" Value="8" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
 
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                    <Setter Property="Background" Value="#ECEFF1"/>
-                                    <Setter Property="Foreground" Value="#37474F"/>
-                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                    <Setter Property="Height" Value="40"/>
-                                    <Setter Property="Padding" Value="8,0"/>
-                                </Style>
-
-                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Center"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -334,7 +340,7 @@
                          Width="130"/>
                             
                             <!-- Cột chứa các nút thao tác -->
-                            <DataGridTemplateColumn Width="Auto">
+                            <DataGridTemplateColumn Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal" >

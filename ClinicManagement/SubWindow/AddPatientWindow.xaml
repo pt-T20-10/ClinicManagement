@@ -56,7 +56,16 @@
                              materialDesign:HintAssist.Hint="Họ và tên *"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
-
+                    <!-- Insurance Number -->
+                    <TextBox Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
+             materialDesign:HintAssist.Hint="Số BHYT*"
+             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+             Margin="0,0,0,16"/>
+                    <!-- Phone -->
+                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+            materialDesign:HintAssist.Hint="Số điện thoại *"
+            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+            Margin="0,0,0,16"/>
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -83,25 +92,11 @@
                         </GroupBox>
                     </Grid>
 
-                    <!-- Phone -->
-                    <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                             materialDesign:HintAssist.Hint="Số điện thoại *"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
-
-        
                     <!-- Address -->
                     <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
                              materialDesign:HintAssist.Hint="Địa chỉ"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,0,0,16"/>
-
-                    <!-- Insurance Number -->
-                    <TextBox Text="{Binding InsuranceNumber, UpdateSourceTrigger=PropertyChanged}"
-                             materialDesign:HintAssist.Hint="Số BHYT"
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Margin="0,0,0,16"/>
-
                     <!-- Patient Type -->
                     <ComboBox ItemsSource="{Binding PatientTypeList}"
                               SelectedItem="{Binding SelectedPatientType, Mode=TwoWay}"

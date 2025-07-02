@@ -94,17 +94,17 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Patient search textbox -->
-                                    <TextBox 
-                                    Grid.Column="0"
-                                    x:Name="PatientSearchBox"
-                                    Text="{Binding PatientSearch, UpdateSourceTrigger=PropertyChanged}"
-                                    Padding="4,3"
-                                    Height="26"
-                                    FontSize="11"
-                                    materialDesign:HintAssist.Hint="Tìm theo mã bảo hiểm, họ tên..."
-                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                        <TextBox 
+                                            Grid.Column="0"
+                                            x:Name="PatientSearchBox"
+                                            Text="{Binding PatientSearch, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                            Padding="4,3"
+                                            Height="26"
+                                            FontSize="11"
+                                            materialDesign:HintAssist.Hint="Tìm theo mã bảo hiểm, họ tên..."
+                                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
-                                    <!-- Patient search button -->
+                                        <!-- Patient search button -->
                                     <Button
                                         Grid.Column="1"
                                         Command="{Binding FindPatientCommand}"
@@ -117,25 +117,22 @@
                                     </Button>
                                 </Grid>
                             </StackPanel>
+                                <!-- Phone -->
+                                <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,4,36,0">
+                                    <TextBlock 
+                                      Text="SĐT" 
+                                      FontWeight="Medium" 
+                                      FontSize="11"
+                                      Margin="0,0,0,2"/>
+                                    <TextBox
+                                        Text="{Binding PatientPhone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                        Padding="4,3"
+                                        Height="26"
+                                        FontSize="11"
+                                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                                </StackPanel>
 
-
-                            <!-- Column 2: Doctor -->
-                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,8,8,0">
-                                <TextBlock 
-                                    Text="Bác sĩ *" 
-                                    FontWeight="Medium" 
-                                    FontSize="11"
-                                    Margin="0,0,0,2"/>
-                                <ComboBox 
-                                ItemsSource="{Binding DoctorList}"
-                                DisplayMemberPath="FullName"
-                                SelectedItem="{Binding SelectedDoctor}"
-                                Padding="4,3"
-                                Height="26"
-                                FontSize="11"
-                               
-                                Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
-                            </StackPanel>
+                       
 
                             <!-- Column 3: Date and Time -->
                             <Grid Grid.Column="2" Grid.Row="0" Margin="0,8,8,0">
@@ -152,7 +149,7 @@
                                         FontSize="11"
                                         Margin="0,0,0,2"/>
                                     <DatePicker 
-                                        SelectedDate="{Binding AppointmentDate}"
+                                        SelectedDate="{Binding AppointmentDate, ValidatesOnDataErrors=True}"
                                         Padding="4,2"
                                         Height="26"
                                         FontSize="11"
@@ -310,23 +307,24 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- Phone -->
-                                    <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                        <TextBlock 
-                                            Text="SĐT" 
-                                            FontWeight="Medium" 
-                                            FontSize="11"
-                                            Margin="0,0,0,2"/>
-                                        <TextBox
-                                            Text="{Binding PatientPhone, UpdateSourceTrigger=PropertyChanged}"
-                                            Padding="4,3"
-                                            Height="26"
-                                            FontSize="11"
-                                          
-                                            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                                    </StackPanel>
+                                        <!-- Column 2: Doctor -->
+                                        <StackPanel Grid.Column="0" Margin="0 0 4 0" >
+                                            <TextBlock 
+                                              Text="Bác sĩ *" 
+                                              FontWeight="Medium" 
+                                              FontSize="11"
+                                              Margin="0,0,0,2"/>
+                                            <ComboBox 
+                                              ItemsSource="{Binding DoctorList}"
+                                              DisplayMemberPath="FullName"
+                                              SelectedItem="{Binding SelectedDoctor, ValidatesOnDataErrors=True}"
+                                              Padding="4,3"
+                                              Height="26"    
+                                              FontSize="11"
+                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                                        </StackPanel>
 
-                                    <!-- Type -->
+                                        <!-- Type -->
                                     <StackPanel Grid.Column="1" Margin="4,0,0,0">
                                         <TextBlock 
                                             Text="Phân loại" 
@@ -345,7 +343,9 @@
                                     </StackPanel>
                                 </Grid>
 
-                            </Grid>
+                                   
+
+                                </Grid>
                             <!-- Note - Compact -->
                             <StackPanel Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Margin="0,0,0,6">
                                 <TextBlock 
