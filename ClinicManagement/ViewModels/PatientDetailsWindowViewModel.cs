@@ -33,6 +33,50 @@ namespace ClinicManagement.ViewModels
         #region Properties
         private Window _window;
 
+        // Loading indicator property
+        private bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+                UpdatePermissions(); // Update UI permissions when account changes
+            }
+        }
+        private bool _canEditPatient = false;
+        public bool CanEditPatient
+        {
+            get => _canEditPatient;
+            set
+            {
+                _canEditPatient = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _canDeletePatient = false;
+        public bool CanDeletePatient
+        {
+            get => _canDeletePatient;
+            set
+            {
+                _canDeletePatient = value;
+                OnPropertyChanged();
+            }
+        }
         private Patient _patient;
         public Patient Patient
         {
@@ -379,12 +423,17 @@ namespace ClinicManagement.ViewModels
         public ICommand CancelAppointmentCommand { get; set; }
         public ICommand LoadedWindowCommand { get; set; }
         #endregion
-
         public PatientDetailsWindowViewModel()
         {
             InitializeCommands();
-         
             InitializeGenderOptions();
+
+            // Get current account from MainViewModel
+            var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+            if (mainVM != null)
+            {
+                CurrentAccount = mainVM.CurrentAccount;
+            }
         }
 
         private void InitializeGenderOptions()
@@ -400,15 +449,16 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
 
+
             UpdatePatientCommand = new RelayCommand<object>(
                 (p) => UpdatePatient(),
-                (p) => CanUpdatePatient()
+                (p) => CanEditPatient && CanUpdatePatient()
             );
 
             DeletePatientCommand = new RelayCommand<object>(
-                (p) => DeletePatient(),
-                (p) => CanDeletePatient()
-            );
+               (p) => DeletePatient(),
+               (p) => CanDeletePatient && CanDeletePatientData()
+           );
 
             FilterRecordsCommand = new RelayCommand<object>(
                 (p) => FilterMedicalRecords(),
@@ -691,24 +741,10 @@ namespace ClinicManagement.ViewModels
     };
         }
 
-        // Loading indicator property
-        private bool _isLoading;
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set
-            {
-                _isLoading = value;
-                OnPropertyChanged();
-            }
-        }
 
-        private bool CanUpdatePatient()
-        {
-            return Patient != null && !string.IsNullOrWhiteSpace(Patient.FullName);
-        }
 
-        private bool CanDeletePatient()
+       
+        private bool CanDeletePatientt()
         {
             if (Patient == null)
                 return false;
@@ -1052,15 +1088,6 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                // Only allow editing appointments that are not "Đã khám" (completed)
-                if (appointment.Status == "Đã khám")
-                {
-                    MessageBoxService.ShowWarning(
-                        "Không thể chỉnh sửa lịch hẹn đã khám.",
-                        "Thông báo");
-                    return;
-                }
-
                 // Create appointment details view model with the selected appointment
                 var appointmentDetailsViewModel = new AppointmentDetailsViewModel(appointment);
 
@@ -1128,6 +1155,49 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private void UpdatePermissions()
+        {
+            // Default to no permissions
+            CanEditPatient = false;
+            CanDeletePatient = false;
+
+            // Check if the current account exists
+            if (CurrentAccount == null)
+                return;
+
+            // Check role-based permissions
+            string role = CurrentAccount.Role?.Trim() ?? string.Empty;
+
+            // Admin and Manager have full permissions
+            if (role.Equals(UserRoles.Admin, StringComparison.OrdinalIgnoreCase) ||
+                role.Equals(UserRoles.Manager, StringComparison.OrdinalIgnoreCase))
+            {
+                CanEditPatient = true;
+                CanDeletePatient = true;
+            }
+
+            // Force command CanExecute to be reevaluated
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private bool CanUpdatePatient()
+        {
+            return Patient != null && !string.IsNullOrWhiteSpace(Patient.FullName);
+        }
+
+        private bool CanDeletePatientData()
+        {
+            if (Patient == null)
+                return false;
+
+            // Check if patient has any active appointments
+            bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
+                .Any(a => a.PatientId == Patient.PatientId &&
+                      (a.Status == "Đang chờ" || a.Status == "Đã khám" || a.Status == "Đã hủy") &&
+                      a.IsDeleted != true);
+
+            return !hasActiveAppointments;
+        }
 
     }
    

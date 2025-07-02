@@ -87,7 +87,7 @@
                         <TextBox Grid.Row="0" Grid.Column="1"
                              Width="220"
                              materialDesign:HintAssist.Hint="Nhập tên bệnh nhân"
-                             Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged}"   
+                             Text="{Binding PatienName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"   
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,8,16,8"
                              HorizontalAlignment="Left"/>
@@ -100,7 +100,7 @@
                         <TextBox Grid.Row="0" Grid.Column="3"
                              Width="220"
                              materialDesign:HintAssist.Hint="Nhập số điện thoại"
-                             Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
+                             Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"  
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,8,0,8"
                              HorizontalAlignment="Left"/>
@@ -112,7 +112,7 @@
                         <TextBox Grid.Row="1" Grid.Column="1"
                              Width="220"
                              materialDesign:HintAssist.Hint="Nhập mã BHYT"
-                             Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged}"  
+                             Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"  
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Margin="0,8,16,8"
                              HorizontalAlignment="Left"/>
@@ -293,15 +293,15 @@
                               VerticalAlignment="Center" 
                               Margin="0,0,8,0"/>
                                 <ComboBox Grid.Column="3"
-                             Width="170" 
-                               Height="50"
-                                Padding="5"
-                                          
-                             ItemsSource="{Binding DoctorList}" 
-                             DisplayMemberPath="FullName" 
-                             SelectedItem="{Binding SelectedDoctor}" 
-                             Style="{StaticResource MaterialDesignOutlinedComboBox}" 
-                             HorizontalAlignment="Left"/>
+                                          Width="170" 
+                                          Height="50"
+                                          Padding="5"
+                                          ItemsSource="{Binding DoctorList}" 
+                                          DisplayMemberPath="FullName" 
+                                          SelectedItem="{Binding SelectedDoctor}"
+                                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                          HorizontalAlignment="Left"
+                                          IsEnabled="{Binding IsDoctorSelectionEnabled}"/>
                             </Grid>
                         </Grid>
                     </materialDesign:Card>
@@ -352,7 +352,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Pulse}" 
+                     Text="{Binding Pulse, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Foreground="Black"                         
                      Margin="0,5" 
@@ -378,7 +378,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Respiration}" 
+                     Text="{Binding Respiration, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Padding="0"
@@ -404,7 +404,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Temperature}" 
+                     Text="{Binding Temperature, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Padding="0"
@@ -429,7 +429,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Weight}" 
+                     Text="{Binding Weight,ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
@@ -458,7 +458,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding SystolicPressure}" 
+                     Text="{Binding SystolicPressure, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
@@ -471,7 +471,7 @@
                        FontWeight="Bold"
                        FontSize="16"/>
                                 <TextBox Grid.Column="2" 
-                     Text="{Binding DiastolicPressure}" 
+                     Text="{Binding DiastolicPressure, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="8,5,0,5" 
                      Height="35"

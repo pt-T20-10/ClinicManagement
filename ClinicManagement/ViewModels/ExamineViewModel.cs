@@ -35,31 +35,62 @@ namespace ClinicManagement.ViewModels
             get => _patienName;
             set
             {
-                _patienName = value;
-                OnPropertyChanged();
-                SearchPatient();
+                if (_patienName != value)
+                {
+                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_patienName))
+                        _touchedFields.Add(nameof(PatienName));
+                    else
+                        _touchedFields.Remove(nameof(PatienName));
+
+                    _patienName = value;
+                    OnPropertyChanged();
+                    SearchPatient();
+                }
             }
         }
-  
+
         private string _phone;
         public string Phone
         {
             get => _phone;
             set
             {
-                _phone = value;
-                OnPropertyChanged();
-                SearchPatient();
+                if (_phone != value)
+                {
+                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_phone))
+                        _touchedFields.Add(nameof(Phone));
+                    else
+                        _touchedFields.Remove(nameof(Phone));
+
+                    _phone = value;
+                    OnPropertyChanged();
+                    SearchPatient();
+                }
             }
         }
+
         private string _insuranceCode;
         public string InsuranceCode
         {
             get => _insuranceCode;
             set
             {
-                _insuranceCode = value;
-                OnPropertyChanged();
+                if (_insuranceCode != value)
+                {
+                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_insuranceCode))
+                        _touchedFields.Add(nameof(InsuranceCode));
+                    else
+                        _touchedFields.Remove(nameof(InsuranceCode));
+
+                    _insuranceCode = value;
+                    OnPropertyChanged();
+
+                    // Optional: auto search if you want to enable search by insurance code
+                    if (!string.IsNullOrWhiteSpace(value) && value.Length >= 10)
+                    {
+                        SearchPatient();
+                    }
+                }
             }
         }
 
@@ -82,6 +113,39 @@ namespace ClinicManagement.ViewModels
             {
                 _selectedDoctor = value;
                 OnPropertyChanged();
+            }
+        }
+        private bool _isDoctorSelectionEnabled = true;
+        public bool IsDoctorSelectionEnabled
+        {
+            get => _isDoctorSelectionEnabled;
+            set
+            {
+                _isDoctorSelectionEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Staff _currentStaff;
+        public Staff CurrentStaff
+        {
+            get => _currentStaff;
+            set
+            {
+                _currentStaff = value;
+                OnPropertyChanged();
+
+                // When current staff changes, update selected doctor if applicable
+                if (_currentStaff != null && _currentStaff.Role?.RoleName?.Contains("Bác sĩ") == true)
+                {
+                    SelectedDoctor = _currentStaff;
+                    IsDoctorSelectionEnabled = false; // Disable selection if this is a doctor
+                }
+                else
+                {
+                    // For admin users, keep the selection enabled
+                    IsDoctorSelectionEnabled = true;
+                }
             }
         }
 
@@ -281,6 +345,20 @@ namespace ClinicManagement.ViewModels
         public ExamineViewModel()
         {
             InitializeCommands();
+
+            // Get the current logged-in account
+            var mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
+            if (mainViewModel?.CurrentAccount != null)
+            {
+                // Load the staff information for the current account
+                using (var context = new ClinicDbContext())
+                {
+                    CurrentStaff = context.Staffs
+                        .Include(s => s.Role)
+                        .FirstOrDefault(s => s.StaffId == mainViewModel.CurrentAccount.StaffId && s.IsDeleted != true);
+                }
+            }
+
             LoadStaffs();
             LoadAppointmentTypes();
         }
@@ -289,6 +367,20 @@ namespace ClinicManagement.ViewModels
         public ExamineViewModel(Patient patient, Appointment appointment = null)
         {
             InitializeCommands();
+
+            // Get the current logged-in account
+            var mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
+            if (mainViewModel?.CurrentAccount != null)
+            {
+                // Load the staff information for the current account
+                using (var context = new ClinicDbContext())
+                {
+                    CurrentStaff = context.Staffs
+                        .Include(s => s.Role)
+                        .FirstOrDefault(s => s.StaffId == mainViewModel.CurrentAccount.StaffId && s.IsDeleted != true);
+                }
+            }
+
             LoadStaffs();
             LoadAppointmentTypes();
             SelectedPatient = patient;
@@ -299,12 +391,15 @@ namespace ClinicManagement.ViewModels
             if (appointment != null)
             {
                 RelatedAppointment = appointment;
+
+                // For appointments, prioritize the appointment's doctor over current user
                 SelectedDoctor = appointment.Staff;
 
                 // Update appointment status to "Đang khám"
                 UpdateAppointmentStatus(appointment, "Đang khám");
             }
         }
+
         #endregion
 
         #region Methods
@@ -361,44 +456,55 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for search fields
+                _isValidating = true;
+                _touchedFields.Add(nameof(PatienName));
+                _touchedFields.Add(nameof(Phone));
+                _touchedFields.Add(nameof(InsuranceCode));
+
+                // Trigger validation
+                OnPropertyChanged(nameof(PatienName));
+                OnPropertyChanged(nameof(Phone));
+                OnPropertyChanged(nameof(InsuranceCode));
+
+                // Check for validation errors in search fields
+                if (!string.IsNullOrEmpty(this[nameof(PatienName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(Phone)]) ||
+                    !string.IsNullOrEmpty(this[nameof(InsuranceCode)]))
+                {
+                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi tìm kiếm.", "Lỗi dữ liệu");
+                    return;
+                }
+
                 // Validate search criteria
                 if (string.IsNullOrWhiteSpace(InsuranceCode) &&
-                   (string.IsNullOrWhiteSpace(PatienName) || string.IsNullOrWhiteSpace(Phone)))
+                   string.IsNullOrWhiteSpace(Phone) &&
+                   string.IsNullOrWhiteSpace(PatienName))
                 {
-                    MessageBoxService.ShowWarning("Vui lòng nhập mã BHYT hoặc cả tên và số điện thoại để tìm kiếm.", "Thiếu thông tin");
+                    MessageBoxService.ShowWarning("Vui lòng nhập số điện thoại, mã BHYT, hoặc tên bệnh nhân để tìm kiếm.",
+                        "Thiếu thông tin");
                     return;
                 }
 
-                // Check minimum length for search fields
-                if (!string.IsNullOrWhiteSpace(PatienName) && PatienName.Length < 2)
-                {
-                    MessageBoxService.ShowWarning("Tên bệnh nhân cần có ít nhất 2 ký tự.", "Thiếu thông tin");
-                    return;
-                }
-
-                if (!string.IsNullOrWhiteSpace(Phone) && Phone.Length < 5)
-                {
-                    MessageBoxService.ShowWarning("Số điện thoại cần có ít nhất 5 ký tự.", "Thiếu thông tin");
-                    return;
-                }
-
-                if (!string.IsNullOrWhiteSpace(InsuranceCode) && InsuranceCode.Length < 5)
-                {
-                    MessageBoxService.ShowWarning("Mã BHYT cần có ít nhất 5 ký tự.", "Thiếu thông tin");
-                    return;
-                }
-
-                var query = DataProvider.Instance.Context.Patients.Where(p => p.IsDeleted != true);
+                var query = DataProvider.Instance.Context.Patients
+                    .Include(p => p.PatientType)
+                    .Where(p => p.IsDeleted != true);
 
                 // Apply search filters
-                if (!string.IsNullOrWhiteSpace(InsuranceCode))
+                if (!string.IsNullOrWhiteSpace(Phone))
                 {
-                    query = query.Where(p => p.InsuranceCode.Contains(InsuranceCode));
+                    // Search by phone if provided
+                    query = query.Where(p => p.Phone.Contains(Phone.Trim()));
                 }
-                else
+                else if (!string.IsNullOrWhiteSpace(InsuranceCode))
                 {
-                    // If not searching by insurance, then require both name and phone
-                    query = query.Where(p => p.FullName.Contains(PatienName) && p.Phone.Contains(Phone));
+                    // If no phone, search by insurance code
+                    query = query.Where(p => p.InsuranceCode.Contains(InsuranceCode.Trim()));
+                }
+                else if (!string.IsNullOrWhiteSpace(PatienName))
+                {
+                    // If no phone or insurance code, search by name
+                    query = query.Where(p => p.FullName.Contains(PatienName.Trim()));
                 }
 
                 var patient = query.FirstOrDefault();
@@ -464,28 +570,39 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                var Staffs = DataProvider.Instance.Context.Staffs
+                var staffs = DataProvider.Instance.Context.Staffs
                     .Where(d => d.IsDeleted != true)
                     .OrderBy(d => d.FullName)
                     .ToList();
 
-                DoctorList = new ObservableCollection<Staff>(Staffs);
+                DoctorList = new ObservableCollection<Staff>(staffs);
 
-                // Select first doctor by default if available
-                if (DoctorList.Count > 0 && SelectedDoctor == null)
+                // If current user is a doctor, select them automatically
+                if (CurrentStaff != null && CurrentStaff.Role?.RoleName?.Contains("Bác sĩ") == true)
                 {
-                    SelectedDoctor = DoctorList.First();
+                    SelectedDoctor = DoctorList.FirstOrDefault(d => d.StaffId == CurrentStaff.StaffId);
+                    IsDoctorSelectionEnabled = false; // Disable the selection
+                }
+                else
+                {
+                    // For admin users, select first doctor by default if available and none is selected
+                    if (DoctorList.Count > 0 && SelectedDoctor == null)
+                    {
+                        SelectedDoctor = DoctorList.First();
+                    }
+
+                    // Admin can select any doctor
+                    IsDoctorSelectionEnabled = true;
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
+
 
         private void SearchPatient()
         {
@@ -711,9 +828,6 @@ namespace ClinicManagement.ViewModels
             return vitalSigns.Count > 0 ? string.Join(", ", vitalSigns) + "." : "";
         }
 
-
-
-
         private void ResetForm()
         {
             // If this is from an appointment, keep the patient and doctor
@@ -899,6 +1013,22 @@ namespace ClinicManagement.ViewModels
                 }
 
                 return error;
+            }
+        }
+        public bool HasErrors
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(this[nameof(PatienName)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Phone)]) ||
+                       !string.IsNullOrEmpty(this[nameof(InsuranceCode)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Pulse)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Respiration)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Temperature)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Weight)]) ||
+                       !string.IsNullOrEmpty(this[nameof(SystolicPressure)]) ||
+                       !string.IsNullOrEmpty(this[nameof(DiastolicPressure)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Diagnosis)]);
             }
         }
         #endregion

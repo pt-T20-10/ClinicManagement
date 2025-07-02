@@ -14,6 +14,7 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         mc:Ignorable="d"
+  
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
         WindowStyle="None"
         xmlns:conver="clr-namespace:ClinicManagement.Converter"
@@ -24,10 +25,12 @@
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         WindowStartupLocation="CenterScreen"
         Width="1500" Height="900">
+    
     <Window.Resources>
         <conver:AppointmentStatusToVisibilityConverter x:Key="AppointmentStatusToCancelVisibilityConverter"/>
         <conver:BooleanToPharmacyConverter x:Key="BooleanToPharmacyConverter"/>
         <conver:StringTrimmingConverter x:Key="StringTrimmingConverter"/>
+        <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -177,18 +180,21 @@
                         </Grid>
 
                         <!-- Action Buttons -->
+                        <!-- Action Buttons -->
                         <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
                             <Button Command="{Binding UpdatePatientCommand}" 
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Width="150" Height="36" Margin="16,0,16,16">
+            Style="{StaticResource MaterialDesignRaisedButton}"
+            Width="150" Height="36" Margin="16,0,16,16"
+            Visibility="{Binding CanEditPatient, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
                                     <TextBlock Text="Lưu thông tin"/>
                                 </StackPanel>
                             </Button>
                             <Button Command="{Binding DeletePatientCommand}" 
-                                    Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-                                    Width="150" Height="36" Margin="16,0,16,16">
+            Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+            Width="150" Height="36" Margin="16,0,16,16"
+            Visibility="{Binding CanDeletePatient, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Delete" Margin="0,0,8,0"/>
                                     <TextBlock Text="Xóa bệnh nhân"/>
@@ -822,10 +828,10 @@
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Command="{Binding DataContext.ViewAppointmentCommand, 
-                                RelativeSource={RelativeSource FindAncestor, 
-                                AncestorType={x:Type DataGrid}}}" 
-                                CommandParameter="{Binding}"
-                                Margin="0,0,8,0" Width="90" Height="32">
+                                                                        RelativeSource={RelativeSource FindAncestor, 
+                                                                        AncestorType={x:Type DataGrid}}}" 
+                                                                        CommandParameter="{Binding}"
+                                                                        Margin="0,0,8,0" Width="90" Height="32">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <materialDesign:PackIcon Kind="CalendarEdit" Margin="0,0,4,0"/>
                                                                 <TextBlock Text="Xem"/>
