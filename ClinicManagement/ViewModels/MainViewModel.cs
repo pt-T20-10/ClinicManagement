@@ -438,11 +438,19 @@ namespace ClinicManagement.ViewModels
             });
 
 
-            //TabSelectionManager.Instance.RegisterTabReloadAction("AppointmentTab", () =>
-            //{
-            //    var appointmentVM = Application.Current.Resources["AppointmentVM"] as AppointmentViewModel;
-            //    appointmentVM?.LoadData();
-            //});
+            TabSelectionManager.Instance.RegisterTabReloadAction("AppointmentTab", () =>
+            {
+                var appointmentVM = Application.Current.Resources["AppointmentVM"] as AppointmentViewModel;
+                if (appointmentVM != null)
+                {
+                    // If CurrentAccount is not set in the ViewModel but is available in MainViewModel
+                    if (appointmentVM.CurrentAccount == null && CurrentAccount != null)
+                    {
+                        appointmentVM.CurrentAccount = CurrentAccount;
+                    }
+                   
+                }
+            });
 
             TabSelectionManager.Instance.RegisterTabReloadAction("StockTab", () =>
             {

@@ -183,18 +183,18 @@
                         <!-- Action Buttons -->
                         <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
                             <Button Command="{Binding UpdatePatientCommand}" 
-            Style="{StaticResource MaterialDesignRaisedButton}"
-            Width="150" Height="36" Margin="16,0,16,16"
-            Visibility="{Binding CanEditPatient, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Width="150" Height="36" Margin="16,0,16,16"
+                                    Visibility="{Binding CanEditPatient, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,8,0"/>
                                     <TextBlock Text="Lưu thông tin"/>
                                 </StackPanel>
                             </Button>
                             <Button Command="{Binding DeletePatientCommand}" 
-            Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
-            Width="150" Height="36" Margin="16,0,16,16"
-            Visibility="{Binding CanDeletePatient, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+                                    Width="150" Height="36" Margin="16,0,16,16"
+                                    Visibility="{Binding CanDeletePatient, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="Delete" Margin="0,0,8,0"/>
                                     <TextBlock Text="Xóa bệnh nhân"/>

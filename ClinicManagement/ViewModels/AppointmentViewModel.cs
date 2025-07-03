@@ -21,7 +21,60 @@ namespace ClinicManagement.ViewModels
     {
         public string? Error => null;
         #region Properties
+        #region Permission Properties
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+                UpdatePermissions(); // Update permissions when account changes
+            }
+        }
 
+        private bool _canManageAppointments;
+        public bool CanManageAppointments
+        {
+            get => _canManageAppointments;
+            set
+            {
+                if (_canManageAppointments != value)
+                {
+                    _canManageAppointments = value;
+                    OnPropertyChanged();
+         
+                }
+            }
+        }
+
+        private bool _canManageAppointmentTypes;
+        public bool CanManageAppointmentTypes
+        {
+            get => _canManageAppointmentTypes;
+            set
+            {
+                if (_canManageAppointmentTypes != value)
+                {
+                    _canManageAppointmentTypes = value;
+                    OnPropertyChanged();
+               
+                }
+            }
+        }
+
+        private bool _canViewAppointmentTypes = true;  // Default everyone can view
+        public bool CanViewAppointmentTypes
+        {
+            get => _canViewAppointmentTypes;
+            set
+            {
+                _canViewAppointmentTypes = value;
+                OnPropertyChanged();
+            }
+        }
+        #endregion
         #region TypeAppointment
         private ObservableCollection<AppointmentType> _ListAppointmentType;
         public ObservableCollection<AppointmentType> ListAppointmentType
@@ -371,15 +424,23 @@ namespace ClinicManagement.ViewModels
 
         #endregion
 
-     
-           public AppointmentViewModel()
+
+        public AppointmentViewModel()
         {
-            LoadData(); 
+            // Get current account from MainViewModel
+            var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+            if (mainVM != null)
+            {
+                CurrentAccount = mainVM.CurrentAccount;
+            }
+
+            LoadData();
         }
+
         public void LoadData()
         {
             _filterDate = DateTime.Today;
-           
+
             _appointmentNote = string.Empty;
             _searchText = string.Empty;
 
@@ -400,7 +461,11 @@ namespace ClinicManagement.ViewModels
 
             // Initialize validation collections
             _touchedFields = new HashSet<string>();
+
+            // Update permissions based on current account
+            UpdatePermissions();
         }
+
 
         private void LoadAppointmentTypeData()
         {
@@ -418,24 +483,23 @@ namespace ClinicManagement.ViewModels
         {
             AddAppointmentTypeCommand = new RelayCommand<object>(
                (p) => AddAppontmentType(),
-               (p) => !string.IsNullOrEmpty(TypeDisplayName)
+               (p) => CanManageAppointmentTypes && !string.IsNullOrEmpty(TypeDisplayName)
             );
 
             EditAppointmentTypeCommand = new RelayCommand<object>(
                 (p) => EditAppontmentType(),
-                (p) => SelectedAppointmentType != null && !string.IsNullOrEmpty(TypeDisplayName)
+                (p) => CanManageAppointmentTypes && SelectedAppointmentType != null && !string.IsNullOrEmpty(TypeDisplayName)
             );
 
             DeleteAppointmentTypeCommand = new RelayCommand<object>(
                 (p) => DeleteAppointmentType(),
-                (p) => SelectedAppointmentType != null
+                (p) => CanManageAppointmentTypes && SelectedAppointmentType != null
             );
+
             RefreshTypeCommand = new RelayCommand<object>
-          ((p) => ExecuteRefreshType(),
-              (p) => true
-          );
-
-
+            ((p) => ExecuteRefreshType(),
+                (p) => true
+            );
 
             // Initialize form commands
             CancelCommand = new RelayCommand<object>(
@@ -445,7 +509,7 @@ namespace ClinicManagement.ViewModels
 
             AddAppointmentCommand = new RelayCommand<object>(
                 (p) => AddNewAppointment(),
-                (p) => CanAddAppointment()
+                (p) => CanManageAppointments && CanAddAppointment()
             );
 
             SelectPatientCommand = new RelayCommand<Patient>(
@@ -463,26 +527,28 @@ namespace ClinicManagement.ViewModels
                 (p) => SearchAppointments(),
                 (p) => true
             );
-            // Initialize time picker commands
-          
+
             FindPatientCommand = new RelayCommand<object>(
               (p) => FindOrCreatePatient(),
-              (p) => !string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone)
-           );
+              (p) => CanManageAppointments && !string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone)
+            );
 
             CancelTimeSelectionCommand = new RelayCommand<object>(
-                (p) => {  },
+                (p) => { },
                 (p) => true
             );
+
             OpenAppointmentDetailsCommand = new RelayCommand<AppointmentDisplayInfo>(
                (p) => OpenAppointmentDetails(p),
-               (p) => p!=null
-               );
+               (p) => p != null
+            );
+
             CancelAppointmentCommand = new RelayCommand<AppointmentDisplayInfo>(
                (p) => CancelAppointmentDirectly(p),
-               (p) => p != null && p.Status != "Đã hủy" && p.Status != "Đã khám" && p.Status != "Đang khám"
-           );
+               (p) => CanManageAppointments && p != null && p.Status != "Đã hủy" && p.Status != "Đã khám" && p.Status != "Đang khám"
+            );
         }
+
         private void CancelAppointmentDirectly(AppointmentDisplayInfo appointmentInfo)
         {
             try
@@ -1074,16 +1140,17 @@ namespace ClinicManagement.ViewModels
                               (usingInsuranceCode && !string.IsNullOrWhiteSpace(PatientSearch)) ||
                               (!string.IsNullOrWhiteSpace(PatientSearch) && !string.IsNullOrWhiteSpace(PatientPhone));
 
-            return SelectedDoctor != null &&
-                   hasPatient &&
+            // Patient is required, doctor is optional
+            return hasPatient &&
                    AppointmentDate.HasValue &&
                    SelectedAppointmentTime.HasValue &&
                    SelectedAppointmentType != null;
         }
 
+
         private bool IsAppointmentTimeValid()
         {
-            if (SelectedDoctor == null || !AppointmentDate.HasValue || !SelectedAppointmentTime.HasValue)
+            if (!AppointmentDate.HasValue || !SelectedAppointmentTime.HasValue)
                 return false;
 
             // Combine date and time
@@ -1124,8 +1191,8 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Parse doctor's schedule to check if the appointment time is within working hours
-            if (!string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
+            // Only check doctor's schedule if a doctor is selected
+            if (SelectedDoctor != null && !string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
             {
                 // Get the day of week for the appointment
                 DayOfWeek dayOfWeek = appointmentDateTime.DayOfWeek;
@@ -1172,6 +1239,7 @@ namespace ClinicManagement.ViewModels
 
             return true;
         }
+
 
         private string ConvertDayOfWeekToVietnameseCode(DayOfWeek dayOfWeek)
         {
@@ -1338,22 +1406,27 @@ namespace ClinicManagement.ViewModels
                 _isValidating = true;
                 _touchedFields.Add(nameof(PatientSearch));
                 _touchedFields.Add(nameof(PatientPhone));
-                _touchedFields.Add(nameof(SelectedDoctor));
                 _touchedFields.Add(nameof(SelectedAppointmentType));
                 _touchedFields.Add(nameof(AppointmentDate));
                 _touchedFields.Add(nameof(SelectedAppointmentTime));
 
-                // Trigger validation check for required fields
+                // Add SelectedDoctor to touched fields only if one is selected
+                if (SelectedDoctor != null)
+                    _touchedFields.Add(nameof(SelectedDoctor));
+
+                // Trigger validation for required fields
                 OnPropertyChanged(nameof(PatientSearch));
                 OnPropertyChanged(nameof(PatientPhone));
-                OnPropertyChanged(nameof(SelectedDoctor));
                 OnPropertyChanged(nameof(SelectedAppointmentType));
                 OnPropertyChanged(nameof(AppointmentDate));
                 OnPropertyChanged(nameof(SelectedAppointmentTime));
+
+                if (SelectedDoctor != null)
+                    OnPropertyChanged(nameof(SelectedDoctor));
+
                 // Check for validation errors on the required fields
                 if (!string.IsNullOrEmpty(this[nameof(PatientSearch)]) ||
                     !string.IsNullOrEmpty(this[nameof(PatientPhone)]) ||
-                    !string.IsNullOrEmpty(this[nameof(SelectedDoctor)]) ||
                     !string.IsNullOrEmpty(this[nameof(SelectedAppointmentType)]) ||
                     !string.IsNullOrEmpty(this[nameof(AppointmentDate)]) ||
                     !string.IsNullOrEmpty(this[nameof(SelectedAppointmentTime)]))
@@ -1362,11 +1435,17 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
+                // If doctor is selected, check doctor-specific validation errors
+                if (SelectedDoctor != null && !string.IsNullOrEmpty(this[nameof(SelectedDoctor)]))
+                {
+                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi thêm lịch hẹn.", "Lỗi thông tin");
+                    return;
+                }
 
                 // Validate patient selection or find/create patient if needed
                 if (SelectedPatient == null &&
-            !string.IsNullOrWhiteSpace(PatientSearch) &&
-            !string.IsNullOrWhiteSpace(PatientPhone))
+                    !string.IsNullOrWhiteSpace(PatientSearch) &&
+                    !string.IsNullOrWhiteSpace(PatientPhone))
                 {
                     // Find patient silently (true for silentMode)
                     FindOrCreatePatient(true);
@@ -1383,8 +1462,8 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Validate doctor selection
-                if (!ValidateStaffselection()) 
+                // Skip doctor validation if no doctor is selected
+                if (SelectedDoctor != null && !ValidateStaffselection())
                     return;
 
                 // Validate appointment type
@@ -1395,9 +1474,14 @@ namespace ClinicManagement.ViewModels
                 if (!ValidateDateTimeSelection())
                     return;
 
+                // Create appointment confirmation message
+                string doctorInfo = SelectedDoctor != null
+                    ? $" với bác sĩ {SelectedDoctor.FullName}"
+                    : " (chưa chọn bác sĩ)";
+
                 // All validations passed, confirm creation
-                 bool  result = MessageBoxService.ShowQuestion(
-                    $"Bạn có muốn tạo lịch hẹn cho bệnh nhân {SelectedPatient.FullName} với bác sĩ {SelectedDoctor.FullName} vào {AppointmentDate?.ToString("dd/MM/yyyy")} lúc {SelectedAppointmentTime?.ToString("HH:mm")} không?",
+                bool result = MessageBoxService.ShowQuestion(
+                    $"Bạn có muốn tạo lịch hẹn cho bệnh nhân {SelectedPatient.FullName}{doctorInfo} vào {AppointmentDate?.ToString("dd/MM/yyyy")} lúc {SelectedAppointmentTime?.ToString("HH:mm")} không?",
                     "Xác nhận");
 
                 if (!result)
@@ -1426,8 +1510,8 @@ namespace ClinicManagement.ViewModels
                 Appointment newAppointment = new Appointment
                 {
                     PatientId = SelectedPatient.PatientId,
-                    StaffId = SelectedDoctor.StaffId,
-                    AppointmentDate = appointmentDateTime,  // Use the properly constructed date/time
+                    StaffId = SelectedDoctor?.StaffId, // This can now be null
+                    AppointmentDate = appointmentDateTime,
                     AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId,
                     Status = "Đang chờ",
                     Notes = AppointmentNote,
@@ -1461,6 +1545,7 @@ namespace ClinicManagement.ViewModels
                    );
             }
         }
+
 
         private bool ValidatePatientSelection()
         {
@@ -1537,11 +1622,9 @@ namespace ClinicManagement.ViewModels
             // Check if time is selected
             if (!SelectedAppointmentTime.HasValue)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     "Vui lòng chọn giờ hẹn.",
-                    "Lỗi - Giờ hẹn"
-                    
-                    );
+                    "Lỗi - Giờ hẹn");
 
                 return false;
             }
@@ -1553,11 +1636,9 @@ namespace ClinicManagement.ViewModels
             // Check if appointment time is in the past
             if (appointmentDateTime < DateTime.Now)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     "Thời gian hẹn đã qua. Vui lòng chọn thời gian trong tương lai.",
-                    "Lỗi - Thời gian hẹn"
-                    
-                    );
+                    "Lỗi - Thời gian hẹn");
 
                 return false;
             }
@@ -1580,13 +1661,11 @@ namespace ClinicManagement.ViewModels
 
                 if (hasExactSameTime)
                 {
-                     MessageBoxService.ShowError(
+                    MessageBoxService.ShowError(
                         $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn vào lúc " +
                         $"{appointmentDateTime.ToString("HH:mm")}.\n" +
                         $"Vui lòng chọn thời gian khác.",
-                        "Lỗi - Trùng lịch"
-                        
-                        );
+                        "Lỗi - Trùng lịch");
 
                     return false;
                 }
@@ -1601,22 +1680,19 @@ namespace ClinicManagement.ViewModels
 
                     if (timeDifference < 30 && timeDifference > 0)
                     {
-                         MessageBoxService.ShowError(
+                        MessageBoxService.ShowError(
                             $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn khác vào lúc " +
                             $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
                             $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
-                            "Lỗi - Trùng lịch"
-                            
-                            );
+                            "Lỗi - Trùng lịch");
 
                         return false;
                     }
                 }
             }
 
-
-            // Check doctor's schedule
-            if (!string.IsNullOrWhiteSpace(SelectedDoctor?.Schedule))
+            // Only check doctor's schedule if a doctor is selected
+            if (SelectedDoctor != null && !string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
             {
                 // Get the day of week for the appointment
                 DayOfWeek dayOfWeek = appointmentDateTime.DayOfWeek;
@@ -1628,11 +1704,9 @@ namespace ClinicManagement.ViewModels
                 // Check if doctor works on this day
                 if (!workingDays.Contains(dayCode))
                 {
-                     MessageBoxService.ShowError(
+                    MessageBoxService.ShowError(
                         $"Bác sĩ {SelectedDoctor.FullName} không làm việc vào ngày {AppointmentDate.Value:dd/MM/yyyy} ({GetVietnameseDayName(dayOfWeek)}).",
-                        "Lỗi - Lịch làm việc"
-                        
-                        );
+                        "Lỗi - Lịch làm việc");
 
                     return false;
                 }
@@ -1641,12 +1715,10 @@ namespace ClinicManagement.ViewModels
                 TimeSpan appointmentTime = new TimeSpan(appointmentDateTime.Hour, appointmentDateTime.Minute, 0);
                 if (appointmentTime < startTime || appointmentTime > endTime)
                 {
-                     MessageBoxService.ShowError(
+                    MessageBoxService.ShowError(
                         $"Giờ hẹn không nằm trong thời gian làm việc của bác sĩ {SelectedDoctor.FullName}.\n" +
                         $"Thời gian làm việc: {startTime.ToString("hh\\:mm")} - {endTime.ToString("hh\\:mm")}.",
-                        "Lỗi - Giờ làm việc"
-                        
-                        );
+                        "Lỗi - Giờ làm việc");
 
                     return false;
                 }
@@ -1667,13 +1739,11 @@ namespace ClinicManagement.ViewModels
 
                 if (hasExactSameTime)
                 {
-                     MessageBoxService.ShowError(
+                    MessageBoxService.ShowError(
                         $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
                         $"{appointmentDateTime.ToString("HH:mm")}.\n" +
                         $"Vui lòng chọn thời gian khác.",
-                        "Lỗi - Trùng lịch"
-                        
-                        );
+                        "Lỗi - Trùng lịch");
 
                     return false;
                 }
@@ -1688,13 +1758,11 @@ namespace ClinicManagement.ViewModels
 
                     if (timeDifference < 30 && timeDifference > 0 && timeDifference % 30 != 0)
                     {
-                         MessageBoxService.ShowError(
+                        MessageBoxService.ShowError(
                             $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
                             $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
                             $"Vui lòng chọn thời gian cách ít nhất 30 phút hoặc đúng khung giờ 30 phút.",
-                            "Lỗi - Trùng lịch"
-                            
-                            );
+                            "Lỗi - Trùng lịch");
 
                         return false;
                     }
@@ -1703,6 +1771,7 @@ namespace ClinicManagement.ViewModels
 
             return true;
         }
+
 
         private string GetVietnameseDayName(DayOfWeek dayOfWeek)
         {
@@ -1771,10 +1840,8 @@ namespace ClinicManagement.ViewModels
                         break;
 
                     case nameof(SelectedDoctor):
-                        if (_touchedFields.Contains(columnName) && SelectedDoctor == null)
-                        {
-                            error = "Vui lòng chọn bác sĩ";
-                        }
+                        // Only validate doctor if it's in the touched fields
+                        // Skip validation if it's not required (i.e., we're allowing null)
                         break;
 
                     case nameof(SelectedAppointmentType):
@@ -1800,10 +1867,16 @@ namespace ClinicManagement.ViewModels
                         {
                             error = "Vui lòng chọn giờ hẹn";
                         }
-                        else if (_isStaffselected && _isPatientInfoValid &&
-                                AppointmentDate.HasValue && SelectedAppointmentTime.HasValue && !IsAppointmentTimeValid())
+                        else if (_touchedFields.Contains(columnName) && AppointmentDate.HasValue && SelectedAppointmentTime.HasValue)
                         {
-                            error = "Giờ hẹn không phù hợp với lịch làm việc";
+                            // Only validate time slot if all necessary components are present
+                            DateTime appointmentDateTime = AppointmentDate.Value.Date
+                                .Add(new TimeSpan(SelectedAppointmentTime.Value.Hour, SelectedAppointmentTime.Value.Minute, 0));
+
+                            if (appointmentDateTime < DateTime.Now)
+                            {
+                                error = "Thời gian hẹn đã qua";
+                            }
                         }
                         break;
                 }
@@ -1811,6 +1884,7 @@ namespace ClinicManagement.ViewModels
                 return error;
             }
         }
+
         #endregion
 
         #region AppoinmentType Methods
@@ -1819,72 +1893,85 @@ namespace ClinicManagement.ViewModels
             try
             {
                 // Confirm dialog
-                 bool  result =  MessageBoxService.ShowQuestion(
-                    $"Bạn có chắc muốn thêm loaị lịch hẹn '{TypeDisplayName}' không?",
+                bool result = MessageBoxService.ShowQuestion(
+                    $"Bạn có chắc muốn thêm loại lịch hẹn '{TypeDisplayName}' không?",
                     "Xác Nhận Thêm"
-                     
-                  );
+                );
 
                 if (!result)
                     return;
 
-                // Check if specialty already exists
+                // Check if appointment type already exists
                 bool isExist = DataProvider.Instance.Context.AppointmentTypes
                     .Any(s => s.TypeName.Trim().ToLower() == TypeDisplayName.Trim().ToLower() && (bool)!s.IsDeleted);
 
                 if (isExist)
                 {
-                     MessageBoxService.ShowWarning("Loại lịch hẹn này đã tồn tại.");
+                    MessageBoxService.ShowWarning("Loại lịch hẹn này đã tồn tại.");
                     return;
                 }
 
-                // Add new specialty
-                var newAppointmentType = new AppointmentType
+                // Begin a transaction
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    TypeName = TypeDisplayName,
-                    Description = TypeDescription ?? "",
-                    Price = TypePrice ?? 0,
-                    IsDeleted = false
-                };
+                    try
+                    {
+                        // Add new appointment type
+                        var newAppointmentType = new AppointmentType
+                        {
+                            TypeName = TypeDisplayName,
+                            Description = TypeDescription ?? "",
+                            Price = TypePrice ?? 0,
+                            IsDeleted = false
+                        };
 
-                DataProvider.Instance.Context.AppointmentTypes.Add(newAppointmentType);
-                DataProvider.Instance.Context.SaveChanges();
+                        DataProvider.Instance.Context.AppointmentTypes.Add(newAppointmentType);
+                        DataProvider.Instance.Context.SaveChanges();
 
-                // Refresh data
-                ListAppointmentType = new ObservableCollection<AppointmentType>(
-                    DataProvider.Instance.Context.AppointmentTypes
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
+                        // Commit the transaction if everything succeeds
+                        transaction.Commit();
 
-                // Also update AppointmentTypes collection
-                AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
+                        // Refresh data
+                        ListAppointmentType = new ObservableCollection<AppointmentType>(
+                            DataProvider.Instance.Context.AppointmentTypes
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
 
-                ExecuteRefreshType();
+                        // Also update AppointmentTypes collection
+                        AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
 
-                 MessageBoxService.ShowSuccess(
-                    "Đã thêm loại lịch hẹn thành công!",
-                    "Thành Công"
-                    
-                     );
+                        ExecuteRefreshType();
+
+                        MessageBoxService.ShowSuccess(
+                            "Đã thêm loại lịch hẹn thành công!",
+                            "Thành Công"
+                        );
+                    }
+                    catch (Exception innerEx)
+                    {
+                        // Rollback the transaction if any error occurs
+                        transaction.Rollback();
+                        throw innerEx; // Re-throw to be caught by the outer catch blocks
+                    }
+                }
             }
             catch (DbUpdateException ex)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     $"Không thể thêm loại lịch hẹn: {ex.InnerException?.Message ?? ex.Message}",
                     "Lỗi Cơ Sở Dữ Liệu"
-                    
-                     );
+                );
             }
             catch (Exception ex)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
                     "Lỗi"
-                    
-                     );
+                );
             }
         }
+
 
         private void EditAppontmentType()
         {
@@ -2020,6 +2107,45 @@ namespace ClinicManagement.ViewModels
                      );
             }
         }
+        private void UpdatePermissions()
+        {
+            // Default to no permissions
+            CanManageAppointments = false;
+            CanManageAppointmentTypes = false;
+
+            // Check if the current account exists
+            if (CurrentAccount == null)
+                return;
+
+            // Get current user role
+            string role = CurrentAccount.Role?.Trim() ?? string.Empty;
+
+            // Admin and Manager have full permissions
+            if (role.Equals(UserRoles.Admin, StringComparison.OrdinalIgnoreCase) ||
+                role.Equals(UserRoles.Manager, StringComparison.OrdinalIgnoreCase))
+            {
+                CanManageAppointments = true;
+                CanManageAppointmentTypes = true;
+            }
+            // Other roles can only manage appointments, not appointment types
+            else if (role.Equals(UserRoles.Doctor, StringComparison.OrdinalIgnoreCase) ||
+                    role.Equals(UserRoles.Cashier, StringComparison.OrdinalIgnoreCase) ||
+                    role.Equals(UserRoles.Pharmacist, StringComparison.OrdinalIgnoreCase))
+            {
+                CanManageAppointments = true;
+                CanManageAppointmentTypes = false;
+            }
+            else
+            {
+                CanManageAppointments = false;
+                CanManageAppointmentTypes = false;
+            }
+
+            // Force command CanExecute to be reevaluated
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+
         private void ExecuteRefreshType()
         {
             SelectedAppointmentType = null;

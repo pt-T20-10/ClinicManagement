@@ -19,7 +19,8 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("MaBenhNhan");
 
             builder.Property(e => e.StaffId)
-                .HasColumnName("MaBacSi");
+                .HasColumnName("MaBacSi")
+                .IsRequired(false);  // Make StaffId nullable
 
             builder.Property(e => e.AppointmentTypeId)
                 .HasColumnName("MaLoaiLichHen")
@@ -55,7 +56,8 @@ namespace ClinicManagement.Configurations
             builder.HasOne(d => d.Staff)
                 .WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.StaffId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.ClientSetNull)  // Keep this as ClientSetNull
+                .IsRequired(false)  // Make the relationship nullable
                 .HasConstraintName("FK_LichHen_BacSi");
 
             builder.HasOne(d => d.AppointmentType)

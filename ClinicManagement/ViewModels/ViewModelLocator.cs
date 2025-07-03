@@ -14,7 +14,7 @@ namespace ClinicManagement.ViewModels
 
         public object GetViewModel(string viewModelName)
         {
-            if (!_isInitialized)
+            if (!_isInitialized && viewModelName != "MainVM" && viewModelName != "LoginVM")
                 return null;
 
             if (_viewModels.TryGetValue(viewModelName, out object vm))
@@ -22,6 +22,7 @@ namespace ClinicManagement.ViewModels
 
             return CreateViewModel(viewModelName);
         }
+
 
         public void Initialize()
         {

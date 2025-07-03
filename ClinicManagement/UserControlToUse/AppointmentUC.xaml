@@ -706,6 +706,7 @@
                      Margin="0,0,0,20">
                                 <Button 
                          Command="{Binding AddAppointmentTypeCommand}" 
+                                    IsEnabled="{Binding CanManageAppointmentTypes}" 
                          Style="{StaticResource MaterialDesignRaisedButton}"
                          materialDesign:ButtonAssist.CornerRadius="5"
                          Margin="5" 
@@ -717,7 +718,8 @@
                                     </StackPanel>
                                 </Button>
                                 <Button 
-                         Command="{Binding EditAppointmentTypeCommand}" 
+                         Command="{Binding EditAppointmentTypeCommand}"
+                                   IsEnabled="{Binding CanManageAppointmentTypes}" 
                          Style="{StaticResource MaterialDesignRaisedButton}"
                          materialDesign:ButtonAssist.CornerRadius="5"
                          Background="#FF3F51B5"
@@ -732,6 +734,7 @@
                                 </Button>
                                 <Button 
                          Command="{Binding DeleteAppointmentTypeCommand}" 
+                                   IsEnabled="{Binding CanManageAppointmentTypes}" 
                          Style="{StaticResource MaterialDesignRaisedButton}"
                          materialDesign:ButtonAssist.CornerRadius="5"
                          Background="#FFE91E63"

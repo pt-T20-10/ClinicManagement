@@ -9,7 +9,7 @@ public partial class Appointment
 
     public int PatientId { get; set; }
 
-    public int StaffId { get; set; }
+    public int? StaffId { get; set; }  // Change to nullable int (int?)
 
     public DateTime AppointmentDate { get; set; }
 
@@ -25,7 +25,7 @@ public partial class Appointment
 
     public virtual AppointmentType AppointmentType { get; set; } = null!;
 
-    public virtual Staff Staff { get; set; } = null!;
+    public virtual Staff? Staff { get; set; } = null!;  // Change to nullable Staff
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
