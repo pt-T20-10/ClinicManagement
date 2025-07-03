@@ -371,37 +371,58 @@
             </Grid>
 
             <!-- Footer Section for Customer Selection -->
+            <!-- Footer Section for Customer Selection -->
             <materialDesign:Card Grid.Row="2" Margin="16,0,16,16" UniformCornerRadius="8">
                 <Grid Margin="16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Bệnh nhân:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBox
-                        Width="220"
-                        materialDesign:HintAssist.Hint="Nhập tên khách hàng"
-                        Text="{Binding PatientName, UpdateSourceTrigger=PropertyChanged}"   
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+            Width="220"
+            materialDesign:HintAssist.Hint="Nhập tên khách hàng"
+            Text="{Binding PatientName, UpdateSourceTrigger=PropertyChanged}"   
+            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="15,0,20,0">
                         <TextBlock Text="Số điện thoại:" VerticalAlignment="Center" Margin="15,0,8,0"/>
                         <TextBox
-                        Width="220"
-                        Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
-                        materialDesign:HintAssist.Hint="Nhập số điện thoại"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+            Width="220"
+            Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"  
+            materialDesign:HintAssist.Hint="Nhập số điện thoại"
+            Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
+                    <!-- Thêm nút tìm kiếm bệnh nhân -->
                     <Button
-                    Grid.Column="2"
-                    Style="{StaticResource MaterialDesignFlatButton}"
-                    Content="+ Thêm khách hàng mới"
-                    Command="{Binding AddNewPatientCommand}"/>
+        Grid.Column="2"
+        Style="{StaticResource MaterialDesignRaisedButton}"
+        Margin="15,0,15,0"
+        Command="{Binding FindPatientCommand}"
+        ToolTip="Tìm kiếm bệnh nhân theo thông tin đã nhập">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AccountSearch" Margin="0,0,8,0"/>
+                            <TextBlock Text="Tìm bệnh nhân"/>
+                        </StackPanel>
+                    </Button>
+                    <!-- Nút thêm bệnh nhân mới -->
+                    <Button
+        Grid.Column="3"
+        Style="{StaticResource MaterialDesignRaisedButton}"
+        Command="{Binding AddNewPatientCommand}"
+        ToolTip="Thêm bệnh nhân mới">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AccountPlus" Margin="0,0,8,0"/>
+                            <TextBlock Text="Thêm bệnh nhân"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
             </materialDesign:Card>
+
         </Grid>
     </materialDesign:Card>
 </UserControl>

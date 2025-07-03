@@ -33,7 +33,7 @@ namespace ClinicManagement.Models
     {Doctor, new List<string>{"PatientTab", "ExamineTab", "AppointmentTab", "SettingsTab"}},
     
     // Dược sĩ có quyền truy cập các tab này
-    {Pharmacist, new List<string>{"StockTab", "MedicineSellTab", "InvoiceTab", "SettingsTab"}},
+    {Pharmacist, new List<string>{"StockTab", "MedicineSellTab", "PatientTab", "InvoiceTab", "SettingsTab"}},
 
             // Cashiers have access to these tabs
     {Cashier, new List<string>{"PatientTab", "AppointmentTab", "InvoiceTab", "DoctorTab", "SettingsTab"} }

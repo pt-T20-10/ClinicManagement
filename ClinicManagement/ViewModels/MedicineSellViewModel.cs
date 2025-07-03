@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -15,7 +16,7 @@ using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
-    public class MedicineSellViewModel : BaseViewModel
+    public class MedicineSellViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
 
@@ -165,6 +166,8 @@ namespace ClinicManagement.ViewModels
             {
                 _patientName = value;
                 OnPropertyChanged();
+                if (_touchedFields.Contains(nameof(PatientName)))
+                    OnPropertyChanged(nameof(Error));
             }
         }
 
@@ -176,6 +179,8 @@ namespace ClinicManagement.ViewModels
             {
                 _phone = value;
                 OnPropertyChanged();
+                if (_touchedFields.Contains(nameof(Phone)))
+                    OnPropertyChanged(nameof(Error));
             }
         }
 
@@ -282,6 +287,63 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Validation properties
+        public string Error => null;
+        private HashSet<string> _touchedFields = new HashSet<string>();
+        private bool _isValidating = false;
+
+        public string this[string columnName]
+        {
+            get
+            {
+                // Don't validate until user has interacted with the field
+                if (!_isValidating && !_touchedFields.Contains(columnName))
+                    return null;
+
+                string error = null;
+
+                switch (columnName)
+                {
+                    case nameof(PatientName):
+                        if (!string.IsNullOrWhiteSpace(PatientName))
+                        {
+                            if (PatientName.Length < 2)
+                            {
+                                error = "Tên bệnh nhân phải có ít nhất 2 ký tự";
+                            }
+                            else if (PatientName.Length > 100)
+                            {
+                                error = "Tên bệnh nhân không được vượt quá 100 ký tự";
+                            }
+                            else if (!Regex.IsMatch(PatientName, @"^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$"))
+                            {
+                                error = "Tên bệnh nhân chỉ được chứa chữ cái và khoảng trắng";
+                            }
+                        }
+                        break;
+
+                    case nameof(Phone):
+                        if (!string.IsNullOrWhiteSpace(Phone) &&
+                            !Regex.IsMatch(Phone, @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                        {
+                            error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
+                        }
+                        break;
+                }
+
+                return error;
+            }
+        }
+
+        public bool HasErrors
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(this[nameof(PatientName)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Phone)]);
+            }
+        }
+
         #endregion
 
         #region Commands
@@ -353,6 +415,16 @@ namespace ClinicManagement.ViewModels
             CheckoutCommand = new RelayCommand<object>(
                 p => Checkout(),
                 p => CartItems != null && CartItems.Count > 0
+            );
+
+            AddNewPatientCommand = new RelayCommand<object>(
+                p => AddNewPatient(),
+                p => true
+            );
+
+            FindPatientCommand = new RelayCommand<object>(
+                p => FindPatient(),
+                p => !string.IsNullOrWhiteSpace(PatientName) || !string.IsNullOrWhiteSpace(Phone)
             );
         }
 
@@ -644,7 +716,7 @@ namespace ClinicManagement.ViewModels
                 // Reset temp quantity for next add
                 medicine.TempQuantity = 1;
 
-             
+
             }
             catch (Exception ex)
             {
@@ -664,6 +736,132 @@ namespace ClinicManagement.ViewModels
             CartItems.Clear();
         }
 
+        private void AddNewPatient()
+        {
+            try
+            {
+                // Mở cửa sổ thêm bệnh nhân mới
+                var addPatientWindow = new AddPatientWindow();
+                var viewModel = new AddPatientViewModel();
+
+                // Nếu đã nhập tên hoặc số điện thoại, truyền vào viewModel
+                if (!string.IsNullOrWhiteSpace(PatientName))
+                    viewModel.FullName = PatientName;
+
+                if (!string.IsNullOrWhiteSpace(Phone))
+                    viewModel.Phone = Phone;
+
+                addPatientWindow.DataContext = viewModel;
+                addPatientWindow.ShowDialog();
+
+                // Sau khi cửa sổ đóng, kiểm tra xem bệnh nhân mới có được tạo không
+                if (viewModel.NewPatient != null)
+                {
+                    // Cập nhật UI với bệnh nhân mới tạo
+                    SelectedPatient = viewModel.NewPatient;
+                    PatientName = viewModel.NewPatient.FullName;
+                    Phone = viewModel.NewPatient.Phone;
+
+                    // Cập nhật giảm giá theo loại bệnh nhân nếu có
+                    if (viewModel.NewPatient.PatientType != null)
+                    {
+                        Discount = viewModel.NewPatient.PatientType.Discount ?? 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi thêm bệnh nhân mới: {ex.Message}", "Lỗi");
+            }
+        }
+
+        private void FindPatient()
+        {
+            try
+            {
+                // Enable validation for patient fields
+                _isValidating = true;
+                _touchedFields.Add(nameof(PatientName));
+                _touchedFields.Add(nameof(Phone));
+
+                // Trigger validation
+                OnPropertyChanged(nameof(PatientName));
+                OnPropertyChanged(nameof(Phone));
+
+                // Check for validation errors
+                if (HasErrors)
+                {
+                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi tìm kiếm bệnh nhân.", "Lỗi dữ liệu");
+                    return;
+                }
+
+                // Kiểm tra có thông tin tìm kiếm không
+                if (string.IsNullOrWhiteSpace(PatientName) && string.IsNullOrWhiteSpace(Phone))
+                {
+                    MessageBoxService.ShowWarning("Vui lòng nhập tên hoặc số điện thoại để tìm kiếm.", "Thiếu thông tin");
+                    return;
+                }
+
+                // Tìm bệnh nhân theo thông tin
+                var query = DataProvider.Instance.Context.Patients
+                    .Include(p => p.PatientType)
+                    .Where(p => p.IsDeleted != true);
+
+                // Tìm theo số điện thoại nếu có
+                if (!string.IsNullOrWhiteSpace(Phone))
+                {
+                    query = query.Where(p => p.Phone == Phone.Trim());
+                }
+                // Nếu không có số điện thoại, tìm theo tên
+                else if (!string.IsNullOrWhiteSpace(PatientName))
+                {
+                    query = query.Where(p => p.FullName.Contains(PatientName.Trim()));
+                }
+
+                var patient = query.FirstOrDefault();
+
+                if (patient != null)
+                {
+                    SelectedPatient = patient;
+                    PatientName = patient.FullName;
+                    Phone = patient.Phone;
+
+                    // Cập nhật giảm giá theo loại bệnh nhân
+                    if (patient.PatientType != null)
+                    {
+                        Discount = patient.PatientType.Discount ?? 0;
+                    }
+
+                    MessageBoxService.ShowSuccess(
+                        $"Đã tìm thấy bệnh nhân {patient.FullName}",
+                        "Tìm kiếm thành công"
+                    );
+                }
+                else
+                {
+                    MessageBoxService.ShowWarning(
+                        "Không tìm thấy bệnh nhân nào phù hợp với thông tin đã nhập.",
+                        "Không tìm thấy"
+                    );
+
+                    // Hỏi người dùng có muốn tạo bệnh nhân mới không
+                    bool wantToCreate = MessageBoxService.ShowQuestion(
+                        "Bạn có muốn thêm mới bệnh nhân này không?",
+                        "Thêm bệnh nhân mới"
+                    );
+
+                    if (wantToCreate)
+                    {
+                        AddNewPatient();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi tìm kiếm bệnh nhân: {ex.Message}", "Lỗi");
+            }
+        }
+
         private void Checkout()
         {
             try
@@ -676,12 +874,72 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // 1. Tìm hoặc tạo bệnh nhân nếu có thông tin
-                Patient patient = null;
-                if (!string.IsNullOrWhiteSpace(PatientName))
+                // Validation cho thông tin bệnh nhân
+                _isValidating = true;
+                _touchedFields.Add(nameof(PatientName));
+                _touchedFields.Add(nameof(Phone));
+
+                OnPropertyChanged(nameof(PatientName));
+                OnPropertyChanged(nameof(Phone));
+
+                if (HasErrors)
                 {
-                    // Tìm bệnh nhân theo tên và số điện thoại
-                    patient = FindOrCreatePatient();
+                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi thanh toán.", "Lỗi dữ liệu");
+                    return;
+                }
+
+                // Kiểm tra đã chọn bệnh nhân chưa
+                if (string.IsNullOrWhiteSpace(PatientName))
+                {
+                    MessageBoxService.ShowWarning("Vui lòng chọn hoặc nhập thông tin bệnh nhân trước khi thanh toán.", "Thiếu thông tin");
+                    return;
+                }
+
+                // 1. Tìm bệnh nhân đã chọn
+                Patient patient = SelectedPatient;
+
+                // Nếu chưa chọn bệnh nhân nhưng đã nhập thông tin, tìm kiếm
+                if (patient == null && !string.IsNullOrWhiteSpace(PatientName))
+                {
+                    var query = DataProvider.Instance.Context.Patients
+                        .Include(p => p.PatientType)
+                        .Where(p => p.IsDeleted != true);
+
+                    if (!string.IsNullOrWhiteSpace(Phone))
+                    {
+                        patient = query.FirstOrDefault(p => p.Phone == Phone.Trim());
+                    }
+
+                    if (patient == null)
+                    {
+                        patient = query.FirstOrDefault(p => p.FullName == PatientName.Trim());
+                    }
+
+                    // Nếu vẫn không tìm thấy, hỏi người dùng có muốn tạo mới không
+                    if (patient == null)
+                    {
+                        bool createNew = MessageBoxService.ShowQuestion(
+                            "Không tìm thấy thông tin bệnh nhân. Bạn có muốn thêm bệnh nhân mới không?",
+                            "Thêm bệnh nhân mới"
+                        );
+
+                        if (createNew)
+                        {
+                            AddNewPatient();
+                            // Sau khi thêm, bệnh nhân mới sẽ được gán vào SelectedPatient
+                            patient = SelectedPatient;
+                        }
+
+                        // Nếu người dùng không muốn tạo mới hoặc việc tạo mới thất bại
+                        if (patient == null)
+                        {
+                            MessageBoxService.ShowWarning(
+                                "Không thể thanh toán khi chưa chọn bệnh nhân.",
+                                "Thiếu thông tin"
+                            );
+                            return;
+                        }
+                    }
                 }
 
                 // 2. Tạo hoặc cập nhật hóa đơn 
@@ -770,7 +1028,6 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-
                 // 4. Lưu thay đổi
                 context.SaveChanges();
 
@@ -792,6 +1049,7 @@ namespace ClinicManagement.ViewModels
                     Phone = null;
                     Discount = 0;
                     CurrentInvoice = null;
+                    SelectedPatient = null;
 
                     // Cập nhật số hóa đơn mới
                     UpdateInvoiceNumber();
@@ -808,6 +1066,7 @@ namespace ClinicManagement.ViewModels
                     Phone = null;
                     Discount = 0;
                     CurrentInvoice = null;
+                    SelectedPatient = null;
 
                     // Cập nhật số hóa đơn mới
                     UpdateInvoiceNumber();
@@ -902,65 +1161,6 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi");
-            }
-        }
-
-        private Patient FindOrCreatePatient()
-        {
-            try
-            {
-                var context = DataProvider.Instance.Context;
-                Patient patient = null;
-
-                // Đã có bệnh nhân được chọn từ trước
-                if (SelectedPatient != null)
-                {
-                    return SelectedPatient;
-                }
-
-                // Tìm theo số điện thoại (nếu có)
-                if (!string.IsNullOrWhiteSpace(Phone))
-                {
-                    patient = context.Patients
-                        .FirstOrDefault(p => p.Phone == Phone && (p.IsDeleted == null || p.IsDeleted == false));
-                }
-
-                // Nếu không tìm thấy theo số điện thoại, tìm theo tên
-                if (patient == null && !string.IsNullOrWhiteSpace(PatientName))
-                {
-                    patient = context.Patients
-                        .FirstOrDefault(p => p.FullName == PatientName && (p.IsDeleted == null || p.IsDeleted == false));
-                }
-
-                // Nếu không tìm thấy bệnh nhân, tạo mới
-                if (patient == null)
-                {
-                    var result = MessageBoxService.ShowQuestion(
-                        $"Không tìm thấy bệnh nhân với thông tin đã nhập. Bạn có muốn tạo bệnh nhân mới?",
-                        "Thông báo");
-
-                    if (result)
-                    {
-                        // Tạo bệnh nhân mới với thông tin cơ bản
-                        patient = new Patient
-                        {
-                            FullName = PatientName,
-                            Phone = Phone,
-                            CreatedAt = DateTime.Now,
-                            IsDeleted = false
-                        };
-
-                        context.Patients.Add(patient);
-                        context.SaveChanges();
-                    }
-                }
-
-                return patient;
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi xử lý thông tin bệnh nhân: {ex.Message}", "Lỗi");
-                return null;
             }
         }
 
