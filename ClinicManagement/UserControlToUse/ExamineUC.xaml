@@ -352,7 +352,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Pulse, ValidatesOnDataErrors=True}" 
+                     Text="{Binding Pulse,  UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Foreground="Black"                         
                      Margin="0,5" 
@@ -378,7 +378,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Respiration, ValidatesOnDataErrors=True}" 
+                     Text="{Binding Respiration,  UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Padding="0"
@@ -404,7 +404,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Temperature, ValidatesOnDataErrors=True}" 
+                     Text="{Binding Temperature,  UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Padding="0"
@@ -429,7 +429,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding Weight,ValidatesOnDataErrors=True}" 
+                     Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
@@ -458,7 +458,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" 
-                     Text="{Binding SystolicPressure, ValidatesOnDataErrors=True}" 
+                     Text="{Binding SystolicPressure,  UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="0,5" 
                      Height="35"
@@ -471,7 +471,7 @@
                        FontWeight="Bold"
                        FontSize="16"/>
                                 <TextBox Grid.Column="2" 
-                     Text="{Binding DiastolicPressure, ValidatesOnDataErrors=True}" 
+                     Text="{Binding DiastolicPressure, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                      Style="{StaticResource MaterialDesignOutlinedTextBox}" 
                      Margin="8,5,0,5" 
                      Height="35"

@@ -11,6 +11,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.IO;
 using System.Windows;
+using System.Text.RegularExpressions;
 
 namespace ClinicManagement.ViewModels
 {
@@ -37,10 +38,8 @@ namespace ClinicManagement.ViewModels
             {
                 if (_patienName != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_patienName))
-                        _touchedFields.Add(nameof(PatienName));
-                    else
-                        _touchedFields.Remove(nameof(PatienName));
+                    // Always mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(PatienName));
 
                     _patienName = value;
                     OnPropertyChanged();
@@ -57,10 +56,8 @@ namespace ClinicManagement.ViewModels
             {
                 if (_phone != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_phone))
-                        _touchedFields.Add(nameof(Phone));
-                    else
-                        _touchedFields.Remove(nameof(Phone));
+                    // Always mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(Phone));
 
                     _phone = value;
                     OnPropertyChanged();
@@ -77,15 +74,13 @@ namespace ClinicManagement.ViewModels
             {
                 if (_insuranceCode != value)
                 {
-                    if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(_insuranceCode))
-                        _touchedFields.Add(nameof(InsuranceCode));
-                    else
-                        _touchedFields.Remove(nameof(InsuranceCode));
+                    // Always mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(InsuranceCode));
 
                     _insuranceCode = value;
                     OnPropertyChanged();
 
-                    // Optional: auto search if you want to enable search by insurance code
+                 
                     if (!string.IsNullOrWhiteSpace(value) && value.Length >= 10)
                     {
                         SearchPatient();
@@ -115,6 +110,7 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
         private bool _isDoctorSelectionEnabled = true;
         public bool IsDoctorSelectionEnabled
         {
@@ -160,15 +156,20 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Medical examination fields
         private string _pulse;
         public string Pulse
         {
             get => _pulse;
             set
             {
-                _pulse = value;
-                OnPropertyChanged();
+                if (_pulse != value)
+                {
+                    // Mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(Pulse));
+
+                    _pulse = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -178,8 +179,14 @@ namespace ClinicManagement.ViewModels
             get => _respiration;
             set
             {
-                _respiration = value;
-                OnPropertyChanged();
+                if (_respiration != value)
+                {
+                    // Mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(Respiration));
+
+                    _respiration = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -189,8 +196,14 @@ namespace ClinicManagement.ViewModels
             get => _temperature;
             set
             {
-                _temperature = value;
-                OnPropertyChanged();
+                if (_temperature != value)
+                {
+                    // Mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(Temperature));
+
+                    _temperature = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -200,8 +213,14 @@ namespace ClinicManagement.ViewModels
             get => _weight;
             set
             {
-                _weight = value;
-                OnPropertyChanged();
+                if (_weight != value)
+                {
+                    // Mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(Weight));
+
+                    _weight = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -211,8 +230,14 @@ namespace ClinicManagement.ViewModels
             get => _systolicPressure;
             set
             {
-                _systolicPressure = value;
-                OnPropertyChanged();
+                if (_systolicPressure != value)
+                {
+                    // Mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(SystolicPressure));
+
+                    _systolicPressure = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -222,8 +247,14 @@ namespace ClinicManagement.ViewModels
             get => _diastolicPressure;
             set
             {
-                _diastolicPressure = value;
-                OnPropertyChanged();
+                if (_diastolicPressure != value)
+                {
+                    // Mark as touched when user modifies the field
+                    _touchedFields.Add(nameof(DiastolicPressure));
+
+                    _diastolicPressure = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -271,7 +302,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Related appointment if examination was started from an appointment
+
         private Appointment _relatedAppointment;
         public Appointment RelatedAppointment
         {
@@ -282,7 +313,7 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-        // For appointment type selection
+
         private ObservableCollection<AppointmentType> _appointmentTypeList;
         public ObservableCollection<AppointmentType> AppointmentTypeList
         {
@@ -311,7 +342,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // For examination fee
+     
         private decimal _examinationFee;
         public decimal ExaminationFee
         {
@@ -322,7 +353,6 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-
 
         // Validation
         public string Error => null;
@@ -955,59 +985,81 @@ namespace ClinicManagement.ViewModels
 
                 switch (columnName)
                 {
-                    case nameof(Diagnosis):
-                        if (string.IsNullOrWhiteSpace(Diagnosis))
+                    case nameof(PatienName):
+                      if (PatienName.Length < 2)
                         {
-                            error = "Chẩn đoán không được để trống";
+                            error = "Tên bệnh nhân phải có ít nhất 2 ký tự";
+                        }
+                        else if (PatienName.Length > 100)
+                        {
+                            error = "Tên bệnh nhân không được vượt quá 100 ký tự";
+                        }
+                        else if (!Regex.IsMatch(PatienName, @"^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$"))
+                        {
+                            error = "Tên bệnh nhân chỉ được chứa chữ cái và khoảng trắng";
+                        }
+                        break;
+                    case nameof(Phone):
+                        if (!string.IsNullOrWhiteSpace(Phone) &&
+                            !Regex.IsMatch(Phone, @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                        {
+                            error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
                         }
                         break;
 
-                    case nameof(SelectedDoctor):
-                        if (SelectedDoctor == null)
+                    case nameof(InsuranceCode):
+                        if (!string.IsNullOrWhiteSpace(InsuranceCode) &&
+                            !Regex.IsMatch(InsuranceCode, @"^\d{10}$"))
                         {
-                            error = "Vui lòng chọn bác sĩ";
+                            error = "Mã BHYT phải có đúng 10 chữ số";
                         }
                         break;
 
                     case nameof(Pulse):
-                        if (!string.IsNullOrWhiteSpace(Pulse) && !int.TryParse(Pulse, out _))
+                        if (!string.IsNullOrWhiteSpace(Pulse) &&
+                            !Regex.IsMatch(Pulse, @"^[1-9]\d{0,3}$"))
                         {
-                            error = "Mạch phải là một số";
+                            error = "Mạch phải là số nguyên dương không quá 4 chữ số";
                         }
                         break;
 
                     case nameof(Respiration):
-                        if (!string.IsNullOrWhiteSpace(Respiration) && !int.TryParse(Respiration, out _))
+                        if (!string.IsNullOrWhiteSpace(Respiration) &&
+                            !Regex.IsMatch(Respiration, @"^[1-9]\d{0,3}$"))
                         {
-                            error = "Nhịp thở phải là một số";
+                            error = "Nhịp thở phải là số nguyên dương không quá 4 chữ số";
                         }
                         break;
 
                     case nameof(Temperature):
-                        if (!string.IsNullOrWhiteSpace(Temperature) && !decimal.TryParse(Temperature, out _))
+                        if (!string.IsNullOrWhiteSpace(Temperature) &&
+                            !Regex.IsMatch(Temperature, @"^[1-9]\d{0,2}([.,]\d{1,2})?$"))
                         {
-                            error = "Nhiệt độ phải là một số";
+                            error = "Nhiệt độ phải là số dương không quá 3 chữ số (ví dụ: 36.5)";
                         }
                         break;
 
                     case nameof(Weight):
-                        if (!string.IsNullOrWhiteSpace(Weight) && !decimal.TryParse(Weight, out _))
+                        if (!string.IsNullOrWhiteSpace(Weight) &&
+                            !Regex.IsMatch(Weight, @"^[1-9]\d{0,2}([.,]\d{1,2})?$"))
                         {
-                            error = "Cân nặng phải là một số";
+                            error = "Cân nặng phải là số dương không quá 3 chữ số (ví dụ: 65.5)";
                         }
                         break;
 
                     case nameof(SystolicPressure):
-                        if (!string.IsNullOrWhiteSpace(SystolicPressure) && !int.TryParse(SystolicPressure, out _))
+                        if (!string.IsNullOrWhiteSpace(SystolicPressure) &&
+                            !Regex.IsMatch(SystolicPressure, @"^[1-9]\d{0,2}$"))
                         {
-                            error = "Huyết áp tâm thu phải là một số";
+                            error = "Huyết áp tâm thu phải là số nguyên dương không quá 3 chữ số";
                         }
                         break;
 
                     case nameof(DiastolicPressure):
-                        if (!string.IsNullOrWhiteSpace(DiastolicPressure) && !int.TryParse(DiastolicPressure, out _))
+                        if (!string.IsNullOrWhiteSpace(DiastolicPressure) &&
+                            !Regex.IsMatch(DiastolicPressure, @"^[1-9]\d{0,2}$"))
                         {
-                            error = "Huyết áp tâm trương phải là một số";
+                            error = "Huyết áp tâm trương phải là số nguyên dương không quá 3 chữ số";
                         }
                         break;
                 }
@@ -1015,6 +1067,7 @@ namespace ClinicManagement.ViewModels
                 return error;
             }
         }
+
         public bool HasErrors
         {
             get
