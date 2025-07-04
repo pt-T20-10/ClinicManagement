@@ -942,140 +942,156 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                // 2. Tạo hoặc cập nhật hóa đơn 
-                Invoice invoice;
-                var context = DataProvider.Instance.Context;
-
-                if (CurrentInvoice != null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Load hóa đơn có sẵn 
-                    invoice = context.Invoices.Find(CurrentInvoice.InvoiceId);
-                    if (invoice == null)
+                    try
                     {
-                        MessageBoxService.ShowError("Không thể tìm thấy hóa đơn để cập nhật.",
-                                        "Lỗi");
-                        return;
-                    }
+                        // 2. Tạo hoặc cập nhật hóa đơn 
+                        Invoice invoice;
+                        var context = DataProvider.Instance.Context;
 
-                    // Lấy chi tiết hóa đơn gốc để xóa sau này
-                    var originalDetails = context.InvoiceDetails
-                        .Where(d => d.InvoiceId == invoice.InvoiceId && d.MedicineId != null)
-                        .ToList();
-
-                    // Update invoice details
-                    invoice.PatientId = patient?.PatientId;
-                    invoice.TotalAmount = TotalAmount - Discount;
-                    invoice.StaffPrescriberId = CurrentAccount.StaffId;
-                    invoice.Discount = Discount;
-                    invoice.Status = "Chưa thanh toán";
-
-                    // Update invoice type if needed
-                    if (invoice.InvoiceType == "Khám bệnh")
-                    {
-                        invoice.InvoiceType = "Khám và bán thuốc";
-                    }
-
-                    // Remove all existing medicine invoice details
-                    foreach (var detail in originalDetails)
-                    {
-                        context.InvoiceDetails.Remove(detail);
-                    }
-
-                    // Save changes to remove old items
-                    context.SaveChanges();
-                }
-                else
-                {
-                    // Tạo hóa đơn mới
-                    invoice = new Invoice
-                    {
-                        PatientId = patient?.PatientId,
-                        TotalAmount = TotalAmount - Discount,
-                        InvoiceDate = DateTime.Now,
-                        StaffPrescriberId = CurrentAccount.StaffId,
-                        Status = "Chưa thanh toán",
-                        InvoiceType = "Bán thuốc",
-                        Discount = Discount,
-                        Tax = 0
-                    };
-
-                    context.Invoices.Add(invoice);
-                    context.SaveChanges(); // Lưu để có InvoiceId
-                }
-
-                // 3. Thêm chi tiết hóa đơn và xác định StockInId từ lô đang bán
-                foreach (var item in CartItems)
-                {
-                    // Load medicine with fresh StockIn data including RemainQuantity
-                    var medicine = context.Medicines
-                        .Include(m => m.StockIns)
-                        .FirstOrDefault(m => m.MedicineId == item.Medicine.MedicineId);
-
-                    if (medicine != null)
-                    {
-                        medicine._availableStockInsCache = null;
-                        var sellingStockIn = medicine.SellingStockIn;
-
-                        var invoiceDetail = item.ToInvoiceDetail(invoice.InvoiceId);
-
-                        // Assign StockInId from the selling stock in
-                        if (sellingStockIn != null)
+                        if (CurrentInvoice != null)
                         {
-                            invoiceDetail.StockInId = sellingStockIn.StockInId;
+                            // Load hóa đơn có sẵn 
+                            invoice = context.Invoices.Find(CurrentInvoice.InvoiceId);
+                            if (invoice == null)
+                            {
+                                MessageBoxService.ShowError("Không thể tìm thấy hóa đơn để cập nhật.",
+                                                "Lỗi");
+                                return;
+                            }
+
+                            // Lấy chi tiết hóa đơn gốc để xóa sau này
+                            var originalDetails = context.InvoiceDetails
+                                .Where(d => d.InvoiceId == invoice.InvoiceId && d.MedicineId != null)
+                                .ToList();
+
+                            // Update invoice details
+                            invoice.PatientId = patient?.PatientId;
+                            invoice.TotalAmount = TotalAmount - Discount;
+                            invoice.StaffPrescriberId = CurrentAccount.StaffId;
+                            invoice.Discount = Discount;
+                            invoice.Status = "Chưa thanh toán";
+
+                            // Update invoice type if needed
+                            if (invoice.InvoiceType == "Khám bệnh")
+                            {
+                                invoice.InvoiceType = "Khám và bán thuốc";
+                            }
+
+                            // Remove all existing medicine invoice details
+                            foreach (var detail in originalDetails)
+                            {
+                                context.InvoiceDetails.Remove(detail);
+                            }
+
+                            // Save changes to remove old items
+                            context.SaveChanges();
+                        }
+                        else
+                        {
+                            // Tạo hóa đơn mới
+                            invoice = new Invoice
+                            {
+                                PatientId = patient?.PatientId,
+                                TotalAmount = TotalAmount - Discount,
+                                InvoiceDate = DateTime.Now,
+                                StaffPrescriberId = CurrentAccount.StaffId,
+                                Status = "Chưa thanh toán",
+                                InvoiceType = "Bán thuốc",
+                                Discount = Discount,
+                                Tax = 0
+                            };
+
+                            context.Invoices.Add(invoice);
+                            context.SaveChanges(); // Lưu để có InvoiceId
                         }
 
-                        context.InvoiceDetails.Add(invoiceDetail);
+                        // 3. Thêm chi tiết hóa đơn và xác định StockInId từ lô đang bán
+                        foreach (var item in CartItems)
+                        {
+                            // Load medicine with fresh StockIn data including RemainQuantity
+                            var medicine = context.Medicines
+                                .Include(m => m.StockIns)
+                                .FirstOrDefault(m => m.MedicineId == item.Medicine.MedicineId);
+
+                            if (medicine != null)
+                            {
+                                medicine._availableStockInsCache = null;
+                                var sellingStockIn = medicine.SellingStockIn;
+
+                                var invoiceDetail = item.ToInvoiceDetail(invoice.InvoiceId);
+
+                                // Assign StockInId from the selling stock in
+                                if (sellingStockIn != null)
+                                {
+                                    invoiceDetail.StockInId = sellingStockIn.StockInId;
+                                }
+
+                                context.InvoiceDetails.Add(invoiceDetail);
+                            }
+                        }
+
+                        // 4. Lưu thay đổi
+                        context.SaveChanges();
+
+                        // Hoàn thành transaction
+                        transaction.Commit();
+
+                        // 5. Mở cửa sổ chi tiết hóa đơn
+                        var invoiceDetailsWindow = new InvoiceDetailsWindow();
+                        invoiceDetailsWindow.DataContext = new InvoiceDetailsViewModel(invoice);
+                        invoiceDetailsWindow.ShowDialog();
+
+                        // 6. Làm mới dữ liệu sau khi thanh toán
+                        var refreshedInvoice = context.Invoices.Find(invoice.InvoiceId);
+
+                        if (refreshedInvoice.Status == "Đã thanh toán")
+                        {
+                            // Update StockIn.RemainQuantity values for each medicine
+                            UpdateStockInRemainQuantity(refreshedInvoice);
+
+                            ClearCart();
+                            PatientName = null;
+                            Phone = null;
+                            Discount = 0;
+                            CurrentInvoice = null;
+                            SelectedPatient = null;
+
+                            // Cập nhật số hóa đơn mới
+                            UpdateInvoiceNumber();
+
+                            // Cập nhật lại danh sách thuốc
+                            LoadMedicines();
+
+                            MessageBoxService.ShowSuccess("Thanh toán thành công!", "Thông báo");
+                        }
+                        else if (refreshedInvoice.Status == "Chưa thanh toán")
+                        {
+                            ClearCart();
+                            PatientName = null;
+                            Phone = null;
+                            Discount = 0;
+                            CurrentInvoice = null;
+                            SelectedPatient = null;
+
+                            // Cập nhật số hóa đơn mới
+                            UpdateInvoiceNumber();
+
+                            // Cập nhật lại danh sách thuốc
+                            LoadMedicines();
+
+                            MessageBoxService.ShowWarning($"Hóa đơn #{refreshedInvoice.InvoiceId} đã được tạo nhưng chưa thanh toán.",
+                                            "Thông báo");
+                        }
                     }
-                }
-
-                // 4. Lưu thay đổi
-                context.SaveChanges();
-
-                // 5. Mở cửa sổ chi tiết hóa đơn
-                var invoiceDetailsWindow = new InvoiceDetailsWindow();
-                invoiceDetailsWindow.DataContext = new InvoiceDetailsViewModel(invoice);
-                invoiceDetailsWindow.ShowDialog();
-
-                // 6. Làm mới dữ liệu sau khi thanh toán
-                var refreshedInvoice = context.Invoices.Find(invoice.InvoiceId);
-
-                if (refreshedInvoice.Status == "Đã thanh toán")
-                {
-                    // Update StockIn.RemainQuantity values for each medicine
-                    UpdateStockInRemainQuantity(refreshedInvoice);
-
-                    ClearCart();
-                    PatientName = null;
-                    Phone = null;
-                    Discount = 0;
-                    CurrentInvoice = null;
-                    SelectedPatient = null;
-
-                    // Cập nhật số hóa đơn mới
-                    UpdateInvoiceNumber();
-
-                    // Cập nhật lại danh sách thuốc
-                    LoadMedicines();
-
-                    MessageBoxService.ShowSuccess("Thanh toán thành công!", "Thông báo");
-                }
-                else if (refreshedInvoice.Status == "Chưa thanh toán")
-                {
-                    ClearCart();
-                    PatientName = null;
-                    Phone = null;
-                    Discount = 0;
-                    CurrentInvoice = null;
-                    SelectedPatient = null;
-
-                    // Cập nhật số hóa đơn mới
-                    UpdateInvoiceNumber();
-
-                    // Cập nhật lại danh sách thuốc
-                    LoadMedicines();
-
-                    MessageBoxService.ShowWarning($"Hóa đơn #{refreshedInvoice.InvoiceId} đã được tạo nhưng chưa thanh toán.",
-                                    "Thông báo");
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác transaction nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để bắt ở khối catch bên ngoài
+                    }
                 }
             }
             catch (Exception ex)
@@ -1084,85 +1100,96 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // New method for updating StockIn.RemainQuantity values
+        // Phương thức cập nhật số lượng còn lại của StockIn sau khi bán thuốc
         private void UpdateStockInRemainQuantity(Invoice invoice)
         {
-            try
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
-                var context = DataProvider.Instance.Context;
-
-                // Get all paid invoice details for this invoice
-                var invoiceDetails = context.InvoiceDetails
-                    .Where(id => id.InvoiceId == invoice.InvoiceId && id.MedicineId.HasValue)
-                    .Include(id => id.StockIn)
-                    .ToList();
-
-                // Update RemainQuantity for each StockIn directly
-                foreach (var detail in invoiceDetails.Where(d => d.StockInId.HasValue))
+                try
                 {
-                    var stockIn = detail.StockIn;
-                    if (stockIn != null)
+                    var context = DataProvider.Instance.Context;
+
+                    // Lấy tất cả chi tiết hóa đơn đã thanh toán cho hóa đơn này
+                    var invoiceDetails = context.InvoiceDetails
+                        .Where(id => id.InvoiceId == invoice.InvoiceId && id.MedicineId.HasValue)
+                        .Include(id => id.StockIn)
+                        .ToList();
+
+                    // Cập nhật RemainQuantity cho từng StockIn trực tiếp
+                    foreach (var detail in invoiceDetails.Where(d => d.StockInId.HasValue))
                     {
-                        // Reduce RemainQuantity by the quantity sold
-                        stockIn.RemainQuantity -= detail.Quantity ?? 0;
-
-                        // Ensure RemainQuantity doesn't go below zero
-                        if (stockIn.RemainQuantity < 0)
-                            stockIn.RemainQuantity = 0;
-                    }
-                }
-
-                // Save changes to update RemainQuantity values
-                context.SaveChanges();
-
-                // Now update Stock records with correct totals
-                foreach (var detail in invoiceDetails)
-                {
-                    var medicine = context.Medicines
-                        .Include(m => m.StockIns)
-                        .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
-
-                    if (medicine != null)
-                    {
-                        // Calculate total physical stock using RemainQuantity directly
-                        int totalPhysicalStock = medicine.StockIns.Sum(si => si.RemainQuantity);
-
-                        // Calculate usable stock with proper expiry date filtering
-                        var today = DateOnly.FromDateTime(DateTime.Today);
-                        var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
-                        int usableStock = medicine.StockIns
-                            .Where(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
-                            .Sum(si => si.RemainQuantity);
-
-                        // Update or create Stock record
-                        var stock = context.Stocks.FirstOrDefault(s => s.MedicineId == detail.MedicineId);
-                        if (stock != null)
+                        var stockIn = detail.StockIn;
+                        if (stockIn != null)
                         {
-                            stock.Quantity = totalPhysicalStock;
-                            stock.UsableQuantity = usableStock;
-                            stock.LastUpdated = DateTime.Now;
+                            // Giảm RemainQuantity theo số lượng đã bán
+                            stockIn.RemainQuantity -= detail.Quantity ?? 0;
+
+                            // Đảm bảo RemainQuantity không âm
+                            if (stockIn.RemainQuantity < 0)
+                                stockIn.RemainQuantity = 0;
                         }
-                        else
+                    }
+
+                    // Lưu thay đổi để cập nhật giá trị RemainQuantity
+                    context.SaveChanges();
+
+                    // Cập nhật bản ghi Stock với tổng số chính xác
+                    foreach (var detail in invoiceDetails)
+                    {
+                        var medicine = context.Medicines
+                            .Include(m => m.StockIns)
+                            .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
+
+                        if (medicine != null)
                         {
-                            context.Stocks.Add(new Stock
+                            // Tính tổng số lượng tồn kho sử dụng RemainQuantity trực tiếp
+                            int totalPhysicalStock = medicine.StockIns.Sum(si => si.RemainQuantity);
+
+                            // Tính toán số lượng có thể sử dụng với bộ lọc ngày hết hạn thích hợp
+                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+                            int usableStock = medicine.StockIns
+                                .Where(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
+                                .Sum(si => si.RemainQuantity);
+
+                            // Cập nhật hoặc tạo bản ghi Stock
+                            var stock = context.Stocks.FirstOrDefault(s => s.MedicineId == detail.MedicineId);
+                            if (stock != null)
                             {
-                                MedicineId = detail.MedicineId.Value,
-                                Quantity = totalPhysicalStock,
-                                UsableQuantity = usableStock,
-                                LastUpdated = DateTime.Now
-                            });
+                                stock.Quantity = totalPhysicalStock;
+                                stock.UsableQuantity = usableStock;
+                                stock.LastUpdated = DateTime.Now;
+                            }
+                            else
+                            {
+                                context.Stocks.Add(new Stock
+                                {
+                                    MedicineId = detail.MedicineId.Value,
+                                    Quantity = totalPhysicalStock,
+                                    UsableQuantity = usableStock,
+                                    LastUpdated = DateTime.Now
+                                });
+                            }
                         }
                     }
-                }
 
-                // Save changes again to update Stock records
-                context.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi");
+                    // Lưu thay đổi lần nữa để cập nhật bản ghi Stock
+                    context.SaveChanges();
+
+                    // Hoàn thành transaction
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    // Hoàn tác transaction nếu có lỗi
+                    transaction.Rollback();
+
+                    MessageBoxService.ShowError($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi");
+                }
             }
         }
+
 
         // Thêm phương thức mới để cập nhật số hóa đơn
         private void UpdateInvoiceNumber()

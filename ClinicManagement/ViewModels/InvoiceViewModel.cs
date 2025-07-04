@@ -493,9 +493,6 @@ namespace ClinicManagement.ViewModels
         private void ViewInvoiceDetails(Invoice invoice)
         {
             if (invoice == null) return;
-
-
-
             var invoiceDetailsWindow = new InvoiceDetailsWindow(); //Tạo mới cửa sổ chi tiết hóa đơn
             invoiceDetailsWindow.DataContext = new InvoiceDetailsViewModel(invoice);//Gán DataContext của cửa sổ chi tiết hóa đơn là InvoiceDetailsViewModel với hóa đơn đã chọn
             invoiceDetailsWindow.ShowDialog();

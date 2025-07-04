@@ -568,6 +568,9 @@ namespace ClinicManagement.ViewModels
         /// <summary>
         /// Lưu thông tin hồ sơ bệnh án vào cơ sở dữ liệu
         /// </summary>
+        /// <summary>
+        /// Lưu thông tin hồ sơ bệnh án vào cơ sở dữ liệu
+        /// </summary>
         private void SaveMedicalRecord()
         {
             try
@@ -582,46 +585,81 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Tìm hồ sơ bệnh án trong cơ sở dữ liệu
-                var recordToUpdate = DataProvider.Instance.Context.MedicalRecords
-                    .FirstOrDefault(m => m.RecordId == MedicalRecord.RecordId);
+                // Xác nhận từ người dùng trước khi lưu
+                bool confirmResult = MessageBoxService.ShowQuestion(
+                    "Bạn có chắc chắn muốn lưu các thay đổi cho hồ sơ bệnh án này?",
+                    "Xác nhận lưu");
 
-                if (recordToUpdate == null)
-                {
-                    MessageBoxService.ShowError("Không tìm thấy hồ sơ bệnh án trong cơ sở dữ liệu!",
-                        "Lỗi");
+                if (!confirmResult)
                     return;
-                }
 
-                // Định dạng các thông số sinh hiệu
-                string formattedVitalSigns = FormatVitalSigns();
-
-                // Trích xuất kết quả xét nghiệm không phải thông số sinh hiệu
-                string existingTestResults = ExtractNonVitalSignResults(recordToUpdate.TestResults);
-
-                // Kết hợp các thông số sinh hiệu với kết quả xét nghiệm hiện có
-                string combinedTestResults = formattedVitalSigns;
-                if (!string.IsNullOrWhiteSpace(existingTestResults))
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    combinedTestResults += formattedVitalSigns.Length > 0 ? "\n\n" + existingTestResults : existingTestResults;
+                    try
+                    {
+                        // Tìm hồ sơ bệnh án trong cơ sở dữ liệu
+                        var recordToUpdate = DataProvider.Instance.Context.MedicalRecords
+                            .FirstOrDefault(m => m.RecordId == MedicalRecord.RecordId);
+
+                        if (recordToUpdate == null)
+                        {
+                            MessageBoxService.ShowError("Không tìm thấy hồ sơ bệnh án trong cơ sở dữ liệu!",
+                                "Lỗi");
+                            return;
+                        }
+
+                        // Định dạng các thông số sinh hiệu
+                        string formattedVitalSigns = FormatVitalSigns();
+
+                        // Trích xuất kết quả xét nghiệm không phải thông số sinh hiệu
+                        string existingTestResults = ExtractNonVitalSignResults(recordToUpdate.TestResults);
+
+                        // Kết hợp các thông số sinh hiệu với kết quả xét nghiệm hiện có
+                        string combinedTestResults = formattedVitalSigns;
+                        if (!string.IsNullOrWhiteSpace(existingTestResults))
+                        {
+                            combinedTestResults += formattedVitalSigns.Length > 0 ? "\n\n" + existingTestResults : existingTestResults;
+                        }
+
+                      
+
+                        // Cập nhật các trường của hồ sơ bệnh án
+                        recordToUpdate.Diagnosis = Diagnosis?.Trim();
+                        recordToUpdate.Prescription = Prescription?.Trim();
+                        recordToUpdate.TestResults = combinedTestResults;  // Sử dụng kết quả đã kết hợp
+                        recordToUpdate.DoctorAdvice = DoctorAdvice?.Trim();
+                   
+
+                        // Lưu thay đổi vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Commit transaction nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess("Đã lưu thông tin hồ sơ bệnh án thành công!", "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction nếu có lỗi xảy ra
+                        transaction.Rollback();
+
+                        // Ghi log lỗi (nếu cần)
+                        System.Diagnostics.Debug.WriteLine($"Lỗi khi lưu hồ sơ bệnh án: {ex.Message}");
+
+                        // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                        throw;
+                    }
                 }
-
-                // Cập nhật các trường của hồ sơ bệnh án
-                recordToUpdate.Diagnosis = Diagnosis?.Trim();
-                recordToUpdate.Prescription = Prescription?.Trim();
-                recordToUpdate.TestResults = combinedTestResults;  // Sử dụng kết quả đã kết hợp
-                recordToUpdate.DoctorAdvice = DoctorAdvice?.Trim();
-
-                // Lưu thay đổi vào cơ sở dữ liệu
-                DataProvider.Instance.Context.SaveChanges();
-
-                MessageBoxService.ShowSuccess("Đã lưu thông tin hồ sơ bệnh án thành công!");
             }
             catch (Exception ex)
             {
+                // Hiển thị thông báo lỗi cho người dùng
                 MessageBoxService.ShowError($"Lỗi khi lưu hồ sơ bệnh án: {ex.Message}", "Lỗi");
             }
         }
+
 
         /// <summary>
         /// Trích xuất phần kết quả xét nghiệm không phải thông số sinh hiệu

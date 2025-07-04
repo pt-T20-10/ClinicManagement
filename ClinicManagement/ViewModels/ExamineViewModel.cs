@@ -595,7 +595,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         private void LoadStaffs()
         {
             try
@@ -632,7 +631,6 @@ namespace ClinicManagement.ViewModels
                     "Lỗi");
             }
         }
-
 
         private void SearchPatient()
         {
@@ -704,7 +702,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         private bool CanSaveRecord()
         {
             return SelectedPatient != null &&
@@ -716,6 +713,7 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Kiểm tra dữ liệu đầu vào
                 if (SelectedPatient == null)
                 {
                     MessageBoxService.ShowWarning("Vui lòng chọn bệnh nhân trước khi lưu hồ sơ.", "Thiếu thông tin");
@@ -733,88 +731,118 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowWarning("Vui lòng nhập chẩn đoán trước khi lưu hồ sơ.", "Thiếu thông tin");
                     return;
                 }
+
+                // Yêu cầu xác nhận từ người dùng
                 bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn lưu hồ sơ khám bệnh không?",
                     "Xác nhận lưu hồ sơ"
                 );
+
                 if (!result)
                 {
-                    return; // User cancelled the save
-                }   
-                // Format vital signs for test results
-                string formattedVitalSigns = FormatVitalSigns();
-
-                // Combine vital signs with any existing test results
-                string combinedTestResults = formattedVitalSigns;
-                if (!string.IsNullOrWhiteSpace(TestResults))
-                {
-                    combinedTestResults += formattedVitalSigns.Length > 0 ? " " + TestResults : TestResults;
+                    return; // Người dùng hủy thao tác lưu
                 }
 
-                // Create new medical record
-                MedicalRecord newRecord = new MedicalRecord
+                // Sử dụng transaction để đảm bảo tính nhất quán dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    PatientId = SelectedPatient.PatientId,
-                    StaffId = SelectedDoctor.StaffId,
-                    RecordDate = RecordDate,
-                    Diagnosis = Diagnosis,
-                    DoctorAdvice = DoctorAdvice,
-                    TestResults = combinedTestResults,
-                    Prescription = Prescription,
-                    IsDeleted = false
-                };
+                    try
+                    {
+                        // Định dạng dấu hiệu sinh tồn cho kết quả xét nghiệm
+                        string formattedVitalSigns = FormatVitalSigns();
 
-                // Save to database
-                DataProvider.Instance.Context.MedicalRecords.Add(newRecord);
-                DataProvider.Instance.Context.SaveChanges();
+                        // Kết hợp dấu hiệu sinh tồn với kết quả xét nghiệm hiện có
+                        string combinedTestResults = formattedVitalSigns;
+                        if (!string.IsNullOrWhiteSpace(TestResults))
+                        {
+                            combinedTestResults += formattedVitalSigns.Length > 0 ? " " + TestResults : TestResults;
+                        }
 
-                // Create invoice for examination
-                var invoice = new Invoice
-                {
-                    PatientId = SelectedPatient.PatientId,
-                    MedicalRecordId = newRecord.RecordId,
-                    InvoiceDate = DateTime.Now,
-                    Status = "Chưa thanh toán",
-                    InvoiceType = "Khám bệnh",
-                    TotalAmount = ExaminationFee,
-                    Discount = SelectedPatient.PatientType.Discount,
-                    Tax = 0
-                };
-                DataProvider.Instance.Context.Invoices.Add(invoice);
-                DataProvider.Instance.Context.SaveChanges();
+                        // Tạo bản ghi y tế mới
+                        MedicalRecord newRecord = new MedicalRecord
+                        {
+                            PatientId = SelectedPatient.PatientId,
+                            StaffId = SelectedDoctor.StaffId,
+                            RecordDate = RecordDate,
+                            Diagnosis = Diagnosis,
+                            DoctorAdvice = DoctorAdvice,
+                            TestResults = combinedTestResults,
+                            Prescription = Prescription,
+                            IsDeleted = false
+                        };
 
-                // Add invoice detail for examination fee
-                var invoiceDetail = new InvoiceDetail
-                {
-                    InvoiceId = invoice.InvoiceId,
-                    ServiceName = SelectedAppointmentType?.TypeName ?? "Khám bệnh",
-                    SalePrice = ExaminationFee,
-                    Quantity = 1
-                };
-                DataProvider.Instance.Context.InvoiceDetails.Add(invoiceDetail);
-                DataProvider.Instance.Context.SaveChanges();
+                        // Lưu bản ghi y tế vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.MedicalRecords.Add(newRecord);
+                        DataProvider.Instance.Context.SaveChanges();
 
-                // Update related appointment if exists
-                if (RelatedAppointment != null)
-                {
-                    UpdateAppointmentStatus(RelatedAppointment, "Đã khám");
+                        // Tạo hóa đơn cho lần khám
+                        var invoice = new Invoice
+                        {
+                            PatientId = SelectedPatient.PatientId,
+                            MedicalRecordId = newRecord.RecordId,
+                            InvoiceDate = DateTime.Now,
+                            Status = "Chưa thanh toán",
+                            InvoiceType = "Khám bệnh",
+                            TotalAmount = ExaminationFee,
+                            Discount = SelectedPatient.PatientType.Discount,
+                            Tax = 0
+                        };
+                        DataProvider.Instance.Context.Invoices.Add(invoice);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Thêm chi tiết hóa đơn cho phí khám
+                        var invoiceDetail = new InvoiceDetail
+                        {
+                            InvoiceId = invoice.InvoiceId,
+                            ServiceName = SelectedAppointmentType?.TypeName ?? "Khám bệnh",
+                            SalePrice = ExaminationFee,
+                            Quantity = 1
+                        };
+                        DataProvider.Instance.Context.InvoiceDetails.Add(invoiceDetail);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Cập nhật trạng thái lịch hẹn liên quan nếu có
+                        if (RelatedAppointment != null)
+                        {
+                            var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                                .FirstOrDefault(a => a.AppointmentId == RelatedAppointment.AppointmentId);
+
+                            if (appointmentToUpdate != null)
+                            {
+                                appointmentToUpdate.Status = "Đã khám";
+                                DataProvider.Instance.Context.SaveChanges();
+                                RelatedAppointment.Status = "Đã khám";
+                            }
+                        }
+
+                        // Hoàn thành giao dịch nếu mọi thao tác thành công
+                        transaction.Commit();
+
+                        // Hiển thị thông báo thành công
+                        MessageBoxService.ShowSuccess("Đã lưu hồ sơ khám bệnh và tạo hóa đơn thành công!", "Thành công");
+
+                        // Đặt lại form sau khi lưu
+                        ResetForm();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+
+                        // Ném ngoại lệ để xử lý ở catch bên ngoài
+                        throw;
+                    }
                 }
-
-                MessageBoxService.ShowSuccess("Đã lưu hồ sơ khám bệnh và tạo hóa đơn thành công!", "Thành công");
-
-                // Optional: Reset form after saving
-                ResetForm();
             }
             catch (Exception ex)
             {
+                // Hiển thị thông báo lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi lưu hồ sơ: {ex.Message}",
                     "Lỗi"
-                     
-                     );
+                );
             }
         }
-
 
         private string FormatVitalSigns()
         {
@@ -890,27 +918,50 @@ namespace ClinicManagement.ViewModels
             {
                 if (appointment == null) return;
 
-                var appointmentToUpdate = DataProvider.Instance.Context.Appointments
-                    .FirstOrDefault(a => a.AppointmentId == appointment.AppointmentId);
-
-                if (appointmentToUpdate != null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    appointmentToUpdate.Status = newStatus;
-                    DataProvider.Instance.Context.SaveChanges();
+                    try
+                    {
+                        // Tìm lịch hẹn cần cập nhật trong cơ sở dữ liệu
+                        var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                            .FirstOrDefault(a => a.AppointmentId == appointment.AppointmentId);
 
-                    // Update our local reference to match the database
-                    RelatedAppointment.Status = newStatus;
+                        if (appointmentToUpdate != null)
+                        {
+                            // Cập nhật trạng thái của lịch hẹn
+                            appointmentToUpdate.Status = newStatus;
+
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Cập nhật tham chiếu trong bộ nhớ để giữ đồng bộ với cơ sở dữ liệu
+                            RelatedAppointment.Status = newStatus;
+
+                            // Hoàn thành giao dịch nếu mọi thao tác thành công
+                            transaction.Commit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi xảy ra
+                        transaction.Rollback();
+
+                        // Ném ngoại lệ để xử lý ở catch bên ngoài
+                        throw;
+                    }
                 }
             }
             catch (Exception ex)
             {
+                // Hiển thị thông báo lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi cập nhật trạng thái lịch hẹn: {ex.Message}",
                     "Lỗi"
-                     
-                     );
+                );
             }
         }
+
 
         private void LoadAppointmentTypes()
         {
@@ -1098,7 +1149,7 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Perform the same validations as in SaveRecord method
+                // Kiểm tra các điều kiện cần thiết
                 if (SelectedPatient == null)
                 {
                     MessageBoxService.ShowWarning("Vui lòng chọn bệnh nhân trước khi xuất phiếu khám.", "Thiếu thông tin");
@@ -1116,190 +1167,225 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowWarning("Vui lòng nhập chẩn đoán trước khi xuất phiếu khám.", "Thiếu thông tin");
                     return;
                 }
+
+                // Xác nhận từ người dùng
                 bool result = MessageBoxService.ShowQuestion(
                     "Bạn có muốn xuất phiếu khám bệnh không? Hồ sơ sẽ được lưu trước khi xuất.",
                     "Xuất phiếu khám"
                 );
+
                 if (!result)
                 {
-                    return; // User cancelled the export
-                }
-                // Save the record first if needed (uses the same logic as SaveRecord method)
-                MedicalRecord medicalRecord = null;
-                bool isNewRecord = true;
-
-                // Check if we already have a saved record for this patient and session
-                if (RelatedAppointment != null)
-                {
-                    medicalRecord = DataProvider.Instance.Context.MedicalRecords
-                        .FirstOrDefault(m => m.PatientId == SelectedPatient.PatientId &&
-                                           m.StaffId == SelectedDoctor.StaffId &&
-                                           m.RecordDate == RecordDate.Date &&
-                                           m.IsDeleted != true);
-
-                    if (medicalRecord != null)
-                        isNewRecord = false;
+                    return; // Người dùng hủy xuất phiếu
                 }
 
-                if (isNewRecord)
+                // Sử dụng transaction để đảm bảo tính nhất quán dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Format vital signs for test results
-                    string formattedVitalSigns = FormatVitalSigns();
-
-                    // Combine vital signs with any existing test results
-                    string combinedTestResults = formattedVitalSigns;
-                    if (!string.IsNullOrWhiteSpace(TestResults))
+                    try
                     {
-                        combinedTestResults += formattedVitalSigns.Length > 0 ? " " + TestResults : TestResults;
-                    }
+                        // Lưu bản ghi y tế trước nếu cần
+                        MedicalRecord medicalRecord = null;
+                        bool isNewRecord = true;
 
-                    // Create new medical record
-                    medicalRecord = new MedicalRecord
-                    {
-                        PatientId = SelectedPatient.PatientId,
-                        StaffId = SelectedDoctor.StaffId,
-                        RecordDate = RecordDate,
-                        Diagnosis = Diagnosis,
-                        DoctorAdvice = DoctorAdvice,
-                        TestResults = combinedTestResults,
-                        Prescription = Prescription,
-                        IsDeleted = false
-                    };
-
-                    // Save to database
-                    DataProvider.Instance.Context.MedicalRecords.Add(medicalRecord);
-                    DataProvider.Instance.Context.SaveChanges();
-
-                    // Create invoice for examination
-                    var invoice = new Invoice
-                    {
-                        PatientId = SelectedPatient.PatientId,
-                        MedicalRecordId = medicalRecord.RecordId,
-                        InvoiceDate = DateTime.Now,
-                        Status = "Chưa thanh toán",
-                        InvoiceType = "Khám bệnh",
-                        TotalAmount = ExaminationFee,
-                        Discount = SelectedPatient.PatientType?.Discount ?? 0,
-                        Tax = 0
-                    };
-                    DataProvider.Instance.Context.Invoices.Add(invoice);
-                    DataProvider.Instance.Context.SaveChanges();
-
-                    // Add invoice detail for examination fee
-                    var invoiceDetail = new InvoiceDetail
-                    {
-                        InvoiceId = invoice.InvoiceId,
-                        ServiceName = SelectedAppointmentType?.TypeName ?? "Khám bệnh",
-                        SalePrice = ExaminationFee,
-                        Quantity = 1
-                    };
-                    DataProvider.Instance.Context.InvoiceDetails.Add(invoiceDetail);
-                    DataProvider.Instance.Context.SaveChanges();
-
-                    // Update related appointment if exists
-                    if (RelatedAppointment != null)
-                    {
-                        UpdateAppointmentStatus(RelatedAppointment, "Đã khám");
-                    }
-
-                    MessageBoxService.ShowSuccess("Đã lưu hồ sơ và hóa đơn khám bệnh thành công!", "Thành công");
-                }
-
-                // Now that we have a valid medical record, export it to PDF
-                QuestPDF.Settings.License = LicenseType.Community;
-
-                SaveFileDialog saveFileDialog = new SaveFileDialog
-                {
-                    Filter = "PDF files (*.pdf)|*.pdf",
-                    DefaultExt = "pdf",
-                    FileName = $"PhieuKhamBenh_{SelectedPatient.FullName}_{DateTime.Now:yyyyMMdd}.pdf",
-                    Title = "Lưu phiếu khám bệnh"
-                };
-
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    string filePath = saveFileDialog.FileName;
-
-                    // Create and show progress dialog
-                    ProgressDialog progressDialog = new ProgressDialog();
-
-                    // Generate PDF in background thread with progress reporting
-                    Task.Run(() =>
-                    {
-                        try
+                        // Kiểm tra xem đã có bản ghi y tế cho bệnh nhân và phiên khám này chưa
+                        if (RelatedAppointment != null)
                         {
-                            // Report progress: 10% - Starting
-                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
-                            Thread.Sleep(100); // Small delay for visibility
+                            medicalRecord = DataProvider.Instance.Context.MedicalRecords
+                                .FirstOrDefault(m => m.PatientId == SelectedPatient.PatientId &&
+                                                    m.StaffId == SelectedDoctor.StaffId &&
+                                                    m.RecordDate == RecordDate.Date &&
+                                                    m.IsDeleted != true);
 
-                            // Report progress: 30% - Preparing data
-                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
-                            Thread.Sleep(100); // Small delay for visibility
+                            if (medicalRecord != null)
+                                isNewRecord = false;
+                        }
 
-                            // Report progress: 50% - Generating document
-                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
+                        if (isNewRecord)
+                        {
+                            // Định dạng dấu hiệu sinh tồn
+                            string formattedVitalSigns = FormatVitalSigns();
 
-                            // Create the PDF document
-                            GenerateMedicalExaminationPdf(filePath, medicalRecord);
-
-                            // Report progress: 90% - Saving file
-                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
-                            Thread.Sleep(100); // Small delay for visibility
-
-                            // Report progress: 100% - Complete
-                            Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                            Thread.Sleep(300); // Show 100% briefly
-
-                            Application.Current.Dispatcher.Invoke(() =>
+                            // Kết hợp dấu hiệu sinh tồn với kết quả xét nghiệm
+                            string combinedTestResults = formattedVitalSigns;
+                            if (!string.IsNullOrWhiteSpace(TestResults))
                             {
-                                // Close progress dialog
-                                progressDialog.Close();
+                                combinedTestResults += formattedVitalSigns.Length > 0 ? " " + TestResults : TestResults;
+                            }
 
-                                // Show success message
-                                MessageBoxService.ShowSuccess(
-                                    $"Đã xuất phiếu khám bệnh thành công!\nĐường dẫn: {filePath}",
-                                    "Xuất phiếu khám"
-                                );
+                            // Tạo bản ghi y tế mới
+                            medicalRecord = new MedicalRecord
+                            {
+                                PatientId = SelectedPatient.PatientId,
+                                StaffId = SelectedDoctor.StaffId,
+                                RecordDate = RecordDate,
+                                Diagnosis = Diagnosis,
+                                DoctorAdvice = DoctorAdvice,
+                                TestResults = combinedTestResults,
+                                Prescription = Prescription,
+                                IsDeleted = false
+                            };
 
-                                // Ask if user wants to open the PDF
-                                if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
+                            // Lưu vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.MedicalRecords.Add(medicalRecord);
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Tạo hóa đơn khám bệnh
+                            var invoice = new Invoice
+                            {
+                                PatientId = SelectedPatient.PatientId,
+                                MedicalRecordId = medicalRecord.RecordId,
+                                InvoiceDate = DateTime.Now,
+                                Status = "Chưa thanh toán",
+                                InvoiceType = "Khám bệnh",
+                                TotalAmount = ExaminationFee,
+                                Discount = SelectedPatient.PatientType?.Discount ?? 0,
+                                Tax = 0
+                            };
+                            DataProvider.Instance.Context.Invoices.Add(invoice);
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Thêm chi tiết hóa đơn cho phí khám
+                            var invoiceDetail = new InvoiceDetail
+                            {
+                                InvoiceId = invoice.InvoiceId,
+                                ServiceName = SelectedAppointmentType?.TypeName ?? "Khám bệnh",
+                                SalePrice = ExaminationFee,
+                                Quantity = 1
+                            };
+                            DataProvider.Instance.Context.InvoiceDetails.Add(invoiceDetail);
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Cập nhật trạng thái lịch hẹn liên quan nếu có
+                            if (RelatedAppointment != null)
+                            {
+                                var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                                    .FirstOrDefault(a => a.AppointmentId == RelatedAppointment.AppointmentId);
+
+                                if (appointmentToUpdate != null)
                                 {
-                                    try
+                                    appointmentToUpdate.Status = "Đã khám";
+                                    DataProvider.Instance.Context.SaveChanges();
+                                    RelatedAppointment.Status = "Đã khám";
+                                }
+                            }
+
+                            // Hoàn thành giao dịch sau khi mọi thao tác thành công
+                            transaction.Commit();
+
+                            // Hiển thị thông báo thành công
+                            MessageBoxService.ShowSuccess("Đã lưu hồ sơ và hóa đơn khám bệnh thành công!", "Thành công");
+                        }
+                        else
+                        {
+                            // Không có thay đổi, chỉ cần hoàn thành giao dịch
+                            transaction.Commit();
+                        }
+
+                        // Thiết lập giấy phép QuestPDF
+                        QuestPDF.Settings.License = LicenseType.Community;
+
+                        // Hiển thị hộp thoại lưu file
+                        SaveFileDialog saveFileDialog = new SaveFileDialog
+                        {
+                            Filter = "PDF files (*.pdf)|*.pdf",
+                            DefaultExt = "pdf",
+                            FileName = $"PhieuKhamBenh_{SelectedPatient.FullName}_{DateTime.Now:yyyyMMdd}.pdf",
+                            Title = "Lưu phiếu khám bệnh"
+                        };
+
+                        if (saveFileDialog.ShowDialog() == true)
+                        {
+                            string filePath = saveFileDialog.FileName;
+
+                            // Tạo và hiển thị hộp thoại tiến trình
+                            ProgressDialog progressDialog = new ProgressDialog();
+
+                            // Tạo PDF trong luồng nền với báo cáo tiến trình
+                            Task.Run(() =>
+                            {
+                                try
+                                {
+                                    // Báo cáo tiến trình: 10% - Bắt đầu
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+                                    Thread.Sleep(100); // Độ trễ nhỏ để hiển thị
+
+                                    // Báo cáo tiến trình: 30% - Chuẩn bị dữ liệu
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
+                                    Thread.Sleep(100); // Độ trễ nhỏ để hiển thị
+
+                                    // Báo cáo tiến trình: 50% - Tạo tài liệu
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
+
+                                    // Tạo tài liệu PDF
+                                    GenerateMedicalExaminationPdf(filePath, medicalRecord);
+
+                                    // Báo cáo tiến trình: 90% - Lưu file
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+                                    Thread.Sleep(100); // Độ trễ nhỏ để hiển thị
+
+                                    // Báo cáo tiến trình: 100% - Hoàn thành
+                                    Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                    Thread.Sleep(300); // Hiển thị 100% trong một thời gian ngắn
+
+                                    Application.Current.Dispatcher.Invoke(() =>
                                     {
-                                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                        // Đóng hộp thoại tiến trình
+                                        progressDialog.Close();
+
+                                        // Hiển thị thông báo thành công
+                                        MessageBoxService.ShowSuccess(
+                                            $"Đã xuất phiếu khám bệnh thành công!\nĐường dẫn: {filePath}",
+                                            "Xuất phiếu khám"
+                                        );
+
+                                        // Hỏi người dùng có muốn mở file PDF không
+                                        if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
                                         {
-                                            FileName = filePath,
-                                            UseShellExecute = true
-                                        });
-                                    }
-                                    catch (Exception ex)
+                                            try
+                                            {
+                                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                                {
+                                                    FileName = filePath,
+                                                    UseShellExecute = true
+                                                });
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                            }
+                                        }
+                                    });
+                                }
+                                catch (Exception ex)
+                                {
+                                    Application.Current.Dispatcher.Invoke(() =>
                                     {
-                                        MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
-                                    }
+                                        progressDialog.Close();
+                                        MessageBoxService.ShowError(
+                                            $"Đã xảy ra lỗi khi xuất phiếu khám: {ex.Message}",
+                                            "Lỗi"
+                                        );
+                                    });
                                 }
                             });
 
+                            // Hiển thị hộp thoại tiến trình - sẽ chặn cho đến khi hộp thoại đóng
+                            progressDialog.ShowDialog();
+                            ResetForm();
                         }
-                        catch (Exception ex)
-                        {
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                progressDialog.Close();
-                                MessageBoxService.ShowError(
-                                    $"Đã xảy ra lỗi khi xuất phiếu khám: {ex.Message}",
-                                    "Lỗi"
-                                );
-                            });
-                        }
-                    });
-
-                    // Show dialog - this will block until the dialog is closed
-                    progressDialog.ShowDialog();
-                    ResetForm();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném ngoại lệ để xử lý ở catch bên ngoài
+                    }
                 }
             }
             catch (Exception ex)
             {
+                // Hiển thị thông báo lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xuất phiếu khám: {ex.Message}",
                     "Lỗi"

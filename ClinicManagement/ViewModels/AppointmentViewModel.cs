@@ -1402,7 +1402,7 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Enable validation for required fields
+                // Bật validation cho tất cả các trường bắt buộc
                 _isValidating = true;
                 _touchedFields.Add(nameof(PatientSearch));
                 _touchedFields.Add(nameof(PatientPhone));
@@ -1410,11 +1410,11 @@ namespace ClinicManagement.ViewModels
                 _touchedFields.Add(nameof(AppointmentDate));
                 _touchedFields.Add(nameof(SelectedAppointmentTime));
 
-                // Add SelectedDoctor to touched fields only if one is selected
+                // Thêm SelectedDoctor vào danh sách trường cần kiểm tra (nếu có)
                 if (SelectedDoctor != null)
                     _touchedFields.Add(nameof(SelectedDoctor));
 
-                // Trigger validation for required fields
+                // Kích hoạt validation cho các trường bắt buộc
                 OnPropertyChanged(nameof(PatientSearch));
                 OnPropertyChanged(nameof(PatientPhone));
                 OnPropertyChanged(nameof(SelectedAppointmentType));
@@ -1424,7 +1424,7 @@ namespace ClinicManagement.ViewModels
                 if (SelectedDoctor != null)
                     OnPropertyChanged(nameof(SelectedDoctor));
 
-                // Check for validation errors on the required fields
+                // Kiểm tra lỗi nhập liệu cho các trường bắt buộc
                 if (!string.IsNullOrEmpty(this[nameof(PatientSearch)]) ||
                     !string.IsNullOrEmpty(this[nameof(PatientPhone)]) ||
                     !string.IsNullOrEmpty(this[nameof(SelectedAppointmentType)]) ||
@@ -1435,22 +1435,22 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // If doctor is selected, check doctor-specific validation errors
+                // Kiểm tra lỗi nhập liệu cho bác sĩ (nếu đã chọn)
                 if (SelectedDoctor != null && !string.IsNullOrEmpty(this[nameof(SelectedDoctor)]))
                 {
                     MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi thêm lịch hẹn.", "Lỗi thông tin");
                     return;
                 }
 
-                // Validate patient selection or find/create patient if needed
+                // Xác thực thông tin bệnh nhân hoặc tìm/tạo mới bệnh nhân nếu cần
                 if (SelectedPatient == null &&
                     !string.IsNullOrWhiteSpace(PatientSearch) &&
                     !string.IsNullOrWhiteSpace(PatientPhone))
                 {
-                    // Find patient silently (true for silentMode)
+                    // Tìm bệnh nhân ở chế độ im lặng (không hiển thị thông báo)
                     FindOrCreatePatient(true);
 
-                    // If patient still not found, show the normal dialog
+                    // Nếu vẫn không tìm thấy, hiển thị hộp thoại tạo mới
                     if (SelectedPatient == null)
                     {
                         FindOrCreatePatient(false);
@@ -1462,24 +1462,24 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Skip doctor validation if no doctor is selected
+                // Bỏ qua validation bác sĩ nếu không có bác sĩ được chọn
                 if (SelectedDoctor != null && !ValidateStaffselection())
                     return;
 
-                // Validate appointment type
+                // Xác thực loại lịch hẹn
                 if (!ValidateAppointmentType())
                     return;
 
-                // Validate date/time selection
+                // Xác thực ngày/giờ đã chọn
                 if (!ValidateDateTimeSelection())
                     return;
 
-                // Create appointment confirmation message
+                // Tạo thông báo xác nhận lịch hẹn
                 string doctorInfo = SelectedDoctor != null
                     ? $" với bác sĩ {SelectedDoctor.FullName}"
                     : " (chưa chọn bác sĩ)";
 
-                // All validations passed, confirm creation
+                // Hiển thị thông báo xác nhận tạo lịch hẹn
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có muốn tạo lịch hẹn cho bệnh nhân {SelectedPatient.FullName}{doctorInfo} vào {AppointmentDate?.ToString("dd/MM/yyyy")} lúc {SelectedAppointmentTime?.ToString("HH:mm")} không?",
                     "Xác nhận");
@@ -1487,65 +1487,84 @@ namespace ClinicManagement.ViewModels
                 if (!result)
                     return;
 
-                // Fix for correct date/time storage in database
-                // Create appointment - explicitly preserve both date and time components
-                DateTime appointmentDateTime;
-                if (AppointmentDate.HasValue && SelectedAppointmentTime.HasValue)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Create a fresh DateTime with proper date components
-                    appointmentDateTime = new DateTime(
-                        AppointmentDate.Value.Year,
-                        AppointmentDate.Value.Month,
-                        AppointmentDate.Value.Day,
-                        SelectedAppointmentTime.Value.Hour,
-                        SelectedAppointmentTime.Value.Minute,
-                        0);
+                    try
+                    {
+                        // Tạo DateTime chính xác từ ngày và giờ đã chọn
+                        DateTime appointmentDateTime;
+                        if (AppointmentDate.HasValue && SelectedAppointmentTime.HasValue)
+                        {
+                            // Kết hợp ngày và giờ thành DateTime đầy đủ
+                            appointmentDateTime = new DateTime(
+                                AppointmentDate.Value.Year,
+                                AppointmentDate.Value.Month,
+                                AppointmentDate.Value.Day,
+                                SelectedAppointmentTime.Value.Hour,
+                                SelectedAppointmentTime.Value.Minute,
+                                0);
+                        }
+                        else
+                        {
+                            // Sử dụng thời gian hiện tại nếu có lỗi (không nên xảy ra do đã validate ở trên)
+                            appointmentDateTime = DateTime.Now;
+                        }
+
+                        // Tạo đối tượng lịch hẹn mới
+                        Appointment newAppointment = new Appointment
+                        {
+                            PatientId = SelectedPatient.PatientId,
+                            StaffId = SelectedDoctor?.StaffId, // Có thể null nếu không chọn bác sĩ
+                            AppointmentDate = appointmentDateTime,
+                            AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId,
+                            Status = "Đang chờ",
+                            Notes = AppointmentNote,
+                            CreatedAt = DateTime.Now,
+                            IsDeleted = false
+                        };
+
+                        // In thông tin debug để kiểm tra DateTime
+                        System.Diagnostics.Debug.WriteLine($"Saving appointment date/time: {newAppointment.AppointmentDate:yyyy-MM-dd HH:mm:ss}");
+
+                        // Lưu vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.Appointments.Add(newAppointment);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn tất transaction
+                        transaction.Commit();
+
+                        // Hiển thị thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã tạo lịch hẹn thành công!");
+
+                        // Xóa form và làm mới danh sách lịch hẹn
+                        ClearAppointmentForm();
+                        LoadAppointments();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction nếu có lỗi
+                        transaction.Rollback();
+
+                        // Ném lại ngoại lệ để xử lý ở phần catch bên ngoài
+                        throw;
+                    }
                 }
-                else
-                {
-                    // Fallback if something went wrong
-                    appointmentDateTime = DateTime.Now;
-                }
-
-                Appointment newAppointment = new Appointment
-                {
-                    PatientId = SelectedPatient.PatientId,
-                    StaffId = SelectedDoctor?.StaffId, // This can now be null
-                    AppointmentDate = appointmentDateTime,
-                    AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId,
-                    Status = "Đang chờ",
-                    Notes = AppointmentNote,
-                    CreatedAt = DateTime.Now,
-                    IsDeleted = false
-                };
-
-                // Debug output to verify the correct date/time is being saved
-                System.Diagnostics.Debug.WriteLine($"Saving appointment date/time: {newAppointment.AppointmentDate:yyyy-MM-dd HH:mm:ss}");
-
-                // Save to database
-                DataProvider.Instance.Context.Appointments.Add(newAppointment);
-                DataProvider.Instance.Context.SaveChanges();
-
-                MessageBoxService.ShowSuccess(
-                    "Đã tạo lịch hẹn thành công!");
-
-                // Clear form and refresh appointment list
-                ClearAppointmentForm();
-                LoadAppointments();
             }
             catch (DbUpdateException dbEx)
             {
+                // Xử lý lỗi cập nhật cơ sở dữ liệu
                 MessageBoxService.ShowError(
                     $"Lỗi khi lưu lịch hẹn vào cơ sở dữ liệu: {dbEx.InnerException?.Message ?? dbEx.Message}");
             }
             catch (Exception ex)
             {
+                // Xử lý các lỗi khác
                 MessageBoxService.ShowError(
-                    $"Đã xảy ra lỗi khi tạo lịch hẹn: {ex.Message}"
-                   );
+                    $"Đã xảy ra lỗi khi tạo lịch hẹn: {ex.Message}");
             }
         }
-
 
         private bool ValidatePatientSelection()
         {
@@ -1772,7 +1791,6 @@ namespace ClinicManagement.ViewModels
             return true;
         }
 
-
         private string GetVietnameseDayName(DayOfWeek dayOfWeek)
         {
             return dayOfWeek switch
@@ -1888,6 +1906,7 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region AppoinmentType Methods
+
         private void AddAppontmentType()
         {
             try
@@ -1972,83 +1991,98 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         private void EditAppontmentType()
         {
             try
             {
-                // Confirm dialog
-                 bool  result =  MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận trước khi sửa
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa loại lịch hẹn '{SelectedAppointmentType.TypeName}' thành '{TypeDisplayName}' không?",
                     "Xác Nhận Sửa"
-                     
-                  );
+                );
 
                 if (!result)
                     return;
 
-                // Check if specialty name already exists (except for current)
+                // Kiểm tra xem tên loại lịch hẹn đã tồn tại chưa (trừ loại hiện tại)
                 bool isExist = DataProvider.Instance.Context.AppointmentTypes
                     .Any(s => s.TypeName.Trim().ToLower() == TypeDisplayName.Trim().ToLower() &&
-                              s.AppointmentTypeId != SelectedAppointmentType.AppointmentTypeId &&
+                             s.AppointmentTypeId != SelectedAppointmentType.AppointmentTypeId &&
                              (bool)!s.IsDeleted);
 
                 if (isExist)
                 {
-                     MessageBoxService.ShowWarning("Tên loại lịch hẹn này đã tồn tại.");
+                    MessageBoxService.ShowWarning("Tên loại lịch hẹn này đã tồn tại.");
                     return;
                 }
 
-                // Update specialty
-                var appointmenttypeToUpdate = DataProvider.Instance.Context.AppointmentTypes
-                    .FirstOrDefault(s => s.AppointmentTypeId == SelectedAppointmentType.AppointmentTypeId);
-
-                if (appointmenttypeToUpdate == null)
+                // Sử dụng transaction để đảm bảo tính nhất quán dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                     MessageBoxService.ShowWarning("Không tìm thấy loại lịch hẹn cần sửa.");
-                    return;
+                    try
+                    {
+                        // Tìm loại lịch hẹn cần cập nhật
+                        var appointmenttypeToUpdate = DataProvider.Instance.Context.AppointmentTypes
+                            .FirstOrDefault(s => s.AppointmentTypeId == SelectedAppointmentType.AppointmentTypeId);
+
+                        if (appointmenttypeToUpdate == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy loại lịch hẹn cần sửa.");
+                            return;
+                        }
+
+                        // Cập nhật thông tin loại lịch hẹn
+                        appointmenttypeToUpdate.TypeName = TypeDisplayName;
+                        appointmenttypeToUpdate.Price = TypePrice ?? 0;
+                        appointmenttypeToUpdate.Description = TypeDescription ?? "";
+
+                        // Lưu thay đổi vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn tất giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Cập nhật lại giao diện với dữ liệu mới
+                        ListAppointmentType = new ObservableCollection<AppointmentType>(
+                            DataProvider.Instance.Context.AppointmentTypes
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Cập nhật danh sách loại lịch hẹn trong form
+                        AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
+
+                        // Cập nhật loại lịch hẹn vì tên có thể đã thay đổi
+                        LoadAppointmentTypeData();
+                        ExecuteRefreshType();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã cập nhật loại lịch hẹn thành công!",
+                            "Thành Công"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để được xử lý ở khối catch bên ngoài
+                    }
                 }
-
-                appointmenttypeToUpdate.TypeName = TypeDisplayName;
-                appointmenttypeToUpdate.Price = TypePrice ?? 0;  
-                appointmenttypeToUpdate.Description = TypeDescription ?? "";
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                ListAppointmentType = new ObservableCollection<AppointmentType>(
-                    DataProvider.Instance.Context.AppointmentTypes
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Also update AppointmentTypes collection
-                AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
-
-                // Update doctor list as specialty names may have changed
-                LoadAppointmentTypeData();
-                ExecuteRefreshType();
-
-                 MessageBoxService.ShowSuccess(
-                    "Đã cập nhật loại lịch hẹn thành công!",
-                    "Thành Công"
-                    
-                     );
             }
             catch (DbUpdateException ex)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     $"Không thể sửa loại lịch hẹn: {ex.InnerException?.Message ?? ex.Message}",
                     "Lỗi Cơ Sở Dữ Liệu"
-                    
-                     );
+                );
             }
             catch (Exception ex)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
                     "Lỗi"
-                    
-                     );
+                );
             }
         }
 
@@ -2056,57 +2090,91 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-
-                // Confirm deletion
-                 bool  result =  MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận trước khi xóa
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn xóa loại lịch hẹn '{SelectedAppointmentType.TypeName}' không?",
                     "Xác Nhận Xóa"
-                     
-                    );
+                );
 
                 if (!result)
                     return;
 
-                // Soft delete the specialty
-                var appointmenttypeToDelete = DataProvider.Instance.Context.AppointmentTypes
-                    .FirstOrDefault(s => s.AppointmentTypeId == SelectedAppointmentType.AppointmentTypeId);
-
-                if (appointmenttypeToDelete == null)
+                // Sử dụng transaction để đảm bảo tính nhất quán dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                     MessageBoxService.ShowWarning("Không tìm thấy loại lịch hẹn cần xóa.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra xem loại lịch hẹn có đang được sử dụng trong lịch hẹn không
+                        bool isInUse = DataProvider.Instance.Context.Appointments
+                            .Any(a => a.AppointmentTypeId == SelectedAppointmentType.AppointmentTypeId &&
+                                      (a.Status == "Đang chờ" || a.Status == "Đã xác nhận") &&
+                                      (bool)!a.IsDeleted);
+
+                        if (isInUse)
+                        {
+                            MessageBoxService.ShowWarning(
+                                "Không thể xóa loại lịch hẹn này vì đang được sử dụng trong các lịch hẹn đang hoạt động.",
+                                "Không thể xóa"
+                            );
+                            return;
+                        }
+
+                        // Tìm loại lịch hẹn cần xóa
+                        var appointmenttypeToDelete = DataProvider.Instance.Context.AppointmentTypes
+                            .FirstOrDefault(s => s.AppointmentTypeId == SelectedAppointmentType.AppointmentTypeId);
+
+                        if (appointmenttypeToDelete == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy loại lịch hẹn cần xóa.");
+                            return;
+                        }
+
+                        // Đánh dấu là đã xóa (xóa mềm)
+                        appointmenttypeToDelete.IsDeleted = true;
+
+                        // Lưu thay đổi vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn tất giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Cập nhật lại giao diện với dữ liệu mới
+                        ListAppointmentType = new ObservableCollection<AppointmentType>(
+                            DataProvider.Instance.Context.AppointmentTypes
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Cập nhật danh sách loại lịch hẹn trong form
+                        AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
+
+                        // Làm mới form
+                        ExecuteRefreshType();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã xóa loại lịch hẹn thành công.",
+                            "Thành Công"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để được xử lý ở khối catch bên ngoài
+                    }
                 }
-
-                appointmenttypeToDelete.IsDeleted = true;
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                ListAppointmentType = new ObservableCollection<AppointmentType>(
-                    DataProvider.Instance.Context.AppointmentTypes
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Also update AppointmentTypes collection
-                AppointmentTypes = new ObservableCollection<AppointmentType>(ListAppointmentType);
-
-                  ExecuteRefreshType();
-
-                 MessageBoxService.ShowSuccess(
-                    "Đã xóa loại lịch hẹn thành công.",
-                    "Thành Công"
-                    
-                     );
             }
             catch (Exception ex)
             {
-                 MessageBoxService.ShowError(
+                MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa loại lịch hẹn: {ex.Message}",
                     "Lỗi"
-                    
-                     );
+                );
             }
         }
+
+
         private void UpdatePermissions()
         {
             // Default to no permissions
@@ -2144,7 +2212,6 @@ namespace ClinicManagement.ViewModels
             // Force command CanExecute to be reevaluated
             CommandManager.InvalidateRequerySuggested();
         }
-
 
         private void ExecuteRefreshType()
         {

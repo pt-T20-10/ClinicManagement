@@ -885,83 +885,99 @@ namespace ClinicManagement.ViewModels
         {
             if (SelectedStockEntry == null || !IsEditingStockEntry) return;
 
-            try
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
-                var dbContext = DataProvider.Instance.Context;
-
-                var stockInToUpdate = dbContext.StockIns.Find(SelectedStockEntry.StockIn.StockInId);
-
-                if (stockInToUpdate != null)
+                try
                 {
-                    // Calculate the quantity difference
-                    int quantityDiff = EditStockQuantity - stockInToUpdate.Quantity;
-                    int remainQuantityDiff = EditRemainQuantity - stockInToUpdate.RemainQuantity;
+                    var dbContext = DataProvider.Instance.Context;
 
-                    // Check if this stock is usable based on expiry date
-                    var today = DateOnly.FromDateTime(DateTime.Today);
-                    var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+                    var stockInToUpdate = dbContext.StockIns.Find(SelectedStockEntry.StockIn.StockInId);
 
-                    // Convert EditExpiryDate to DateOnly if it has a value
-                    DateOnly? expiryDateOnly = EditExpiryDate.HasValue ?
-                        DateOnly.FromDateTime(EditExpiryDate.Value) : null;
-
-                    bool isUsable = !expiryDateOnly.HasValue || expiryDateOnly.Value >= minimumExpiryDate;
-
-                    // Update StockIn record
-                    stockInToUpdate.Quantity = EditStockQuantity;
-                    stockInToUpdate.RemainQuantity = EditRemainQuantity;
-                    stockInToUpdate.UnitPrice = EditUnitPrice;
-                    stockInToUpdate.SellPrice = EditSellPrice;
-                    stockInToUpdate.ProfitMargin = EditProfitMargin;
-                    stockInToUpdate.TotalCost = EditUnitPrice * EditStockQuantity;
-                    stockInToUpdate.ExpiryDate = expiryDateOnly;
-
-                    // Update supplier if changed
-                    if (EditSupplier != null)
+                    if (stockInToUpdate != null)
                     {
-                        stockInToUpdate.SupplierId = EditSupplier.SupplierId;
-                    }
+                        // Calculate the quantity difference
+                        int quantityDiff = EditStockQuantity - stockInToUpdate.Quantity;
+                        int remainQuantityDiff = EditRemainQuantity - stockInToUpdate.RemainQuantity;
 
-                    // Update Stock record if quantity changed
-                    if (quantityDiff != 0 || remainQuantityDiff != 0)
-                    {
-                        var stockToUpdate = dbContext.Stocks
-                            .FirstOrDefault(s => s.MedicineId == stockInToUpdate.MedicineId);
+                        // Check if this stock is usable based on expiry date
+                        var today = DateOnly.FromDateTime(DateTime.Today);
+                        var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
 
-                        if (stockToUpdate != null)
+                        // Convert EditExpiryDate to DateOnly if it has a value
+                        DateOnly? expiryDateOnly = EditExpiryDate.HasValue ?
+                            DateOnly.FromDateTime(EditExpiryDate.Value) : null;
+
+                        bool isUsable = !expiryDateOnly.HasValue || expiryDateOnly.Value >= minimumExpiryDate;
+
+                        // Update StockIn record
+                        stockInToUpdate.Quantity = EditStockQuantity;
+                        stockInToUpdate.RemainQuantity = EditRemainQuantity;
+                        stockInToUpdate.UnitPrice = EditUnitPrice;
+                        stockInToUpdate.SellPrice = EditSellPrice;
+                        stockInToUpdate.ProfitMargin = EditProfitMargin;
+                        stockInToUpdate.TotalCost = EditUnitPrice * EditStockQuantity;
+                        stockInToUpdate.ExpiryDate = expiryDateOnly;
+
+                    
+
+                        // Update supplier if changed
+                        if (EditSupplier != null)
                         {
-                            stockToUpdate.Quantity += remainQuantityDiff; // Update by remain quantity diff
-                            if (isUsable)
-                                stockToUpdate.UsableQuantity += remainQuantityDiff;
-                            stockToUpdate.LastUpdated = DateTime.Now;
+                            stockInToUpdate.SupplierId = EditSupplier.SupplierId;
                         }
+
+                        // Update Stock record if quantity changed
+                        if (quantityDiff != 0 || remainQuantityDiff != 0)
+                        {
+                            var stockToUpdate = dbContext.Stocks
+                                .FirstOrDefault(s => s.MedicineId == stockInToUpdate.MedicineId);
+
+                            if (stockToUpdate != null)
+                            {
+                                stockToUpdate.Quantity += remainQuantityDiff; // Update by remain quantity diff
+                                if (isUsable)
+                                    stockToUpdate.UsableQuantity += remainQuantityDiff;
+                                stockToUpdate.LastUpdated = DateTime.Now;
+                            }
+                        }
+
+                        // Lưu các thay đổi vào cơ sở dữ liệu
+                        dbContext.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        MessageBoxService.ShowSuccess(
+                            "Thông tin lô nhập kho đã được cập nhật thành công!",
+                            "Thành công"
+                        );
+
+                        // Refresh data after saving
+                        RefreshMedicineData();
+                        IsEditingStockEntry = false;
                     }
-
-                    dbContext.SaveChanges();
-
-                    MessageBoxService.ShowSuccess(
-                        "Thông tin lô nhập kho đã được cập nhật thành công!",
-                        "Thành công"
-                    );
-
-                    // Refresh data after saving
-                    RefreshMedicineData();
-                    IsEditingStockEntry = false;
+                    else
+                    {
+                        MessageBoxService.ShowError(
+                            "Không tìm thấy lô nhập kho trong cơ sở dữ liệu.",
+                            "Lỗi"
+                        );
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
+                    // Hoàn tác giao dịch nếu có lỗi xảy ra
+                    transaction.Rollback();
+
+                    // Ghi log lỗi
+                    System.Diagnostics.Debug.WriteLine($"Lỗi khi lưu thông tin lô thuốc: {ex.Message}");
+
                     MessageBoxService.ShowError(
-                        "Không tìm thấy lô nhập kho trong cơ sở dữ liệu.",
+                        $"Lỗi khi lưu thông tin lô nhập kho: {ex.Message}",
                         "Lỗi"
                     );
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError(
-                    $"Lỗi khi lưu thông tin lô nhập kho: {ex.Message}",
-                    "Lỗi"
-                );
             }
         }
 
@@ -975,63 +991,77 @@ namespace ClinicManagement.ViewModels
         {
             if (stockEntry == null) return;
 
-            try
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
-                var context = DataProvider.Instance.Context;
-
-                // Reset tất cả các lô thuốc của medicine này về false
-                var allBatches = context.StockIns
-                    .Where(si => si.MedicineId == Medicine.MedicineId)
-                    .ToList();
-
-                foreach (var batch in allBatches)
+                try
                 {
-                    batch.IsSelling = false;
-                }
+                    var context = DataProvider.Instance.Context;
 
-                // Đặt lô được chọn thành lô đang bán
-                var stockInToUpdate = context.StockIns.Find(stockEntry.StockIn.StockInId);
-                if (stockInToUpdate != null)
+                    // Reset tất cả các lô thuốc của medicine này về false
+                    var allBatches = context.StockIns
+                        .Where(si => si.MedicineId == Medicine.MedicineId)
+                        .ToList();
+
+                    foreach (var batch in allBatches)
+                    {
+                        batch.IsSelling = false;
+                    }
+
+                    // Đặt lô được chọn thành lô đang bán
+                    var stockInToUpdate = context.StockIns.Find(stockEntry.StockIn.StockInId);
+                    if (stockInToUpdate != null)
+                    {
+                        stockInToUpdate.IsSelling = true;
+
+                        // Cập nhật trạng thái trong UI trước khi lưu database
+                        foreach (var item in DetailedStockList)
+                        {
+                            item.IsCurrentSellingBatch = (item.StockIn.StockInId == stockEntry.StockIn.StockInId);
+                        }
+
+                        // Kiểm tra nếu lô này gần hết hạn hoặc đã hết hạn
+                        if (stockEntry.IsExpired)
+                        {
+                            MessageBoxService.ShowWarning(
+                                "Bạn đang chọn một lô thuốc đã hết hạn làm lô đang bán.\n" +
+                                "Việc này có thể ảnh hưởng đến an toàn thuốc.",
+                                "Cảnh báo: Lô hết hạn"
+                            );
+                        }
+                        else if (stockEntry.IsNearExpiry)
+                        {
+                            MessageBoxService.ShowWarning(
+                                "Bạn đang chọn một lô thuốc sắp hết hạn làm lô đang bán.\n" +
+                                $"Lô thuốc này sẽ hết hạn vào ngày {stockEntry.ExpiryDate:dd/MM/yyyy}.",
+                                "Cảnh báo: Lô gần hết hạn"
+                            );
+                        }
+
+                        // Lưu thay đổi vào cơ sở dữ liệu
+                        context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        MessageBoxService.ShowSuccess(
+                            $"Đã đặt lô thuốc (mã: {stockInToUpdate.StockInId}) làm lô đang bán.",
+                            "Thành công"
+                        );
+
+                        // Cập nhật lại thông tin hiển thị
+                        RefreshMedicineData();
+                    }
+                }
+                catch (Exception ex)
                 {
-                    stockInToUpdate.IsSelling = true;
+                    // Hoàn tác giao dịch nếu có lỗi xảy ra
+                    transaction.Rollback();
 
-                    // Cập nhật trạng thái trong UI trước khi lưu database
-                    foreach (var item in DetailedStockList)
-                    {
-                        item.IsCurrentSellingBatch = (item.StockIn.StockInId == stockEntry.StockIn.StockInId);
-                    }
+          
 
-                    // Kiểm tra nếu lô này gần hết hạn hoặc đã hết hạn
-                    if (stockEntry.IsExpired)
-                    {
-                        MessageBoxService.ShowWarning(
-                            "Bạn đang chọn một lô thuốc đã hết hạn làm lô đang bán.\n" +
-                            "Việc này có thể ảnh hưởng đến an toàn thuốc.",
-                            "Cảnh báo: Lô hết hạn"
-                        );
-                    }
-                    else if (stockEntry.IsNearExpiry)
-                    {
-                        MessageBoxService.ShowWarning(
-                            "Bạn đang chọn một lô thuốc sắp hết hạn làm lô đang bán.\n" +
-                            $"Lô thuốc này sẽ hết hạn vào ngày {stockEntry.ExpiryDate:dd/MM/yyyy}.",
-                            "Cảnh báo: Lô gần hết hạn"
-                        );
-                    }
-
-                    context.SaveChanges();
-                    MessageBoxService.ShowSuccess(
-                        $"Đã đặt lô thuốc (mã: {stockInToUpdate.StockInId}) làm lô đang bán.",
-                        "Thành công"
-                    );
-
-                    // Cập nhật lại thông tin hiển thị
-                    RefreshMedicineData();
+                    MessageBoxService.ShowError($"Lỗi khi cập nhật lô thuốc đang bán: {ex.Message}", "Lỗi");
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi cập nhật lô thuốc đang bán: {ex.Message}", "Lỗi");
             }
         }
 

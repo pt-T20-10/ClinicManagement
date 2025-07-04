@@ -128,118 +128,15 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+        private MainViewModel _mainViewModel;
 
         #endregion
 
-        #region Application Settings Properties
-        private MainViewModel _mainViewModel; 
-
-        private ObservableCollection<FontFamily> _fontFamilies;
-        public ObservableCollection<FontFamily> FontFamilies
-        {
-            get => _fontFamilies;
-            set
-            {
-                _fontFamilies = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private FontFamily _selectedFontFamily;
-        public FontFamily SelectedFontFamily
-        {
-            get => _selectedFontFamily;
-            set
-            {
-                _selectedFontFamily = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private double _fontSize = 13;
-        public double FontSize
-        {
-            get => _fontSize;
-            set
-            {
-                _fontSize = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _isLightTheme = true;
-        public bool IsLightTheme
-        {
-            get => _isLightTheme;
-            set
-            {
-                _isLightTheme = value;
-                OnPropertyChanged();
-                if (value)
-                {
-                    IsDarkTheme = false;
-                    UpdatePreviewColors();
-                }
-            }
-        }
-
-        private bool _isDarkTheme;
-        public bool IsDarkTheme
-        {
-            get => _isDarkTheme;
-            set
-            {
-                _isDarkTheme = value;
-                OnPropertyChanged();
-                if (value)
-                {
-                    IsLightTheme = false;
-                    UpdatePreviewColors();
-                }
-            }
-        }
-
-        private SolidColorBrush _previewBackground;
-        public SolidColorBrush PreviewBackground
-        {
-            get => _previewBackground;
-            set
-            {
-                _previewBackground = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private SolidColorBrush _previewForeground;
-        public SolidColorBrush PreviewForeground
-        {
-            get => _previewForeground;
-            set
-            {
-                _previewForeground = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private SolidColorBrush _primaryColorBrush;
-        public SolidColorBrush PrimaryColorBrush
-        {
-            get => _primaryColorBrush;
-            set
-            {
-                _primaryColorBrush = value;
-                OnPropertyChanged();
-            }
-        }
-
-        #endregion
 
         #region Commands
 
         public ICommand UpdateDoctorInfoCommand { get; set; }
         public ICommand ChangePasswordCommand { get; set; }
-        public ICommand SaveSettingsCommand { get; set; }
-        public ICommand ResetSettingsCommand { get; set; }
         public ICommand LoadedCommand { get; set; }
         public ICommand SignOutCommand { get; set; }
 
@@ -254,11 +151,6 @@ namespace ClinicManagement.ViewModels
             // Initialize commands
             InitializeCommands();
             
-            // Initialize font families
-            InitializeFontFamilies();
-            
-            // Initialize colors for preview
-            InitializeColors();
             
             // Load doctor information when MainViewModel's CurrentAccount changes
             MainViewModel mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
@@ -291,16 +183,6 @@ namespace ClinicManagement.ViewModels
                 p => _currentAccount != null
             );
 
-            SaveSettingsCommand = new RelayCommand<object>(
-                p => SaveSettings(),
-                p => true
-            );
-
-            ResetSettingsCommand = new RelayCommand<object>(
-                p => ResetSettings(),
-                p => true
-            );
-
             LoadedCommand = new RelayCommand<object>(
                 p => {
                     // Refresh data when control is loaded
@@ -323,7 +205,6 @@ namespace ClinicManagement.ViewModels
         {
             return _mainViewModel != null && _mainViewModel.CurrentAccount != null;
         }
-
 
         private void ExecuteSignOut()
         {
@@ -383,38 +264,6 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi đăng xuất: {ex.Message}", "Lỗi");
-            }
-        }
-
-
-        private void InitializeFontFamilies()
-        {
-            FontFamilies = new ObservableCollection<FontFamily>(Fonts.SystemFontFamilies.OrderBy(f => f.Source));
-            SelectedFontFamily = Fonts.SystemFontFamilies.FirstOrDefault(f => f.Source == "Segoe UI") 
-                ?? Fonts.SystemFontFamilies.FirstOrDefault();
-        }
-
-        private void InitializeColors()
-        {
-            // Default colors
-            PreviewBackground = new SolidColorBrush(Colors.White);
-            PreviewForeground = new SolidColorBrush(Colors.Black);
-            PrimaryColorBrush = new SolidColorBrush(Color.FromRgb(63, 81, 181)); // Material Design primary color
-            
-            UpdatePreviewColors();
-        }
-
-        private void UpdatePreviewColors()
-        {
-            if (IsDarkTheme)
-            {
-                PreviewBackground = new SolidColorBrush(Color.FromRgb(48, 48, 48));
-                PreviewForeground = new SolidColorBrush(Colors.White);
-            }
-            else
-            {
-                PreviewBackground = new SolidColorBrush(Colors.White);
-                PreviewForeground = new SolidColorBrush(Colors.Black);
             }
         }
 
@@ -547,42 +396,5 @@ namespace ClinicManagement.ViewModels
             changePasswordWindow.ShowDialog();
         }
 
-
-
-        private void SaveSettings()
-        {
-            try
-            {
-                // Save application settings (this would typically use a settings service)
-                MessageBoxService.ShowSuccess("Đã lưu cài đặt ứng dụng thành công!", 
-                               "Thành Công"   );
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi lưu cài đặt: {ex.Message}", 
-                               "Lỗi"    );
-            }
-        }
-
-        private void ResetSettings()
-        {
-            try
-            {
-                // Reset to default settings
-                FontSize = 13;
-                SelectedFontFamily = Fonts.SystemFontFamilies.FirstOrDefault(f => f.Source == "Segoe UI") 
-                    ?? Fonts.SystemFontFamilies.FirstOrDefault();
-                IsLightTheme = true;
-                PrimaryColorBrush = new SolidColorBrush(Color.FromRgb(63, 81, 181));
-                
-                MessageBoxService.ShowSuccess("Đã đặt lại cài đặt về mặc định!", 
-                               "Thành Công"     );
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi đặt lại cài đặt: {ex.Message}", 
-                               "Lỗi"    );
-            }
-        }
     }
 }

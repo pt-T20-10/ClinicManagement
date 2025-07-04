@@ -441,7 +441,6 @@ namespace ClinicManagement.ViewModels
             GenderOptions = new ObservableCollection<string> { "Nam", "Nữ", "Khác" };
         }
 
-
         private void InitializeCommands()
         {
             LoadedWindowCommand = new RelayCommand<Window>(
@@ -742,22 +741,6 @@ namespace ClinicManagement.ViewModels
         }
 
 
-
-       
-        private bool CanDeletePatientt()
-        {
-            if (Patient == null)
-                return false;
-
-            // Check if patient has any active appointments
-            bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
-                .Any(a => a.PatientId == Patient.PatientId &&
-                      (a.Status == "Đang chờ" || a.Status == "Đã khám" || a.Status == "Đã hủy") &&
-                      a.IsDeleted != true);
-
-            return !hasActiveAppointments;
-        }
-
         private void UpdatePatient()
         {
             try
@@ -766,45 +749,58 @@ namespace ClinicManagement.ViewModels
                 if (!ValidatePatient())
                     return;
 
-                // Find the patient in database
-                var patientToUpdate = DataProvider.Instance.Context.Patients
-                    .FirstOrDefault(p => p.PatientId == PatientId);
-
-                if (patientToUpdate == null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowError("Không tìm thấy thông tin bệnh nhân!", "Lỗi"    );
-                    return;
+                    try
+                    {
+                        // Find the patient in database
+                        var patientToUpdate = DataProvider.Instance.Context.Patients
+                            .FirstOrDefault(p => p.PatientId == PatientId);
+
+                        if (patientToUpdate == null)
+                        {
+                            MessageBoxService.ShowError("Không tìm thấy thông tin bệnh nhân!", "Lỗi");
+                            return;
+                        }
+
+                        // Update patient information
+                        patientToUpdate.FullName = FullName?.Trim();
+                        patientToUpdate.DateOfBirth = DateOfBirth.HasValue ? DateOnly.FromDateTime(DateOfBirth.Value) : null;
+                        patientToUpdate.PatientTypeId = PatientTypeId;
+                        patientToUpdate.Gender = Gender;
+                        patientToUpdate.Phone = Phone?.Trim();
+                        patientToUpdate.Address = Address?.Trim();
+                        patientToUpdate.InsuranceCode = InsuranceCode?.Trim();
+
+                        // Save changes to database
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Commit transaction when all changes are successful
+                        transaction.Commit();
+
+                        // Refresh the current data from database
+                        var refreshedPatient = DataProvider.Instance.Context.Patients
+                            .Include(p => p.PatientType)
+                            .FirstOrDefault(p => p.PatientId == PatientId);
+
+                        MessageBoxService.ShowSuccess("Thông tin bệnh nhân đã được cập nhật thành công!",
+                                   "Thông báo");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction if any error occurs
+                        transaction.Rollback();
+
+                        // Re-throw the exception to be caught by the outer try-catch
+                        throw;
+                    }
                 }
-
-                // Update patient information
-                patientToUpdate.FullName = FullName?.Trim();
-                patientToUpdate.DateOfBirth = DateOfBirth.HasValue ? DateOnly.FromDateTime(DateOfBirth.Value) : null;
-                patientToUpdate.PatientTypeId = PatientTypeId;
-                patientToUpdate.Gender = Gender;
-                patientToUpdate.Phone = Phone?.Trim();
-                patientToUpdate.Address = Address?.Trim();
-                patientToUpdate.InsuranceCode = InsuranceCode?.Trim();
-
-                // Save changes to database
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh the current data from database
-                var refreshedPatient = DataProvider.Instance.Context.Patients
-                    .Include(p => p.PatientType)
-                    .FirstOrDefault(p => p.PatientId == PatientId);
-
-
-                MessageBoxService.ShowSuccess("Thông tin bệnh nhân đã được cập nhật thành công!",
-                               "Thông báo"
-                                
-                                 );
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi cập nhật thông tin: {ex.Message}",
-                               "Lỗi"
-                                
-                                );
+                           "Lỗi");
             }
         }
 
@@ -823,41 +819,56 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowWarning(
                         "Không thể xóa bệnh nhân này vì còn lịch hẹn đang chờ hoặc đang khám.\n" +
                         "Vui lòng hủy tất cả lịch hẹn trước khi xóa bệnh nhân.",
-                        "Cánh báo"
-                         
-                          );
+                        "Cánh báo");
                     return;
                 }
 
-                 bool  result = MessageBoxService.ShowQuestion(
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc chắn muốn xóa bệnh nhân {Patient.FullName} không?",
-                    "Xác nhận xóa"
-                     
-                      );
+                    "Xác nhận xóa");
 
                 if (result)
                 {
-                    var patientToDelete = DataProvider.Instance.Context.Patients
-                        .FirstOrDefault(p => p.PatientId == Patient.PatientId);
-
-                    if (patientToDelete != null)
+                    // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                    using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                     {
-                        // Soft delete
-                        patientToDelete.IsDeleted = true;
-                        DataProvider.Instance.Context.SaveChanges();
+                        try
+                        {
+                            var patientToDelete = DataProvider.Instance.Context.Patients
+                                .FirstOrDefault(p => p.PatientId == Patient.PatientId);
 
-                        MessageBoxService.ShowSuccess("Đã xóa bệnh nhân thành công!", "Thông báo"     );
+                            if (patientToDelete != null)
+                            {
+                                // Soft delete
+                                patientToDelete.IsDeleted = true;
+                                DataProvider.Instance.Context.SaveChanges();
 
-                        // Close the window after deletion
-                        _window?.Close();
+                                // Commit transaction when deletion is successful
+                                transaction.Commit();
+
+                                MessageBoxService.ShowSuccess("Đã xóa bệnh nhân thành công!", "Thông báo");
+
+                                // Close the window after deletion
+                                _window?.Close();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Rollback transaction if any error occurs
+                            transaction.Rollback();
+
+                            // Re-throw the exception to be caught by the outer try-catch
+                            throw;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi xóa bệnh nhân: {ex.Message}", "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi xóa bệnh nhân: {ex.Message}", "Lỗi");
             }
         }
+
 
         private void FilterMedicalRecords()
         {

@@ -277,59 +277,6 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region Command Methods
-        private void AcceptAppointment()
-        {
-            try
-            {
-                if (OriginalAppointment == null)
-                    return;
-
-                // Get the MainWindow instance
-                var mainWindow = Application.Current.MainWindow;
-                if (mainWindow == null)
-                {
-                    MessageBoxService.ShowError("Không thể tìm thấy cửa sổ chính của ứng dụng.", "Lỗi");
-                    return;
-                }
-
-                // Find the TabControl in the MainWindow
-                var mainTabControl = mainWindow.FindName("MainTabControl") as TabControl;
-                if (mainTabControl == null)
-                {
-                    MessageBoxService.ShowError("Không thể tìm thấy TabControl trong cửa sổ chính.", "Lỗi");
-                    return;
-                }
-
-                // Select the ExamineUC tab (index 2)
-                mainTabControl.SelectedIndex = 2;
-
-                // Find the ExamineUC user control
-                var examineUC = mainTabControl.SelectedContent as ExamineUC;
-                if (examineUC == null)
-                {
-                    MessageBoxService.ShowError("Không thể tìm thấy giao diện khám bệnh.", "Lỗi");
-                    return;
-                }
-
-                // Create a new ExamineViewModel with Patient and Appointment objects
-                var examineViewModel = new ExamineViewModel(OriginalAppointment.Patient, OriginalAppointment);
-
-                // Set the DataContext for the ExamineUC
-                examineUC.DataContext = examineViewModel;
-
-
-               
-
-                MessageBoxService.ShowSuccess($"Đã chuyển đến phần khám bệnh cho bệnh nhân {OriginalAppointment.Patient.FullName}.", "Thành công");
-                _window?.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Đã xảy ra lỗi khi tiến hành khám: {ex.Message}", "Lỗi");
-            }
-        }
-
-
         private bool CanEditAppointment()
         {
             return OriginalAppointment != null &&
@@ -345,23 +292,24 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Kiểm tra xem lịch hẹn có tồn tại không
                 if (OriginalAppointment == null) return;
 
-                // Verify time slot validity
+                // Xác thực thời gian đã chọn
                 if (!ValidateDateTimeSelection())
                 {
                     MessageBoxService.ShowError(TimeSlotError, "Lỗi - Thời gian không hợp lệ");
                     return;
                 }
 
-                // Check if appointment type is selected
+                // Kiểm tra loại lịch hẹn đã được chọn chưa
                 if (SelectedAppointmentType == null)
                 {
                     MessageBoxService.ShowWarning("Vui lòng chọn loại lịch hẹn", "Thiếu thông tin");
                     return;
                 }
 
-                // Combine date and time for actual appointment time
+                // Kết hợp ngày và giờ thành thời gian lịch hẹn thực tế
                 DateTime appointmentDateTime = new DateTime(
                     AppointmentDate.Value.Year,
                     AppointmentDate.Value.Month,
@@ -370,8 +318,8 @@ namespace ClinicManagement.ViewModels
                     SelectedAppointmentTime.Value.Minute,
                     0);
 
-                // Ask for confirmation
-               bool result = MessageBoxService.ShowQuestion(
+                // Yêu cầu xác nhận từ người dùng
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có muốn cập nhật lịch hẹn với thông tin sau không?\n" +
                     $"- Bác sĩ: {SelectedDoctor.FullName}\n" +
                     $"- Loại lịch hẹn: {SelectedAppointmentType.TypeName}\n" +
@@ -382,29 +330,44 @@ namespace ClinicManagement.ViewModels
                 if (!result)
                     return;
 
-                // Update appointment
-                var appointmentToUpdate = DataProvider.Instance.Context.Appointments
-                    .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
-
-                if (appointmentToUpdate != null)
+                // Sử dụng giao dịch để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Update appointment information
-                    appointmentToUpdate.StaffId = SelectedDoctor.StaffId;
-                    appointmentToUpdate.AppointmentDate = appointmentDateTime;
-                    appointmentToUpdate.AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId;
+                    try
+                    {
+                        // Tìm lịch hẹn trong cơ sở dữ liệu
+                        var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                            .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
 
-                    // Save to database
-                    DataProvider.Instance.Context.SaveChanges();
+                        if (appointmentToUpdate != null)
+                        {
+                            // Cập nhật thông tin lịch hẹn
+                            appointmentToUpdate.StaffId = SelectedDoctor.StaffId;
+                            appointmentToUpdate.AppointmentDate = appointmentDateTime;
+                            appointmentToUpdate.AppointmentTypeId = SelectedAppointmentType.AppointmentTypeId;
 
-                    // Refresh the appointment data
-                    OriginalAppointment = DataProvider.Instance.Context.Appointments
-                        .Include(a => a.Patient)
-               
-                        .Include(a => a.Staff)
-                        .Include(a => a.AppointmentType)
-                        .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.SaveChanges();
 
-                    MessageBoxService.ShowSuccess("Lịch hẹn đã được cập nhật thành công!", "Thành công");
+                            // Commit transaction khi thành công
+                            transaction.Commit();
+
+                            // Làm mới dữ liệu lịch hẹn từ cơ sở dữ liệu
+                            OriginalAppointment = DataProvider.Instance.Context.Appointments
+                                .Include(a => a.Patient)
+                                .Include(a => a.Staff)
+                                .Include(a => a.AppointmentType)
+                                .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
+
+                            MessageBoxService.ShowSuccess("Lịch hẹn đã được cập nhật thành công!", "Thành công");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction nếu xảy ra lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để được xử lý bởi khối catch bên ngoài
+                    }
                 }
             }
             catch (Exception ex)
@@ -413,21 +376,21 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         private void CancelAppointment()
         {
             try
             {
+                // Kiểm tra xem lịch hẹn có tồn tại không
                 if (OriginalAppointment == null) return;
 
-                // Check if there's a reason for cancellation 
+                // Kiểm tra xem có lý do hủy lịch hẹn không
                 if (string.IsNullOrWhiteSpace(OriginalAppointment.Notes))
                 {
                     MessageBoxService.ShowWarning("Vui lòng nhập lý do hủy lịch hẹn.", "Thiếu thông tin");
                     return;
                 }
 
-                // Ask for confirmation
+                // Yêu cầu xác nhận từ người dùng
                 bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
                     "Xác nhận hủy");
@@ -435,29 +398,46 @@ namespace ClinicManagement.ViewModels
                 if (!result)
                     return;
 
-                // Update appointment status
-                var appointmentToUpdate = DataProvider.Instance.Context.Appointments
-                    .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
-
-                if (appointmentToUpdate != null)
+                // Sử dụng giao dịch để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    appointmentToUpdate.Status = "Đã hủy";
-                    // Notes should already be updated via binding to OriginalAppointment.Notes
+                    try
+                    {
+                        // Tìm lịch hẹn trong cơ sở dữ liệu
+                        var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                            .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
 
-                    // Save changes
-                    DataProvider.Instance.Context.SaveChanges();
+                        if (appointmentToUpdate != null)
+                        {
+                            // Cập nhật trạng thái lịch hẹn thành "Đã hủy"
+                            appointmentToUpdate.Status = "Đã hủy";
+                            // Lý do hủy đã được cập nhật thông qua binding với OriginalAppointment.Notes
 
-                    // Refresh the appointment data
-                    OriginalAppointment = DataProvider.Instance.Context.Appointments
-                        .Include(a => a.Patient)
-                        .Include(a => a.Staff)
-                        .Include(a => a.AppointmentType)
-                        .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.SaveChanges();
 
-                    MessageBoxService.ShowSuccess("Lịch hẹn đã được hủy thành công!", "Thành công");
+                            // Commit transaction khi thành công
+                            transaction.Commit();
 
-                    // Close the window after cancellation
-                    _window?.Close();
+                            // Làm mới dữ liệu lịch hẹn từ cơ sở dữ liệu
+                            OriginalAppointment = DataProvider.Instance.Context.Appointments
+                                .Include(a => a.Patient)
+                                .Include(a => a.Staff)
+                                .Include(a => a.AppointmentType)
+                                .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
+
+                            MessageBoxService.ShowSuccess("Lịch hẹn đã được hủy thành công!", "Thành công");
+
+                            // Đóng cửa sổ sau khi hủy
+                            _window?.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction nếu xảy ra lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để được xử lý bởi khối catch bên ngoài
+                    }
                 }
             }
             catch (Exception ex)
@@ -465,6 +445,80 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Đã xảy ra lỗi khi hủy lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
+
+        private void AcceptAppointment()
+        {
+            try
+            {
+                // Kiểm tra xem lịch hẹn có tồn tại không
+                if (OriginalAppointment == null)
+                    return;
+
+                // Sử dụng giao dịch để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // Cập nhật trạng thái lịch hẹn thành "Đang khám"
+                        var appointmentToUpdate = DataProvider.Instance.Context.Appointments
+                            .FirstOrDefault(a => a.AppointmentId == OriginalAppointment.AppointmentId);
+
+                        if (appointmentToUpdate != null)
+                        {
+                            appointmentToUpdate.Status = "Đang khám";
+                            DataProvider.Instance.Context.SaveChanges();
+                        }
+
+                        // Lấy MainWindow
+                        var mainWindow = Application.Current.MainWindow;
+                        if (mainWindow == null)
+                        {
+                            throw new Exception("Không thể tìm thấy cửa sổ chính của ứng dụng.");
+                        }
+
+                        // Tìm TabControl trong MainWindow
+                        var mainTabControl = mainWindow.FindName("MainTabControl") as TabControl;
+                        if (mainTabControl == null)
+                        {
+                            throw new Exception("Không thể tìm thấy TabControl trong cửa sổ chính.");
+                        }
+
+                        // Chọn tab ExamineUC (index 2)
+                        mainTabControl.SelectedIndex = 2;
+
+                        // Tìm ExamineUC user control
+                        var examineUC = mainTabControl.SelectedContent as ExamineUC;
+                        if (examineUC == null)
+                        {
+                            throw new Exception("Không thể tìm thấy giao diện khám bệnh.");
+                        }
+
+                        // Tạo ExamineViewModel mới với thông tin Patient và Appointment
+                        var examineViewModel = new ExamineViewModel(OriginalAppointment.Patient, OriginalAppointment);
+
+                        // Đặt DataContext cho ExamineUC
+                        examineUC.DataContext = examineViewModel;
+
+                        // Commit transaction khi tất cả các bước thành công
+                        transaction.Commit();
+
+                        MessageBoxService.ShowSuccess($"Đã chuyển đến phần khám bệnh cho bệnh nhân {OriginalAppointment.Patient.FullName}.", "Thành công");
+                        _window?.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction nếu xảy ra lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để được xử lý bởi khối catch bên ngoài
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi tiến hành khám: {ex.Message}", "Lỗi");
+            }
+        }
+
         #endregion
 
         #region Validation Methods

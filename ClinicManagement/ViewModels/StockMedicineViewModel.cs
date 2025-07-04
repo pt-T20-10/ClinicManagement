@@ -1271,10 +1271,6 @@ namespace ClinicManagement.ViewModels
             );
         }
 
-        
-    
-
-       
         #endregion
 
         #region Unit Methods
@@ -1289,74 +1285,87 @@ namespace ClinicManagement.ViewModels
             UnitName = "";
             UnitDescription = "";
         }
+
         private void AddUnit()
         {
             try
             {
-                // Confirm dialog
-                 bool  result = MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận trước khi thêm đơn vị
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn thêm đơn vị '{UnitName}' không?",
-                    "Xác Nhận Thêm"
-                     
-                      );
+                    "Xác Nhận Thêm");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Check if specialty already exists
-                bool isExist = DataProvider.Instance.Context.Units
-                    .Any(s => s.UnitName.Trim().ToLower() == UnitName.Trim().ToLower() && (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Đơn vị này đã tồn tại.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra đơn vị đã tồn tại chưa
+                        bool isExist = DataProvider.Instance.Context.Units
+                            .Any(s => s.UnitName.Trim().ToLower() == UnitName.Trim().ToLower() && (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Đơn vị này đã tồn tại.");
+                            return;
+                        }
+
+                        // Tạo đơn vị mới
+                        var newUnit = new Unit
+                        {
+                            UnitName = UnitName,
+                            Description = UnitDescription ?? "",
+                            IsDeleted = false
+                        };
+
+                        // Thêm đơn vị vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.Units.Add(newUnit);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Làm mới danh sách đơn vị
+                        UnitList = new ObservableCollection<Unit>(
+                            DataProvider.Instance.Context.Units
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Xóa các trường nhập liệu
+                        SelectedUnit = null;
+                        UnitName = "";
+                        UnitDescription = "";
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã thêm Đơn vị thành công!",
+                            "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                    }
                 }
-
-                // Add new specialty
-                var newUnit = new Unit
-                {
-                    UnitName = UnitName,
-                    Description = UnitDescription ?? "",
-                    IsDeleted = false
-                };
-
-                DataProvider.Instance.Context.Units.Add(newUnit);
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                UnitList = new ObservableCollection<Unit>(
-                    DataProvider.Instance.Context.Units
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Clear fields
-                SelectedUnit = null;
-                UnitName = ""; 
-                UnitDescription = "";
-
-                MessageBoxService.ShowSuccess(
-                    "Đã thêm Đơn vị thành công!",
-                    "Thành công"
-                     
-                      );
             }
             catch (DbUpdateException ex)
             {
+                // Xử lý lỗi cơ sở dữ liệu
                 MessageBoxService.ShowError(
                     $"Không thể thêm Đơn vị: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu"
-                     
-                     );
+                    "Lỗi Cơ Sở Dữ Liệu");
             }
             catch (Exception ex)
             {
+                // Xử lý các lỗi khác
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
 
@@ -1364,73 +1373,85 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Confirm dialog
-                 bool  result = MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận trước khi sửa đơn vị
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa đơn vị '{SelectedUnit.UnitName}' thành '{UnitName}' không?",
-                    "Xác Nhận Sửa"
-                     
-                      );
+                    "Xác Nhận Sửa");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Check if specialty name already exists (except for current)
-                bool isExist = DataProvider.Instance.Context.Units
-                    .Any(s => s.UnitName.Trim().ToLower() == UnitName.Trim().ToLower() &&
-                              s.UnitId != SelectedUnit.UnitId &&
-                             (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Tên đơn vị này đã tồn tại.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra tên đơn vị đã tồn tại chưa (trừ chính nó)
+                        bool isExist = DataProvider.Instance.Context.Units
+                            .Any(s => s.UnitName.Trim().ToLower() == UnitName.Trim().ToLower() &&
+                                    s.UnitId != SelectedUnit.UnitId &&
+                                    (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Tên đơn vị này đã tồn tại.");
+                            return;
+                        }
+
+                        // Tìm đơn vị cần cập nhật
+                        var unitToUpdate = DataProvider.Instance.Context.Units
+                            .FirstOrDefault(s => s.UnitId == SelectedUnit.UnitId);
+
+                        if (unitToUpdate == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy đơn vị cần sửa.");
+                            return;
+                        }
+
+                        // Cập nhật thông tin đơn vị
+                        unitToUpdate.UnitName = UnitName;
+                        unitToUpdate.Description = UnitDescription ?? "";
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Làm mới danh sách đơn vị
+                        UnitList = new ObservableCollection<Unit>(
+                            DataProvider.Instance.Context.Units
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Cập nhật danh sách thuốc vì tên đơn vị có thể đã thay đổi
+                        LoadData();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã cập nhật đơn vị thành công!",
+                            "Thành Công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                    }
                 }
-
-                // Update specialty
-                var unitToUpdate = DataProvider.Instance.Context.Units
-                    .FirstOrDefault(s => s.UnitId == SelectedUnit.UnitId);
-
-                if (unitToUpdate == null)
-                {
-                    MessageBoxService.ShowWarning("Không tìm thấy đơn vị cần sửa.");
-                    return;
-                }
-
-                unitToUpdate.UnitName = UnitName;
-                unitToUpdate.Description = UnitDescription ?? "";
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                UnitList = new ObservableCollection<Unit>(
-                    DataProvider.Instance.Context.Units
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Update doctor list as specialty names may have changed
-                LoadData();
-
-                MessageBoxService.ShowSuccess(
-                    "Đã cập nhật đơn vị thành công!",
-                    "Thành Công"
-                     
-                      );
             }
             catch (DbUpdateException ex)
             {
+                // Xử lý lỗi cơ sở dữ liệu
                 MessageBoxService.ShowError(
                     $"Không thể sửa đơn vị: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu"
-                     
-                     );
+                    "Lỗi Cơ Sở Dữ Liệu");
             }
             catch (Exception ex)
             {
+                // Xử lý các lỗi khác
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
 
@@ -1438,57 +1459,82 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-         
-                // Confirm deletion
-                 bool  result = MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận trước khi xóa đơn vị
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn xóa Đơn vị '{SelectedUnit.UnitName}' không?",
-                    "Xác nhận xóa"
-                     
-                      );
+                    "Xác nhận xóa");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Soft delete the specialty
-                var specialtyToDelete = DataProvider.Instance.Context.Units
-                    .FirstOrDefault(s => s.UnitId == SelectedUnit.UnitId);
-
-                if (specialtyToDelete == null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Không tìm thấy Đơn vị cần xóa.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra xem đơn vị có đang được sử dụng bởi thuốc nào không
+                        bool isInUse = DataProvider.Instance.Context.Medicines
+                            .Any(m => m.UnitId == SelectedUnit.UnitId && (bool)!m.IsDeleted);
+
+                        if (isInUse)
+                        {
+                            MessageBoxService.ShowWarning(
+                                "Không thể xóa đơn vị này vì đang được sử dụng bởi một hoặc nhiều thuốc.",
+                                "Cảnh báo");
+                            return;
+                        }
+
+                        // Tìm đơn vị cần xóa
+                        var unitToDelete = DataProvider.Instance.Context.Units
+                            .FirstOrDefault(s => s.UnitId == SelectedUnit.UnitId);
+
+                        if (unitToDelete == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy Đơn vị cần xóa.");
+                            return;
+                        }
+
+                        // Thực hiện xóa mềm bằng cách đánh dấu IsDeleted = true
+                        unitToDelete.IsDeleted = true;
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Làm mới danh sách đơn vị
+                        UnitList = new ObservableCollection<Unit>(
+                            DataProvider.Instance.Context.Units
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Xóa các trường nhập liệu
+                        SelectedUnit = null;
+                        UnitName = "";
+                        UnitDescription = "";
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã xóa đơn vị thành công.",
+                            "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                    }
                 }
-
-                specialtyToDelete.IsDeleted = true;
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                UnitList = new ObservableCollection<Unit>(
-                    DataProvider.Instance.Context.Units
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Clear selection and fields
-                SelectedUnit = null;
-                UnitName = "";
-                UnitDescription = "";
-
-                MessageBoxService.ShowSuccess(
-                    "Đã xóa đơn vị thành công.",
-                    "Thành công"
-                     
-                      );
             }
             catch (Exception ex)
             {
+                // Xử lý lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa đơn vị: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
+
         #endregion
 
         #region Category Methods
@@ -1807,175 +1853,217 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Enable validation for all fields when trying to submit
+                // Bật chế độ xác thực cho tất cả các trường khi thử gửi
                 _isValidating = true;
                 _touchedFields.Add(nameof(SupplierCode));
                 _touchedFields.Add(nameof(SupplierName));
 
-                // Trigger validation check for required fields
+                // Kích hoạt kiểm tra xác thực cho các trường bắt buộc
                 OnPropertyChanged(nameof(SupplierCode));
                 OnPropertyChanged(nameof(SupplierName));
 
-                // Check for validation errors
+                // Kiểm tra lỗi xác thực
                 if (HasErrors)
                 {
                     MessageBoxService.ShowError(
                         "Vui lòng sửa các lỗi nhập liệu trước khi thêm nhà cung cấp.",
-                        "Lỗi thông tin"
-                         
-                          );
+                        "Lỗi thông tin");
                     return;
                 }
 
-                // Check required fields
+                // Kiểm tra các trường bắt buộc
                 if (string.IsNullOrWhiteSpace(SupplierCode) || string.IsNullOrWhiteSpace(SupplierName))
                 {
                     MessageBoxService.ShowWarning(
                         "Mã nhà cung cấp và Tên nhà cung cấp là bắt buộc.",
-                        "Thiếu Thông Tin"
-                         
-                          );
+                        "Thiếu Thông Tin");
                     return;
                 }
 
-                // Confirm dialog
-                 bool  result = MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn thêm nhà cung cấp '{SupplierName}' không?",
-                    "Xác Nhận Thêm"
-                     
-                      );
+                    "Xác Nhận Thêm");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Check if supplier already exists (by code or name)
-                bool isExist = DataProvider.Instance.Context.Suppliers
-                    .Any(s => (s.SupplierCode.Trim().ToLower() == SupplierCode.Trim().ToLower() ||
-                              s.SupplierName.Trim().ToLower() == SupplierName.Trim().ToLower()) &&
-                              (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Nhà cung cấp này đã tồn tại (trùng mã hoặc tên).");
-                    return;
+                    try
+                    {
+                        // Kiểm tra nhà cung cấp đã tồn tại chưa (theo mã hoặc tên)
+                        bool isExist = DataProvider.Instance.Context.Suppliers
+                            .Any(s => (s.SupplierCode.Trim().ToLower() == SupplierCode.Trim().ToLower() ||
+                                      s.SupplierName.Trim().ToLower() == SupplierName.Trim().ToLower()) &&
+                                      (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Nhà cung cấp này đã tồn tại (trùng mã hoặc tên).");
+                            return;
+                        }
+
+                        // Tạo nhà cung cấp mới
+                        var newSupplier = new Supplier
+                        {
+                            SupplierCode = SupplierCode.Trim(),
+                            SupplierName = SupplierName.Trim(),
+                            Email = SupplierEmail?.Trim() ?? "",
+                            Phone = SupplierPhone?.Trim() ?? "",
+                            TaxCode = SupplierTaxCode?.Trim() ?? "",
+                            ContactPerson = ContactPerson?.Trim() ?? "",
+                            Address = SupplierAddress?.Trim() ?? "",
+                            IsActive = IsActive,
+                            IsDeleted = false
+                        };
+
+                        // Thêm nhà cung cấp vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.Suppliers.Add(newSupplier);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Xóa các trường và đặt lại trạng thái xác thực
+                        ClearForm();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã thêm nhà cung cấp thành công!",
+                            "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                    }
                 }
-
-                // Add new supplier
-                var newSupplier = new Supplier
-                {
-                    SupplierCode = SupplierCode.Trim(),
-                    SupplierName = SupplierName.Trim(),
-                    Email = SupplierEmail?.Trim() ?? "",
-                    Phone = SupplierPhone?.Trim() ?? "",
-                    TaxCode = SupplierTaxCode?.Trim() ?? "",
-                    ContactPerson = ContactPerson?.Trim() ?? "",
-                    Address = SupplierAddress?.Trim() ?? "",
-                    IsActive = IsActive,
-                    IsDeleted = false
-                };
-
-                DataProvider.Instance.Context.Suppliers.Add(newSupplier);
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Clear fields and reset validation state
-                ClearForm();
-
-                MessageBoxService.ShowSuccess(
-                    "Đã thêm nhà cung cấp thành công!",
-                    "Thành công"
-                     
-                      );
+            }
+            catch (DbUpdateException ex)
+            {
+                MessageBoxService.ShowError(
+                    $"Không thể thêm nhà cung cấp: {ex.InnerException?.Message ?? ex.Message}",
+                    "Lỗi cơ sở dữ liệu");
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
-
 
         private void EditSupplier()
         {
             try
             {
-                // Confirm dialog
-                 bool  result = MessageBoxService.ShowQuestion(
+                // Bật chế độ xác thực cho tất cả các trường
+                _isValidating = true;
+                _touchedFields.Add(nameof(SupplierCode));
+                _touchedFields.Add(nameof(SupplierName));
+
+                // Kích hoạt kiểm tra xác thực cho các trường bắt buộc
+                OnPropertyChanged(nameof(SupplierCode));
+                OnPropertyChanged(nameof(SupplierName));
+
+                // Kiểm tra lỗi xác thực
+                if (HasErrors)
+                {
+                    MessageBoxService.ShowError(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi cập nhật nhà cung cấp.",
+                        "Lỗi thông tin");
+                    return;
+                }
+
+                // Hiển thị hộp thoại xác nhận
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa nhà cung cấp '{SelectedSupplier.SupplierName}' thành '{SupplierName}' không?",
-                    "Xác Nhận Sửa"
-                     
-                      );
+                    "Xác Nhận Sửa");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Check if supplier code or name already exists (except for current)
-                bool isExist = DataProvider.Instance.Context.Suppliers
-                    .Any(s => (s.SupplierCode.Trim().ToLower() == SupplierCode.Trim().ToLower() ||
-                              s.SupplierName.Trim().ToLower() == SupplierName.Trim().ToLower()) &&
-                              s.SupplierId != SelectedSupplier.SupplierId &&
-                             (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Mã hoặc tên nhà cung cấp này đã tồn tại.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra mã hoặc tên nhà cung cấp đã tồn tại chưa (trừ chính nó)
+                        bool isExist = DataProvider.Instance.Context.Suppliers
+                            .Any(s => (s.SupplierCode.Trim().ToLower() == SupplierCode.Trim().ToLower() ||
+                                      s.SupplierName.Trim().ToLower() == SupplierName.Trim().ToLower()) &&
+                                      s.SupplierId != SelectedSupplier.SupplierId &&
+                                     (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Mã hoặc tên nhà cung cấp này đã tồn tại.");
+                            return;
+                        }
+
+                        // Tìm nhà cung cấp cần cập nhật
+                        var supplierToUpdate = DataProvider.Instance.Context.Suppliers
+                            .FirstOrDefault(s => s.SupplierId == SelectedSupplier.SupplierId);
+
+                        if (supplierToUpdate == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy nhà cung cấp cần sửa.");
+                            return;
+                        }
+
+                        // Cập nhật thông tin nhà cung cấp
+                        supplierToUpdate.SupplierCode = SupplierCode;
+                        supplierToUpdate.SupplierName = SupplierName;
+                        supplierToUpdate.Email = SupplierEmail ?? "";
+                        supplierToUpdate.Phone = SupplierPhone ?? "";
+                        supplierToUpdate.TaxCode = SupplierTaxCode ?? "";
+                        supplierToUpdate.ContactPerson = ContactPerson ?? "";
+                        supplierToUpdate.Address = SupplierAddress ?? "";
+                        supplierToUpdate.IsActive = IsActive;
+
+                        // Lưu thay đổi
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Làm mới dữ liệu
+                        SupplierList = new ObservableCollection<Supplier>(
+                            DataProvider.Instance.Context.Suppliers
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Cập nhật dữ liệu liên quan nếu cần
+                        LoadData();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã cập nhật nhà cung cấp thành công!",
+                            "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                    }
                 }
-
-                // Update supplier
-                var supplierToUpdate = DataProvider.Instance.Context.Suppliers
-                    .FirstOrDefault(s => s.SupplierId == SelectedSupplier.SupplierId);
-
-                if (supplierToUpdate == null)
-                {
-                    MessageBoxService.ShowWarning("Không tìm thấy nhà cung cấp cần sửa.");
-                    return;
-                }
-
-                supplierToUpdate.SupplierCode = SupplierCode;
-                supplierToUpdate.SupplierName = SupplierName;
-                supplierToUpdate.Email = SupplierEmail ?? "";
-                supplierToUpdate.Phone = SupplierPhone ?? "";
-                supplierToUpdate.TaxCode = SupplierTaxCode ?? "";
-                supplierToUpdate.ContactPerson = ContactPerson ?? "";
-                supplierToUpdate.Address = SupplierAddress ?? "";
-                supplierToUpdate.IsActive = IsActive;
-
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                SupplierList = new ObservableCollection<Supplier>(
-                    DataProvider.Instance.Context.Suppliers
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Update related data if needed
-                LoadData();
-
-                MessageBoxService.ShowSuccess(
-                    "Đã cập nhật nhà cung cấp thành công!",
-                    "Thành công"
-                     
-                      );
             }
             catch (DbUpdateException ex)
             {
                 MessageBoxService.ShowError(
                     $"Không thể sửa nhà cung cấp: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi cơ sở dữ liệu"
-                     
-                     );
+                    "Lỗi cơ sở dữ liệu");
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
 
@@ -1983,55 +2071,80 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                
+                // Kiểm tra xem nhà cung cấp có đang được sử dụng không
+                bool isInUse = DataProvider.Instance.Context.StockIns
+                    .Any(s => s.SupplierId == SelectedSupplier.SupplierId);
 
-                // Confirm deletion
-                 bool  result = MessageBoxService.ShowQuestion(
-                    $"Bạn có chắc muốn xóa nhà cung cấp '{SelectedSupplier.SupplierName}' không?",
-                    "Xác nhận xóa"
-                     
-                      );
-
-                if ( !result)
-                    return;
-
-                // Soft delete the supplier
-                var supplierToDelete = DataProvider.Instance.Context.Suppliers
-                    .FirstOrDefault(s => s.SupplierId == SelectedSupplier.SupplierId);
-
-                if (supplierToDelete == null)
+                if (isInUse)
                 {
-                    MessageBoxService.ShowWarning("Không tìm thấy nhà cung cấp cần xóa.");
+                    MessageBoxService.ShowWarning(
+                        "Không thể xóa nhà cung cấp này vì đang được sử dụng trong các lô thuốc đã nhập.",
+                        "Ràng buộc dữ liệu");
                     return;
                 }
 
-                supplierToDelete.IsDeleted = true;
-                DataProvider.Instance.Context.SaveChanges();
+                // Hiển thị hộp thoại xác nhận xóa
+                bool result = MessageBoxService.ShowQuestion(
+                    $"Bạn có chắc muốn xóa nhà cung cấp '{SelectedSupplier.SupplierName}' không?",
+                    "Xác nhận xóa");
 
-                // Refresh data
-                SupplierList = new ObservableCollection<Supplier>(
-                    DataProvider.Instance.Context.Suppliers
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
+                if (!result)
+                    return;
 
-                ClearForm();
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // Tìm nhà cung cấp cần xóa
+                        var supplierToDelete = DataProvider.Instance.Context.Suppliers
+                            .FirstOrDefault(s => s.SupplierId == SelectedSupplier.SupplierId);
 
-                MessageBoxService.ShowSuccess(
-                    "Đã xóa nhà cung cấp thành công.",
-                    "Thành công"
-                     
-                      );
+                        if (supplierToDelete == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy nhà cung cấp cần xóa.");
+                            return;
+                        }
+
+                        // Thực hiện xóa mềm
+                        supplierToDelete.IsDeleted = true;
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn thành giao dịch nếu mọi thứ thành công
+                        transaction.Commit();
+
+                        // Làm mới danh sách nhà cung cấp
+                        SupplierList = new ObservableCollection<Supplier>(
+                            DataProvider.Instance.Context.Suppliers
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Xóa các trường nhập liệu
+                        ClearForm();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã xóa nhà cung cấp thành công.",
+                            "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                    }
+                }
             }
             catch (Exception ex)
             {
+                // Xử lý lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa nhà cung cấp: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    "Lỗi");
             }
         }
+
 
 
         private void ExecuteAutoSupplierFilter()
@@ -2209,8 +2322,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
         // Phương thức để cập nhật tổng số lượng và giá trị tồn kho hiện tại
         private void UpdateCurrentTotals()
         {
@@ -2289,6 +2400,7 @@ namespace ClinicManagement.ViewModels
                      );
             }
         }
+
         private void ResetSupplierFilters()
         {
             SupplierSearchText = string.Empty;
@@ -2773,8 +2885,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
         // Method to check if there's already a stock summary for current month
         private bool HasCurrentMonthStock(ClinicDbContext context = null)
         {
@@ -2805,22 +2915,23 @@ namespace ClinicManagement.ViewModels
         }
 
         // Method to execute manual generation of monthly stock
+
         /// <summary>
-        /// Executes manual generation of monthly stock with improved month selection logic
+        /// Thực hiện tổng kết tồn kho tháng một cách thủ công với xác nhận người dùng
         /// </summary>
         private void ExecuteManualGenerateMonthlyStock()
         {
             try
             {
-                // Use the currently selected month and year from UI controls
+                // Lấy tháng và năm đã chọn từ giao diện
                 int targetYear = SelectedYear;
                 int targetMonth = SelectedMonth;
 
-                // Format month and year for display
+                // Định dạng tháng/năm để hiển thị và lưu trữ
                 string monthYearFormat = $"{targetYear:D4}-{targetMonth:D2}";
                 string monthName = new DateTime(targetYear, targetMonth, 1).ToString("MMMM yyyy");
 
-                // Check if monthly stock data already exists for this month
+                // Kiểm tra dữ liệu tồn kho tháng đã tồn tại chưa
                 bool hasExistingData = false;
                 using (var context = new ClinicDbContext())
                 {
@@ -2828,21 +2939,15 @@ namespace ClinicManagement.ViewModels
                         .Any(ms => ms.MonthYear == monthYearFormat);
                 }
 
-                // Prepare the confirmation message
-                string confirmMessage;
-                if (hasExistingData)
-                {
-                    confirmMessage = $"Đã tồn tại dữ liệu tổng kết tồn kho cho tháng {targetMonth}/{targetYear}.\n" +
-                                    $"Bạn có chắc chắn muốn cập nhật lại không?";
-                }
-                else
-                {
-                    confirmMessage = $"Bạn đang chuẩn bị tổng kết tồn kho cho tháng {targetMonth}/{targetYear}.\n" +
-                                    $"Bạn có chắc chắn muốn tiếp tục không?";
-                }
+                // Chuẩn bị thông báo xác nhận phù hợp
+                string confirmMessage = hasExistingData
+                    ? $"Đã tồn tại dữ liệu tổng kết tồn kho cho tháng {targetMonth}/{targetYear}.\n" +
+                      $"Bạn có chắc chắn muốn cập nhật lại không?"
+                    : $"Bạn đang chuẩn bị tổng kết tồn kho cho tháng {targetMonth}/{targetYear}.\n" +
+                      $"Bạn có chắc chắn muốn tiếp tục không?";
 
-                // Show confirmation dialog
-                var result = MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận
+                bool result = MessageBoxService.ShowQuestion(
                     confirmMessage,
                     "Xác nhận tổng kết kho"
                 );
@@ -2852,25 +2957,27 @@ namespace ClinicManagement.ViewModels
 
                 try
                 {
-                    // Generate or update the monthly stock records
+                    // Thực hiện tổng kết hoặc cập nhật dữ liệu tồn kho tháng
                     GenerateOrUpdateMonthlyStock(targetYear, targetMonth);
 
+                    // Thông báo thành công
                     MessageBoxService.ShowSuccess(
                         $"Đã tổng kết tồn kho cho tháng {targetMonth}/{targetYear} thành công!",
                         "Tổng kết tồn kho"
                     );
+
+                    // Cập nhật dữ liệu hiển thị
                     FilterMonthlyStock();
-                   
                 }
                 catch (ObjectDisposedException)
                 {
-                    // Handle the specific case where the context was disposed
+                    // Xử lý trường hợp đặc biệt khi context bị dispose
                     MessageBoxService.ShowError(
                         "Lỗi kết nối cơ sở dữ liệu. Hãy thử lại sau vài giây.",
                         "Lỗi cơ sở dữ liệu"
                     );
 
-                    // Reset the data provider context
+                    // Reset data provider context
                     DataProvider.Instance.ResetContext();
                 }
             }
@@ -2882,26 +2989,55 @@ namespace ClinicManagement.ViewModels
                 );
             }
         }
-        // Method to delete current month's stock records
+
+        /// <summary>
+        /// Xóa dữ liệu tổng kết tồn kho của tháng hiện tại
+        /// </summary>
         private void DeleteCurrentMonthStock()
         {
             try
             {
+                // Lấy thông tin tháng và năm hiện tại
                 var currentMonth = DateTime.Now.Month;
                 var currentYear = DateTime.Now.Year;
                 var monthYearString = $"{currentYear}-{currentMonth:D2}";
 
-                // Use the DataProvider singleton for database operations
-                var context = DataProvider.Instance.Context;
-
-                var recordsToDelete = context.MonthlyStocks
-                    .Where(ms => ms.MonthYear == monthYearString)
-                    .ToList();
-
-                if (recordsToDelete.Any())
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    context.MonthlyStocks.RemoveRange(recordsToDelete);
-                    context.SaveChanges();
+                    try
+                    {
+                        // Lấy danh sách các bản ghi cần xóa
+                        var recordsToDelete = DataProvider.Instance.Context.MonthlyStocks
+                            .Where(ms => ms.MonthYear == monthYearString)
+                            .ToList();
+
+                        // Kiểm tra nếu có bản ghi để xóa
+                        if (recordsToDelete.Any())
+                        {
+                            // Xóa các bản ghi
+                            DataProvider.Instance.Context.MonthlyStocks.RemoveRange(recordsToDelete);
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Hoàn thành giao dịch khi thành công
+                            transaction.Commit();
+
+                            // Ghi log thành công (nếu cần)
+                            System.Diagnostics.Debug.WriteLine($"Đã xóa {recordsToDelete.Count} bản ghi tổng kết kho tháng {monthYearString}");
+                        }
+                        else
+                        {
+                            // Không có bản ghi nào để xóa, vẫn commit transaction trống
+                            transaction.Commit();
+                            System.Diagnostics.Debug.WriteLine($"Không có bản ghi nào để xóa cho tháng {monthYearString}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch khi có lỗi
+                        transaction.Rollback();
+                        throw new Exception($"Lỗi khi xóa dữ liệu tổng kết tồn kho: {ex.Message}", ex);
+                    }
                 }
             }
             catch (Exception ex)
@@ -2913,25 +3049,30 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tạo mới hoặc cập nhật dữ liệu tổng kết tồn kho cho một tháng cụ thể
+        /// </summary>
+        /// <param name="year">Năm cần tổng kết</param>
+        /// <param name="month">Tháng cần tổng kết</param>
         private void GenerateOrUpdateMonthlyStock(int year, int month)
         {
             try
             {
-                // Format for MonthYear field
+                // Định dạng chuỗi tháng-năm để lưu trữ
                 string monthYearFormat = $"{year:D4}-{month:D2}";
 
-                // Create a fresh context for this operation
+                // Tạo context mới để tránh vấn đề với tracking entities
                 using (var context = new ClinicDbContext())
                 {
-                    // Begin a transaction for consistency
+                    // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
                     using (var transaction = context.Database.BeginTransaction())
                     {
                         try
                         {
-                            // Dictionary to track existing records for efficient updates
+                            // Dictionary để theo dõi các bản ghi hiện có để cập nhật hiệu quả
                             Dictionary<int, MonthlyStock> existingRecords = new Dictionary<int, MonthlyStock>();
 
-                            // Check for existing records and load them into dictionary
+                            // Kiểm tra các bản ghi hiện có và tải vào dictionary
                             var currentRecords = context.MonthlyStocks
                                 .Where(ms => ms.MonthYear == monthYearFormat)
                                 .ToList();
@@ -2941,40 +3082,40 @@ namespace ClinicManagement.ViewModels
                                 existingRecords[record.MedicineId] = record;
                             }
 
-                            // Get all non-deleted medicines
+                            // Lấy tất cả thuốc chưa bị xóa
                             var medicines = context.Medicines
                                 .Where(m => m.IsDeleted != true)
                                 .Include(m => m.StockIns)
                                 .Include(m => m.Stocks)
                                 .ToList();
 
-                            // Track medicines with stock for cleanup
+                            // Theo dõi các thuốc có tồn kho để làm sạch dữ liệu
                             HashSet<int> medicinesWithStock = new HashSet<int>();
 
                             foreach (var medicine in medicines)
                             {
-                                // Reset cache to ensure fresh calculations
+                                // Xóa bộ nhớ đệm để đảm bảo tính toán mới
                                 medicine._availableStockInsCache = null;
 
-                                // Calculate stock quantities
+                                // Tính toán số lượng tồn kho
                                 int totalPhysicalQuantity = medicine.TotalPhysicalStockQuantity;
                                 int usableQuantity = medicine.TotalStockQuantity;
 
-                                // Only process medicines with stock
+                                // Chỉ xử lý các thuốc có tồn kho
                                 if (totalPhysicalQuantity > 0)
                                 {
                                     medicinesWithStock.Add(medicine.MedicineId);
 
                                     if (existingRecords.TryGetValue(medicine.MedicineId, out MonthlyStock existingRecord))
                                     {
-                                        // Update existing record
+                                        // Cập nhật bản ghi hiện có
                                         existingRecord.Quantity = totalPhysicalQuantity;
                                         existingRecord.CanUsed = usableQuantity;
                                         existingRecord.RecordedDate = DateTime.Now;
                                     }
                                     else
                                     {
-                                        // Create new record
+                                        // Tạo bản ghi mới
                                         var monthlyStock = new MonthlyStock
                                         {
                                             MedicineId = medicine.MedicineId,
@@ -2986,7 +3127,7 @@ namespace ClinicManagement.ViewModels
                                         context.MonthlyStocks.Add(monthlyStock);
                                     }
 
-                                    // Update current month's Stock records if applicable
+                                    // Cập nhật bản ghi Stock cho tháng hiện tại nếu cần
                                     if (month == DateTime.Now.Month && year == DateTime.Now.Year)
                                     {
                                         var stockRecord = context.Stocks.FirstOrDefault(s => s.MedicineId == medicine.MedicineId);
@@ -3010,7 +3151,7 @@ namespace ClinicManagement.ViewModels
                                 }
                             }
 
-                            // Remove records for medicines that no longer have stock
+                            // Xóa các bản ghi cho thuốc không còn tồn kho
                             var recordsToDelete = currentRecords
                                 .Where(r => !medicinesWithStock.Contains(r.MedicineId))
                                 .ToList();
@@ -3020,12 +3161,13 @@ namespace ClinicManagement.ViewModels
                                 context.MonthlyStocks.RemoveRange(recordsToDelete);
                             }
 
-                            // Save all changes
+                            // Lưu tất cả thay đổi
                             context.SaveChanges();
                             transaction.Commit();
                         }
                         catch (Exception ex)
                         {
+                            // Hoàn tác giao dịch khi có lỗi
                             transaction.Rollback();
                             throw new Exception($"Lỗi khi tạo hoặc cập nhật dữ liệu tồn kho tháng: {ex.Message}", ex);
                         }
@@ -3041,29 +3183,68 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Hoàn tác việc tổng kết tồn kho tháng hiện tại
+        /// </summary>
         private void ExecuteUndoMonthlyStock()
         {
-            var confirmResult = MessageBoxService.ShowQuestion(
-                "Bạn có chắc chắn muốn hủy bỏ tổng kết tồn kho tháng hiện tại không?",
-                "Xác nhận hoàn tác"
-            );
-
-            if (!confirmResult)
-                return;
-
-            DeleteCurrentMonthStock();
-
-            MessageBoxService.ShowSuccess(
-                "Đã hủy bỏ tổng kết tồn kho tháng hiện tại thành công!",
-                "Hoàn tác tổng kết kho"
-            );
-
-            // Refresh data if in monthly view
-            if (IsMonthlyView)
+            try
             {
-                FilterMonthlyStock();
+                // Hiển thị hộp thoại xác nhận
+                bool confirmResult = MessageBoxService.ShowQuestion(
+                    "Bạn có chắc chắn muốn hủy bỏ tổng kết tồn kho tháng hiện tại không?",
+                    "Xác nhận hoàn tác"
+                );
+
+                if (!confirmResult)
+                    return;
+
+                // Thực hiện xóa dữ liệu tổng kết tháng hiện tại
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        // Gọi phương thức xóa dữ liệu
+                        DeleteCurrentMonthStock();
+
+                        // Hoàn thành giao dịch
+                        transaction.Commit();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã hủy bỏ tổng kết tồn kho tháng hiện tại thành công!",
+                            "Hoàn tác tổng kết kho"
+                        );
+
+                        // Cập nhật dữ liệu hiển thị nếu đang ở chế độ xem tháng
+                        if (IsMonthlyView)
+                        {
+                            FilterMonthlyStock();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch khi có lỗi
+                        transaction.Rollback();
+
+                        // Hiển thị thông báo lỗi
+                        MessageBoxService.ShowError(
+                            $"Lỗi khi hoàn tác tổng kết kho: {ex.Message}",
+                            "Lỗi"
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Xử lý các lỗi không dự kiến
+                MessageBoxService.ShowError(
+                    $"Lỗi không mong muốn khi hoàn tác tổng kết kho: {ex.Message}",
+                    "Lỗi hệ thống"
+                );
             }
         }
+
 
         // Method to check if it's time to remind about monthly stock summary
         public void CheckMonthlyStockReminder()

@@ -609,7 +609,7 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Enable validation for all fields
+                // Bật xác thực cho tất cả các trường
                 _isValidating = true;
                 _touchedFields.Add(nameof(FullName));
                 _touchedFields.Add(nameof(Phone));
@@ -617,87 +617,95 @@ namespace ClinicManagement.ViewModels
                 _touchedFields.Add(nameof(Schedule));
                 _touchedFields.Add(nameof(CertificateLink));
 
-                // Trigger validation for required fields
+                // Kích hoạt xác thực cho các trường bắt buộc
                 OnPropertyChanged(nameof(FullName));
                 OnPropertyChanged(nameof(Phone));
                 OnPropertyChanged(nameof(Email));
                 OnPropertyChanged(nameof(Schedule));
                 OnPropertyChanged(nameof(CertificateLink));
 
-                // Check for validation errors
+                // Kiểm tra lỗi xác thực
                 if (HasErrors)
                 {
                     MessageBoxService.ShowError(
                         "Vui lòng sửa các lỗi nhập liệu trước khi cập nhật thông tin bác sĩ.",
-                        "Lỗi thông tin"
-                         
-                          );
-                    return;
-                }
-                bool emailExits = DataProvider.Instance.Context.Staffs
-                                 .Any(d => d.Email == Email.Trim() && d.StaffId != Doctor.StaffId && d.IsDeleted == false);
-                if(emailExits)
-                {
-                    MessageBoxService.ShowError(
-                                "Email đã tồn tại. Vui lòng sử dụng email khác.",
-                                "Lỗi Dữ Liệu"
-                                 
-                                  );
-                    return;
-                }    
-                // Check if phone number already exists (excluding current doctor)
-                bool phoneExists = DataProvider.Instance.Context.Staffs
-                    .Any(d => d.Phone == Phone.Trim() && d.StaffId != Doctor.StaffId && d.IsDeleted == false);
-
-                if (phoneExists)
-                {
-                    MessageBoxService.ShowError(
-                        "Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
-                        "Lỗi Dữ Liệu"
-                         
-                          );
+                        "Lỗi thông tin");
                     return;
                 }
 
-                // Get doctor record
-                var doctorToUpdate = DataProvider.Instance.Context.Staffs
-                    .FirstOrDefault(d => d.StaffId == Doctor.StaffId);
-
-                if (doctorToUpdate != null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Update properties
-                    doctorToUpdate.FullName = FullName.Trim();
-                    doctorToUpdate.SpecialtyId = SelectedSpecialty?.SpecialtyId;
-                    doctorToUpdate.CertificateLink = CertificateLink.Trim();
-                    doctorToUpdate.Email = Email.Trim();
-                    doctorToUpdate.Schedule = Schedule.Trim();
-                    doctorToUpdate.Phone = Phone.Trim();
-                    doctorToUpdate.Address = Address.Trim();
+                    try
+                    {
+                        bool emailExits = DataProvider.Instance.Context.Staffs
+                                        .Any(d => d.Email == Email.Trim() && d.StaffId != Doctor.StaffId && d.IsDeleted == false);
+                        if (emailExits)
+                        {
+                            MessageBoxService.ShowError(
+                                        "Email đã tồn tại. Vui lòng sử dụng email khác.",
+                                        "Lỗi Dữ Liệu");
+                            return;
+                        }
+                        // Kiểm tra số điện thoại đã tồn tại chưa (ngoại trừ bác sĩ hiện tại)
+                        bool phoneExists = DataProvider.Instance.Context.Staffs
+                            .Any(d => d.Phone == Phone.Trim() && d.StaffId != Doctor.StaffId && d.IsDeleted == false);
 
-                    DataProvider.Instance.Context.SaveChanges();
+                        if (phoneExists)
+                        {
+                            MessageBoxService.ShowError(
+                                "Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
+                                "Lỗi Dữ Liệu");
+                            return;
+                        }
 
-                    MessageBoxService.ShowMessage(
-                        "Đã cập nhật thông tin bác sĩ thành công!",
-                        "Thành Công"
-                         
-                         );
-                }
-                else
-                {
-                    MessageBoxService.ShowError(
-                        "Không tìm thấy thông tin bác sĩ!",
-                        "Lỗi"
-                         
-                          );
+                        // Lấy thông tin bác sĩ cần cập nhật
+                        var doctorToUpdate = DataProvider.Instance.Context.Staffs
+                            .FirstOrDefault(d => d.StaffId == Doctor.StaffId);
+
+                        if (doctorToUpdate != null)
+                        {
+                            // Cập nhật thông tin
+                            doctorToUpdate.FullName = FullName.Trim();
+                            doctorToUpdate.SpecialtyId = SelectedSpecialty?.SpecialtyId;
+                            doctorToUpdate.CertificateLink = CertificateLink.Trim();
+                            doctorToUpdate.Email = Email.Trim();
+                            doctorToUpdate.Schedule = Schedule.Trim();
+                            doctorToUpdate.Phone = Phone.Trim();
+                            doctorToUpdate.Address = Address.Trim();
+
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Hoàn tất transaction khi mọi thứ thành công
+                            transaction.Commit();
+
+                            MessageBoxService.ShowMessage(
+                                "Đã cập nhật thông tin bác sĩ thành công!",
+                                "Thành Công");
+                        }
+                        else
+                        {
+                            MessageBoxService.ShowError(
+                                "Không tìm thấy thông tin bác sĩ!",
+                                "Lỗi");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác transaction nếu có lỗi
+                        transaction.Rollback();
+
+                        // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                        throw;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi cập nhật thông tin bác sĩ: {ex.Message}",
-                    "Lỗi"
-                     
-                      );
+                    "Lỗi");
             }
         }
 
@@ -707,7 +715,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (Doctor == null) return;
 
-                // Check if doctor has pending or in-progress appointments
+                // Kiểm tra xem bác sĩ có lịch hẹn đang chờ hoặc đang khám không
                 bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
                     .Any(a => a.StaffId == Doctor.StaffId &&
                              (a.Status == "Đang chờ" || a.Status == "Đang khám") &&
@@ -718,70 +726,80 @@ namespace ClinicManagement.ViewModels
                     MessageBoxService.ShowWarning(
                         "Không thể xóa bác sĩ này vì còn lịch hẹn đang chờ hoặc đang khám.\n" +
                         "Vui lòng giải quyết các lịch hẹn hiện tại trước khi xóa.",
-                        "Cảnh Báo"
-                         
-                          );
+                        "Cảnh Báo");
                     return;
                 }
 
-                // Ask for confirmation
-                 bool  result = MessageBoxService.ShowSuccess(
+                // Hiển thị hộp thoại xác nhận
+                bool result = MessageBoxService.ShowSuccess(
                     $"Bạn có chắc muốn xóa bác sĩ {FullName} không?\n" +
                     "Lưu ý: Tài khoản liên kết với bác sĩ này cũng sẽ bị xóa.",
-                    "Xác Nhận Xóa"
-                     
-                      );
+                    "Xác Nhận Xóa");
 
                 if (!result)
                     return;
 
-                // Find and soft-delete the doctor
-                var doctorToDelete = DataProvider.Instance.Context.Staffs
-                    .FirstOrDefault(d => d.StaffId == Doctor.StaffId);
-
-                if (doctorToDelete != null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Soft-delete the doctor
-                    doctorToDelete.IsDeleted = true;
-
-                    // Also soft-delete the associated account
-                    var accountToDelete = DataProvider.Instance.Context.Accounts
-                        .FirstOrDefault(a => a.StaffId == Doctor.StaffId);
-
-                    if (accountToDelete != null)
+                    try
                     {
-                        accountToDelete.IsDeleted = true;
+                        // Tìm và đánh dấu xóa bác sĩ
+                        var doctorToDelete = DataProvider.Instance.Context.Staffs
+                            .FirstOrDefault(d => d.StaffId == Doctor.StaffId);
+
+                        if (doctorToDelete != null)
+                        {
+                            // Đánh dấu xóa mềm bác sĩ
+                            doctorToDelete.IsDeleted = true;
+
+                            // Đồng thời xóa mềm tài khoản liên kết
+                            var accountToDelete = DataProvider.Instance.Context.Accounts
+                                .FirstOrDefault(a => a.StaffId == Doctor.StaffId);
+
+                            if (accountToDelete != null)
+                            {
+                                accountToDelete.IsDeleted = true;
+                            }
+
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Hoàn tất transaction khi mọi thứ thành công
+                            transaction.Commit();
+
+                            MessageBoxService.ShowSuccess(
+                                "Đã xóa bác sĩ thành công!",
+                                "Thành Công");
+
+                            // Đóng cửa sổ
+                            _window?.Close();
+                        }
+                        else
+                        {
+                            MessageBoxService.ShowError(
+                                "Không tìm thấy thông tin bác sĩ!",
+                                "Lỗi");
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác transaction nếu có lỗi
+                        transaction.Rollback();
 
-                    DataProvider.Instance.Context.SaveChanges();
-
-                    MessageBoxService.ShowSuccess(
-                        "Đã xóa bác sĩ thành công!",
-                        "Thành Công"
-                         
-                         );
-
-                    // Close the window
-                    _window?.Close();
-                }
-                else
-                {
-                    MessageBoxService.ShowError(
-                        "Không tìm thấy thông tin bác sĩ!",
-                        "Lỗi"
-                         
-                          );
+                        // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                        throw;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa bác sĩ: {ex.Message}",
-                    "Lỗi"
-                     
-                      );
+                    "Lỗi");
             }
         }
+
 
         private void ExecuteResetPassword()
         {
@@ -791,63 +809,74 @@ namespace ClinicManagement.ViewModels
                 {
                     MessageBoxService.ShowError(
                         "Không thể đặt lại mật khẩu. Bác sĩ này chưa có tài khoản!",
-                        "Lỗi"
-                         
-                          );
+                        "Lỗi");
                     return;
                 }
 
-                // Ask for confirmation
-                 bool  result = MessageBoxService.ShowQuestion(
+                // Hiển thị hộp thoại xác nhận
+                bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc muốn đặt lại mật khẩu cho tài khoản này không?\n" +
                     "Mật khẩu mới sẽ là: 1111",
-                    "Xác Nhận Đặt Lại Mật Khẩu"
-                     
-                      );
+                    "Xác Nhận Đặt Lại Mật Khẩu");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Find the account
-                var account = DataProvider.Instance.Context.Accounts
-                    .FirstOrDefault(a => a.StaffId == Doctor.StaffId && a.IsDeleted != true);
-
-                if (account != null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    // Reset password to "1111"
-                    string hashedPassword = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode("1111"));
-                    account.Password = hashedPassword;
-                    DataProvider.Instance.Context.SaveChanges();
+                    try
+                    {
+                        // Tìm tài khoản liên kết với bác sĩ
+                        var account = DataProvider.Instance.Context.Accounts
+                            .FirstOrDefault(a => a.StaffId == Doctor.StaffId && a.IsDeleted != true);
 
-                    MessageBoxService.ShowSuccess(
-                        "Đã đặt lại mật khẩu thành công!\n" +
-                        "Mật khẩu mới: 1111",
-                        "Thành Công"
-                         
-                         );
-                }
-                else
-                {
-                    MessageBoxService.ShowError(
-                        "Không tìm thấy tài khoản liên kết với bác sĩ này!",
-                        "Lỗi"
-                         
-                          );
+                        if (account != null)
+                        {
+                            // Đặt lại mật khẩu thành "1111"
+                            string hashedPassword = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode("1111"));
+                            account.Password = hashedPassword;
 
-                    // Cập nhật lại trạng thái HasAccount
-                    HasAccount = false;
-                    CommandManager.InvalidateRequerySuggested();
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Commit transaction khi mọi thứ thành công
+                            transaction.Commit();
+
+                            MessageBoxService.ShowSuccess(
+                                "Đã đặt lại mật khẩu thành công!\n" +
+                                "Mật khẩu mới: 1111",
+                                "Thành Công");
+                        }
+                        else
+                        {
+                            MessageBoxService.ShowError(
+                                "Không tìm thấy tài khoản liên kết với bác sĩ này!",
+                                "Lỗi");
+
+                            // Cập nhật lại trạng thái HasAccount
+                            HasAccount = false;
+                            CommandManager.InvalidateRequerySuggested();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác transaction nếu có lỗi
+                        transaction.Rollback();
+
+                        // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                        throw;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi đặt lại mật khẩu: {ex.Message}",
-                    "Lỗi"
-                     
-                      );
+                    "Lỗi");
             }
         }
+
 
         private void LoadAppointments()
         {
@@ -929,24 +958,23 @@ namespace ClinicManagement.ViewModels
             {
                 if (Doctor == null) return;
 
-                // Enable validation for username field
+                // Bật xác thực cho trường tên đăng nhập
                 _isValidating = true;
                 _touchedFields.Add(nameof(NewUsername));
 
-                // Trigger validation
+                // Kích hoạt xác thực
                 OnPropertyChanged(nameof(NewUsername));
 
-                // Check for validation errors
+                // Kiểm tra lỗi xác thực
                 if (HasUsernameErrors)
                 {
                     MessageBoxService.ShowError(
                         "Tên đăng nhập không hợp lệ. Vui lòng nhập tên đăng nhập có ít nhất 4 ký tự.",
-                        "Lỗi thông tin"
-                    );
+                        "Lỗi thông tin");
                     return;
                 }
 
-                // Check if username already exists
+                // Kiểm tra tên đăng nhập đã tồn tại chưa
                 bool usernameExists = DataProvider.Instance.Context.Accounts
                     .Any(a => a.Username == NewUsername.Trim() && a.IsDeleted != true);
 
@@ -954,57 +982,72 @@ namespace ClinicManagement.ViewModels
                 {
                     MessageBoxService.ShowError(
                         "Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác.",
-                        "Lỗi Dữ Liệu"
-                    );
+                        "Lỗi Dữ Liệu");
                     return;
                 }
 
-                // Ask for confirmation
+                // Yêu cầu xác nhận từ người dùng
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn tạo tài khoản cho {FullName} không?\n" +
                     $"Tên đăng nhập: {NewUsername.Trim()}\n" +
                     $"Mật khẩu mặc định: 1111\n" +
                     $"Vai trò: {Role}",
-                    "Xác Nhận Tạo Tài Khoản"
-                );
+                    "Xác Nhận Tạo Tài Khoản");
 
                 if (!result)
                     return;
 
-                // Create account with default password "1111"
-                var defaultPassword = "1111";
-                var newAccount = new Account
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    Username = NewUsername.Trim(),
-                    Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
-                    StaffId = Doctor.StaffId,
-                    Role = Role, // Use the staff's role
-                    IsLogined = false,
-                    IsDeleted = false
-                };
+                    try
+                    {
+                        // Tạo tài khoản mới với mật khẩu mặc định "1111"
+                        var defaultPassword = "1111";
+                        var newAccount = new Account
+                        {
+                            Username = NewUsername.Trim(),
+                            Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
+                            StaffId = Doctor.StaffId,
+                            Role = Role, // Sử dụng vai trò của nhân viên
+                            IsLogined = false,
+                            IsDeleted = false
+                        };
 
-                DataProvider.Instance.Context.Accounts.Add(newAccount);
-                DataProvider.Instance.Context.SaveChanges();
+                        // Thêm tài khoản vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.Accounts.Add(newAccount);
+                        DataProvider.Instance.Context.SaveChanges();
 
-                MessageBoxService.ShowSuccess(
-                    "Đã tạo tài khoản thành công với mật khẩu mặc định là \"1111\".",
-                    "Thành Công"
-                );
+                        // Commit transaction khi mọi thứ thành công
+                        transaction.Commit();
 
-                // Update UI to reflect new account
-                UserName = NewUsername.Trim();
-                HasAccount = true;  // Update account status
+                        MessageBoxService.ShowSuccess(
+                            "Đã tạo tài khoản thành công với mật khẩu mặc định là \"1111\".",
+                            "Thành Công");
 
-                // Refresh UI
-                OnPropertyChanged(nameof(HasAccount));
-                CommandManager.InvalidateRequerySuggested();
+                        // Cập nhật giao diện để phản ánh tài khoản mới
+                        UserName = NewUsername.Trim();
+                        HasAccount = true;  // Cập nhật trạng thái tài khoản
+
+                        // Làm mới giao diện
+                        OnPropertyChanged(nameof(HasAccount));
+                        CommandManager.InvalidateRequerySuggested();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác transaction nếu có lỗi
+                        transaction.Rollback();
+
+                        // Ném lại ngoại lệ để xử lý ở khối catch bên ngoài
+                        throw;
+                    }
+                }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi tạo tài khoản: {ex.Message}",
-                    "Lỗi"
-                );
+                    "Lỗi");
             }
         }
         #endregion

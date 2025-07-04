@@ -250,7 +250,6 @@ namespace ClinicManagement.ViewModels
 
         #region Commands
 
-
         public ICommand ProcessPaymentCommand { get; set; }
         public ICommand CloseWindow { get; set; }
         public ICommand GenerateQRCodeCommand { get; set; }
@@ -410,7 +409,6 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi tải chi tiết hóa đơn: {ex.Message}", "Lỗi"   );
             }
         }
-
         // Method to handle editing the sale
         private void EditSale(Window window)
         {
@@ -599,7 +597,6 @@ namespace ClinicManagement.ViewModels
 
             _paymentWindow.ShowDialog();
         }
-
 
         private UIElement CreatePaymentControl()
         {
@@ -803,57 +800,68 @@ namespace ClinicManagement.ViewModels
             return panel;
         }
 
-
         private void ConfirmPayment(Window paymentWindow)
         {
             if (Invoice == null) return;
 
-            try
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
-                // Ensure discount and tax have values and recalculate totals one final time
-                if (Invoice.Discount == null) Invoice.Discount = 0;
-                if (Invoice.Tax == null) Invoice.Tax = 10;
-                RecalculateTotals();
+                try
+                {
+                    // Đảm bảo giảm giá và thuế có giá trị và tính toán lại tổng tiền
+                    if (Invoice.Discount == null) Invoice.Discount = 0;
+                    if (Invoice.Tax == null) Invoice.Tax = 10;
+                    RecalculateTotals();
 
-                // Update invoice status and total amount
-                Invoice.Status = "Đã thanh toán";
-                Invoice.TotalAmount = TotalAmount; // Set the calculated total amount
+                    // Cập nhật trạng thái hóa đơn và tổng số tiền
+                    Invoice.Status = "Đã thanh toán";
+                    Invoice.TotalAmount = TotalAmount; // Đặt tổng số tiền đã tính toán
 
-                // Store payment information in the Notes field
-                string paymentMethod = IsCashPayment ? "Tiền mặt" : "Chuyển khoản";
-                string paymentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    // Lưu thông tin thanh toán vào trường Notes
+                    string paymentMethod = IsCashPayment ? "Tiền mặt" : "Chuyển khoản";
+                    string paymentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-                // Preserve existing notes if any
-                string existingNotes = string.IsNullOrEmpty(Invoice.Notes) ? "" : Invoice.Notes + " | ";
+                    // Giữ lại ghi chú hiện có nếu có
+                    string existingNotes = string.IsNullOrEmpty(Invoice.Notes) ? "" : Invoice.Notes + " | ";
 
-                // Add payment information to notes
-                Invoice.Notes = existingNotes + $"Phương thức thanh toán:{paymentMethod};Ngày thanh toán:{paymentDate}";
+                    // Thêm thông tin thanh toán vào ghi chú
+                    Invoice.Notes = existingNotes + $"Phương thức thanh toán:{paymentMethod};Ngày thanh toán:{paymentDate}";
 
-                // Update database with payment info first
-                DataProvider.Instance.Context.SaveChanges();
+                    // Cập nhật cơ sở dữ liệu với thông tin thanh toán
+                    DataProvider.Instance.Context.SaveChanges();
 
-                // Update stock after payment is recorded
-                UpdateStockAfterPayment();
+                    // Cập nhật tồn kho sau khi thanh toán được ghi lại
+                    UpdateStockAfterPayment();
 
-                // Update view model properties
-                IsPaid = true;
-                IsNotPaid = false;
-                PaymentMethod = paymentMethod;
-                PaymentDate = DateTime.Now;
+                    // Hoàn thành giao dịch nếu mọi thứ thành công
+                    transaction.Commit();
 
-                MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công");
+                    // Cập nhật thuộc tính của view model
+                    IsPaid = true;
+                    IsNotPaid = false;
+                    PaymentMethod = paymentMethod;
+                    PaymentDate = DateTime.Now;
 
-                // Đóng cửa sổ thanh toán
-                _paymentWindow?.Close();
-                _paymentWindow = null;
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi");
+                    // Hiển thị thông báo thành công
+                    MessageBoxService.ShowSuccess($"Thanh toán hóa đơn #{Invoice.InvoiceId} thành công!", "Thành công");
+
+                    // Đóng cửa sổ thanh toán
+                    _paymentWindow?.Close();
+                    _paymentWindow = null;
+                }
+                catch (Exception ex)
+                {
+                    // Hoàn tác giao dịch nếu có lỗi xảy ra
+                    transaction.Rollback();
+
+                
+
+                    // Hiển thị thông báo lỗi
+                    MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi");
+                }
             }
         }
-
-
 
 
         // Add this method to update stock after payment
@@ -958,13 +966,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
         public bool CanEditMedicineSale => Invoice != null &&
                                     Invoice.Status == "Chưa thanh toán" &&
                                     (Invoice.InvoiceType == "Bán thuốc" || Invoice.InvoiceType == "Khám và bán thuốc");
-
-        #region PDF
+       #region PDF
         private void ExportInvoiceToPdf()
         {
             QuestPDF.Settings.License = LicenseType.Community;
@@ -1059,7 +1064,6 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi xuất hóa đơn: {ex.Message}", "Lỗi xuất hóa đơn");
             }
         }
-
 
         // Phương thức tạo PDF đơn giản, không chia nhỏ
         private void GenerateSimplePdfDocument(string filePath)
@@ -1297,9 +1301,6 @@ namespace ClinicManagement.ViewModels
             })
             .GeneratePdf(filePath);
         }
-
-
-
         #endregion
 
     }

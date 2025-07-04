@@ -465,92 +465,122 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Check if phone number already exists
-                bool phoneExists = DataProvider.Instance.Context.Staffs
-                    .Any(d => d.Phone == Phone.Trim() && (bool)!d.IsDeleted);
-
-                if (phoneExists)
+                // Start a database transaction to ensure data consistency
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning(
-                        "Số điện thoại này đã được sử dụng bởi một nhân viên khác.",
-                        "Lỗi Dữ Liệu");
-                    return;
-                }
-
-                // Check if email already exists (if provided)
-                if (!string.IsNullOrWhiteSpace(Email))
-                {
-                    bool emailExists = DataProvider.Instance.Context.Staffs
-                        .Any(d => d.Email == Email.Trim() && (bool)!d.IsDeleted);
-
-                    if (emailExists)
+                    try
                     {
-                        MessageBoxService.ShowWarning(
-                            "Email này đã được sử dụng bởi một nhân viên khác.",
-                            "Lỗi Dữ Liệu");
-                        return;
-                    }
-                }
+                        // Check if phone number already exists
+                        bool phoneExists = DataProvider.Instance.Context.Staffs
+                            .Any(d => d.Phone == Phone.Trim() && (bool)!d.IsDeleted);
 
-                // Create and save Staff object
-                var newStaff = new Staff
-                {
-                    FullName = FullName.Trim(),
-                    RoleId = SelectedRole.RoleId,
-                    SpecialtyId = IsSpecialtyVisible ? SelectedSpecialty?.SpecialtyId : null,
-                    CertificateLink = CertificateLink?.Trim(),
-                    Schedule = Schedule?.Trim(),
-                    Phone = Phone.Trim(),
-                    Email = Email?.Trim(),
-                    Address = Address?.Trim(),
-                    IsDeleted = false
-                };
-
-                DataProvider.Instance.Context.Staffs.Add(newStaff);
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Create account if username is provided
-                if (!string.IsNullOrWhiteSpace(UserName))
-                {
-                    // Check if username already exists
-                    bool usernameExists = DataProvider.Instance.Context.Accounts
-                        .Any(a => a.Username == UserName.Trim() && (bool)!a.IsDeleted);
-
-                    if (usernameExists)
-                    {
-                        MessageBoxService.ShowWarning(
-                            "Tên đăng nhập đã tồn tại. Tài khoản không được tạo nhưng thông tin nhân viên đã được lưu.",
-                            "Cảnh Báo");
-                    }
-                    else
-                    {
-                        // Create account with default password "1111"
-                        var defaultPassword = "1111";
-                        var newAccount = new Account
+                        if (phoneExists)
                         {
-                            Username = UserName.Trim(),
-                            Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
-                            StaffId = newStaff.StaffId,
-                            Role = SelectedRole.RoleName, // Use the selected role name
-                            IsLogined = false,
+                            MessageBoxService.ShowWarning(
+                                "Số điện thoại này đã được sử dụng bởi một nhân viên khác.",
+                                "Lỗi Dữ Liệu");
+                            return;
+                        }
+
+                        // Check if email already exists (if provided)
+                        if (!string.IsNullOrWhiteSpace(Email))
+                        {
+                            bool emailExists = DataProvider.Instance.Context.Staffs
+                                .Any(d => d.Email == Email.Trim() && (bool)!d.IsDeleted);
+
+                            if (emailExists)
+                            {
+                                MessageBoxService.ShowWarning(
+                                    "Email này đã được sử dụng bởi một nhân viên khác.",
+                                    "Lỗi Dữ Liệu");
+                                return;
+                            }
+                        }
+
+                        // Create and save Staff object
+                        var newStaff = new Staff
+                        {
+                            FullName = FullName.Trim(),
+                            RoleId = SelectedRole.RoleId,
+                            SpecialtyId = IsSpecialtyVisible ? SelectedSpecialty?.SpecialtyId : null,
+                            CertificateLink = CertificateLink?.Trim(),
+                            Schedule = Schedule?.Trim(),
+                            Phone = Phone.Trim(),
+                            Email = Email?.Trim(),
+                            Address = Address?.Trim(),
                             IsDeleted = false
                         };
 
-                        DataProvider.Instance.Context.Accounts.Add(newAccount);
+                        DataProvider.Instance.Context.Staffs.Add(newStaff);
                         DataProvider.Instance.Context.SaveChanges();
 
+                        // Variable to track if we need to create an account
+                        bool createAccount = false;
+                        string accountMessage = "";
+
+                        // Create account if username is provided
+                        if (!string.IsNullOrWhiteSpace(UserName))
+                        {
+                            // Check if username already exists
+                            bool usernameExists = DataProvider.Instance.Context.Accounts
+                                .Any(a => a.Username == UserName.Trim() && (bool)!a.IsDeleted);
+
+                            if (usernameExists)
+                            {
+                                accountMessage = "Tên đăng nhập đã tồn tại. Tài khoản không được tạo nhưng thông tin nhân viên đã được lưu.";
+                            }
+                            else
+                            {
+                                // Create account with default password "1111"
+                                var defaultPassword = "1111";
+                                var newAccount = new Account
+                                {
+                                    Username = UserName.Trim(),
+                                    Password = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(defaultPassword)),
+                                    StaffId = newStaff.StaffId,
+                                    Role = SelectedRole.RoleName, // Use the selected role name
+                                    IsLogined = false,
+                                    IsDeleted = false
+                                };
+
+                                DataProvider.Instance.Context.Accounts.Add(newAccount);
+                                DataProvider.Instance.Context.SaveChanges();
+                                createAccount = true;
+                                accountMessage = "Tài khoản được tạo thành công với mật khẩu mặc định là \"1111\".";
+                            }
+                        }
+
+                        // Commit the transaction
+                        transaction.Commit();
+
+                        // Show success messages
+                        if (!string.IsNullOrEmpty(accountMessage))
+                        {
+                            // Only show account message if we tried to create one
+                            if (createAccount)
+                            {
+                                MessageBoxService.ShowSuccess(accountMessage, "Thông Báo");
+                            }
+                            else
+                            {
+                                MessageBoxService.ShowWarning(accountMessage, "Cảnh Báo");
+                            }
+                        }
+
                         MessageBoxService.ShowSuccess(
-                            "Tài khoản được tạo thành công với mật khẩu mặc định là \"1111\".",
-                            "Thông Báo");
+                            $"Đã thêm {(SelectedRole.RoleName == "Bác sĩ" ? "bác sĩ" : "nhân viên")} thành công!",
+                            "Thành Công");
+
+                        // Close the window
+                        _window?.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback the transaction on error
+                        transaction.Rollback();
+                        throw; // Rethrow to be caught by outer catch block
                     }
                 }
-
-                MessageBoxService.ShowSuccess(
-                    $"Đã thêm {(SelectedRole.RoleName == "Bác sĩ" ? "bác sĩ" : "nhân viên")} thành công!",
-                    "Thành Công");
-
-                // Close the window
-                _window?.Close();
             }
             catch (Exception ex)
             {
@@ -559,6 +589,7 @@ namespace ClinicManagement.ViewModels
                     "Lỗi");
             }
         }
+
 
         private void ExecuteCancel()
         {

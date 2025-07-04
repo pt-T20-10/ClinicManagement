@@ -352,18 +352,18 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Enable validation for all fields when trying to submit
+                // Bật validation cho tất cả các trường khi người dùng submit form
                 _isValidating = true;
                 _touchedFields.Add(nameof(FullName));
                 _touchedFields.Add(nameof(Phone));
                 _touchedFields.Add(nameof(InsuranceCode));
 
-                // Trigger validation check for required fields
+                // Kích hoạt kiểm tra validation cho các trường bắt buộc
                 OnPropertyChanged(nameof(FullName));
                 OnPropertyChanged(nameof(Phone));
                 OnPropertyChanged(nameof(InsuranceCode));
 
-                // Check for validation errors
+                // Kiểm tra lỗi nhập liệu
                 if (HasErrors)
                 {
                     MessageBoxService.ShowWarning(
@@ -373,82 +373,103 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Check if phone number already exists
-                if (!string.IsNullOrWhiteSpace(Phone))
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    bool phoneExists = DataProvider.Instance.Context.Patients
-                        .Any(p => p.Phone == Phone.Trim() && (p.IsDeleted == null || p.IsDeleted == false));
-
-                    if (phoneExists)
+                    try
                     {
-                        MessageBoxService.ShowError(
-                            "Số điện thoại này đã được sử dụng bởi một bệnh nhân khác.",
-                            "Lỗi dữ liệu"
+                        // Kiểm tra số điện thoại đã tồn tại chưa
+                        if (!string.IsNullOrWhiteSpace(Phone))
+                        {
+                            bool phoneExists = DataProvider.Instance.Context.Patients
+                                .Any(p => p.Phone == Phone.Trim() && (p.IsDeleted == null || p.IsDeleted == false));
+
+                            if (phoneExists)
+                            {
+                                MessageBoxService.ShowError(
+                                    "Số điện thoại này đã được sử dụng bởi một bệnh nhân khác.",
+                                    "Lỗi dữ liệu"
+                                );
+                                return;
+                            }
+                        }
+
+                        // Kiểm tra mã BHYT đã tồn tại chưa (nếu có)
+                        if (!string.IsNullOrWhiteSpace(InsuranceCode))
+                        {
+                            bool insuranceExists = DataProvider.Instance.Context.Patients
+                                .Any(p => p.InsuranceCode == InsuranceCode.Trim() && (p.IsDeleted == null || p.IsDeleted == false));
+
+                            if (insuranceExists)
+                            {
+                                MessageBoxService.ShowError(
+                                    "Mã BHYT này đã được sử dụng bởi một bệnh nhân khác.",
+                                    "Lỗi dữ liệu"
+                                );
+                                return;
+                            }
+                        }
+
+                        // Chuyển đổi ngày sinh thành DateOnly nếu có
+                        DateOnly? birthDate = null;
+                        if (BirthDate.HasValue)
+                        {
+                            birthDate = DateOnly.FromDateTime(BirthDate.Value);
+                        }
+
+                        // Tạo đối tượng bệnh nhân mới
+                        var newPatient = new Patient
+                        {
+                            FullName = FullName.Trim(),
+                            DateOfBirth = birthDate,
+                            Gender = Gender,
+                            Phone = Phone?.Trim(),
+                            Address = Address?.Trim(),
+                            InsuranceCode = InsuranceCode?.Trim(),
+                            PatientTypeId = SelectedPatientType?.PatientTypeId,
+                            CreatedAt = DateTime.Now,
+                            IsDeleted = false
+                        };
+
+                        // Lưu vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.Patients.Add(newPatient);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Lưu bệnh nhân vào property NewPatient để có thể truy cập từ bên ngoài
+                        // Điều này đảm bảo đối tượng Patient có PatientId được gán bởi database
+                        NewPatient = newPatient;
+
+                        // Commit transaction khi mọi thứ thành công
+                        transaction.Commit();
+
+                        // Hiển thị thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã thêm bệnh nhân thành công!",
+                            "Thành Công"
                         );
-                        return;
+
+                        // Đóng cửa sổ
+                        _window?.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction nếu có bất kỳ lỗi nào
+                        transaction.Rollback();
+
+                        // Ném lại ngoại lệ để được xử lý ở catch block bên ngoài
+                        throw;
                     }
                 }
-
-                // Check if insurance number already exists (if provided)
-                if (!string.IsNullOrWhiteSpace(InsuranceCode))
-                {
-                    bool insuranceExists = DataProvider.Instance.Context.Patients
-                        .Any(p => p.InsuranceCode == InsuranceCode.Trim() && (p.IsDeleted == null || p.IsDeleted == false));
-
-                    if (insuranceExists)
-                    {
-                        MessageBoxService.ShowError(
-                            "Mã BHYT này đã được sử dụng bởi một bệnh nhân khác.",
-                            "Lỗi dữ liệu"
-                        );
-                        return;
-                    }
-                }
-
-                // Create new patient object
-                DateOnly? birthDate = null;
-                if (BirthDate.HasValue)
-                {
-                    birthDate = DateOnly.FromDateTime(BirthDate.Value);
-                }
-
-                var newPatient = new Patient
-                {
-                    FullName = FullName.Trim(),
-                    DateOfBirth = birthDate,
-                    Gender = Gender,
-                    Phone = Phone?.Trim(),
-                    Address = Address?.Trim(),
-                    InsuranceCode = InsuranceCode?.Trim(),
-                    PatientTypeId = SelectedPatientType?.PatientTypeId,
-                    CreatedAt = DateTime.Now,
-                    IsDeleted = false
-                };
-
-                // Save to database
-                DataProvider.Instance.Context.Patients.Add(newPatient);
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Set the NewPatient property with the newly created patient
-                // This ensures the Patient object has the ID assigned by the database
-                NewPatient = newPatient;
-
-                // Success message
-                MessageBoxService.ShowSuccess(
-                    "Đã thêm bệnh nhân thành công!",
-                    "Thành Công"
-                );
-
-                // Close window
-                _window?.Close();
             }
             catch (Exception ex)
             {
+                // Xử lý và hiển thị lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi thêm bệnh nhân: {ex.Message}",
                     "Lỗi");
             }
         }
+
 
 
 

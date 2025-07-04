@@ -388,6 +388,7 @@ namespace ClinicManagement.ViewModels
                 RoleList = new ObservableCollection<Role>();
             }
         }
+
         private void ExecuteResetFilters()
         {
             SearchText = string.Empty;
@@ -401,6 +402,7 @@ namespace ClinicManagement.ViewModels
 
             DoctorList = new ObservableCollection<Staff>(_allStaffs);
         }
+
         private void ExecuteSearch()
         {
             if (_allStaffs == null || _allStaffs.Count == 0)
@@ -662,64 +664,82 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
         #region Specialty Methods
         private void AddSpecialty()
         {
             try
             {
-                // Confirm dialog
+                // Xác nhận từ người dùng trước khi thêm chuyên khoa
                 bool result = MessageBoxService.ShowQuestion(
                      $"Bạn có chắc muốn thêm chuyên khoa '{SpecialtyName}' không?",
                      "Xác Nhận Thêm");
                 if (!result)
                     return;
 
-                // Check if specialty already exists
-                bool isExist = DataProvider.Instance.Context.DoctorSpecialties
-                    .Any(s => s.SpecialtyName.Trim().ToLower() == SpecialtyName.Trim().ToLower() && (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Chuyên khoa này đã tồn tại.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra chuyên khoa đã tồn tại chưa
+                        bool isExist = DataProvider.Instance.Context.DoctorSpecialties
+                            .Any(s => s.SpecialtyName.Trim().ToLower() == SpecialtyName.Trim().ToLower() && (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Chuyên khoa này đã tồn tại.", "Trùng dữ liệu");
+                            return;
+                        }
+
+                        // Tạo chuyên khoa mới
+                        var newSpecialty = new DoctorSpecialty
+                        {
+                            SpecialtyName = SpecialtyName,
+                            Description = Description ?? "",
+                            IsDeleted = false
+                        };
+
+                        // Thêm chuyên khoa vào cơ sở dữ liệu
+                        DataProvider.Instance.Context.DoctorSpecialties.Add(newSpecialty);
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn tất giao dịch khi thành công
+                        transaction.Commit();
+
+                        // Cập nhật danh sách chuyên khoa trong giao diện
+                        ListSpecialty = new ObservableCollection<DoctorSpecialty>(
+                            DataProvider.Instance.Context.DoctorSpecialties
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Xóa các trường nhập liệu
+                        SpecialtyName = "";
+                        Description = "";
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã thêm chuyên khoa thành công!",
+                            "Thành Công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                    }
                 }
-
-                // Add new specialty
-                var newSpecialty = new DoctorSpecialty
-                {
-                    SpecialtyName = SpecialtyName,
-                    Description = Description ?? "",
-                    IsDeleted = false
-                };
-
-                DataProvider.Instance.Context.DoctorSpecialties.Add(newSpecialty);
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                ListSpecialty = new ObservableCollection<DoctorSpecialty>(
-                    DataProvider.Instance.Context.DoctorSpecialties
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Clear fields
-                SpecialtyName = "";
-                Description = "";
-
-                MessageBoxService.ShowSuccess(
-                    "Đã thêm chuyên khoa thành công!",
-                    "Thành Công");
             }
             catch (DbUpdateException ex)
             {
+                // Xử lý lỗi cơ sở dữ liệu
                 MessageBoxService.ShowError(
                     $"Không thể thêm chuyên khoa: {ex.InnerException?.Message ?? ex.Message}",
                     "Lỗi Cơ Sở Dữ Liệu");
             }
             catch (Exception ex)
             {
+                // Xử lý các lỗi khác
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
                     "Lỗi");
@@ -730,7 +750,7 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Confirm dialog
+                // Xác nhận từ người dùng trước khi sửa chuyên khoa
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa chuyên khoa '{SelectedItem.SpecialtyName}' thành '{SpecialtyName}' không?",
                     "Xác Nhận Sửa");
@@ -738,59 +758,79 @@ namespace ClinicManagement.ViewModels
                 if (!result)
                     return;
 
-                // Check if specialty name already exists (except for current)
-                bool isExist = DataProvider.Instance.Context.DoctorSpecialties
-                    .Any(s => s.SpecialtyName.Trim().ToLower() == SpecialtyName.Trim().ToLower() && 
-                              s.SpecialtyId != SelectedItem.SpecialtyId && 
-                             (bool) !s.IsDeleted);
-
-                if (isExist)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Tên chuyên khoa này đã tồn tại.");
-                    return;
+                    try
+                    {
+                        // Kiểm tra tên chuyên khoa mới đã tồn tại chưa (trừ chính nó)
+                        bool isExist = DataProvider.Instance.Context.DoctorSpecialties
+                            .Any(s => s.SpecialtyName.Trim().ToLower() == SpecialtyName.Trim().ToLower() &&
+                                      s.SpecialtyId != SelectedItem.SpecialtyId &&
+                                     (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Tên chuyên khoa này đã tồn tại.", "Trùng dữ liệu");
+                            return;
+                        }
+
+                        // Tìm chuyên khoa cần cập nhật
+                        var specialtyToUpdate = DataProvider.Instance.Context.DoctorSpecialties
+                            .FirstOrDefault(s => s.SpecialtyId == SelectedItem.SpecialtyId);
+
+                        if (specialtyToUpdate == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy chuyên khoa cần sửa.", "Dữ liệu không tồn tại");
+                            return;
+                        }
+
+                        // Cập nhật thông tin chuyên khoa
+                        specialtyToUpdate.SpecialtyName = SpecialtyName;
+                        specialtyToUpdate.Description = Description ?? "";
+
+                        // Lưu thay đổi
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn tất giao dịch khi thành công
+                        transaction.Commit();
+
+                        // Cập nhật danh sách chuyên khoa trong giao diện
+                        ListSpecialty = new ObservableCollection<DoctorSpecialty>(
+                            DataProvider.Instance.Context.DoctorSpecialties
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Cập nhật danh sách bác sĩ vì tên chuyên khoa có thể đã thay đổi
+                        LoadData();
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã cập nhật chuyên khoa thành công!",
+                            "Thành Công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                    }
                 }
-
-                // Update specialty
-                var specialtyToUpdate = DataProvider.Instance.Context.DoctorSpecialties
-                    .FirstOrDefault(s => s.SpecialtyId == SelectedItem.SpecialtyId);
-
-                if (specialtyToUpdate == null)
-                {
-                    MessageBoxService.ShowWarning("Không tìm thấy chuyên khoa cần sửa.");
-                    return;
-                }
-
-                specialtyToUpdate.SpecialtyName = SpecialtyName;
-                specialtyToUpdate.Description = Description ?? "";
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                ListSpecialty = new ObservableCollection<DoctorSpecialty>(
-                    DataProvider.Instance.Context.DoctorSpecialties
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Update doctor list as specialty names may have changed
-                LoadData();
-
-                MessageBoxService.ShowSuccess(
-                    "Đã cập nhật chuyên khoa thành công!",
-                    "Thành Công");
-                ;
             }
             catch (DbUpdateException ex)
             {
+                // Xử lý lỗi cơ sở dữ liệu
                 MessageBoxService.ShowError(
                     $"Không thể sửa chuyên khoa: {ex.InnerException?.Message ?? ex.Message}",
                     "Lỗi Cơ Sở Dữ Liệu");
             }
             catch (Exception ex)
             {
+                // Xử lý các lỗi khác
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                  );
+                    "Lỗi");
             }
         }
 
@@ -798,7 +838,7 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Check if specialty is in use by any Staffs
+                // Kiểm tra chuyên khoa có đang được sử dụng bởi bác sĩ nào không
                 bool isInUse = DataProvider.Instance.Context.Staffs
                     .Any(d => d.SpecialtyId == SelectedItem.SpecialtyId && (bool)!d.IsDeleted);
 
@@ -806,57 +846,78 @@ namespace ClinicManagement.ViewModels
                 {
                     MessageBoxService.ShowError(
                         "Không thể xóa chuyên khoa này vì đang được sử dụng bởi một hoặc nhiều bác sĩ.",
-                        "Cảnh báo");
+                        "Ràng buộc dữ liệu");
                     return;
                 }
 
-                // Confirm deletion
-               bool result = MessageBoxService.ShowQuestion(
+                // Xác nhận từ người dùng trước khi xóa chuyên khoa
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn xóa chuyên khoa '{SelectedItem.SpecialtyName}' không?",
                     "Xác Nhận Xóa");
 
                 if (!result)
                     return;
 
-                // Soft delete the specialty
-                var specialtyToDelete = DataProvider.Instance.Context.DoctorSpecialties
-                    .FirstOrDefault(s => s.SpecialtyId == SelectedItem.SpecialtyId);
-
-                if (specialtyToDelete == null)
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Không tìm thấy chuyên khoa cần xóa.");
-                    return;
+                    try
+                    {
+                        // Tìm chuyên khoa cần xóa
+                        var specialtyToDelete = DataProvider.Instance.Context.DoctorSpecialties
+                            .FirstOrDefault(s => s.SpecialtyId == SelectedItem.SpecialtyId);
+
+                        if (specialtyToDelete == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy chuyên khoa cần xóa.", "Dữ liệu không tồn tại");
+                            return;
+                        }
+
+                        // Thực hiện xóa mềm (soft delete) bằng cách đánh dấu IsDeleted = true
+                        specialtyToDelete.IsDeleted = true;
+
+                        // Lưu thay đổi
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Hoàn tất giao dịch khi thành công
+                        transaction.Commit();
+
+                        // Cập nhật danh sách chuyên khoa trong giao diện
+                        ListSpecialty = new ObservableCollection<DoctorSpecialty>(
+                            DataProvider.Instance.Context.DoctorSpecialties
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Xóa lựa chọn và làm mới các trường nhập liệu
+                        SelectedItem = null;
+                        SpecialtyName = "";
+                        Description = "";
+
+                        // Thông báo thành công
+                        MessageBoxService.ShowSuccess(
+                            "Đã xóa chuyên khoa thành công.",
+                            "Thành Công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Hoàn tác giao dịch nếu có lỗi
+                        transaction.Rollback();
+                        throw; // Ném lại ngoại lệ để xử lý ở catch bên ngoài
+                    }
                 }
-
-                specialtyToDelete.IsDeleted = true;
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                ListSpecialty = new ObservableCollection<DoctorSpecialty>(
-                    DataProvider.Instance.Context.DoctorSpecialties
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Clear selection and fields
-                SelectedItem = null;
-                SpecialtyName = "";
-                Description = "";
-
-                MessageBoxService.ShowSuccess(
-                    "Đã xóa chuyên khoa thành công.",
-                    "Thành Công");
             }
             catch (Exception ex)
             {
+                // Xử lý lỗi
                 MessageBoxService.ShowError(
                     $"Đã xảy ra lỗi khi xóa chuyên khoa: {ex.Message}",
-                    "Lỗi"
-                    );
+                    "Lỗi");
             }
         }
 
-       
+
+
         #endregion
         #endregion
     }

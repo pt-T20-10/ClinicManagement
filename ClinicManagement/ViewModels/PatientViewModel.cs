@@ -491,7 +491,8 @@ namespace ClinicManagement.ViewModels
                 (p) => OpenPatientDetails(p),
                 (p) => p != null
                 );
-                }
+            CheckAndUpgradePatients();
+        }
 
         private void OpenPatientDetails(Patient patient)
         {
@@ -840,89 +841,108 @@ namespace ClinicManagement.ViewModels
         /// </summary>
         public void CheckAndUpgradePatients()
         {
-            try
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
-                // Get the VIP patient type
-                var vipType = DataProvider.Instance.Context.PatientTypes
-                    .FirstOrDefault(pt => pt.TypeName.Trim().Equals("VIP", StringComparison.OrdinalIgnoreCase) == true);
-
-                if (vipType == null)
-                    return;
-
-                // Get the standard patient type
-                var normalType = DataProvider.Instance.Context.PatientTypes
-                    .FirstOrDefault(pt => pt.TypeName.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase) == true);
-
-                if (normalType == null)
-                    return;
-
-                // Get regular patients who are not VIPs
-                var regularPatients = DataProvider.Instance.Context.Patients
-                    .Where(p => p.PatientTypeId == normalType.PatientTypeId && p.IsDeleted != true)
-                    .ToList();
-
-                if (regularPatients.Count == 0)
-                    return;
-
-                // Get all invoices
-                var invoices = DataProvider.Instance.Context.Invoices
-                    .Where(i => i.Status == "Đã thanh toán")
-                    .ToList();
-
-                List<string> upgradedPatients = new List<string>();
-
-                // Check each patient's spending and invoice count
-                foreach (var patient in regularPatients)
+                try
                 {
-                    // Get all paid invoices for this patient
-                    var patientInvoices = invoices
-                        .Where(i => i.PatientId == patient.PatientId)
+                    // Get the VIP patient type
+                    var vipType = DataProvider.Instance.Context.PatientTypes
+                        .FirstOrDefault(pt => pt.TypeName.Trim().Equals("VIP", StringComparison.OrdinalIgnoreCase) == true);
+
+                    if (vipType == null)
+                        return;
+
+                    // Get the standard patient type
+                    var normalType = DataProvider.Instance.Context.PatientTypes
+                        .FirstOrDefault(pt => pt.TypeName.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase) == true);
+
+                    if (normalType == null)
+                        return;
+
+                    // Get regular patients who are not VIPs
+                    var regularPatients = DataProvider.Instance.Context.Patients
+                        .Where(p => p.PatientTypeId == normalType.PatientTypeId && p.IsDeleted != true)
                         .ToList();
 
-                    // Calculate total spending
-                    decimal totalSpending = patientInvoices.Sum(i => i.TotalAmount);
+                    if (regularPatients.Count == 0)
+                        return;
 
-                    // Get invoice count
-                    int invoiceCount = patientInvoices.Count;
+                    // Get all invoices
+                    var invoices = DataProvider.Instance.Context.Invoices
+                        .Where(i => i.Status == "Đã thanh toán")
+                        .ToList();
 
-                    // Check if patient qualifies for upgrade
-                    bool qualifiedBySpending = totalSpending >= 8000000; // 8 million
-                    bool qualifiedByCount = invoiceCount >= 30;
+                    List<string> upgradedPatients = new List<string>();
 
-                    if (qualifiedBySpending || qualifiedByCount)
+                    // Check each patient's spending and invoice count
+                    foreach (var patient in regularPatients)
                     {
-                        // Upgrade patient to VIP
-                        patient.PatientTypeId = vipType.PatientTypeId;
+                        // Get all paid invoices for this patient
+                        var patientInvoices = invoices
+                            .Where(i => i.PatientId == patient.PatientId)
+                            .ToList();
 
-                        // Add to upgraded list for reporting
-                        upgradedPatients.Add(patient.FullName);
+                        // Calculate total spending
+                        decimal totalSpending = patientInvoices.Sum(i => i.TotalAmount);
+
+                        // Get invoice count
+                        int invoiceCount = patientInvoices.Count;
+
+                        // Check if patient qualifies for upgrade
+                        bool qualifiedBySpending = totalSpending >= 8000000; // 8 million
+                        bool qualifiedByCount = invoiceCount >= 30;
+
+                        if (qualifiedBySpending || qualifiedByCount)
+                        {
+                            // Upgrade patient to VIP
+                            patient.PatientTypeId = vipType.PatientTypeId;
+
+                            // Add to upgraded list for reporting
+                            upgradedPatients.Add(patient.FullName);
+                        }
+                    }
+
+                    // Save changes if any patients were upgraded
+                    if (upgradedPatients.Count > 0)
+                    {
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Commit transaction khi mọi thứ thành công
+                        transaction.Commit();
+
+                        // Show a notification only if patients were upgraded
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            string message = $"Đã nâng cấp {upgradedPatients.Count} bệnh nhân lên VIP!\n\n" +
+                                            $"Danh sách: {string.Join(", ", upgradedPatients)}";
+
+                            MessageBoxService.ShowSuccess(message, "Nâng cấp thành công");
+
+                            // Refresh patient list
+                            LoadData();
+                        });
+                    }
+                    else
+                    {
+                        // Không có gì thay đổi, vẫn commit để kết thúc transaction
+                        transaction.Commit();
                     }
                 }
-
-                // Save changes if any patients were upgraded
-                if (upgradedPatients.Count > 0)
+                catch (Exception ex)
                 {
-                    DataProvider.Instance.Context.SaveChanges();
+                    // Rollback transaction nếu có lỗi xảy ra
+                    transaction.Rollback();
 
-                    // Show a notification only if patients were upgraded
+                    // Hiển thị lỗi cho người dùng
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        string message = $"Đã nâng cấp {upgradedPatients.Count} bệnh nhân lên VIP!\n\n" +
-                                        $"Danh sách: {string.Join(", ", upgradedPatients)}";
-
-                        MessageBoxService.ShowSuccess(message, "Nâng cấp thành công");
-
-                        // Refresh patient list
-                        LoadData();
+                        MessageBoxService.ShowError($"Lỗi khi nâng cấp bệnh nhân: {ex.Message}", "Lỗi");
                     });
                 }
             }
-            catch (Exception ex)
-            {
-                // Log the error but don't show it to the user since this is an automated process
-                Console.WriteLine($"Error in CheckAndUpgradePatients: {ex.Message}");
-            }
         }
+
 
 
 

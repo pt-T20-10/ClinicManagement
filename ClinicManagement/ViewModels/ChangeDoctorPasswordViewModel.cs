@@ -174,7 +174,6 @@ public class ChangeDoctorPasswordViewModel : BaseViewModel
         }
     }
 
-
     private void ValidateConfirmPassword()
     {
         if (string.IsNullOrWhiteSpace(ConfirmPassword))
@@ -209,59 +208,80 @@ public class ChangeDoctorPasswordViewModel : BaseViewModel
     {
         try
         {
+            // Kiểm tra xem tài khoản đã được khởi tạo hay chưa
             if (Account == null)
             {
-                MessageBoxService.ShowError("Không tìm thấy thông tin tài khoản!",
-                    "Lỗi"  );
+                MessageBoxService.ShowError("Không tìm thấy thông tin tài khoản!", "Lỗi");
                 return;
             }
 
-            // Double-check mật khẩu hiện tại
+            // Kiểm tra lại mật khẩu hiện tại một lần nữa để đảm bảo an toàn
             string hashedCurrentPassword = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(CurrentPassword));
             if (Account.Password != hashedCurrentPassword)
             {
-                MessageBoxService.ShowError("Mật khẩu hiện tại không đúng!",
-                    "Lỗi"  );
+                MessageBoxService.ShowError("Mật khẩu hiện tại không đúng!", "Lỗi");
                 return;
             }
 
-            // Tìm tài khoản trong database
-            var accountToUpdate = DataProvider.Instance.Context.Accounts
-                .FirstOrDefault(a => a.Username == Account.Username && a.IsDeleted != true);
-
-            if (accountToUpdate != null)
+            // Sử dụng transaction để đảm bảo tính nhất quán của dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
-                // Hash mật khẩu mới và lưu vào database
-                string hashedNewPassword = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(NewPassword));
-                accountToUpdate.Password = hashedNewPassword;
+                try
+                {
+                    // Tìm tài khoản trong cơ sở dữ liệu
+                    var accountToUpdate = DataProvider.Instance.Context.Accounts
+                        .FirstOrDefault(a => a.Username == Account.Username && a.IsDeleted != true);
 
-                // Lưu thay đổi vào database
-                DataProvider.Instance.Context.SaveChanges();
+                    if (accountToUpdate == null)
+                    {
+                        MessageBoxService.ShowError("Không tìm thấy tài khoản trong hệ thống!", "Lỗi");
+                        return;
+                    }
 
-                // Cập nhật lại Account trong memory
-                Account.Password = hashedNewPassword;
+                    // Hash mật khẩu mới và lưu vào cơ sở dữ liệu
+                    string hashedNewPassword = HashUtility.ComputeSha256Hash(HashUtility.Base64Encode(NewPassword));
+                    accountToUpdate.Password = hashedNewPassword;
 
-                // Hiển thị thông báo thành công
-                MessageBoxService.ShowWarning("Đổi mật khẩu thành công!",
-                    "Thông báo"  );
+                    // Ghi nhật ký đổi mật khẩu (nếu cần)
+                    // Có thể thêm code ghi nhật ký ở đây
 
-                // Đóng window
-                Window window = Application.Current.Windows.OfType<Window>()
-                    .FirstOrDefault(w => w.DataContext == this);
-                window?.Close();
-            }
-            else
-            {
-                MessageBoxService.ShowError("Không tìm thấy tài khoản trong hệ thống!",
-                    "Lỗi"  );
+                    // Lưu thay đổi vào cơ sở dữ liệu
+                    DataProvider.Instance.Context.SaveChanges();
+
+                    // Hoàn tất transaction
+                    transaction.Commit();
+
+                    // Cập nhật lại Account trong memory để đảm bảo đồng bộ
+                    Account.Password = hashedNewPassword;
+
+                    // Hiển thị thông báo thành công
+                    MessageBoxService.ShowSuccess("Đổi mật khẩu thành công!", "Thông báo");
+
+                    // Tự động đóng cửa sổ đổi mật khẩu
+                    Window window = Application.Current.Windows.OfType<Window>()
+                        .FirstOrDefault(w => w.DataContext == this);
+                    window?.Close();
+                }
+                catch (Exception ex)
+                {
+                    // Nếu có lỗi xảy ra, hoàn tác lại toàn bộ thay đổi
+                    transaction.Rollback();
+
+                    // Ghi log lỗi (nếu có)
+                    System.Diagnostics.Debug.WriteLine($"Lỗi khi đổi mật khẩu: {ex.Message}");
+
+                    // Ném lại ngoại lệ để được xử lý ở khối catch bên ngoài
+                    throw;
+                }
             }
         }
         catch (Exception ex)
         {
-            MessageBoxService.ShowError($"Lỗi khi đổi mật khẩu: {ex.Message}",
-                "Lỗi"  );
+            // Xử lý và hiển thị lỗi cho người dùng
+            MessageBoxService.ShowError($"Lỗi khi đổi mật khẩu: {ex.Message}", "Lỗi");
         }
     }
+
 
     // Phương thức public để truyền Account từ bên ngoài
     public void SetAccount(Account account)
