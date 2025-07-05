@@ -369,16 +369,48 @@
                         </ScrollViewer>
                     </Grid>
                 </TabItem>
-                <TabItem Header="Doanh thu tổng quan">
+                <!-- Combined Revenue Statistics Tab -->
+                <TabItem Header="Thống kê doanh thu">
+                    <TabItem.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="🔄 Làm mới" Command="{Binding RefreshCommand}"/>
+                            <MenuItem Header="📊 Xuất Excel" Command="{Binding ExportRevenueToExcelCommand}"/>
+                        </ContextMenu>
+                    </TabItem.ContextMenu>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
+                            <!-- Top 10 ngày có doanh thu cao nhất -->
+                            <materialDesign:Card Grid.Row="0" Margin="8" UniformCornerRadius="8">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="350"/>
+                                    </Grid.RowDefinitions>
 
+                                    <TextBlock Grid.Row="0" Text="Top 10 ngày có doanh thu cao nhất" 
+                               FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding TopRevenueDaysSeries}" 
+                                        LegendLocation="Top" DisableAnimations="False">
+                                        <lvc:CartesianChart.AxisX>
+                                            <lvc:Axis Title="Ngày" Labels="{Binding TopRevenueDaysLabels}" 
+                                       LabelsRotation="45"/>
+                                        </lvc:CartesianChart.AxisX>
+                                        <lvc:CartesianChart.AxisY>
+                                            <lvc:Axis Title="Doanh thu (VNĐ)" 
+                                       LabelFormatter="{Binding YFormatter}"/>
+                                        </lvc:CartesianChart.AxisY>
+                                    </lvc:CartesianChart>
+                                </Grid>
+                            </materialDesign:Card>
 
                             <!-- Doanh thu theo loại hóa đơn và Tỷ lệ doanh thu -->
                             <Grid Grid.Row="1">
@@ -396,10 +428,10 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Text="Doanh thu theo loại hóa đơn" 
-                                             FontWeight="Medium" Margin="0,0,0,15"/>
+                                   FontWeight="Medium" Margin="0,0,0,15"/>
 
                                         <lvc:CartesianChart Grid.Row="1" Series="{Binding InvoiceTypeSeries}" 
-                                                      LegendLocation="Top" DisableAnimations="False">
+                                            LegendLocation="Top" DisableAnimations="False">
                                             <lvc:CartesianChart.AxisX>
                                                 <lvc:Axis Title="Loại hóa đơn" Labels="{Binding InvoiceTypeLabels}"/>
                                             </lvc:CartesianChart.AxisX>
@@ -416,68 +448,17 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Text="Tỷ lệ doanh thu theo dịch vụ" 
-                                             FontWeight="Medium" Margin="0,0,0,15"/>
+                                   FontWeight="Medium" Margin="0,0,0,15"/>
 
                                         <lvc:PieChart Grid.Row="1" Series="{Binding ServiceRevenueSeries}" 
-                                               LegendLocation="Right" InnerRadius="0" Hoverable="True">
+                                       LegendLocation="Right" InnerRadius="0" Hoverable="True">
                                         </lvc:PieChart>
                                     </Grid>
                                 </materialDesign:Card>
                             </Grid>
 
-                            <!-- Doanh thu bình quân và So sánh doanh thu -->
-                            <Grid Grid.Row="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-
-                                </Grid.ColumnDefinitions>
-
-                            </Grid>
-                        </Grid>
-                    </ScrollViewer>
-                </TabItem>
-
-                <!-- 2. Phân tích doanh thu chi tiết Tab -->
-                <TabItem Header="Phân tích doanh thu chi tiết">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Top 10 ngày có doanh thu cao nhất -->
-                            <materialDesign:Card Grid.Row="0" Margin="8" UniformCornerRadius="8">
-                                <Grid Margin="15">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="514*"/>
-                                        <ColumnDefinition Width="479*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="350"/>
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock Grid.Row="0" Text="Top 10 ngày có doanh thu cao nhất" 
-                                         FontWeight="Medium" Margin="0,0,0,15" Grid.ColumnSpan="2"/>
-
-                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding TopRevenueDaysSeries}" 
-                                                  LegendLocation="Top" DisableAnimations="False" Grid.ColumnSpan="2">
-                                        <lvc:CartesianChart.AxisX>
-                                            <lvc:Axis Title="Ngày" Labels="{Binding TopRevenueDaysLabels}" 
-                                               LabelsRotation="45"/>
-                                        </lvc:CartesianChart.AxisX>
-                                        <lvc:CartesianChart.AxisY>
-                                            <lvc:Axis Title="Doanh thu (VNĐ)" 
-                                               LabelFormatter="{Binding YFormatter}"/>
-                                        </lvc:CartesianChart.AxisY>
-                                    </lvc:CartesianChart>
-                                </Grid>
-                            </materialDesign:Card>
-
                             <!-- Biểu đồ xu hướng và Doanh thu theo giờ -->
-                            <Grid Grid.Row="1">
+                            <Grid Grid.Row="2">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
@@ -492,10 +473,10 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Text="Xu hướng doanh thu theo thời gian" 
-                                             FontWeight="Medium" Margin="0,0,0,15"/>
+                                   FontWeight="Medium" Margin="0,0,0,15"/>
 
                                         <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueTrendSeries}" 
-                                                      LegendLocation="Top" DisableAnimations="False">
+                                            LegendLocation="Top" DisableAnimations="False">
                                             <lvc:CartesianChart.AxisX>
                                                 <lvc:Axis Title="Thời gian" Labels="{Binding RevenueTrendLabels}"/>
                                             </lvc:CartesianChart.AxisX>
@@ -512,10 +493,10 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Text="Doanh thu theo giờ trong ngày (peak hours)" 
-                                             FontWeight="Medium" Margin="0,0,0,15"/>
+                                   FontWeight="Medium" Margin="0,0,0,15"/>
 
                                         <lvc:CartesianChart Grid.Row="1" Series="{Binding RevenueByHourSeries}" 
-                                                      LegendLocation="Top" DisableAnimations="False">
+                                            LegendLocation="Top" DisableAnimations="False">
                                             <lvc:CartesianChart.AxisX>
                                                 <lvc:Axis Title="Giờ" Labels="{Binding HourLabels}"/>
                                             </lvc:CartesianChart.AxisX>
@@ -527,8 +508,15 @@
                     </ScrollViewer>
                 </TabItem>
 
+
                 <!-- 3. Thống kê bệnh nhân Tab -->
                 <TabItem Header="Thống kê bệnh nhân">
+                    <TabItem.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="🔄 Làm mới" Command="{Binding RefreshCommand}"/>
+                            <MenuItem Header="📊 Xuất Excel" Command="{Binding ExportPatientsToExcelCommand}"/>
+                        </ContextMenu>
+                    </TabItem.ContextMenu>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -617,6 +605,12 @@
 
                 <!-- 4. Thống kê lịch hẹn Tab -->
                 <TabItem Header="Thống kê lịch hẹn">
+                    <TabItem.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="🔄 Làm mới" Command="{Binding RefreshCommand}"/>
+                            <MenuItem Header="📊 Xuất Excel" Command="{Binding ExportAppointmentsToExcelCommand}"/>
+                        </ContextMenu>
+                    </TabItem.ContextMenu>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -704,6 +698,12 @@
 
                 <!-- 5. Thống kê thuốc Tab -->
                 <TabItem Header="Thống kê thuốc">
+                    <TabItem.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="🔄 Làm mới" Command="{Binding RefreshCommand}"/>
+                            <MenuItem Header="📊 Xuất Excel" Command="{Binding ExportMedicineToExcelCommand}"/>
+                        </ContextMenu>
+                    </TabItem.ContextMenu>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.RowDefinitions>

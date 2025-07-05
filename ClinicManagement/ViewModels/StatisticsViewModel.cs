@@ -7,6 +7,10 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
+using ClosedXML.Excel;
+using System.IO;
+using ClinicManagement.SubWindow;
 
 namespace ClinicManagement.ViewModels
 {
@@ -611,6 +615,12 @@ namespace ClinicManagement.ViewModels
         public ICommand FilterByQuarterCommand { get; set; }
         public ICommand FilterByYearCommand { get; set; }
         public ICommand ViewLowStockCommand { get; set; }
+        public ICommand ExportRevenueToExcelCommand { get; private set; }
+
+        // Additional export commands for each tab
+        public ICommand ExportPatientsToExcelCommand { get; private set; }
+        public ICommand ExportAppointmentsToExcelCommand { get; private set; }
+        public ICommand ExportMedicineToExcelCommand { get; private set; }
         #endregion
 
         // Track if async operation is running
@@ -666,6 +676,26 @@ namespace ClinicManagement.ViewModels
             ViewLowStockCommand = new RelayCommand<object>(
                 p => ViewLowStock(),
                 p => LowStockCount > 0 && !IsLoading && !_isAsyncOperationRunning
+            );
+            // Add these lines to your existing InitializeCommands method
+            ExportRevenueToExcelCommand = new RelayCommand<object>(
+                p => ExportRevenueToExcel(),
+                p => !IsLoading
+            );
+
+            ExportPatientsToExcelCommand = new RelayCommand<object>(
+                p => ExportPatientsToExcel(),
+                p => !IsLoading
+            );
+
+            ExportAppointmentsToExcelCommand = new RelayCommand<object>(
+                p => ExportAppointmentsToExcel(),
+                p => !IsLoading
+            );
+
+            ExportMedicineToExcelCommand = new RelayCommand<object>(
+                p => ExportMedicineToExcel(),
+                p => !IsLoading
             );
         }
 
@@ -2005,10 +2035,6 @@ namespace ClinicManagement.ViewModels
         }
 
 
-
-
-
-
         /// <summary>
         /// Tính toán tỷ lệ tăng trưởng doanh thu và bệnh nhân mới giữa kỳ hiện tại và kỳ trước đó.
         /// </summary>
@@ -2249,7 +2275,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         private string GetInitialsFromFullName(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
@@ -2341,6 +2366,1747 @@ namespace ClinicManagement.ViewModels
             Random random = new Random();
             return new SolidColorBrush(colors[random.Next(colors.Length)]);
         }
+
+        /// <summary>
+        /// Exports revenue statistics to Excel
+        /// </summary>
+        private void ExportRevenueToExcel()
+        {
+            try
+            {
+                // Create a save file dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    DefaultExt = "xlsx",
+                    Title = "Chọn vị trí lưu file Excel",
+                    FileName = $"ThongKeDoanhThu_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Start export operation in background thread
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var workbook = new XLWorkbook())
+                            {
+                                // Report progress: 5% - Created workbook
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
+
+                                // Determine the title based on current filter
+                                string period = GetCurrentPeriodTitle();
+                                var worksheet = workbook.Worksheets.Add($"Thống kê doanh thu {period}");
+
+                                // Add title
+                                worksheet.Cell(1, 1).Value = $"THỐNG KÊ DOANH THU {period.ToUpper()}";
+                                var titleRange = worksheet.Range(1, 1, 1, 10);
+                                titleRange.Merge();
+                                titleRange.Style.Font.Bold = true;
+                                titleRange.Style.Font.FontSize = 16;
+                                titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add current date
+                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, 1, 2, 10);
+                                dateRange.Merge();
+                                dateRange.Style.Font.Italic = true;
+                                dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Report progress: 10% - Added header
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                                // Current row position tracker
+                                int currentRow = 4;
+
+                                // Export each chart data to separate tables
+                                currentRow = ExportTopRevenueDaysChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
+
+                                currentRow = ExportInvoiceTypeChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
+
+                                currentRow = ExportRevenueTrendChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(70));
+
+                                currentRow = ExportRevenueByHourChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+
+                                // Format the worksheet for better readability
+                                worksheet.Columns().AdjustToContents();
+
+                                // Save the workbook
+                                workbook.SaveAs(saveFileDialog.FileName);
+
+                                // Report progress: 100% - Complete
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                Thread.Sleep(300); // Show 100% briefly
+
+                                // Close progress dialog and show success message
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    progressDialog.Close();
+
+                                    MessageBoxService.ShowSuccess(
+                                        $"Đã xuất thống kê doanh thu thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                        "Thành công"
+                                    );
+
+                                    // Ask if user wants to open the Excel file
+                                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                    {
+                                        try
+                                        {
+                                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                            {
+                                                FileName = saveFileDialog.FileName,
+                                                UseShellExecute = true
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Close progress dialog on error
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+                                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+            }
+        }
+
+        /// <summary>
+        /// Exports patient statistics to Excel
+        /// </summary>
+        private void ExportPatientsToExcel()
+        {
+            try
+            {
+                // Create a save file dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    DefaultExt = "xlsx",
+                    Title = "Chọn vị trí lưu file Excel",
+                    FileName = $"ThongKeBenhNhan_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Create copies of data on UI thread before passing to background thread
+                    var patientTypeSeriesCopy = new List<(string Title, double Value)>();
+                    if (PatientTypeSeries != null)
+                    {
+                        foreach (var series in PatientTypeSeries)
+                        {
+                            if (series is LiveCharts.Wpf.PieSeries pieSeries &&
+                                pieSeries.Values is LiveCharts.ChartValues<double> values &&
+                                values.Count > 0)
+                            {
+                                patientTypeSeriesCopy.Add((pieSeries.Title ?? "Không có tên", values[0]));
+                            }
+                        }
+                    }
+
+                    var topVIPPatientsCopy = TopVIPPatients?.ToList() ?? new List<VIPPatient>();
+
+                    // Start export operation in background thread
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var workbook = new XLWorkbook())
+                            {
+                                // Report progress: 5% - Created workbook
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
+
+                                // Determine the title based on current filter
+                                string period = GetCurrentPeriodTitle();
+                                var worksheet = workbook.Worksheets.Add($"Thống kê bệnh nhân {period}");
+
+                                // Add title
+                                worksheet.Cell(1, 1).Value = $"THỐNG KÊ BỆNH NHÂN {period.ToUpper()}";
+                                var titleRange = worksheet.Range(1, 1, 1, 10);
+                                titleRange.Merge();
+                                titleRange.Style.Font.Bold = true;
+                                titleRange.Style.Font.FontSize = 16;
+                                titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add current date
+                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, 1, 2, 10);
+                                dateRange.Merge();
+                                dateRange.Style.Font.Italic = true;
+                                dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Report progress: 10% - Added header
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                                // Current row position tracker
+                                int currentRow = 4;
+
+                                // Export each chart data to separate tables using copies
+                                currentRow = ExportPatientTypeChartFromCopy(worksheet, currentRow, patientTypeSeriesCopy);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(40));
+
+                                currentRow = ExportTopVIPPatientsTableFromCopy(worksheet, currentRow, topVIPPatientsCopy);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
+
+                                // Format the worksheet for better readability
+                                worksheet.Columns().AdjustToContents();
+
+                                // Save the workbook
+                                workbook.SaveAs(saveFileDialog.FileName);
+
+                                // Report progress: 100% - Complete
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                Thread.Sleep(300); // Show 100% briefly
+
+                                // Close progress dialog and show success message
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    progressDialog.Close();
+
+                                    MessageBoxService.ShowSuccess(
+                                        $"Đã xuất thống kê bệnh nhân thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                        "Thành công"
+                                    );
+
+                                    // Ask if user wants to open the Excel file
+                                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                    {
+                                        try
+                                        {
+                                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                            {
+                                                FileName = saveFileDialog.FileName,
+                                                UseShellExecute = true
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Close progress dialog on error
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+                                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+            }
+        }
+
+        /// <summary>
+        /// Exports appointment statistics to Excel
+        /// </summary>
+        private void ExportAppointmentsToExcel()
+        {
+            try
+            {
+                // Create a save file dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    DefaultExt = "xlsx",
+                    Title = "Chọn vị trí lưu file Excel",
+                    FileName = $"ThongKeLichHen_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Start export operation in background thread
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var workbook = new XLWorkbook())
+                            {
+                                // Report progress: 5% - Created workbook
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
+
+                                // Determine the title based on current filter
+                                string period = GetCurrentPeriodTitle();
+                                var worksheet = workbook.Worksheets.Add($"Thống kê lịch hẹn {period}");
+
+                                // Add title
+                                worksheet.Cell(1, 1).Value = $"THỐNG KÊ LỊCH HẸN {period.ToUpper()}";
+                                var titleRange = worksheet.Range(1, 1, 1, 10);
+                                titleRange.Merge();
+                                titleRange.Style.Font.Bold = true;
+                                titleRange.Style.Font.FontSize = 16;
+                                titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add current date
+                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, 1, 2, 10);
+                                dateRange.Merge();
+                                dateRange.Style.Font.Italic = true;
+                                dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Report progress: 10% - Added header
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                                // Current row position tracker
+                                int currentRow = 4;
+
+                                // Export each chart data to separate tables
+                                currentRow = ExportAppointmentStatusChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(40));
+
+                                currentRow = ExportAppointmentPeakHoursChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(70));
+
+                                currentRow = ExportPatientsByDoctorChart(worksheet, currentRow);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+
+                                // Format the worksheet for better readability
+                                worksheet.Columns().AdjustToContents();
+
+                                // Save the workbook
+                                workbook.SaveAs(saveFileDialog.FileName);
+
+                                // Report progress: 100% - Complete
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                Thread.Sleep(300); // Show 100% briefly
+
+                                // Close progress dialog and show success message
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    progressDialog.Close();
+
+                                    MessageBoxService.ShowSuccess(
+                                        $"Đã xuất thống kê lịch hẹn thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                        "Thành công"
+                                    );
+
+                                    // Ask if user wants to open the Excel file
+                                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                    {
+                                        try
+                                        {
+                                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                            {
+                                                FileName = saveFileDialog.FileName,
+                                                UseShellExecute = true
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Close progress dialog on error
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+                                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+            }
+        }
+
+        /// <summary>
+        /// Exports medicine statistics to Excel
+        /// </summary>
+        private void ExportMedicineToExcel()
+        {
+            try
+            {
+                // Create a save file dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    DefaultExt = "xlsx",
+                    Title = "Chọn vị trí lưu file Excel",
+                    FileName = $"ThongKeThuoc_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Create and show progress dialog
+                    ProgressDialog progressDialog = new ProgressDialog();
+
+                    // Create copies of collection data on UI thread
+                    var revenueByCategorySeries = new List<(string Category, double Value)>();
+                    if (RevenueByCategorySeries?.Count > 0 && CategoryLabels?.Length > 0)
+                    {
+                        var series = RevenueByCategorySeries[0] as LiveCharts.Wpf.ColumnSeries;
+                        if (series?.Values is LiveCharts.ChartValues<double> values)
+                        {
+                            for (int i = 0; i < CategoryLabels.Length; i++)
+                            {
+                                double value = i < values.Count ? values[i] : 0;
+                                revenueByCategorySeries.Add((CategoryLabels[i], value));
+                            }
+                        }
+                    }
+
+                    // Copy other collections
+                    var productDistributionCopy = new List<(string Title, double Value)>();
+                    if (ProductDistributionSeries != null)
+                    {
+                        foreach (var series in ProductDistributionSeries)
+                        {
+                            if (series is LiveCharts.Wpf.PieSeries pieSeries &&
+                                pieSeries.Values is LiveCharts.ChartValues<double> values &&
+                                values.Count > 0)
+                            {
+                                productDistributionCopy.Add((pieSeries.Title ?? "Không có tên", values[0]));
+                            }
+                        }
+                    }
+
+                    var topSellingProductsCopy = TopSellingProducts?.ToList() ?? new List<TopSellingProduct>();
+                    var warningMedicinesCopy = WarningMedicines?.ToList() ?? new List<WarningMedicine>();
+
+                    // Get period title on UI thread
+                    string period = GetCurrentPeriodTitle();
+
+                    // Start export operation in background thread
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            using (var workbook = new XLWorkbook())
+                            {
+                                // Report progress: 5% - Created workbook
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
+
+                                var worksheet = workbook.Worksheets.Add($"Thống kê thuốc {period}");
+
+                                // Add title
+                                worksheet.Cell(1, 1).Value = $"THỐNG KÊ THUỐC {period.ToUpper()}";
+                                var titleRange = worksheet.Range(1, 1, 1, 10);
+                                titleRange.Merge();
+                                titleRange.Style.Font.Bold = true;
+                                titleRange.Style.Font.FontSize = 16;
+                                titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Add current date
+                                worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
+                                var dateRange = worksheet.Range(2, 1, 2, 10);
+                                dateRange.Merge();
+                                dateRange.Style.Font.Italic = true;
+                                dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                // Report progress: 10% - Added header
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
+
+                                // Current row position tracker
+                                int currentRow = 4;
+
+                                // Export each chart data to separate tables using copies
+                                currentRow = ExportRevenueByCategoryChartFromCopy(worksheet, currentRow, revenueByCategorySeries);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
+
+                                currentRow = ExportProductDistributionChartFromCopy(worksheet, currentRow, productDistributionCopy);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
+
+                                currentRow = ExportTopSellingProductsTableFromCopy(worksheet, currentRow, topSellingProductsCopy);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(70));
+
+                                currentRow = ExportWarningMedicinesTableFromCopy(worksheet, currentRow, warningMedicinesCopy);
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
+
+                                // Format the worksheet for better readability
+                                worksheet.Columns().AdjustToContents();
+
+                                // Save the workbook
+                                workbook.SaveAs(saveFileDialog.FileName);
+
+                                // Report progress: 100% - Complete
+                                Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
+                                Thread.Sleep(300); // Show 100% briefly
+
+                                // Close progress dialog and show success message
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    progressDialog.Close();
+
+                                    MessageBoxService.ShowSuccess(
+                                        $"Đã xuất thống kê thuốc thành công!\nĐường dẫn: {saveFileDialog.FileName}",
+                                        "Thành công"
+                                    );
+
+                                    // Ask if user wants to open the Excel file
+                                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                    {
+                                        try
+                                        {
+                                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                            {
+                                                FileName = saveFileDialog.FileName,
+                                                UseShellExecute = true
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Close progress dialog on error
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                progressDialog.Close();
+                                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+                            });
+                        }
+                    });
+
+                    // Show dialog - this will block until the dialog is closed
+                    progressDialog.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
+            }
+        }
+
+
+        /// <summary>
+        /// Gets a descriptive title for the current filter period
+        /// </summary>
+        private string GetCurrentPeriodTitle()
+        {
+            // Parse the current filter text to determine which period we're viewing
+            if (CurrentFilterText.Contains("Hôm nay"))
+            {
+                return $"hôm nay ({DateTime.Now:dd/MM/yyyy})";
+            }
+            else if (CurrentFilterText.Contains("Tháng"))
+            {
+                return $"tháng {DateTime.Now.Month}-{DateTime.Now.Year}";
+            }
+            else if (CurrentFilterText.Contains("Quý"))
+            {
+                int quarterNumber = (DateTime.Now.Month - 1) / 3 + 1;
+                return $"quý {quarterNumber}/{DateTime.Now.Year}";
+            }
+            else if (CurrentFilterText.Contains("Năm"))
+            {
+                return $"năm {DateTime.Now.Year}";
+            }
+            else
+            {
+                // Custom date range
+                return $"từ {StartDate:dd/MM/yyyy} đến {EndDate:dd/MM/yyyy}";
+            }
+        }
+
+        #region Export Chart Methods
+
+        /// <summary>
+        /// Exports Top Revenue Days chart to Excel
+        /// </summary>
+        private int ExportTopRevenueDaysChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "DOANH THU THEO NGÀY";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Ngày";
+            worksheet.Cell(startRow, 2).Value = "Doanh thu";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 2);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (TopRevenueDaysSeries?.Count > 0 && TopRevenueDaysLabels?.Length > 0)
+            {
+                var series = TopRevenueDaysSeries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    for (int i = 0; i < TopRevenueDaysLabels.Length; i++)
+                    {
+                        worksheet.Cell(startRow, 1).Value = TopRevenueDaysLabels[i];
+                        worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = values.Sum();
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Invoice Type chart to Excel
+        /// </summary>
+        private int ExportInvoiceTypeChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "DOANH THU THEO LOẠI HÓA ĐƠN";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Loại hóa đơn";
+            worksheet.Cell(startRow, 2).Value = "Doanh thu";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (InvoiceTypeSeries?.Count > 0 && InvoiceTypeLabels?.Length > 0)
+            {
+                var series = InvoiceTypeSeries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    double total = values.Sum();
+
+                    for (int i = 0; i < InvoiceTypeLabels.Length; i++)
+                    {
+                        double value = i < values.Count ? values[i] : 0;
+                        double percentage = total > 0 ? (value / total) * 100 : 0;
+
+                        worksheet.Cell(startRow, 1).Value = InvoiceTypeLabels[i];
+                        worksheet.Cell(startRow, 2).Value = value;
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                        worksheet.Cell(startRow, 3).Value = percentage;
+                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = total;
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 3).Value = 1;
+                    worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Revenue Trend chart to Excel
+        /// </summary>
+        private int ExportRevenueTrendChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "XU HƯỚNG DOANH THU THEO THỜI GIAN";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Thời gian";
+            worksheet.Cell(startRow, 2).Value = "Doanh thu";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 2);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (RevenueTrendSeries?.Count > 0 && RevenueTrendLabels?.Length > 0)
+            {
+                var series = RevenueTrendSeries[0] as LiveCharts.Wpf.LineSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    for (int i = 0; i < RevenueTrendLabels.Length; i++)
+                    {
+                        worksheet.Cell(startRow, 1).Value = RevenueTrendLabels[i];
+                        worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = values.Sum();
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Revenue By Hour chart to Excel
+        /// </summary>
+        private int ExportRevenueByHourChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "DOANH THU THEO GIỜ TRONG NGÀY";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Giờ";
+            worksheet.Cell(startRow, 2).Value = "Doanh thu";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 2);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (RevenueByHourSeries?.Count > 0)
+            {
+                var series = RevenueByHourSeries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    for (int i = 0; i < HourLabels.Length; i++)
+                    {
+                        worksheet.Cell(startRow, 1).Value = HourLabels[i];
+                        worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = values.Sum();
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Patient Type chart to Excel
+        /// </summary>
+        private int ExportPatientTypeChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "PHÂN TÍCH THEO LOẠI BỆNH NHÂN";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Loại bệnh nhân";
+            worksheet.Cell(startRow, 2).Value = "Số lượng";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (PatientTypeSeries?.Count > 0)
+            {
+                double total = 0;
+                var patientTypes = new List<(string Label, double Value)>();
+
+                // Extract data from pie chart series
+                foreach (var series in PatientTypeSeries)
+                {
+                    if (series is LiveCharts.Wpf.PieSeries pieSeries &&
+                        pieSeries.Values is LiveCharts.ChartValues<double> values &&
+                        values.Count > 0)
+                    {
+                        string title = pieSeries.Title ?? "Không có tên";
+                        double value = values[0];
+                        total += value;
+                        patientTypes.Add((title, value));
+                    }
+                }
+
+                // Add data rows
+                foreach (var item in patientTypes)
+                {
+                    double percentage = total > 0 ? (item.Value / total) * 100 : 0;
+
+                    worksheet.Cell(startRow, 1).Value = item.Label;
+                    worksheet.Cell(startRow, 2).Value = item.Value;
+                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Format as percentage
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 2).Value = total;
+                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Top VIP Patients to Excel
+        /// </summary>
+        private int ExportTopVIPPatientsTable(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN VIP (CHI TIÊU NHIỀU NHẤT)";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "ID";
+            worksheet.Cell(startRow, 2).Value = "Họ và tên";
+            worksheet.Cell(startRow, 3).Value = "Số điện thoại";
+            worksheet.Cell(startRow, 4).Value = "Tổng chi tiêu";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 4);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (TopVIPPatients != null && TopVIPPatients.Count > 0)
+            {
+                foreach (var patient in TopVIPPatients)
+                {
+                    worksheet.Cell(startRow, 1).Value = patient.Id;
+                    worksheet.Cell(startRow, 2).Value = patient.FullName;
+                    worksheet.Cell(startRow, 3).Value = patient.Phone;
+                    worksheet.Cell(startRow, 4).Value = patient.TotalSpending;
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Value = TopVIPPatients.Sum(p => p.TotalSpending);
+                worksheet.Cell(startRow, 4).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                startRow++;
+            }
+            else
+            {
+                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
+                var noDataRange = worksheet.Range(startRow, 1, startRow, 4);
+                noDataRange.Merge();
+                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Appointment Status chart to Excel
+        /// </summary>
+        private int ExportAppointmentStatusChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "LỊCH HẸN THEO TRẠNG THÁI";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Trạng thái";
+            worksheet.Cell(startRow, 2).Value = "Số lượng";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (AppointmentStatusSeries?.Count > 0 && AppointmentStatusLabels?.Length > 0)
+            {
+                var series = AppointmentStatusSeries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    double total = values.Sum();
+
+                    for (int i = 0; i < AppointmentStatusLabels.Length; i++)
+                    {
+                        double value = i < values.Count ? values[i] : 0;
+                        double percentage = total > 0 ? (value / total) * 100 : 0;
+
+                        worksheet.Cell(startRow, 1).Value = AppointmentStatusLabels[i];
+                        worksheet.Cell(startRow, 2).Value = value;
+                        worksheet.Cell(startRow, 3).Value = percentage / 100;
+                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = total;
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 3).Value = 1;
+                    worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Appointment Peak Hours chart to Excel
+        /// </summary>
+        private int ExportAppointmentPeakHoursChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "PEAK HOURS ĐẶT LỊCH NHIỀU NHẤT";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Giờ";
+            worksheet.Cell(startRow, 2).Value = "Số lịch hẹn";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 2);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (AppointmentPeakHoursSeries?.Count > 0)
+            {
+                var series = AppointmentPeakHoursSeries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    for (int i = 0; i < HourLabels.Length; i++)
+                    {
+                        worksheet.Cell(startRow, 1).Value = HourLabels[i];
+                        worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = values.Sum();
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Patients By Doctor chart to Excel
+        /// </summary>
+        private int ExportPatientsByDoctorChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "SỐ LƯỢNG BỆNH NHÂN CỦA TỪNG BÁC SĨ";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Bác sĩ";
+            worksheet.Cell(startRow, 2).Value = "Số bệnh nhân";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 2);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (PatientsByStaffseries?.Count > 0 && DoctorLabels?.Length > 0)
+            {
+                var series = PatientsByStaffseries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    for (int i = 0; i < DoctorLabels.Length; i++)
+                    {
+                        worksheet.Cell(startRow, 1).Value = DoctorLabels[i];
+                        worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = values.Sum();
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Revenue By Category chart to Excel
+        /// </summary>
+        private int ExportRevenueByCategoryChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "DOANH THU THEO DANH MỤC THUỐC";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Danh mục";
+            worksheet.Cell(startRow, 2).Value = "Doanh thu";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (RevenueByCategorySeries?.Count > 0 && CategoryLabels?.Length > 0)
+            {
+                var series = RevenueByCategorySeries[0] as LiveCharts.Wpf.ColumnSeries;
+
+                if (series?.Values is LiveCharts.ChartValues<double> values)
+                {
+                    double total = values.Sum();
+
+                    for (int i = 0; i < CategoryLabels.Length; i++)
+                    {
+                        double value = i < values.Count ? values[i] : 0;
+                        double percentage = total > 0 ? (value / total) * 100 : 0;
+
+                        worksheet.Cell(startRow, 1).Value = CategoryLabels[i];
+                        worksheet.Cell(startRow, 2).Value = value;
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                        worksheet.Cell(startRow, 3).Value = percentage / 100;
+                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                        startRow++;
+                    }
+
+                    // Add total row
+                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Value = total;
+                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 3).Value = 1;
+                    worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Product Distribution chart to Excel
+        /// </summary>
+        private int ExportProductDistributionChart(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "PHÂN BỔ THEO DANH MỤC THUỐC";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Danh mục";
+            worksheet.Cell(startRow, 2).Value = "Số lượng";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (ProductDistributionSeries?.Count > 0)
+            {
+                double total = 0;
+                var categories = new List<(string Label, double Value)>();
+
+                // Extract data from pie chart series
+                foreach (var series in ProductDistributionSeries)
+                {
+                    if (series is LiveCharts.Wpf.PieSeries pieSeries &&
+                        pieSeries.Values is LiveCharts.ChartValues<double> values &&
+                        values.Count > 0)
+                    {
+                        string title = pieSeries.Title ?? "Không có tên";
+                        double value = values[0];
+                        total += value;
+                        categories.Add((title, value));
+                    }
+                }
+
+                // Add data rows
+                foreach (var item in categories)
+                {
+                    double percentage = total > 0 ? (item.Value / total) * 100 : 0;
+
+                    worksheet.Cell(startRow, 1).Value = item.Label;
+                    worksheet.Cell(startRow, 2).Value = item.Value;
+                    worksheet.Cell(startRow, 3).Value = percentage / 100;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 2).Value = total;
+                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Top Selling Products to Excel
+        /// </summary>
+        private int ExportTopSellingProductsTable(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "TOP THUỐC BÁN CHẠY NHẤT";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "ID";
+            worksheet.Cell(startRow, 2).Value = "Tên thuốc";
+            worksheet.Cell(startRow, 3).Value = "Danh mục";
+            worksheet.Cell(startRow, 4).Value = "Doanh thu";
+            worksheet.Cell(startRow, 5).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 5);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (TopSellingProducts != null && TopSellingProducts.Count > 0)
+            {
+                foreach (var product in TopSellingProducts)
+                {
+                    worksheet.Cell(startRow, 1).Value = product.Id;
+                    worksheet.Cell(startRow, 2).Value = product.Name;
+                    worksheet.Cell(startRow, 3).Value = product.Category;
+                    worksheet.Cell(startRow, 4).Value = product.Sales;
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 5).Value = product.Percentage / 100;
+                    worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Value = TopSellingProducts.Sum(p => p.Sales);
+                worksheet.Cell(startRow, 4).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                worksheet.Cell(startRow, 5).Value = 1;
+                worksheet.Cell(startRow, 5).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+            else
+            {
+                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
+                var noDataRange = worksheet.Range(startRow, 1, startRow, 5);
+                noDataRange.Merge();
+                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        /// <summary>
+        /// Exports Warning Medicines to Excel
+        /// </summary>
+        private int ExportWarningMedicinesTable(IXLWorksheet worksheet, int startRow)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "CẢNH BÁO TỒN KHO";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "ID";
+            worksheet.Cell(startRow, 2).Value = "Tên thuốc";
+            worksheet.Cell(startRow, 3).Value = "Cảnh báo";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (WarningMedicines != null && WarningMedicines.Count > 0)
+            {
+                foreach (var medicine in WarningMedicines)
+                {
+                    worksheet.Cell(startRow, 1).Value = medicine.Id;
+                    worksheet.Cell(startRow, 2).Value = medicine.Name;
+                    worksheet.Cell(startRow, 3).Value = medicine.WarningMessage;
+
+                    // Color-code warnings based on severity
+                    if (medicine.WarningMessage.Contains("CẦN TIÊU HỦY"))
+                    {
+                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Red;
+                        worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                    }
+                    else if (medicine.WarningMessage.Contains("SẮP HẾT HẠN"))
+                    {
+                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Orange;
+                    }
+                    else if (medicine.WarningMessage.Contains("TỒN KHO THẤP"))
+                    {
+                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Blue;
+                    }
+
+                    startRow++;
+                }
+            }
+            else
+            {
+                worksheet.Cell(startRow, 1).Value = "Không có cảnh báo";
+                var noDataRange = worksheet.Range(startRow, 1, startRow, 3);
+                noDataRange.Merge();
+                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+   
+        private int ExportPatientTypeChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Title, double Value)> patientTypes)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "PHÂN TÍCH THEO LOẠI BỆNH NHÂN";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Loại bệnh nhân";
+            worksheet.Cell(startRow, 2).Value = "Số lượng";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (patientTypes != null && patientTypes.Count > 0)
+            {
+                double total = patientTypes.Sum(pt => pt.Value);
+
+                foreach (var item in patientTypes)
+                {
+                    double percentage = total > 0 ? (item.Value / total) * 100 : 0;
+
+                    worksheet.Cell(startRow, 1).Value = item.Title;
+                    worksheet.Cell(startRow, 2).Value = item.Value;
+                    worksheet.Cell(startRow, 3).Value = percentage / 100;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 2).Value = total;
+                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        private int ExportTopVIPPatientsTableFromCopy(IXLWorksheet worksheet, int startRow, List<VIPPatient> patients)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN VIP (CHI TIÊU NHIỀU NHẤT)";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "ID";
+            worksheet.Cell(startRow, 2).Value = "Họ và tên";
+            worksheet.Cell(startRow, 3).Value = "Số điện thoại";
+            worksheet.Cell(startRow, 4).Value = "Tổng chi tiêu";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 4);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (patients != null && patients.Count > 0)
+            {
+                foreach (var patient in patients)
+                {
+                    worksheet.Cell(startRow, 1).Value = patient.Id;
+                    worksheet.Cell(startRow, 2).Value = patient.FullName;
+                    worksheet.Cell(startRow, 3).Value = patient.Phone;
+                    worksheet.Cell(startRow, 4).Value = patient.TotalSpending;
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Value = patients.Sum(p => p.TotalSpending);
+                worksheet.Cell(startRow, 4).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                startRow++;
+            }
+            else
+            {
+                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
+                var noDataRange = worksheet.Range(startRow, 1, startRow, 4);
+                noDataRange.Merge();
+                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+        private int ExportRevenueByCategoryChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Category, double Value)> categories)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "DOANH THU THEO DANH MỤC THUỐC";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Danh mục";
+            worksheet.Cell(startRow, 2).Value = "Doanh thu";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (categories != null && categories.Count > 0)
+            {
+                double total = categories.Sum(c => c.Value);
+
+                foreach (var category in categories)
+                {
+                    double percentage = total > 0 ? (category.Value / total) * 100 : 0;
+
+                    worksheet.Cell(startRow, 1).Value = category.Category;
+                    worksheet.Cell(startRow, 2).Value = category.Value;
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 3).Value = percentage / 100;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 2).Value = total;
+                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        private int ExportProductDistributionChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Title, double Value)> categories)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "PHÂN BỔ THEO DANH MỤC THUỐC";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "Danh mục";
+            worksheet.Cell(startRow, 2).Value = "Số lượng";
+            worksheet.Cell(startRow, 3).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (categories != null && categories.Count > 0)
+            {
+                double total = categories.Sum(item => item.Value);
+
+                foreach (var item in categories)
+                {
+                    double percentage = total > 0 ? (item.Value / total) * 100 : 0;
+
+                    worksheet.Cell(startRow, 1).Value = item.Title;
+                    worksheet.Cell(startRow, 2).Value = item.Value;
+                    worksheet.Cell(startRow, 3).Value = percentage / 100;
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 2).Value = total;
+                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        private int ExportTopSellingProductsTableFromCopy(IXLWorksheet worksheet, int startRow, List<TopSellingProduct> products)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "TOP THUỐC BÁN CHẠY NHẤT";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "ID";
+            worksheet.Cell(startRow, 2).Value = "Tên thuốc";
+            worksheet.Cell(startRow, 3).Value = "Danh mục";
+            worksheet.Cell(startRow, 4).Value = "Doanh thu";
+            worksheet.Cell(startRow, 5).Value = "Phần trăm";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 5);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (products != null && products.Count > 0)
+            {
+                foreach (var product in products)
+                {
+                    worksheet.Cell(startRow, 1).Value = product.Id;
+                    worksheet.Cell(startRow, 2).Value = product.Name;
+                    worksheet.Cell(startRow, 3).Value = product.Category;
+                    worksheet.Cell(startRow, 4).Value = product.Sales;
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 5).Value = product.Percentage / 100;
+                    worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
+                    startRow++;
+                }
+
+                // Add total row
+                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Value = products.Sum(p => p.Sales);
+                worksheet.Cell(startRow, 4).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                worksheet.Cell(startRow, 5).Value = 1;
+                worksheet.Cell(startRow, 5).Style.Font.Bold = true;
+                worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
+                startRow++;
+            }
+            else
+            {
+                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
+                var noDataRange = worksheet.Range(startRow, 1, startRow, 5);
+                noDataRange.Merge();
+                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+
+        private int ExportWarningMedicinesTableFromCopy(IXLWorksheet worksheet, int startRow, List<WarningMedicine> medicines)
+        {
+            // Add section title
+            worksheet.Cell(startRow, 1).Value = "CẢNH BÁO TỒN KHO";
+            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
+            sectionTitleRange.Merge();
+            sectionTitleRange.Style.Font.Bold = true;
+            sectionTitleRange.Style.Font.FontSize = 14;
+            startRow += 1;
+
+            // Add header row
+            worksheet.Cell(startRow, 1).Value = "ID";
+            worksheet.Cell(startRow, 2).Value = "Tên thuốc";
+            worksheet.Cell(startRow, 3).Value = "Cảnh báo";
+
+            // Style header row
+            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            startRow += 1;
+
+            // Add data rows
+            if (medicines != null && medicines.Count > 0)
+            {
+                foreach (var medicine in medicines)
+                {
+                    worksheet.Cell(startRow, 1).Value = medicine.Id;
+                    worksheet.Cell(startRow, 2).Value = medicine.Name;
+                    worksheet.Cell(startRow, 3).Value = medicine.WarningMessage;
+
+                    // Color-code warnings based on severity
+                    if (medicine.WarningMessage?.Contains("CẦN TIÊU HỦY") == true)
+                    {
+                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Red;
+                        worksheet.Cell(startRow, 3).Style.Font.Bold = true;
+                    }
+                    else if (medicine.WarningMessage?.Contains("SẮP HẾT HẠN") == true)
+                    {
+                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Orange;
+                    }
+                    else if (medicine.WarningMessage?.Contains("TỒN KHO THẤP") == true)
+                    {
+                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Blue;
+                    }
+
+                    startRow++;
+                }
+            }
+            else
+            {
+                worksheet.Cell(startRow, 1).Value = "Không có cảnh báo";
+                var noDataRange = worksheet.Range(startRow, 1, startRow, 3);
+                noDataRange.Merge();
+                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
+
+            // Add empty row as separator
+            startRow += 2;
+            return startRow;
+        }
+        #endregion
+
         #endregion
 
         #region Model Classes

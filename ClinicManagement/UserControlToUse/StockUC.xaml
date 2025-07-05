@@ -311,16 +311,20 @@ Height="32"
                                 SelectionUnit="FullRow"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
-                                Background="White">
+                                     BorderThickness="1"
+      BorderBrush="{DynamicResource MaterialDesignDivider}"
+      Background="White"
+      VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+      HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+      CanUserSortColumns="True">
                                             <DataGrid.Resources>
-                                                <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                                    <Setter Property="Background" Value="#ECEFF1"/>
-                                                    <Setter Property="Foreground" Value="#37474F"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Height" Value="40"/>
-                                                    <Setter Property="Padding" Value="8,0"/>
+                                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                    <Setter Property="Background" Value="#E3F2FD" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                    <Setter Property="Padding" Value="8" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
                                                 </Style>
 
                                                 <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
@@ -454,20 +458,25 @@ Height="32"
                                 ItemsSource="{Binding MonthlyStockList}" 
                                 AutoGenerateColumns="False"
                                 IsReadOnly="True"
+                                                 BorderThickness="1"
+                              BorderBrush="{DynamicResource MaterialDesignDivider}"
+     
+                              VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                              HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                              CanUserSortColumns="True"
                                 SelectionMode="Single"
                                 SelectionUnit="FullRow"
                                 CanUserAddRows="False"
                                 CanUserDeleteRows="False"
                                 Background="White">
                                             <DataGrid.Resources>
-                                                <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                                    <Setter Property="Background" Value="#ECEFF1"/>
-                                                    <Setter Property="Foreground" Value="#37474F"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Height" Value="40"/>
-                                                    <Setter Property="Padding" Value="8,0"/>
+                                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                    <Setter Property="Background" Value="#E3F2FD" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                    <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                    <Setter Property="Padding" Value="8" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Center" />
                                                 </Style>
 
                                                 <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
@@ -709,19 +718,23 @@ Height="32"
                                       SelectionUnit="FullRow"
                                       CanUserAddRows="False"
                                       CanUserDeleteRows="False"
-                                      Background="White">
+                                           BorderThickness="1"
+                                      BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                      Background="White"
+                                      VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                      HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                      CanUserSortColumns="True">
                                             <DataGrid.Resources>
-                                                <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                                    <Setter Property="Background" Value="#ECEFF1"/>
-                                                    <Setter Property="Foreground" Value="#37474F"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Height" Value="40"/>
-                                                    <Setter Property="Padding" Value="8,0"/>
-                                                </Style>
+                                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                <Setter Property="Background" Value="#E3F2FD" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                <Setter Property="Padding" Value="8" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                            </Style>
 
-                                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
                                                     <Setter Property="HorizontalAlignment" Value="Center"/>
                                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                                     <Setter Property="TextWrapping" Value="Wrap"/>
@@ -1021,16 +1034,20 @@ Height="32"
                                             SelectionUnit="FullRow"
                                             CanUserAddRows="False"
                                             CanUserDeleteRows="False"
-                                            Background="White">
+                                                 BorderThickness="1"
+                                              BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                              Background="White"
+                                              VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                              HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                              CanUserSortColumns="True">
                                                     <DataGrid.Resources>
-                                                        <Style TargetType="DataGridColumnHeader">
-                                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                                            <Setter Property="Foreground" Value="#37474F"/>
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Setter Property="Height" Value="40"/>
-                                                            <Setter Property="Padding" Value="8,0"/>
+                                                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                            <Setter Property="Background" Value="#E3F2FD" />
+                                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                            <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                            <Setter Property="Padding" Value="8" />
+                                                            <Setter Property="HorizontalContentAlignment" Value="Center" />
                                                         </Style>
 
                                                         <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
@@ -1251,16 +1268,20 @@ Height="32"
                                                     SelectionUnit="FullRow"
                                                     CanUserAddRows="False"
                                                     CanUserDeleteRows="False"
-                                                    Background="White">
+                                                         BorderThickness="1"
+                                                  BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                                  Background="White"
+                                                  VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                                  HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                                  CanUserSortColumns="True">
                                                                 <DataGrid.Resources>
-                                                                    <Style TargetType="DataGridColumnHeader">
-                                                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                                                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                                                        <Setter Property="Background" Value="#ECEFF1"/>
-                                                                        <Setter Property="Foreground" Value="#37474F"/>
-                                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                        <Setter Property="Height" Value="40"/>
-                                                                        <Setter Property="Padding" Value="8,0"/>
+                                                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                                        <Setter Property="Background" Value="#E3F2FD" />
+                                                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                                                        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                                        <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                                        <Setter Property="Padding" Value="8" />
+                                                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
                                                                     </Style>
 
                                                                     <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
@@ -1582,19 +1603,23 @@ Height="32"
                                    SelectionUnit="FullRow"
                                    CanUserAddRows="False"
                                    CanUserDeleteRows="False"
-                                   Background="White">
+                                        BorderThickness="1"
+      BorderBrush="{DynamicResource MaterialDesignDivider}"
+      Background="White"
+      VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+      HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+      CanUserSortColumns="True">
                                             <DataGrid.Resources>
-                                                <Style TargetType="DataGridColumnHeader">
-                                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                                    <Setter Property="Background" Value="#ECEFF1"/>
-                                                    <Setter Property="Foreground" Value="#37474F"/>
-                                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                                    <Setter Property="Height" Value="40"/>
-                                                    <Setter Property="Padding" Value="8,0"/>
-                                                </Style>
+                                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                        <Setter Property="Background" Value="#E3F2FD" />
+                                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                        <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                        <Setter Property="Padding" Value="8" />
+                                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                                    </Style>
 
-                                                <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                                    <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
                                                     <Setter Property="HorizontalAlignment" Value="Center"/>
                                                     <Setter Property="VerticalAlignment" Value="Center"/>
                                                     <Setter Property="TextWrapping" Value="Wrap"/>

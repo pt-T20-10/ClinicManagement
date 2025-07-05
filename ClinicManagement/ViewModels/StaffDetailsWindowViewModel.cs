@@ -16,6 +16,53 @@ namespace ClinicManagement.ViewModels
     public class StaffDetailsWindowViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+                UpdatePermissions(); // Update UI permissions when account changes
+            }
+        }
+
+        private bool _canEditStaff = false;
+        public bool CanEditStaff
+        {
+            get => _canEditStaff;
+            set
+            {
+                _canEditStaff = value;
+                OnPropertyChanged();
+            }
+        }
+
+        // Add this method to check permissions
+        private void UpdatePermissions()
+        {
+            // Default to no permissions
+            CanEditStaff = false;
+
+            // Check if the current account exists
+            if (CurrentAccount == null)
+                return;
+
+            // Check role-based permissions
+            string role = CurrentAccount.Role?.Trim() ?? string.Empty;
+
+            // Admin and Manager have full permissions
+            if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+            {
+                CanEditStaff = true;
+            }
+
+            // Force command CanExecute to be reevaluated
+            CommandManager.InvalidateRequerySuggested();
+        }
+
         private ObservableCollection<AppointmentDisplayInfo>? _doctorAppointmentsDisplay;
         public ObservableCollection<AppointmentDisplayInfo> DoctorAppointmentsDisplay
         {
@@ -323,6 +370,13 @@ namespace ClinicManagement.ViewModels
         {
             InitializeCommands();
             InitializeData();
+
+            // Get current account from MainViewModel
+            var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+            if (mainVM != null)
+            {
+                CurrentAccount = mainVM.CurrentAccount;
+            }
         }
 
         #region Initialization
@@ -594,7 +648,8 @@ namespace ClinicManagement.ViewModels
         #region Methods
         private bool CanUpdateDoctorInfo()
         {
-            return !string.IsNullOrWhiteSpace(FullName) &&
+            return CanEditStaff &&
+                   !string.IsNullOrWhiteSpace(FullName) &&
                    !string.IsNullOrWhiteSpace(Phone) &&
                    SelectedSpecialty != null;
         }

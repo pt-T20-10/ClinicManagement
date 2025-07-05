@@ -1201,15 +1201,16 @@ namespace ClinicManagement.ViewModels
             if (Patient == null)
                 return false;
 
-            // Check if patient has any active appointments
+            // Only check for currently active appointments
             bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
                 .Any(a => a.PatientId == Patient.PatientId &&
-                      (a.Status == "Đang chờ" || a.Status == "Đã khám" || a.Status == "Đã hủy") &&
+                      a.Status == "Đang khám" && // Only check for appointments in progress
                       a.IsDeleted != true);
 
             return !hasActiveAppointments;
         }
 
+
     }
-   
+
 }

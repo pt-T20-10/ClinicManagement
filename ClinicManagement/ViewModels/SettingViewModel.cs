@@ -246,7 +246,7 @@ namespace ClinicManagement.ViewModels
         {
             UpdateDoctorInfoCommand = new RelayCommand<object>(
                 p => UpdateDoctorInfo(),
-                p => CanUpdateDoctorInfo()
+                p => true
             );
 
             ChangePasswordCommand = new RelayCommand<object>(
@@ -388,13 +388,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private bool CanUpdateDoctorInfo()
-        {
-            return _currentDoctor != null &&
-                   !string.IsNullOrWhiteSpace(FullName) &&
-                   !string.IsNullOrWhiteSpace(Phone) &&
-                   SelectedSpecialty != null;
-        }
+     
 
         private void UpdateDoctorInfo()
         {

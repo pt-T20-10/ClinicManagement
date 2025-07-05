@@ -470,7 +470,12 @@
                                 <DataGrid Grid.Row="1" 
                                   ItemsSource="{Binding AppointmentsDisplay}" 
                                   Margin="8,0,8,8"
+                                       BorderThickness="1"
+                                  BorderBrush="{DynamicResource MaterialDesignDivider}"
                                   Background="White"
+                                  VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                  HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+                                  CanUserSortColumns="True"
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   SelectionMode="Single"
@@ -478,17 +483,16 @@
                                   CanUserAddRows="False"
                                   CanUserDeleteRows="False">
                                     <DataGrid.Resources>
-                                        <Style TargetType="DataGridColumnHeader">
-                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                            <Setter Property="Foreground" Value="#37474F"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Height" Value="40"/>
-                                            <Setter Property="Padding" Value="8,0"/>
-                                        </Style>
+                                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                <Setter Property="Background" Value="#E3F2FD" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                <Setter Property="Padding" Value="8" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                            </Style>
 
-                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center"/>
                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                             <Setter Property="TextWrapping" Value="Wrap"/>
@@ -811,28 +815,33 @@
                      Margin="0,5,0,0">
                                 <!-- List View -->
                                 <DataGrid Grid.Row="1"
-          Background="White"
+       
           ItemsSource="{Binding ListAppointmentType}" 
           SelectedItem="{Binding SelectedAppointmentType, Mode=TwoWay}"
           AutoGenerateColumns="False"
           IsReadOnly="True"
+         BorderThickness="1"
+          BorderBrush="{DynamicResource MaterialDesignDivider}"
+          Background="White"
+          VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+          HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+          CanUserSortColumns="True"
           SelectionMode="Single"
           SelectionUnit="FullRow"
           CanUserAddRows="False"
           CanUserDeleteRows="False"
           Margin="0,5,0,0">
                                     <DataGrid.Resources>
-                                        <Style TargetType="DataGridColumnHeader">
-                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            <Setter Property="VerticalContentAlignment" Value="Center"/>
-                                            <Setter Property="Background" Value="#ECEFF1"/>
-                                            <Setter Property="Foreground" Value="#37474F"/>
-                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                            <Setter Property="Height" Value="40"/>
-                                            <Setter Property="Padding" Value="8,0"/>
-                                        </Style>
+                                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                                <Setter Property="Background" Value="#E3F2FD" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+                                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                                <Setter Property="Padding" Value="8" />
+                                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                            </Style>
 
-                                        <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
+                                            <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
                                             <Setter Property="HorizontalAlignment" Value="Center"/>
                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                             <Setter Property="TextWrapping" Value="Wrap"/>
