@@ -23,7 +23,7 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("MaThuoc");
 
             builder.Property(e => e.StockInId)
-                .HasColumnName("MaNhapKho");
+                .HasColumnName("MaLoThuoc");
 
             builder.Property(e => e.Quantity)
                 .HasColumnName("SoLuong");
@@ -53,7 +53,7 @@ namespace ClinicManagement.Configurations
                 .WithMany(p => p.InvoiceDetails)
                 .HasForeignKey(d => d.StockInId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ChiTietHoaDon_NhapKho");
+                .HasConstraintName("FK_ChiTietHoaDon_LoThuoc");
         }
     }
 

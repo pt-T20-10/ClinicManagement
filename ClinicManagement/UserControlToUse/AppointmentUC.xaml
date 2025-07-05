@@ -672,7 +672,7 @@
                             <!-- Input Fields -->
                             <TextBox 
                      Grid.Row="1"
-                     Text="{Binding TypeDisplayName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                     Text="{Binding TypeDisplayName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, ValidatesOnDataErrors=True}"
                      materialDesign:HintAssist.Hint="Tên lịch hẹn"
                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                      Margin="0,0,0,15"
@@ -680,7 +680,7 @@
                      HorizontalAlignment="Center"/>
                                    <TextBox 
                         Grid.Row="2"
-                        Text="{Binding TypePrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        Text="{Binding TypePrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, ValidatesOnDataErrors=True}"
                         materialDesign:HintAssist.Hint="Giá tiền"
                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
                         Margin="0,0,0,15"
@@ -688,7 +688,7 @@
                         HorizontalAlignment="Center"/>
                             <TextBox 
                         Grid.Row="3"
-                        Text="{Binding TypeDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                        Text="{Binding TypeDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, ValidatesOnDataErrors=True}"
                         materialDesign:HintAssist.Hint="Mô tả chi tiết"
                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
                         TextWrapping="Wrap"

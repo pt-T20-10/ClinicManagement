@@ -3,11 +3,7 @@ using ClinicManagement.Services;
 using LiveCharts;
 using LiveCharts.Wpf;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -1895,20 +1891,20 @@ namespace ClinicManagement.ViewModels
                     // Bỏ qua thuốc không có lô
                     if (!medicine.StockIns.Any()) continue;
 
-                    // Lấy các lô có số lượng còn lại
-                    var stockInsWithRemaining = medicine.StockIns
-                        .Where(si => si.RemainQuantity > 0)
-                        .OrderBy(si => si.ImportDate)
+                    // Lấy các lô có số lượng còn lại và chưa bị tiêu hủy
+                    var activeBatches = medicine.StockIns
+                        .Where(si => si.RemainQuantity > 0 && !si.IsTerminated)
+                        .OrderBy(si => si.ExpiryDate) // Sắp xếp theo ngày hết hạn, gần nhất trước
                         .ToList();
 
-                    // Bỏ qua nếu không có lô nào còn số lượng
-                    if (!stockInsWithRemaining.Any()) continue;
+                    // Bỏ qua nếu không có lô nào còn hoạt động
+                    if (!activeBatches.Any()) continue;
 
                     // Đếm tổng số thuốc còn lại
-                    int totalRemaining = stockInsWithRemaining.Sum(si => si.RemainQuantity);
+                    int totalRemaining = activeBatches.Sum(si => si.RemainQuantity);
 
                     // Kiểm tra các lô đang sử dụng
-                    foreach (var stockIn in stockInsWithRemaining.Take(2)) // Chỉ kiểm tra 2 lô đầu tiên (theo FIFO)
+                    foreach (var stockIn in activeBatches.Take(2)) // Chỉ kiểm tra 2 lô đầu tiên theo ngày hết hạn
                     {
                         // 1. Kiểm tra nếu là lô đã hết hạn
                         if (stockIn.ExpiryDate.HasValue && stockIn.ExpiryDate.Value <= today)
@@ -1917,9 +1913,9 @@ namespace ClinicManagement.ViewModels
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
-                                WarningMessage = $"LÔ HẾT HẠN: Lô thuốc đã hết hạn từ {stockIn.ExpiryDate.Value:dd/MM/yyyy} nhưng vẫn còn {stockIn.RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}"
+                                WarningMessage = $"CẦN TIÊU HỦY: Lô thuốc đã hết hạn từ {stockIn.ExpiryDate.Value:dd/MM/yyyy} nhưng vẫn còn {stockIn.RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}"
                             });
-                            break; // Ưu tiên cảnh báo hết hạn
+                            break; // Ưu tiên cảnh báo tiêu hủy
                         }
                         // 2. Kiểm tra nếu là lô sắp hết hạn
                         else if (stockIn.ExpiryDate.HasValue && stockIn.ExpiryDate.Value <= thirtyDaysLater)
@@ -1929,13 +1925,24 @@ namespace ClinicManagement.ViewModels
                             {
                                 Id = medicine.MedicineId,
                                 Name = medicine.Name,
-                                WarningMessage = $"LÔ SẮP HẾT HẠN: Còn {daysUntilExpiry} ngày đến hạn sử dụng ({stockIn.ExpiryDate.Value:dd/MM/yyyy})"
+                                WarningMessage = $"SẮP HẾT HẠN: Còn {daysUntilExpiry} ngày đến hạn sử dụng ({stockIn.ExpiryDate.Value:dd/MM/yyyy})"
                             });
                             break; // Không kiểm tra các cảnh báo khác cho thuốc này
                         }
+                        // 3. Kiểm tra nếu lô đang bán đã được đánh dấu tiêu hủy
+                        else if (stockIn.IsSelling && stockIn.IsTerminated)
+                        {
+                            warnings.Add(new WarningMedicine
+                            {
+                                Id = medicine.MedicineId,
+                                Name = medicine.Name,
+                                WarningMessage = $"LỖI CẤU HÌNH: Lô thuốc được đánh dấu tiêu hủy nhưng vẫn là lô đang bán"
+                            });
+                            break; // Ưu tiên cảnh báo này
+                        }
                     }
 
-                    // 3. Kiểm tra tồn kho thấp nếu chưa có cảnh báo nào cho thuốc này
+                    // 4. Kiểm tra tồn kho thấp nếu chưa có cảnh báo nào cho thuốc này
                     if (!warnings.Any(w => w.Id == medicine.MedicineId))
                     {
                         if (totalRemaining <= 10)
@@ -1956,13 +1963,26 @@ namespace ClinicManagement.ViewModels
                                 WarningMessage = $"TỒN KHO THẤP: Chỉ còn {totalRemaining} {medicine.Unit?.UnitName ?? "đơn vị"} - Nên nhập thêm"
                             });
                         }
+
+                        // 5. Kiểm tra nếu lô cuối cùng
+                        else if (activeBatches.Count == 1)
+                        {
+                            warnings.Add(new WarningMedicine
+                            {
+                                Id = medicine.MedicineId,
+                                Name = medicine.Name,
+                                WarningMessage = $"LÔ CUỐI CÙNG: Thuốc chỉ còn 1 lô với {activeBatches[0].RemainQuantity} {medicine.Unit?.UnitName ?? "đơn vị"}"
+                            });
+                        }
                     }
                 }
 
-                // Sắp xếp cảnh báo theo mức độ nghiêm trọng (hết hạn > sắp hết hạn > tồn kho thấp)
+                // Sắp xếp cảnh báo theo mức độ nghiêm trọng
                 var sortedWarnings = warnings
-                    .OrderByDescending(w => w.WarningMessage.Contains("HẾT HẠN"))
+                    .OrderByDescending(w => w.WarningMessage.Contains("CẦN TIÊU HỦY"))
+                    .ThenByDescending(w => w.WarningMessage.Contains("LỖI CẤU HÌNH"))
                     .ThenByDescending(w => w.WarningMessage.Contains("SẮP HẾT HẠN"))
+                    .ThenByDescending(w => w.WarningMessage.Contains("LÔ CUỐI CÙNG"))
                     .ThenByDescending(w => w.WarningMessage.Contains("TỒN KHO THẤP"))
                     .Take(10)
                     .ToList();
@@ -1983,6 +2003,7 @@ namespace ClinicManagement.ViewModels
                 });
             }
         }
+
 
 
 

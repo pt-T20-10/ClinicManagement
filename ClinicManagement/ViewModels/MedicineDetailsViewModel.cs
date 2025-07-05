@@ -15,6 +15,7 @@ namespace ClinicManagement.ViewModels
         #region Properties
         private readonly Window _window;
         private Medicine _medicine;
+        private Medicine.StockInWithRemaining CurrentStockEntry { get; set; }
         private ObservableCollection<Medicine.StockInWithRemaining> _detailedStockList;
 
         private ObservableCollection<Supplier> _SupplierList;
@@ -397,6 +398,7 @@ namespace ClinicManagement.ViewModels
         // Commands for editing stock entries
         public ICommand EditStockEntryCommand { get; set; }
         public ICommand SaveStockEntryCommand { get; set; }
+        public ICommand TerminateStockBatchCommand { get; set; }
         public ICommand CancelEditStockEntryCommand { get; set; }
         #endregion
         #endregion
@@ -447,6 +449,10 @@ namespace ClinicManagement.ViewModels
                 parameter => SetAsSellingBatch(parameter),
                 parameter => parameter != null && parameter.RemainingQuantity > 0
             );
+            TerminateStockBatchCommand = new RelayCommand<Medicine.StockInWithRemaining>(
+                 parameter => TerminateStockBatch(parameter),
+                 parameter => CanTerminateStockBatch(parameter)
+             );
         }
         #endregion
 
@@ -1064,9 +1070,128 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
-
         // Property để lưu StockEntry hiện tại
-        private Medicine.StockInWithRemaining CurrentStockEntry { get; set; }
+       
+        private bool CanTerminateStockBatch(Medicine.StockInWithRemaining stockEntry)
+        {
+            return stockEntry != null &&
+                   !stockEntry.StockIn.IsTerminated &&
+                   stockEntry.RemainingQuantity > 0;
+        }
+
+        // Add this method to terminate the stock batch
+        private void TerminateStockBatch(Medicine.StockInWithRemaining stockEntry)
+        {
+            if (stockEntry == null) return;
+
+            // Confirm with user
+            bool confirm = MessageBoxService.ShowQuestion(
+                $"Bạn có chắc chắn muốn tiêu hủy lô thuốc này không?\n" +
+                $"Lô nhập ngày: {stockEntry.ImportDate:dd/MM/yyyy}\n" +
+                $"Số lượng còn lại: {stockEntry.RemainingQuantity}\n\n" +
+                "Hành động này không thể hoàn tác!",
+                "Xác nhận tiêu hủy"
+            );
+
+            if (!confirm) return;
+
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+            using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
+            {
+                try
+                {
+                    var context = DataProvider.Instance.Context;
+
+                    // Tìm lô thuốc cần tiêu hủy
+                    var stockInToTerminate = context.StockIns.Find(stockEntry.StockIn.StockInId);
+
+                    if (stockInToTerminate == null)
+                    {
+                        MessageBoxService.ShowError(
+                            "Không tìm thấy lô thuốc trong cơ sở dữ liệu.",
+                            "Lỗi"
+                        );
+                        return;
+                    }
+
+                    // Đánh dấu lô thuốc là đã tiêu hủy
+                    stockInToTerminate.IsTerminated = true;
+
+                    // Nếu lô này đang là lô đang bán, reset lại để không bán lô này nữa
+                    if (stockInToTerminate.IsSelling)
+                    {
+                        stockInToTerminate.IsSelling = false;
+
+                        // Tìm lô khác có thể bán để chuyển đến
+                        var availableBatch = context.StockIns
+                            .Where(si => si.MedicineId == Medicine.MedicineId &&
+                                         si.StockInId != stockInToTerminate.StockInId &&
+                                         si.RemainQuantity > 0 &&
+                                         !si.IsTerminated)
+                            .OrderBy(si => si.ImportDate)  // FIFO
+                            .FirstOrDefault();
+
+                        if (availableBatch != null)
+                        {
+                            availableBatch.IsSelling = true;
+
+                            // Hiển thị thông báo
+                            MessageBoxService.ShowWarning(
+                                $"Lô vừa tiêu hủy là lô đang bán. Hệ thống đã tự động chuyển sang lô mới " +
+                                $"(Mã: {availableBatch.StockInId}, ngày nhập: {availableBatch.ImportDate:dd/MM/yyyy}).",
+                                "Thông báo"
+                            );
+                        }
+                    }
+
+                    // Cập nhật số lượng trong bảng Stock
+                    var stockRecord = context.Stocks
+                        .FirstOrDefault(s => s.MedicineId == stockInToTerminate.MedicineId);
+
+                    if (stockRecord != null)
+                    {
+                        // Cập nhật số lượng tồn kho vật lý và có thể sử dụng
+                        stockRecord.Quantity -= stockInToTerminate.RemainQuantity;
+
+                        // Nếu lô chưa hết hạn, thì giảm số lượng usable
+                        var today = DateOnly.FromDateTime(DateTime.Today);
+                        var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
+
+                        if (!stockInToTerminate.ExpiryDate.HasValue ||
+                            stockInToTerminate.ExpiryDate.Value >= minimumExpiryDate)
+                        {
+                            stockRecord.UsableQuantity -= stockInToTerminate.RemainQuantity;
+                        }
+
+                        stockRecord.LastUpdated = DateTime.Now;
+                    }
+
+                    // Lưu thay đổi vào cơ sở dữ liệu
+                    context.SaveChanges();
+
+                    // Hoàn thành giao dịch
+                    transaction.Commit();
+
+                    MessageBoxService.ShowSuccess(
+                        $"Đã tiêu hủy lô thuốc (mã: {stockInToTerminate.StockInId}) thành công!",
+                        "Thành công"
+                    );
+
+                    // Cập nhật lại thông tin hiển thị
+                    RefreshMedicineData();
+                }
+                catch (Exception ex)
+                {
+                    // Hoàn tác giao dịch nếu có lỗi xảy ra
+                    transaction.Rollback();
+
+                    MessageBoxService.ShowError(
+                        $"Lỗi khi tiêu hủy lô thuốc: {ex.Message}",
+                        "Lỗi"
+                    );
+                }
+            }
+        }
 
         #endregion
     }

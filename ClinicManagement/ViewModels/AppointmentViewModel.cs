@@ -111,42 +111,97 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        private string? _TypeDescription;
-        public string? TypeDescription
-        {
-            get => _TypeDescription;
-            set
-            {
-                _TypeDescription = value;
-                OnPropertyChanged();
-            }
-        }
-
         private string? _TypeDisplayName;
         public string? TypeDisplayName
         {
             get => _TypeDisplayName;
             set
             {
-                _TypeDisplayName = value;
-                OnPropertyChanged();
+                if (_TypeDisplayName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_TypeDisplayName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    // Add to touched fields only when user interacts with the field
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(TypeDisplayName));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _touchedFields.Remove(nameof(TypeDisplayName));
+                        // Force error clearing by triggering validation refresh
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _TypeDisplayName = value;
+                    OnPropertyChanged();
+
+                    // If the field is being validated, update validation state
+                    if (_touchedFields.Contains(nameof(TypeDisplayName)))
+                        OnPropertyChanged(nameof(Error));
+
+                    // Update commands' CanExecute state since validation may have changed
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
+
+        private string? _TypeDescription;
+        public string? TypeDescription
+        {
+            get => _TypeDescription;
+            set
+            {
+                if (_TypeDescription != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_TypeDescription);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(TypeDescription));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _touchedFields.Remove(nameof(TypeDescription));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _TypeDescription = value;
+                    OnPropertyChanged();
+
+                    if (_touchedFields.Contains(nameof(TypeDescription)))
+                        OnPropertyChanged(nameof(Error));
+                }
+            }
+        }
+
         private decimal? _TypePrice;
         public decimal? TypePrice
         {
             get => _TypePrice;
             set
             {
-                _TypePrice = value;
-                OnPropertyChanged();
+                if (_TypePrice != value)
+                {
+                    if (value.HasValue)
+                        _touchedFields.Add(nameof(TypePrice));
+                    else
+                        _touchedFields.Remove(nameof(TypePrice));
+
+                    _TypePrice = value;
+                    OnPropertyChanged();
+
+                    if (_touchedFields.Contains(nameof(TypePrice)))
+                        OnPropertyChanged(nameof(Error));
+
+                    // Update commands' CanExecute state
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
         #endregion
 
-                #region Appointment Form Properties
-                // Patient search
+        #region Appointment Form Properties
+        // Patient search
         private string _patientSearch;
         public string PatientSearch
         {
@@ -1825,7 +1880,7 @@ namespace ClinicManagement.ViewModels
             _isValidating = false;
         }
 
-        #region Validation Implementation
+        #region Validation 
         public string this[string columnName]
         {
             get
@@ -1897,6 +1952,43 @@ namespace ClinicManagement.ViewModels
                             }
                         }
                         break;
+                    // Add cases for the appointment type management controls
+                    case nameof(TypeDisplayName):
+                        if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(TypeDisplayName))
+                        {
+                            error = "Tên loại lịch hẹn không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(TypeDisplayName) && TypeDisplayName.Length < 2)
+                        {
+                            error = "Tên loại lịch hẹn phải có ít nhất 2 ký tự";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(TypeDisplayName) && TypeDisplayName.Length > 50)
+                        {
+                            error = "Tên loại lịch hẹn không được vượt quá 50 ký tự";
+                        }
+                        break;
+
+                    case nameof(TypePrice):
+                        if (_touchedFields.Contains(columnName) && !TypePrice.HasValue)
+                        {
+                            error = "Giá không được để trống";
+                        }
+                        else if (TypePrice.HasValue && TypePrice.Value < 0)
+                        {
+                            error = "Giá phải là số không âm";
+                        }
+                        else if (TypePrice.HasValue && TypePrice.Value > 1000000000) // 1 billion limit
+                        {
+                            error = "Giá quá cao, vui lòng nhập lại";
+                        }
+                        break;
+
+                    case nameof(TypeDescription):
+                        if (!string.IsNullOrWhiteSpace(TypeDescription) && TypeDescription.Length > 255)
+                        {
+                            error = "Mô tả không được vượt quá 255 ký tự";
+                        }
+                        break;
                 }
 
                 return error;
@@ -1911,6 +2003,28 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for all fields
+                _isValidating = true;
+                _touchedFields.Add(nameof(TypeDisplayName));
+                _touchedFields.Add(nameof(TypePrice));
+                _touchedFields.Add(nameof(TypeDescription));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(TypeDisplayName));
+                OnPropertyChanged(nameof(TypePrice));
+                OnPropertyChanged(nameof(TypeDescription));
+
+                // Check for validation errors
+                if (!string.IsNullOrEmpty(this[nameof(TypeDisplayName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(TypePrice)]) ||
+                    !string.IsNullOrEmpty(this[nameof(TypeDescription)]))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm loại lịch hẹn.",
+                        "Lỗi thông tin");
+                    return;
+                }
+
                 // Confirm dialog
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn thêm loại lịch hẹn '{TypeDisplayName}' không?",

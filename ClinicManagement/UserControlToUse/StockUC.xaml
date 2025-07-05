@@ -330,25 +330,29 @@ Height="32"
                                                     <Setter Property="Padding" Value="4,0"/>
                                                 </Style>
                                             </DataGrid.Resources>
-
                                             <DataGrid.RowStyle>
                                                 <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
                                                     <Style.Triggers>
-                                                        <!-- Thứ tự ưu tiên: Hết hạn > Lô đang bán sắp hết hạn > Lô cuối cùng sắp hết hạn > Lô sắp hết số lượng -->
+                                                        <!-- Thứ tự ưu tiên: Thuốc đã có lô hết hạn chưa tiêu hủy > Lô đang bán sắp hết hạn > Lô cuối cùng sắp hết hạn > Lô sắp hết số lượng -->
 
-                                                        <!-- 1. Nếu thuốc đã hết hạn - Màu đỏ nhạt -->
-                                                        <DataTrigger Binding="{Binding Medicine.HasExpiredStock}" Value="True">
+                                                        <!-- 1. Nếu thuốc đã hết hạn và chưa được tiêu hủy - Màu đỏ nhạt -->
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Medicine.HasExpiredStock}" Value="True"/>
+                                                                <Condition Binding="{Binding Medicine.HasNonTerminatedExpiredStock}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
                                                             <Setter Property="Background" Value="#FFEBEE"/>
                                                             <Setter Property="Foreground" Value="#D32F2F"/>
                                                             <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Setter Property="ToolTip" Value="Thuốc đã hết hạn sử dụng, cần tiêu hủy"/>
-                                                        </DataTrigger>
+                                                            <Setter Property="ToolTip" Value="Thuốc có lô đã hết hạn sử dụng và chưa được tiêu hủy, cần tiêu hủy"/>
+                                                        </MultiDataTrigger>
 
                                                         <!-- 2. Lô đang bán đã được chỉ định và sắp hết hạn - Màu cam nổi bật -->
                                                         <MultiDataTrigger>
                                                             <MultiDataTrigger.Conditions>
                                                                 <Condition Binding="{Binding Medicine.SellingStockIn.IsSelling}" Value="True"/>
                                                                 <Condition Binding="{Binding Medicine.SellingStockIn.IsNearExpiry}" Value="True"/>
+                                                                <Condition Binding="{Binding Medicine.SellingStockIn.IsTerminated}" Value="False"/>
                                                             </MultiDataTrigger.Conditions>
                                                             <Setter Property="Background" Value="#FFE0B2"/>
                                                             <Setter Property="Foreground" Value="#E65100"/>
@@ -356,34 +360,45 @@ Height="32"
                                                             <Setter Property="ToolTip" Value="Lô thuốc đang bán sắp hết hạn, cần cân nhắc chuyển lô"/>
                                                         </MultiDataTrigger>
 
-                                                        <!-- 3. Nếu là lô cuối cùng và sắp hết hạn - Màu vàng nhạt -->
+                                                        <!-- 3. Nếu lô đang bán đã bị tiêu hủy - Màu đỏ nhạt (lỗi cấu hình) -->
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Medicine.SellingStockIn.IsSelling}" Value="True"/>
+                                                                <Condition Binding="{Binding Medicine.SellingStockIn.IsTerminated}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#FCE4EC"/>
+                                                            <Setter Property="Foreground" Value="#AD1457"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <Setter Property="ToolTip" Value="LỖI CẤU HÌNH: Lô thuốc đang bán đã được tiêu hủy, cần chỉ định lô bán mới"/>
+                                                        </MultiDataTrigger>
+
+                                                        <!-- 4. Nếu là lô cuối cùng và sắp hết hạn - Màu vàng nhạt -->
                                                         <MultiDataTrigger>
                                                             <MultiDataTrigger.Conditions>
                                                                 <Condition Binding="{Binding Medicine.IsLastestStockIn}" Value="True"/>
                                                                 <Condition Binding="{Binding Medicine.HasNearExpiryStock}" Value="True"/>
+                                                                <Condition Binding="{Binding Medicine.HasNonTerminatedStock}" Value="True"/>
                                                             </MultiDataTrigger.Conditions>
                                                             <Setter Property="Background" Value="#FFF9C4"/>
                                                             <Setter Property="ToolTip" Value="Lô thuốc cuối cùng sắp hết hạn, cần nhập thêm"/>
                                                             <Setter Property="Foreground" Value="#F57F17"/>
                                                         </MultiDataTrigger>
 
-                                                        <!-- 4. Nếu là lô cuối cùng và gần hết số lượng - Màu xanh dương nhạt -->
+                                                        <!-- 5. Nếu là lô cuối cùng và gần hết số lượng - Màu xanh dương nhạt -->
                                                         <MultiDataTrigger>
                                                             <MultiDataTrigger.Conditions>
                                                                 <Condition Binding="{Binding Medicine.IsLastestStockIn}" Value="True"/>
                                                                 <Condition Binding="{Binding Medicine.TotalPhysicalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True"/>
+                                                                <Condition Binding="{Binding Medicine.HasNonTerminatedStock}" Value="True"/>
                                                             </MultiDataTrigger.Conditions>
                                                             <Setter Property="Background" Value="#E3F2FD"/>
                                                             <Setter Property="ToolTip" Value="Thuốc sắp hết số lượng, cần nhập thêm"/>
                                                             <Setter Property="Foreground" Value="#1565C0"/>
                                                         </MultiDataTrigger>
-
-
-
-
                                                     </Style.Triggers>
                                                 </Style>
                                             </DataGrid.RowStyle>
+
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Tên thuốc" Width="180" 
                                         Binding="{Binding Medicine.Name}" 
@@ -537,7 +552,7 @@ Height="32"
                             Grid.Column="0" Grid.Row="0"
                             ItemsSource="{Binding SupplierList}"
                             DisplayMemberPath="SupplierName"
-                            SelectedItem="{Binding StockinSelectedSupplier}"
+                            SelectedItem="{Binding StockinSelectedSupplier, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -549,7 +564,7 @@ Height="32"
                             Grid.Column="0" Grid.Row="1"
                             ItemsSource="{Binding UnitList}"
                             DisplayMemberPath="UnitName"
-                            SelectedItem="{Binding StockinSelectedUnit}"
+                            SelectedItem="{Binding StockinSelectedUnit, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -561,7 +576,7 @@ Height="32"
                             Grid.Column="0" Grid.Row="2"
                             ItemsSource="{Binding CategoryList}"
                             DisplayMemberPath="CategoryName"
-                            SelectedItem="{Binding StockinSelectedCategory}"
+                            SelectedItem="{Binding StockinSelectedCategory,  ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -571,7 +586,7 @@ Height="32"
                             <!-- Tên thuốc -->
                             <TextBox
                             Grid.Column="1" Grid.Row="0"
-                            Text="{Binding StockinMedicineName, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinMedicineName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -581,7 +596,7 @@ Height="32"
                             <!-- Số lượng -->
                             <materialDesign:NumericUpDown
                             Grid.Column="1" Grid.Row="2"
-                            Value="{Binding StockinQuantity}"
+                            Value="{Binding StockinQuantity,  ValidatesOnDataErrors=True}"
                             Minimum="0"
                             Margin="5"
                             Width="220"
@@ -592,7 +607,7 @@ Height="32"
 
                             <TextBox
                             Grid.Column="2" Grid.Row="0"
-                            Text="{Binding StockinUnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinUnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -601,7 +616,7 @@ Height="32"
 
                             <TextBox
                             Grid.Column="2" Grid.Row="1"
-                            Text="{Binding StockProfitMargin, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockProfitMargin, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -611,7 +626,7 @@ Height="32"
                             <!-- Giá xuất -->
                             <TextBox
                             Grid.Column="2" Grid.Row="2"
-                            Text="{Binding StockinSellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinSellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -621,7 +636,7 @@ Height="32"
                             <!-- BarCode -->
                             <TextBox
                             Grid.Column="3" Grid.Row="1"
-                            Text="{Binding StockinBarCode, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinBarCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -631,7 +646,7 @@ Height="32"
                             <!-- QRCode -->
                             <TextBox
                             Grid.Column="3" Grid.Row="2"
-                            Text="{Binding StockinQrCode, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding StockinQrCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -641,7 +656,7 @@ Height="32"
                             <!-- Hạn sử dụng -->
                             <DatePicker
                             Grid.Column="1" Grid.Row="1"
-                            SelectedDate="{Binding StockinExpiryDate}"
+                            SelectedDate="{Binding StockinExpiryDate, ValidatesOnDataErrors=True}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -715,57 +730,76 @@ Height="32"
                                             </DataGrid.Resources>
 
 
-                                            <DataGrid.RowStyle>
-                                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
-                                                    <Style.Triggers>
-                                                        <!-- Thứ tự ưu tiên: Hết hạn > Lô đang bán sắp hết hạn > Lô cuối cùng sắp hết hạn > Lô sắp hết số lượng -->
+                                        <DataGrid.RowStyle>
+                                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                                <Style.Triggers>
+                                                    <!-- Thứ tự ưu tiên: Thuốc đã có lô hết hạn chưa tiêu hủy > Lô đang bán sắp hết hạn > Lô cuối cùng sắp hết hạn > Lô sắp hết số lượng -->
 
-                                                        <!-- 1. Nếu thuốc đã hết hạn - Màu đỏ nhạt -->
-                                                        <DataTrigger Binding="{Binding Medicine.HasExpiredStock}" Value="True">
-                                                            <Setter Property="Background" Value="#FFEBEE"/>
-                                                            <Setter Property="Foreground" Value="#D32F2F"/>
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Setter Property="ToolTip" Value="Thuốc đã hết hạn sử dụng, cần tiêu hủy"/>
-                                                        </DataTrigger>
+                                                    <!-- 1. Nếu thuốc đã hết hạn và chưa được tiêu hủy - Màu đỏ nhạt -->
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Medicine.HasExpiredStock}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.HasNonTerminatedExpiredStock}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                                        <Setter Property="Foreground" Value="#D32F2F"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter Property="ToolTip" Value="Thuốc có lô đã hết hạn sử dụng và chưa được tiêu hủy, cần tiêu hủy"/>
+                                                    </MultiDataTrigger>
 
-                                                        <!-- 2. Lô đang bán đã được chỉ định và sắp hết hạn - Màu cam nổi bật -->
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Medicine.SellingStockIn.IsSelling}" Value="True"/>
-                                                                <Condition Binding="{Binding Medicine.SellingStockIn.IsNearExpiry}" Value="True"/>
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter Property="Background" Value="#FFE0B2"/>
-                                                            <Setter Property="Foreground" Value="#E65100"/>
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            <Setter Property="ToolTip" Value="Lô thuốc đang bán sắp hết hạn, cần cân nhắc chuyển lô"/>
-                                                        </MultiDataTrigger>
+                                                    <!-- 2. Lô đang bán đã được chỉ định và sắp hết hạn - Màu cam nổi bật -->
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Medicine.SellingStockIn.IsSelling}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.SellingStockIn.IsNearExpiry}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.SellingStockIn.IsTerminated}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#FFE0B2"/>
+                                                        <Setter Property="Foreground" Value="#E65100"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter Property="ToolTip" Value="Lô thuốc đang bán sắp hết hạn, cần cân nhắc chuyển lô"/>
+                                                    </MultiDataTrigger>
 
-                                                        <!-- 3. Nếu là lô cuối cùng và sắp hết hạn - Màu vàng nhạt -->
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Medicine.IsLastestStockIn}" Value="True"/>
-                                                                <Condition Binding="{Binding Medicine.HasNearExpiryStock}" Value="True"/>
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter Property="Background" Value="#FFF9C4"/>
-                                                            <Setter Property="ToolTip" Value="Lô thuốc cuối cùng sắp hết hạn, cần nhập thêm"/>
-                                                            <Setter Property="Foreground" Value="#F57F17"/>
-                                                        </MultiDataTrigger>
+                                                    <!-- 3. Nếu lô đang bán đã bị tiêu hủy - Màu đỏ nhạt (lỗi cấu hình) -->
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Medicine.SellingStockIn.IsSelling}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.SellingStockIn.IsTerminated}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#FCE4EC"/>
+                                                        <Setter Property="Foreground" Value="#AD1457"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter Property="ToolTip" Value="LỖI CẤU HÌNH: Lô thuốc đang bán đã được tiêu hủy, cần chỉ định lô bán mới"/>
+                                                    </MultiDataTrigger>
 
-                                                        <!-- 4. Nếu là lô cuối cùng và gần hết số lượng - Màu xanh dương nhạt -->
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Medicine.IsLastestStockIn}" Value="True"/>
-                                                                <Condition Binding="{Binding Medicine.TotalPhysicalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True"/>
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter Property="Background" Value="#E3F2FD"/>
-                                                            <Setter Property="ToolTip" Value="Thuốc sắp hết số lượng, cần nhập thêm"/>
-                                                            <Setter Property="Foreground" Value="#1565C0"/>
-                                                        </MultiDataTrigger>
+                                                    <!-- 4. Nếu là lô cuối cùng và sắp hết hạn - Màu vàng nhạt -->
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Medicine.IsLastestStockIn}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.HasNearExpiryStock}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.HasNonTerminatedStock}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#FFF9C4"/>
+                                                        <Setter Property="ToolTip" Value="Lô thuốc cuối cùng sắp hết hạn, cần nhập thêm"/>
+                                                        <Setter Property="Foreground" Value="#F57F17"/>
+                                                    </MultiDataTrigger>
 
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </DataGrid.RowStyle>
-                                            <DataGrid.Columns>
+                                                    <!-- 5. Nếu là lô cuối cùng và gần hết số lượng - Màu xanh dương nhạt -->
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Medicine.IsLastestStockIn}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.TotalPhysicalStockQuantity, Converter={StaticResource LowStockConverter}}" Value="True"/>
+                                                            <Condition Binding="{Binding Medicine.HasNonTerminatedStock}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#E3F2FD"/>
+                                                        <Setter Property="ToolTip" Value="Thuốc sắp hết số lượng, cần nhập thêm"/>
+                                                        <Setter Property="Foreground" Value="#1565C0"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGrid.RowStyle>
+
+                                        <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Tên thuốc" Width="200" 
                           Binding="{Binding Medicine.Name}" 
                           ElementStyle="{StaticResource CenteredCellStyle}"/>
@@ -846,7 +880,7 @@ Height="32"
                                     <!-- Input Fields -->
                                     <TextBox 
                                     Grid.Row="1"
-                                    Text="{Binding UnitName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    Text="{Binding UnitName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay,  ValidatesOnDataErrors=True}"
                                     materialDesign:HintAssist.Hint="Tên đơn vị đo"
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                     Margin="0,0,0,15"
@@ -856,7 +890,7 @@ Height="32"
                                     <!-- Description Field -->
                                     <TextBox 
                                     Grid.Row="2"
-                                    Text="{Binding UnitDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                    Text="{Binding UnitDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay,  ValidatesOnDataErrors=True}"
                                     materialDesign:HintAssist.Hint="Mô tả chi tiết"
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                     TextWrapping="Wrap"
@@ -1073,7 +1107,7 @@ Height="32"
                                             <!-- Input Fields -->
                                             <TextBox 
                                             Grid.Row="1"
-                                            Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                            Text="{Binding CategoryName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, ValidatesOnDataErrors=True}"
                                             materialDesign:HintAssist.Hint="Tên loại thuốc"
                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                             Margin="0,0,0,15"
@@ -1083,7 +1117,7 @@ Height="32"
                                             <!-- Description Field -->
                                             <TextBox 
                                             Grid.Row="2"
-                                            Text="{Binding CategoryDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                            Text="{Binding CategoryDescription, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay,  ValidatesOnDataErrors=True}"
                                             materialDesign:HintAssist.Hint="Mô tả chi tiết"
                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                             TextWrapping="Wrap"

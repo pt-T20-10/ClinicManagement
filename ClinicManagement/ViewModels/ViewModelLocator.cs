@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ClinicManagement.ViewModels
 {
-    // Tạo file mới ViewModelLocator.cs
     public class ViewModelLocator
     {
         private Dictionary<string, object> _viewModels = new Dictionary<string, object>();
@@ -14,21 +13,35 @@ namespace ClinicManagement.ViewModels
 
         public object GetViewModel(string viewModelName)
         {
+            // Chỉ cho phép MainVM và LoginVM trước khi khởi tạo
             if (!_isInitialized && viewModelName != "MainVM" && viewModelName != "LoginVM")
                 return null;
 
+            // Trả về ViewModel nếu đã tồn tại
             if (_viewModels.TryGetValue(viewModelName, out object vm))
                 return vm;
 
+            // Tạo và trả về ViewModel mới
             return CreateViewModel(viewModelName);
         }
 
-
+        // Khởi tạo tất cả ViewModels sau khi đăng nhập thành công
         public void Initialize()
         {
             _isInitialized = true;
+
+            // Khởi tạo các ViewModel cần thiết ngay sau đăng nhập
+            // Lưu ý: Không khởi tạo MedicineSellVM ở đây - nó sẽ được khởi tạo khi cần thiết
+            CreateViewModel("StockMedicineVM");
+            CreateViewModel("PatientVM");
+            CreateViewModel("AppointmentVM");
+            CreateViewModel("InvoiceVM");
+            CreateViewModel("StatisticsVM");
+            CreateViewModel("StaffVM");
+            CreateViewModel("SettingVM");
         }
 
+        // Reset tất cả ViewModels khi đăng xuất
         public void Reset()
         {
             _viewModels.Clear();
@@ -44,6 +57,9 @@ namespace ClinicManagement.ViewModels
                 case "MainVM":
                     viewModel = new MainViewModel();
                     break;
+                case "LoginVM":
+                    viewModel = new LoginViewModel();
+                    break;
                 case "StockMedicineVM":
                     viewModel = new StockMedicineViewModel();
                     break;
@@ -57,7 +73,8 @@ namespace ClinicManagement.ViewModels
                     viewModel = new InvoiceViewModel();
                     break;
                 case "MedicineSellVM":
-                    viewModel = new MedicineSellViewModel();
+                    // Tạo với flag lazyInitialization = true để tránh tải dữ liệu ngay lập tức
+                    viewModel = new MedicineSellViewModel(true);
                     break;
                 case "StatisticsVM":
                     viewModel = new StatisticsViewModel();
@@ -68,7 +85,6 @@ namespace ClinicManagement.ViewModels
                 case "SettingVM":
                     viewModel = new SettingViewModel();
                     break;
-                    // Thêm các ViewModel khác khi cần thiết
             }
 
             if (viewModel != null)
@@ -77,5 +93,4 @@ namespace ClinicManagement.ViewModels
             return viewModel;
         }
     }
-    
 }

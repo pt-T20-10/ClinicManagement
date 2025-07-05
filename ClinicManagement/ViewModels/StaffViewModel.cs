@@ -8,13 +8,30 @@ using ClosedXML.Excel;
 using Microsoft.Win32;
 using System.Threading;
 using ClinicManagement.Services;
+using System.ComponentModel;
+using System.Windows.Controls;
 
 namespace ClinicManagement.ViewModels
 {
-    public class StaffViewModel : BaseViewModel
+    public class StaffViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
+        private HashSet<string> _touchedFields = new HashSet<string>();
+        private bool _isValidating = false;
+        public string Error => null;
 
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+                // Check permissions whenever the account changes
+                UpdatePermissions();
+            }
+        }
         #region DisplayProperties
         private ObservableCollection<Staff> _DoctorList;
         public ObservableCollection<Staff> DoctorList
@@ -37,7 +54,16 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-
+        private ObservableCollection<DoctorSpecialty> _ListSpecialtyForFilter;
+        public ObservableCollection<DoctorSpecialty> ListSpecialtyForFilter
+        {
+            get => _ListSpecialtyForFilter;
+            set
+            {
+                _ListSpecialtyForFilter = value;
+                OnPropertyChanged();
+            }
+        }
         private DoctorSpecialty _SelectedItem;
         public DoctorSpecialty SelectedItem
         {
@@ -111,21 +137,60 @@ namespace ClinicManagement.ViewModels
             get => _SpecialtyName;
             set
             {
-                _SpecialtyName = value;
-                OnPropertyChanged();
+                if (_SpecialtyName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_SpecialtyName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(SpecialtyName));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _touchedFields.Remove(nameof(SpecialtyName));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _SpecialtyName = value;
+                    OnPropertyChanged();
+
+                    if (_touchedFields.Contains(nameof(SpecialtyName)))
+                        OnPropertyChanged(nameof(Error));
+
+                    // Refresh command availability
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
+        // Modify the Description property to include validation
         private string _Description;
         public string Description
         {
             get => _Description;
             set
             {
-                _Description = value;
-                OnPropertyChanged();
+                if (_Description != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_Description);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(Description));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _touchedFields.Remove(nameof(Description));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _Description = value;
+                    OnPropertyChanged();
+
+                    if (_touchedFields.Contains(nameof(Description)))
+                        OnPropertyChanged(nameof(Error));
+                }
             }
         }
+
 
         private string _SearchText;
         public string SearchText
@@ -214,6 +279,16 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+        private bool _canModifySpecialties = false;
+        public bool CanModifySpecialties
+        {
+            get => _canModifySpecialties;
+            set
+            {
+                _canModifySpecialties = value;
+                OnPropertyChanged();
+            }
+        }
         #endregion
 
         private ObservableCollection<Staff> _allStaffs;
@@ -228,26 +303,53 @@ namespace ClinicManagement.ViewModels
         public ICommand DeleteDoctorCommand { get; set; }
         public ICommand SearchCommand { get; set; }
         public ICommand ResetFiltersCommand { get; set; }
-
+        public ICommand LoadedUCCommand { get; set; }
         public ICommand OpenDoctorDetailsCommand { get; set; }
         public ICommand ExportExcelCommand { get;  set; }
+        public ICommand RefreshSpecialtyCommand { get;  set; }
         // Specialty Commands
         public ICommand AddCommand { get; set; }
         public ICommand EditCommand { get; set; }
         public ICommand DeleteCommand { get; set; }
         #endregion
 
-        public StaffViewModel()
+        public StaffViewModel(Account account = null)
         {
-                    LoadData();
-               
+            // If account is provided, set it
+            if (account != null)
+            {
+                CurrentAccount = account;
+            }
 
+            // Initialize commands first
             InitializeCommands();
-        }
 
+            // Then load data
+            LoadData();
+
+            // Finally, explicitly update permissions
+            UpdatePermissions();
+        }
         #region Methods
         private void InitializeCommands()
         {
+            LoadedUCCommand = new RelayCommand<UserControl>(
+        (userControl) => {
+            if (userControl != null)
+            {
+                // Get the MainViewModel from Application resources
+                var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+                if (mainVM != null && mainVM.CurrentAccount != null)
+                {
+                    // Update current account
+                    CurrentAccount = mainVM.CurrentAccount;
+                    // The CurrentAccount setter calls UpdatePermissions()
+                }
+            }
+        },
+        (userControl) => true
+    );
+
             ResetFiltersCommand = new RelayCommand<object>(
                (p) => ExecuteResetFilters(),
                (p) => true
@@ -280,21 +382,24 @@ namespace ClinicManagement.ViewModels
                 p => DoctorList != null && DoctorList.Count > 0
             );
 
-            // Specialty Commands
             AddCommand = new RelayCommand<object>(
-                (p) => AddSpecialty(),
-                (p) => !string.IsNullOrEmpty(SpecialtyName)
-            );
+                 (p) => AddSpecialty(),
+                 (p) => CanModifySpecialties && !string.IsNullOrEmpty(SpecialtyName)
+             );
 
             EditCommand = new RelayCommand<object>(
                 (p) => EditSpecialty(),
-                (p) => SelectedItem != null && !string.IsNullOrEmpty(SpecialtyName)
+                (p) => CanModifySpecialties && SelectedItem != null && !string.IsNullOrEmpty(SpecialtyName)
             );
 
             DeleteCommand = new RelayCommand<object>(
                 (p) => DeleteSpecialty(),
-                (p) => SelectedItem != null
+                (p) => CanModifySpecialties && SelectedItem != null
             );
+            RefreshSpecialtyCommand = new RelayCommand<object>(
+                (p) => RefeshSpecialty(),
+                (p) => true
+                );
         }
         private void OpenDoctorDetails(Staff doctor)
         {
@@ -345,6 +450,7 @@ namespace ClinicManagement.ViewModels
                         return s;
                     })
                     .ToList();
+                ListSpecialty = new ObservableCollection<DoctorSpecialty>(specialties);
 
                 // Add "All Specialties" option at the beginning of the list
                 specialties.Insert(0, new DoctorSpecialty
@@ -353,7 +459,7 @@ namespace ClinicManagement.ViewModels
                     SpecialtyName = "-- Tất cả chuyên khoa --"
                 });
 
-                ListSpecialty = new ObservableCollection<DoctorSpecialty>(specialties);
+                ListSpecialtyForFilter = new ObservableCollection<DoctorSpecialty>(specialties);
 
                 // Load roles with "All" option
                 var roles = DataProvider.Instance.Context.Roles
@@ -385,6 +491,7 @@ namespace ClinicManagement.ViewModels
                 _allStaffs = new ObservableCollection<Staff>();
                 DoctorList = new ObservableCollection<Staff>();
                 ListSpecialty = new ObservableCollection<DoctorSpecialty>();
+                ListSpecialtyForFilter = new ObservableCollection<DoctorSpecialty>();
                 RoleList = new ObservableCollection<Role>();
             }
         }
@@ -669,6 +776,23 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for all fields
+                _isValidating = true;
+                _touchedFields.Add(nameof(SpecialtyName));
+                _touchedFields.Add(nameof(Description));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(SpecialtyName));
+                OnPropertyChanged(nameof(Description));
+
+                // Check for validation errors
+                if (HasErrors)
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm chuyên khoa.",
+                        "Lỗi thông tin");
+                    return;
+                }
                 // Xác nhận từ người dùng trước khi thêm chuyên khoa
                 bool result = MessageBoxService.ShowQuestion(
                      $"Bạn có chắc muốn thêm chuyên khoa '{SpecialtyName}' không?",
@@ -681,6 +805,7 @@ namespace ClinicManagement.ViewModels
                 {
                     try
                     {
+
                         // Kiểm tra chuyên khoa đã tồn tại chưa
                         bool isExist = DataProvider.Instance.Context.DoctorSpecialties
                             .Any(s => s.SpecialtyName.Trim().ToLower() == SpecialtyName.Trim().ToLower() && (bool)!s.IsDeleted);
@@ -750,6 +875,23 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for all fields
+                _isValidating = true;
+                _touchedFields.Add(nameof(SpecialtyName));
+                _touchedFields.Add(nameof(Description));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(SpecialtyName));
+                OnPropertyChanged(nameof(Description));
+
+                // Check for validation errors
+                if (HasErrors)
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi sửa chuyên khoa.",
+                        "Lỗi thông tin");
+                    return;
+                }
                 // Xác nhận từ người dùng trước khi sửa chuyên khoa
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa chuyên khoa '{SelectedItem.SpecialtyName}' thành '{SpecialtyName}' không?",
@@ -916,7 +1058,92 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private void UpdatePermissions()
+        {
+            // Default to no permissions
+            CanModifySpecialties = false;
 
+            if (CurrentAccount == null)
+                return;
+
+            string role = CurrentAccount.Role?.Trim() ?? string.Empty;
+
+            // Set permissions based on role
+            switch (role)
+            {
+                case UserRoles.Admin:
+                case UserRoles.Manager:
+                    CanModifySpecialties = true;
+                    break;
+
+                case UserRoles.Doctor:
+                case UserRoles.Pharmacist:
+                case UserRoles.Cashier:
+                default:
+                    CanModifySpecialties = false;
+                    break;
+            }
+
+            // Force command CanExecute to be reevaluated
+            CommandManager.InvalidateRequerySuggested();
+        }
+        private void RefeshSpecialty()
+        {
+            SpecialtyName = string.Empty;
+            Description = string.Empty;
+            SelectedSpecialty = null;
+        }
+
+        #region Validation
+        public string this[string columnName]
+        {
+            get
+            {
+                // Don't validate until user has interacted with the form or when submitting
+                if (!_isValidating && !_touchedFields.Contains(columnName))
+                    return null;
+
+                string error = null;
+
+                switch (columnName)
+                {
+                    case nameof(SpecialtyName):
+                        if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(SpecialtyName))
+                        {
+                            error = "Tên chuyên khoa không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(SpecialtyName))
+                        {
+                            if (SpecialtyName.Length < 2)
+                                error = "Tên chuyên khoa phải có ít nhất 2 ký tự";
+                            else if (SpecialtyName.Length > 50)
+                                error = "Tên chuyên khoa không được vượt quá 50 ký tự";
+                        }
+                        break;
+
+                    case nameof(Description):
+                        if (!string.IsNullOrWhiteSpace(Description) && Description.Length > 255)
+                        {
+                            error = "Mô tả không được vượt quá 255 ký tự";
+                        }
+                        break;
+                }
+
+                return error;
+            }
+        }
+
+        // Add this method to check if there are validation errors
+        public bool HasErrors
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(this[nameof(SpecialtyName)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Description)]);
+            }
+        }
+
+        #endregion
 
         #endregion
         #endregion

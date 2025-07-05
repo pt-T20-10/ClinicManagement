@@ -155,7 +155,7 @@
                 </materialDesign:Card>
 
 
-                <!-- Cảnh báo tồn kho KPI -->
+                <!-- Cảnh báo tồn kho -->
                 <materialDesign:Card Grid.Column="3" Margin="8" UniformCornerRadius="8">
                     <StackPanel Margin="15">
                         <TextBlock Text="Cảnh báo tồn kho" 

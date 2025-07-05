@@ -1,10 +1,12 @@
 using ClinicManagement.Models;
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,10 +17,12 @@ using System.Windows.Media;
 
 namespace ClinicManagement.ViewModels
 {
-    public class SettingViewModel : BaseViewModel
+    public class SettingViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Doctor Information Properties
 
+        private HashSet<string> _touchedFields = new HashSet<string>();
+        private bool _isValidating = false;
         private int _StaffId;
         public int StaffId
         {
@@ -36,8 +40,19 @@ namespace ClinicManagement.ViewModels
             get => _fullName;
             set
             {
-                _fullName = value;
-                OnPropertyChanged();
+                if (_fullName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_fullName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(FullName));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(FullName));
+
+                    _fullName = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -69,8 +84,19 @@ namespace ClinicManagement.ViewModels
             get => _phone;
             set
             {
-                _phone = value;
-                OnPropertyChanged();
+                if (_phone != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_phone);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(Phone));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Phone));
+
+                    _phone = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -80,10 +106,22 @@ namespace ClinicManagement.ViewModels
             get => _schedule;
             set
             {
-                _schedule = value;
-                OnPropertyChanged();
+                if (_schedule != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_schedule);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(Schedule));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Schedule));
+
+                    _schedule = value;
+                    OnPropertyChanged();
+                }
             }
         }
+
 
         private string _address = string.Empty;
         public string Address
@@ -102,8 +140,19 @@ namespace ClinicManagement.ViewModels
             get => _certificateLink;
             set
             {
-                _certificateLink = value;
-                OnPropertyChanged();
+                if (_certificateLink != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_certificateLink);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(CertificateLink));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(CertificateLink));
+
+                    _certificateLink = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -128,6 +177,27 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+        private string _email = string.Empty;
+        public string Email
+        {
+            get => _email;
+            set
+            {
+                if (_email != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_email);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(Email));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Email));
+
+                    _email = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         private MainViewModel _mainViewModel;
 
         #endregion
@@ -139,6 +209,7 @@ namespace ClinicManagement.ViewModels
         public ICommand ChangePasswordCommand { get; set; }
         public ICommand LoadedCommand { get; set; }
         public ICommand SignOutCommand { get; set; }
+        public ICommand RefreshDataCommand { get; set; }
 
         #endregion
 
@@ -199,6 +270,10 @@ namespace ClinicManagement.ViewModels
                 p => ExecuteSignOut(),
                 p => CanExecuteSignOut()
             );
+            RefreshDataCommand = new RelayCommand<object>(
+       p => RefreshDoctorInformation(),
+       p => _currentAccount != null
+   );
         }
 
         private bool CanExecuteSignOut()
@@ -272,7 +347,7 @@ namespace ClinicManagement.ViewModels
             if (account == null) return;
 
             _currentAccount = account;
-            
+
             try
             {
                 // Load doctor information from account
@@ -284,6 +359,7 @@ namespace ClinicManagement.ViewModels
                     StaffId = _currentDoctor.StaffId;
                     FullName = _currentDoctor.FullName;
                     Phone = _currentDoctor.Phone ?? string.Empty;
+                    Email = _currentDoctor.Email ?? string.Empty; // Add this line to load Email
                     Schedule = _currentDoctor.Schedule ?? string.Empty;
                     Address = _currentDoctor.Address ?? string.Empty;
                     CertificateLink = _currentDoctor.CertificateLink ?? string.Empty;
@@ -302,13 +378,13 @@ namespace ClinicManagement.ViewModels
                 // Set account information
                 UserName = account.Username;
                 Role = account.Role ?? string.Empty;
-                
+
                 // Update command state
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải thông tin bác sĩ: {ex.Message}", "Lỗi"    );
+                MessageBoxService.ShowError($"Lỗi khi tải thông tin bác sĩ: {ex.Message}", "Lỗi");
             }
         }
 
@@ -326,64 +402,116 @@ namespace ClinicManagement.ViewModels
             {
                 if (_currentDoctor == null)
                 {
-                    MessageBoxService.ShowError("Không tìm thấy thông tin bác sĩ!", "Lỗi"    );
+                    MessageBoxService.ShowError("Không tìm thấy thông tin bác sĩ!", "Lỗi");
                     return;
                 }
 
-                // Validate phone number format
-                if (!string.IsNullOrWhiteSpace(Phone) && !Regex.IsMatch(Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                // Enable validation for all fields
+                _isValidating = true;
+                _touchedFields.Add(nameof(FullName));
+                _touchedFields.Add(nameof(Phone));
+                _touchedFields.Add(nameof(Email));
+                _touchedFields.Add(nameof(Schedule));
+                _touchedFields.Add(nameof(CertificateLink));
+
+                // Trigger validation for required fields
+                OnPropertyChanged(nameof(FullName));
+                OnPropertyChanged(nameof(Phone));
+                OnPropertyChanged(nameof(Email));
+                OnPropertyChanged(nameof(Schedule));
+                OnPropertyChanged(nameof(CertificateLink));
+
+                // Check if there are validation errors
+                if (HasErrors)
                 {
-                    MessageBoxService.ShowError("Số điện thoại không đúng định dạng (VD: 0901234567)", 
-                                    "Lỗi định dạng"    );
+                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi cập nhật thông tin.", "Lỗi dữ liệu");
                     return;
                 }
 
-                // Check if phone number already exists (excluding current doctor)
-                bool phoneExists = DataProvider.Instance.Context.Staffs
-                    .Any(d => d.Phone == Phone.Trim() && d.StaffId != _currentDoctor.StaffId && d.IsDeleted == false);
-
-                if (phoneExists)
+                // Use transaction to ensure data consistency
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowError("Số điện thoại này đã được sử dụng bởi một bác sĩ khác.",
-                                   "Lỗi dữ liệu"     );
-                    return;
-                }
+                    try
+                    {
+                        // Check if email already exists (excluding current doctor)
+                        if (!string.IsNullOrWhiteSpace(Email))
+                        {
+                            bool emailExists = DataProvider.Instance.Context.Staffs
+                                .Any(d => d.Email == Email.Trim() && d.StaffId != _currentDoctor.StaffId && d.IsDeleted == false);
 
-                // Get doctor record from database
-                var doctorToUpdate = DataProvider.Instance.Context.Staffs
-                    .FirstOrDefault(d => d.StaffId == _currentDoctor.StaffId);
+                            if (emailExists)
+                            {
+                                MessageBoxService.ShowError("Email này đã được sử dụng bởi một nhân viên khác.", "Lỗi dữ liệu");
+                                return;
+                            }
+                        }
 
-                if (doctorToUpdate != null)
-                {
-                    // Update properties
-                    doctorToUpdate.FullName = FullName.Trim();
-                    doctorToUpdate.SpecialtyId = SelectedSpecialty?.SpecialtyId;
-                    doctorToUpdate.CertificateLink = CertificateLink?.Trim();
-                    doctorToUpdate.Schedule = Schedule?.Trim();
-                    doctorToUpdate.Phone = Phone?.Trim();
-                    doctorToUpdate.Address = Address?.Trim();
+                        // Check if phone number already exists (excluding current doctor)
+                        bool phoneExists = DataProvider.Instance.Context.Staffs
+                            .Any(d => d.Phone == Phone.Trim() && d.StaffId != _currentDoctor.StaffId && d.IsDeleted == false);
 
-                    DataProvider.Instance.Context.SaveChanges();
+                        if (phoneExists)
+                        {
+                            MessageBoxService.ShowError("Số điện thoại này đã được sử dụng bởi một nhân viên khác.", "Lỗi dữ liệu");
+                            return;
+                        }
 
-                    // Update local copy
-                    _currentDoctor = doctorToUpdate;
+                        // Get doctor record from database
+                        var doctorToUpdate = DataProvider.Instance.Context.Staffs
+                            .FirstOrDefault(d => d.StaffId == _currentDoctor.StaffId);
 
-                    MessageBoxService.ShowSuccess("Đã cập nhật thông tin bác sĩ thành công!", 
-                                   "Thành Công"    );
-                }
-                else
-                {
-                    MessageBoxService.ShowError("Không tìm thấy thông tin bác sĩ!",
-                                   "Lỗi"    );
+                        if (doctorToUpdate != null)
+                        {
+                            // Update properties
+                            doctorToUpdate.FullName = FullName.Trim();
+                            doctorToUpdate.SpecialtyId = SelectedSpecialty?.SpecialtyId;
+                            doctorToUpdate.CertificateLink = CertificateLink?.Trim();
+                            doctorToUpdate.Email = Email?.Trim();
+                            doctorToUpdate.Schedule = Schedule?.Trim();
+                            doctorToUpdate.Phone = Phone?.Trim();
+                            doctorToUpdate.Address = Address?.Trim();
+
+                            // Save changes
+                            DataProvider.Instance.Context.SaveChanges();
+
+                            // Commit transaction
+                            transaction.Commit();
+
+                            // Update local copy
+                            _currentDoctor = doctorToUpdate;
+
+                            MessageBoxService.ShowSuccess("Đã cập nhật thông tin thành công!", "Thành công");
+                        }
+                        else
+                        {
+                            MessageBoxService.ShowError("Không tìm thấy thông tin trong cơ sở dữ liệu!", "Lỗi");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction if error occurs
+                        transaction.Rollback();
+                        throw; // Re-throw to be caught by outer catch block
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Đã xảy ra lỗi khi cập nhật thông tin bác sĩ: {ex.Message}",
-                               "Lỗi"    );
+                MessageBoxService.ShowError($"Đã xảy ra lỗi khi cập nhật thông tin: {ex.Message}", "Lỗi");
             }
         }
 
+        public bool HasErrors
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(this[nameof(FullName)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Phone)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Email)]) ||
+                       !string.IsNullOrEmpty(this[nameof(Schedule)]) ||
+                       !string.IsNullOrEmpty(this[nameof(CertificateLink)]);
+            }
+        }
         // Trong SettingViewModel
         private void ChangePassword()
         {
@@ -396,5 +524,175 @@ namespace ClinicManagement.ViewModels
             changePasswordWindow.ShowDialog();
         }
 
+        private void RefreshDoctorInformation()
+        {
+            try
+            {
+                if (_currentAccount != null)
+                {
+                    // Clear any touched fields to reset validation
+                    _touchedFields.Clear();
+                    _isValidating = false;
+
+                    // Reload doctor information from the database
+                    LoadDoctorInformation(_currentAccount);
+
+                    // Display message to user
+                    MessageBoxService.ShowSuccess(
+                        "Thông tin đã được làm mới thành công.",
+                        "Thành công"
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBoxService.ShowError(
+                    $"Đã xảy ra lỗi khi làm mới thông tin: {ex.Message}",
+                    "Lỗi"
+                );
+            }
+        }
+        #region Validation
+        public string Error
+        {
+            get
+            {
+                return null;
+            }
+        }
+        public string this[string columnName]
+        {
+            get
+            {
+                // Don't validate until user has interacted with the form or when submitting
+                if (!_isValidating && !_touchedFields.Contains(columnName))
+                    return null;
+
+                string error = null;
+
+                switch (columnName)
+                {
+                    case nameof(FullName):
+                        if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(FullName))
+                        {
+                            error = "Họ và tên không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(FullName) && FullName.Trim().Length < 2)
+                        {
+                            error = "Họ và tên phải có ít nhất 2 ký tự";
+                        }
+                        break;
+
+                    case nameof(Phone):
+                        if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(Phone))
+                        {
+                            error = "Số điện thoại không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(Phone) &&
+                                !Regex.IsMatch(Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                        {
+                            error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
+                        }
+                        break;
+
+                    case nameof(Email):
+                        if (!string.IsNullOrWhiteSpace(Email) &&
+                            !Regex.IsMatch(Email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                        {
+                            error = "Email không đúng định dạng";
+                        }
+                        break;
+
+                    case nameof(Schedule):
+                        if (!string.IsNullOrWhiteSpace(Schedule) && !IsValidScheduleFormat(Schedule))
+                        {
+                            error = "Lịch làm việc không đúng định dạng. Vui lòng nhập theo mẫu: T2, T3, T4: 7h-13h";
+                        }
+                        break;
+
+                    case nameof(UserName):
+                        if (!string.IsNullOrWhiteSpace(UserName) && UserName.Trim().Length < 4)
+                        {
+                            error = "Tên đăng nhập phải có ít nhất 4 ký tự";
+                        }
+                        break;
+                }
+
+                return error;
+            }
+        }
+
+   
+        /// <summary>
+        /// Validates that the schedule follows the format: "T2, T3, T4: 7h-13h"
+        /// </summary>
+        private bool IsValidScheduleFormat(string schedule)
+        {
+            if (string.IsNullOrWhiteSpace(schedule))
+                return true; // Empty schedule is valid (not required)
+
+            // Multiple pattern support
+            string pattern1 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
+            string pattern2 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
+            string pattern3 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
+            string pattern4 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
+            string pattern5 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h\d{2}-\d{1,2}h\d{2}(, \d{1,2}h\d{2}-\d{1,2}h\d{2})*$";
+
+            if (Regex.IsMatch(schedule, pattern1) ||
+                Regex.IsMatch(schedule, pattern2) ||
+                Regex.IsMatch(schedule, pattern3) ||
+                Regex.IsMatch(schedule, pattern4) ||
+                Regex.IsMatch(schedule, pattern5))
+            {
+                try
+                {
+                    // Parse all time slots and check each slot's start < end
+                    string[] parts = schedule.Split(':');
+                    if (parts.Length < 2)
+                        return false;
+
+                    string timeSection = string.Join(":", parts.Skip(1)).Trim();
+                    var timeRanges = timeSection.Split(',');
+
+                    foreach (var range in timeRanges)
+                    {
+                        var times = range.Trim().Split('-');
+                        if (times.Length == 2)
+                        {
+                            var start = ParseTimeString(times[0].Trim());
+                            var end = ParseTimeString(times[1].Trim());
+                            if (start == TimeSpan.Zero && end == TimeSpan.Zero)
+                                return false; // Invalid time format
+                            if (start >= end)
+                                return false; // Start must be before end
+                        }
+                    }
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        // Helper: parses "8h", "8h30", "13h", "13h30" etc.
+        private TimeSpan ParseTimeString(string timeStr)
+        {
+            timeStr = timeStr.Replace("h", ":").Replace(" ", "");
+            if (timeStr.EndsWith(":")) timeStr += "00";
+            var parts = timeStr.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int h) && int.TryParse(parts[1], out int m))
+                return new TimeSpan(h, m, 0);
+            if (parts.Length == 1 && int.TryParse(parts[0], out h))
+                return new TimeSpan(h, 0, 0);
+            return TimeSpan.Zero;
+        }
+        #endregion    
+       
     }
-}
+
+    }
+

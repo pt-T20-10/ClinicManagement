@@ -33,7 +33,13 @@ namespace ClinicManagement.ViewModels
 
         private bool IsLoading;
         public string Error => null;
+        private HashSet<string> _medicineFieldsTouched = new HashSet<string>();
+        private bool _isMedicineValidating = false;
 
+        private HashSet<string> _unitFieldsTouched = new HashSet<string>();
+        private HashSet<string> _categoryFieldsTouched = new HashSet<string>();
+        private bool _isUnitValidating = false;
+        private bool _isCategoryValidating = false;
 
         private HashSet<string> _touchedFields = new HashSet<string>();
         private bool _isValidating = false; // Flag to control when to validate
@@ -378,7 +384,7 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged(nameof(TotalValue));
             }
         }
-  
+
 
         #endregion
 
@@ -390,19 +396,57 @@ namespace ClinicManagement.ViewModels
             get => _UnitName;
             set
             {
-                _UnitName = value;
-                OnPropertyChanged();
+                if (_UnitName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_UnitName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _unitFieldsTouched.Add(nameof(UnitName));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _unitFieldsTouched.Remove(nameof(UnitName));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _UnitName = value;
+                    OnPropertyChanged();
+
+                    if (_unitFieldsTouched.Contains(nameof(UnitName)))
+                        OnPropertyChanged(nameof(Error));
+
+                    // Update commands' CanExecute state
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
+        // Modify the UnitDescription property to include validation
         private string _UnitDescription;
         public string UnitDescription
         {
             get => _UnitDescription;
             set
             {
-                _UnitDescription = value;
-                OnPropertyChanged();
+                if (_UnitDescription != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_UnitDescription);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _unitFieldsTouched.Add(nameof(UnitDescription));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _unitFieldsTouched.Remove(nameof(UnitDescription));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _UnitDescription = value;
+                    OnPropertyChanged();
+
+                    if (_unitFieldsTouched.Contains(nameof(UnitDescription)))
+                        OnPropertyChanged(nameof(Error));
+                }
             }
         }
 
@@ -433,21 +477,60 @@ namespace ClinicManagement.ViewModels
             get => _CategoryName;
             set
             {
-                _CategoryName = value;
-                OnPropertyChanged();
+                if (_CategoryName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_CategoryName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _categoryFieldsTouched.Add(nameof(CategoryName));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _categoryFieldsTouched.Remove(nameof(CategoryName));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _CategoryName = value;
+                    OnPropertyChanged();
+
+                    if (_categoryFieldsTouched.Contains(nameof(CategoryName)))
+                        OnPropertyChanged(nameof(Error));
+
+                    // Update commands' CanExecute state
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
+        // Modify the CategoryDescription property to include validation
         private string _CategoryDescription;
         public string CategoryDescription
         {
             get => _CategoryDescription;
             set
             {
-                _CategoryDescription = value;
-                OnPropertyChanged();
+                if (_CategoryDescription != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_CategoryDescription);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _categoryFieldsTouched.Add(nameof(CategoryDescription));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _categoryFieldsTouched.Remove(nameof(CategoryDescription));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _CategoryDescription = value;
+                    OnPropertyChanged();
+
+                    if (_categoryFieldsTouched.Contains(nameof(CategoryDescription)))
+                        OnPropertyChanged(nameof(Error));
+                }
             }
         }
+
 
         private MedicineCategory _SelectedCategory;
         public MedicineCategory SelectedCategory
@@ -803,68 +886,177 @@ namespace ClinicManagement.ViewModels
             get => _stockinMedicineName;
             set
             {
-                _stockinMedicineName = value;
-                OnPropertyChanged();
+                if (_stockinMedicineName != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_stockinMedicineName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _medicineFieldsTouched.Add(nameof(StockinMedicineName));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _medicineFieldsTouched.Remove(nameof(StockinMedicineName));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _stockinMedicineName = value;
+                    OnPropertyChanged();
+
+                    if (_medicineFieldsTouched.Contains(nameof(StockinMedicineName)))
+                        OnPropertyChanged(nameof(Error));
+
+                    // Refresh command availability
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
-        // Add new properties for BarCode and QRCode
-        private string _stockinBarCode;
+ // Barcode property with validation
+private string _stockinBarCode;
         public string StockinBarCode
         {
             get => _stockinBarCode;
             set
             {
-                _stockinBarCode = value;
-                OnPropertyChanged();
+                if (_stockinBarCode != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_stockinBarCode);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _medicineFieldsTouched.Add(nameof(StockinBarCode));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _medicineFieldsTouched.Remove(nameof(StockinBarCode));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _stockinBarCode = value;
+                    OnPropertyChanged();
+
+                    if (_medicineFieldsTouched.Contains(nameof(StockinBarCode)))
+                        OnPropertyChanged(nameof(Error));
+                }
             }
         }
 
+        // QR Code property with validation
         private string _stockinQrCode;
         public string StockinQrCode
         {
             get => _stockinQrCode;
             set
             {
-                _stockinQrCode = value;
-                OnPropertyChanged();
+                if (_stockinQrCode != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_stockinQrCode);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _medicineFieldsTouched.Add(nameof(StockinQrCode));
+                    else if (!wasEmpty && isEmpty)
+                    {
+                        _medicineFieldsTouched.Remove(nameof(StockinQrCode));
+                        OnPropertyChanged(nameof(Error));
+                    }
+
+                    _stockinQrCode = value;
+                    OnPropertyChanged();
+
+                    if (_medicineFieldsTouched.Contains(nameof(StockinQrCode)))
+                        OnPropertyChanged(nameof(Error));
+                }
             }
         }
 
+        // Quantity property with validation
         private int _stockinQuantity = 1;
         public int StockinQuantity
         {
             get => _stockinQuantity;
             set
             {
-                _stockinQuantity = value;
-                OnPropertyChanged();
+                if (_stockinQuantity != value)
+                {
+                    if (value != 0)
+                        _medicineFieldsTouched.Add(nameof(StockinQuantity));
+                    else
+                        _medicineFieldsTouched.Remove(nameof(StockinQuantity));
+
+                    _stockinQuantity = value;
+                    OnPropertyChanged();
+
+                    if (_medicineFieldsTouched.Contains(nameof(StockinQuantity)))
+                        OnPropertyChanged(nameof(Error));
+
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
+        // Unit Price property with validation
         private decimal _stockinUnitPrice;
         public decimal StockinUnitPrice
         {
             get => _stockinUnitPrice;
             set
             {
-                _stockinUnitPrice = value;
-                OnPropertyChanged();
-                
-                // If profit margin is set, recalculate sell price
-                if (_StockProfitMargin > 0)
+                if (_stockinUnitPrice != value)
                 {
-                    // Calculate sell price based on unit price and profit margin
-                    _stockinSellPrice = _stockinUnitPrice * (1 + (_StockProfitMargin / 100));
-                    OnPropertyChanged(nameof(StockinSellPrice));
-                }
-                else if (_stockinSellPrice > 0)
-                {
-                    // Calculate profit margin based on unit price and sell price
-                    CalculateProfitMargin();
+                    if (value != 0)
+                        _medicineFieldsTouched.Add(nameof(StockinUnitPrice));
+                    else
+                        _medicineFieldsTouched.Remove(nameof(StockinUnitPrice));
+
+                    _stockinUnitPrice = value;
+                    OnPropertyChanged();
+
+                    // If profit margin is set, recalculate sell price
+                    if (_StockProfitMargin > 0)
+                    {
+                        // Calculate sell price based on unit price and profit margin
+                        _stockinSellPrice = _stockinUnitPrice * (1 + (_StockProfitMargin / 100));
+                        OnPropertyChanged(nameof(StockinSellPrice));
+                    }
+                    else if (_stockinSellPrice > 0)
+                    {
+                        // Calculate profit margin based on unit price and sell price
+                        CalculateProfitMargin();
+                    }
+
+                    if (_medicineFieldsTouched.Contains(nameof(StockinUnitPrice)))
+                        OnPropertyChanged(nameof(Error));
+
+                    CommandManager.InvalidateRequerySuggested();
                 }
             }
         }
+
+        // Expiry Date property with validation
+        private DateTime? _stockinExpiryDate = DateTime.Now.AddYears(3);
+        public DateTime? StockinExpiryDate
+        {
+            get => _stockinExpiryDate;
+            set
+            {
+                if (_stockinExpiryDate != value)
+                {
+                    if (value.HasValue)
+                        _medicineFieldsTouched.Add(nameof(StockinExpiryDate));
+                    else
+                        _medicineFieldsTouched.Remove(nameof(StockinExpiryDate));
+
+                    _stockinExpiryDate = value;
+                    OnPropertyChanged();
+
+                    if (_medicineFieldsTouched.Contains(nameof(StockinExpiryDate)))
+                        OnPropertyChanged(nameof(Error));
+
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
+
 
         private decimal _StockProfitMargin;
         public decimal StockProfitMargin
@@ -916,17 +1108,6 @@ namespace ClinicManagement.ViewModels
                 // Calculate profit margin percentage
                 _StockProfitMargin = ((_stockinSellPrice / _stockinUnitPrice) - 1) * 100;
                 OnPropertyChanged(nameof(StockProfitMargin));
-            }
-        }
-
-        private DateTime? _stockinExpiryDate = DateTime.Now.AddYears(3);
-        public DateTime? StockinExpiryDate
-        {
-            get => _stockinExpiryDate;
-            set
-            {
-                _stockinExpiryDate = value;
-                OnPropertyChanged();
             }
         }
 
@@ -1277,19 +1458,43 @@ namespace ClinicManagement.ViewModels
         private void ExecuteUnitRefresh()
         {
             UnitList = new ObservableCollection<Unit>(
-                   DataProvider.Instance.Context.Units
-                       .Where(s => (bool)!s.IsDeleted)
-                       .ToList()
-               );
+                DataProvider.Instance.Context.Units
+                    .Where(s => (bool)!s.IsDeleted)
+                    .ToList()
+            );
+
+            // Clear form fields
             SelectedUnit = null;
             UnitName = "";
             UnitDescription = "";
-        }
 
+            // Clear validation state
+            _isUnitValidating = false;
+            _unitFieldsTouched.Clear();
+        }
         private void AddUnit()
         {
             try
             {
+                // Enable validation for unit fields
+                _isUnitValidating = true;
+                _unitFieldsTouched.Add(nameof(UnitName));
+                _unitFieldsTouched.Add(nameof(UnitDescription));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(UnitName));
+                OnPropertyChanged(nameof(UnitDescription));
+
+                // Check for validation errors in unit fields
+                if (!string.IsNullOrEmpty(this[nameof(UnitName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(UnitDescription)]))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm đơn vị.",
+                        "Lỗi thông tin");
+                    return;
+                }
+
                 // Hiển thị hộp thoại xác nhận trước khi thêm đơn vị
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn thêm đơn vị '{UnitName}' không?",
@@ -1373,6 +1578,24 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for unit fields
+                _isUnitValidating = true;
+                _unitFieldsTouched.Add(nameof(UnitName));
+                _unitFieldsTouched.Add(nameof(UnitDescription));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(UnitName));
+                OnPropertyChanged(nameof(UnitDescription));
+
+                // Check for validation errors in unit fields
+                if (!string.IsNullOrEmpty(this[nameof(UnitName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(UnitDescription)]))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi sửa đơn vị.",
+                        "Lỗi thông tin");
+                    return;
+                }
                 // Hiển thị hộp thoại xác nhận trước khi sửa đơn vị
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa đơn vị '{SelectedUnit.UnitName}' thành '{UnitName}' không?",
@@ -1430,6 +1653,8 @@ namespace ClinicManagement.ViewModels
                         MessageBoxService.ShowSuccess(
                             "Đã cập nhật đơn vị thành công!",
                             "Thành Công");
+                        _isUnitValidating = false;
+                        _unitFieldsTouched.Clear();
                     }
                     catch (Exception ex)
                     {
@@ -1541,83 +1766,125 @@ namespace ClinicManagement.ViewModels
         private void ExecuteCategoryRefresh()
         {
             CategoryList = new ObservableCollection<MedicineCategory>(
-                    DataProvider.Instance.Context.MedicineCategories
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
+                DataProvider.Instance.Context.MedicineCategories
+                    .Where(s => (bool)!s.IsDeleted)
+                    .ToList()
+            );
+
+            // Clear form fields
             SelectedCategory = null;
             CategoryName = "";
-            CategoryDescription = "";   
+            CategoryDescription = "";
+
+            // Clear validation state
+            _isCategoryValidating = false;
+            _categoryFieldsTouched.Clear();
         }
-        
         private void AddCategory()
         {
             try
             {
-                // Confirm dialog
-                 bool  result = MessageBoxService.ShowQuestion(
-                    $"Bạn có chắc muốn thêm loại thuốc '{CategoryName}' không?",
-                    "Xác Nhận Thêm"
-                     
-                      );
+                // Enable validation for category fields
+                _isCategoryValidating = true;
+                _categoryFieldsTouched.Add(nameof(CategoryName));
+                _categoryFieldsTouched.Add(nameof(CategoryDescription));
 
-                if ( !result)
-                    return;
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(CategoryName));
+                OnPropertyChanged(nameof(CategoryDescription));
 
-                // Check if specialty already exists
-                bool isExist = DataProvider.Instance.Context.MedicineCategories
-                    .Any(s => s.CategoryName.Trim().ToLower() == CategoryName.Trim().ToLower() && (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Check for validation errors in category fields
+                if (!string.IsNullOrEmpty(this[nameof(CategoryName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(CategoryDescription)]))
                 {
-                    MessageBoxService.ShowWarning("Loại thuốc này đã tồn tại.");
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm loại thuốc.",
+                        "Lỗi thông tin");
                     return;
                 }
 
-                // Add new specialty
-                var newCategory = new MedicineCategory
+                // Confirm dialog
+                bool result = MessageBoxService.ShowQuestion(
+                    $"Bạn có chắc muốn thêm loại thuốc '{CategoryName}' không?",
+                    "Xác Nhận Thêm");
+
+                if (!result)
+                    return;
+
+                // Use transaction to ensure data integrity
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    CategoryName = CategoryName,
-                    Description = UnitDescription ?? "",
-                    IsDeleted = false
-                };
+                    try
+                    {
+                        // Check if specialty already exists
+                        bool isExist = DataProvider.Instance.Context.MedicineCategories
+                            .Any(s => s.CategoryName.Trim().ToLower() == CategoryName.Trim().ToLower() && (bool)!s.IsDeleted);
 
-                DataProvider.Instance.Context.MedicineCategories.Add(newCategory);
-                DataProvider.Instance.Context.SaveChanges();
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Loại thuốc này đã tồn tại.", "Trùng dữ liệu");
+                            return;
+                        }
 
-                // Refresh data
-                CategoryList = new ObservableCollection<MedicineCategory>(
-                    DataProvider.Instance.Context.MedicineCategories
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
+                        // Add new specialty
+                        var newCategory = new MedicineCategory
+                        {
+                            CategoryName = CategoryName.Trim(),
+                            Description = CategoryDescription?.Trim() ?? "",
+                            IsDeleted = false
+                        };
 
-                // Clear fields
-                SelectedCategory = null;
-                CategoryName = "";
-                CategoryDescription = "";
+                        DataProvider.Instance.Context.MedicineCategories.Add(newCategory);
+                        DataProvider.Instance.Context.SaveChanges();
 
-                MessageBoxService.ShowSuccess(
-                    "Đã thêm loại thuốc thành công!",
-                    "Thành công"
-                     
-                      );
-            }
-            catch (DbUpdateException ex)
-            {
-                MessageBoxService.ShowError(
-                    $"Không thể thêm loại thuốc: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi Cơ Sở Dữ Liệu"
-                     
-                     );
+                        // Commit the transaction after successful save
+                        transaction.Commit();
+
+                        // Refresh data
+                        CategoryList = new ObservableCollection<MedicineCategory>(
+                            DataProvider.Instance.Context.MedicineCategories
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Clear fields
+                        SelectedCategory = null;
+                        CategoryName = "";
+                        CategoryDescription = "";
+
+                        // Clear validation state
+                        _isCategoryValidating = false;
+                        _categoryFieldsTouched.Clear();
+
+                        MessageBoxService.ShowSuccess(
+                            "Đã thêm loại thuốc thành công!",
+                            "Thành công");
+                    }
+                    catch (DbUpdateException ex)
+                    {
+                        // Rollback transaction in case of database error
+                        transaction.Rollback();
+
+                        MessageBoxService.ShowError(
+                            $"Không thể thêm loại thuốc: {ex.InnerException?.Message ?? ex.Message}",
+                            "Lỗi Cơ Sở Dữ Liệu");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction for any other error
+                        transaction.Rollback();
+
+                        MessageBoxService.ShowError(
+                            $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
+                            "Lỗi");
+                    }
+                }
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
-                    $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    $"Đã xảy ra lỗi: {ex.Message}",
+                    "Lỗi");
             }
         }
 
@@ -1625,73 +1892,119 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for category fields
+                _isCategoryValidating = true;
+                _categoryFieldsTouched.Add(nameof(CategoryName));
+                _categoryFieldsTouched.Add(nameof(CategoryDescription));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(CategoryName));
+                OnPropertyChanged(nameof(CategoryDescription));
+
+                // Check for validation errors in category fields
+                if (!string.IsNullOrEmpty(this[nameof(CategoryName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(CategoryDescription)]))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi sửa loại thuốc.",
+                        "Lỗi thông tin");
+                    return;
+                }
+
+                // Check if a category is selected
+                if (SelectedCategory == null)
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng chọn loại thuốc cần sửa.",
+                        "Thiếu thông tin");
+                    return;
+                }
+
                 // Confirm dialog
-                 bool  result = MessageBoxService.ShowQuestion(
+                bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn sửa loại thuốc '{SelectedCategory.CategoryName}' thành '{CategoryName}' không?",
-                    "Xác Nhận Sửa"
-                     
-                      );
+                    "Xác Nhận Sửa");
 
-                if ( !result)
+                if (!result)
                     return;
 
-                // Check if specialty name already exists (except for current)
-                bool isExist = DataProvider.Instance.Context.MedicineCategories
-                    .Any(s => s.CategoryName.Trim().ToLower() == CategoryName.Trim().ToLower() &&
-                              s.CategoryId != SelectedCategory.CategoryId &&
-                             (bool)!s.IsDeleted);
-
-                if (isExist)
+                // Use transaction to ensure data integrity
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Tên loại thuôc này đã tồn tại.");
-                    return;
+                    try
+                    {
+                        // Check if specialty name already exists (except for current)
+                        bool isExist = DataProvider.Instance.Context.MedicineCategories
+                            .Any(s => s.CategoryName.Trim().ToLower() == CategoryName.Trim().ToLower() &&
+                                    s.CategoryId != SelectedCategory.CategoryId &&
+                                    (bool)!s.IsDeleted);
+
+                        if (isExist)
+                        {
+                            MessageBoxService.ShowWarning("Tên loại thuốc này đã tồn tại.", "Trùng dữ liệu");
+                            return;
+                        }
+
+                        // Update specialty
+                        var categoryToUpdate = DataProvider.Instance.Context.MedicineCategories
+                            .FirstOrDefault(s => s.CategoryId == SelectedCategory.CategoryId);
+
+                        if (categoryToUpdate == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy loại thuốc cần sửa.", "Dữ liệu không tồn tại");
+                            return;
+                        }
+
+                        categoryToUpdate.CategoryName = CategoryName.Trim();
+                        categoryToUpdate.Description = CategoryDescription?.Trim() ?? "";
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Commit the transaction after successful save
+                        transaction.Commit();
+
+                        // Refresh data
+                        CategoryList = new ObservableCollection<MedicineCategory>(
+                            DataProvider.Instance.Context.MedicineCategories
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Update medicine list as category names may have changed
+                        LoadData();
+
+                        // Clear validation state
+                        _isCategoryValidating = false;
+                        _categoryFieldsTouched.Clear();
+
+                        MessageBoxService.ShowSuccess(
+                            "Đã cập nhật loại thuốc thành công!",
+                            "Thành công");
+                    }
+                    catch (DbUpdateException ex)
+                    {
+                        // Rollback transaction in case of database error
+                        transaction.Rollback();
+
+                        MessageBoxService.ShowError(
+                            $"Không thể sửa loại thuốc: {ex.InnerException?.Message ?? ex.Message}",
+                            "Lỗi cơ sở dữ liệu");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction for any other error
+                        transaction.Rollback();
+
+                        MessageBoxService.ShowError(
+                            $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
+                            "Lỗi");
+                    }
                 }
-
-                // Update specialty
-                var categoryToUpdate = DataProvider.Instance.Context.MedicineCategories
-                    .FirstOrDefault(s => s.CategoryId == SelectedCategory.CategoryId);
-
-                if (categoryToUpdate == null)
-                {
-                    MessageBoxService.ShowWarning("Không tìm thấy loại thuốc cần sửa.");
-                    return;
-                }
-
-                categoryToUpdate.CategoryName = CategoryName;
-                categoryToUpdate.Description = CategoryDescription ?? "";
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                CategoryList = new ObservableCollection<MedicineCategory>(
-                    DataProvider.Instance.Context.MedicineCategories
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Update doctor list as specialty names may have changed
-                LoadData();
-
-                MessageBoxService.ShowSuccess(
-                    "Đã cập nhật loại thuốc thành công!",
-                    "Thành công"
-                     
-                      );
-            }
-            catch (DbUpdateException ex)
-            {
-                MessageBoxService.ShowError(
-                    $"Không thể sửa loại thuốc: {ex.InnerException?.Message ?? ex.Message}",
-                    "Lỗi cơ sở dữ liệu"
-                     
-                     );
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
-                    $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    $"Đã xảy ra lỗi: {ex.Message}",
+                    "Lỗi");
             }
         }
 
@@ -1699,71 +2012,91 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Check if specialty is in use by any Staffs
-                bool isInUse = DataProvider.Instance.Context.MedicineCategories
-                    .Any(d => d.CategoryId == SelectedCategory.CategoryId && (bool)d.IsDeleted == true);
-
-
-                if (isInUse)
+                // Check if a category is selected
+                if (SelectedCategory == null)
                 {
                     MessageBoxService.ShowWarning(
-                        "Không thể xóa Đơn vị này vì đang được sử dụng bởi một hoặc nhiều thuốc.",
-                        "Cánh báo"
-                         
-                          );
+                        "Vui lòng chọn loại thuốc cần xóa.",
+                        "Thiếu thông tin");
                     return;
                 }
 
-                // Confirm deletion
-                 bool  result = MessageBoxService.ShowQuestion(
-                    $"Bạn có chắc muốn xóa loại thuốc '{SelectedCategory.CategoryName}' không?",
-                    "Xác nhận xóa"
-                     
-                      );
-
-                if ( !result)
-                    return;
-
-                // Soft delete the specialty
-                var categoryToUpdate = DataProvider.Instance.Context.MedicineCategories
-                    .FirstOrDefault(s => s.CategoryId == SelectedCategory.CategoryId);
-
-                if (categoryToUpdate == null)
+                // Use transaction to ensure data integrity
+                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
-                    MessageBoxService.ShowWarning("Không tìm thấy loại thuốc cần xóa.");
-                    return;
+                    try
+                    {
+                        // Check if category is in use by any medicines
+                        bool isInUse = DataProvider.Instance.Context.Medicines
+                            .Any(m => m.CategoryId == SelectedCategory.CategoryId && (bool)!m.IsDeleted);
+
+                        if (isInUse)
+                        {
+                            MessageBoxService.ShowWarning(
+                                "Không thể xóa loại thuốc này vì đang được sử dụng bởi một hoặc nhiều thuốc.",
+                                "Ràng buộc dữ liệu");
+                            return;
+                        }
+
+                        // Confirm deletion
+                        bool result = MessageBoxService.ShowQuestion(
+                            $"Bạn có chắc muốn xóa loại thuốc '{SelectedCategory.CategoryName}' không?",
+                            "Xác nhận xóa");
+
+                        if (!result)
+                            return;
+
+                        // Soft delete the category
+                        var categoryToUpdate = DataProvider.Instance.Context.MedicineCategories
+                            .FirstOrDefault(s => s.CategoryId == SelectedCategory.CategoryId);
+
+                        if (categoryToUpdate == null)
+                        {
+                            MessageBoxService.ShowWarning("Không tìm thấy loại thuốc cần xóa.", "Dữ liệu không tồn tại");
+                            return;
+                        }
+
+                        categoryToUpdate.IsDeleted = true;
+                        DataProvider.Instance.Context.SaveChanges();
+
+                        // Commit the transaction after successful save
+                        transaction.Commit();
+
+                        // Refresh data
+                        CategoryList = new ObservableCollection<MedicineCategory>(
+                            DataProvider.Instance.Context.MedicineCategories
+                                .Where(s => (bool)!s.IsDeleted)
+                                .ToList()
+                        );
+
+                        // Clear selection and fields
+                        SelectedCategory = null;
+                        CategoryName = "";
+                        CategoryDescription = "";
+
+                        MessageBoxService.ShowSuccess(
+                            "Đã xóa loại thuốc thành công.",
+                            "Thành công");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Rollback transaction in case of error
+                        transaction.Rollback();
+
+                        MessageBoxService.ShowError(
+                            $"Đã xảy ra lỗi khi xóa loại thuốc: {ex.Message}",
+                            "Lỗi");
+                    }
                 }
-
-                categoryToUpdate.IsDeleted = true;
-                DataProvider.Instance.Context.SaveChanges();
-
-                // Refresh data
-                CategoryList = new ObservableCollection<MedicineCategory>(
-                    DataProvider.Instance.Context.MedicineCategories
-                        .Where(s => (bool)!s.IsDeleted)
-                        .ToList()
-                );
-
-                // Clear selection and fields
-                SelectedCategory = null;
-                CategoryName = "";
-                CategoryDescription = "";
-
-                MessageBoxService.ShowSuccess(
-                    "Đã xóa loại thuốc thành công.",
-                    "Thành công"
-                     
-                      );
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
-                    $"Đã xảy ra lỗi khi xóa loại thuốc: {ex.Message}",
-                    "Lỗi"
-                     
-                     );
+                    $"Đã xảy ra lỗi: {ex.Message}",
+                    "Lỗi");
             }
         }
+
         #endregion
 
         #region Supplier Methods
@@ -1776,7 +2109,22 @@ namespace ClinicManagement.ViewModels
                        !string.IsNullOrEmpty(this[nameof(SupplierName)]) ||
                        !string.IsNullOrEmpty(this[nameof(SupplierPhone)]) ||
                        !string.IsNullOrEmpty(this[nameof(SupplierEmail)]) ||
-                       !string.IsNullOrEmpty(this[nameof(SupplierTaxCode)]);
+                       !string.IsNullOrEmpty(this[nameof(SupplierTaxCode)]) ||
+                       // Add Unit validation checks
+                       !string.IsNullOrEmpty(this[nameof(UnitName)]) ||
+                       !string.IsNullOrEmpty(this[nameof(UnitDescription)]) ||
+                       // Add Category validation checks
+                       !string.IsNullOrEmpty(this[nameof(CategoryName)]) ||
+                       !string.IsNullOrEmpty(this[nameof(CategoryDescription)]) ||
+                       // Include medicine validation checks if they exist
+                       (_medicineFieldsTouched != null && (_medicineFieldsTouched.Any() &&
+                         (!string.IsNullOrEmpty(this[nameof(StockinMedicineName)]) ||
+                          !string.IsNullOrEmpty(this[nameof(StockinBarCode)]) ||
+                          !string.IsNullOrEmpty(this[nameof(StockinQrCode)]) ||
+                          !string.IsNullOrEmpty(this[nameof(StockinQuantity)]) ||
+                          !string.IsNullOrEmpty(this[nameof(StockinUnitPrice)]) ||
+                          !string.IsNullOrEmpty(this[nameof(StockinSellPrice)]) ||
+                          !string.IsNullOrEmpty(this[nameof(StockinExpiryDate)]))));
             }
         }
         public string this[string columnName]
@@ -1841,6 +2189,116 @@ namespace ClinicManagement.ViewModels
                             !Regex.IsMatch(SupplierTaxCode.Trim(), @"^\d{10}(-\d{3})?$"))
                         {
                             error = "Mã số thuế phải có 10 số hoặc 10-3 số (VD: 0123456789-001)";
+                        }
+                        break;
+
+                    case nameof(StockinMedicineName):
+                        if (_medicineFieldsTouched.Contains(columnName) && string.IsNullOrWhiteSpace(StockinMedicineName))
+                        {
+                            error = "Tên thuốc không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(StockinMedicineName) && StockinMedicineName.Trim().Length < 2)
+                        {
+                            error = "Tên thuốc phải có ít nhất 2 ký tự";
+                        }
+                        break;
+
+                    // Barcode validation - optional but if provided must follow format
+                    case nameof(StockinBarCode):
+                        if (!string.IsNullOrWhiteSpace(StockinBarCode) && StockinBarCode.Length < 8)
+                        {
+                            error = "Mã vạch phải có ít nhất 8 ký tự";
+                        }
+                        break;
+
+                    // QR code validation - optional
+                    case nameof(StockinQrCode):
+                        // Add any specific QR code validation rules if needed
+                        break;
+
+                    // Quantity validation
+                    case nameof(StockinQuantity):
+                        if (_medicineFieldsTouched.Contains(columnName) && StockinQuantity <= 0)
+                        {
+                            error = "Số lượng phải lớn hơn 0";
+                        }
+                        break;
+
+                    // Unit price validation
+                    case nameof(StockinUnitPrice):
+                        if (_medicineFieldsTouched.Contains(columnName) && StockinUnitPrice <= 0)
+                        {
+                            error = "Giá nhập phải lớn hơn 0";
+                        }
+                        break;
+
+                    // Sell price validation
+                    case nameof(StockinSellPrice):
+                        if (_medicineFieldsTouched.Contains(columnName) && StockinSellPrice <= 0)
+                        {
+                            error = "Giá bán phải lớn hơn 0";
+                        }
+                        else if (StockinSellPrice < StockinUnitPrice)
+                        {
+                            error = "Giá bán không được thấp hơn giá nhập";
+                        }
+                        break;
+
+                    // Expiry date validation
+                    case nameof(StockinExpiryDate):
+                        if (!StockinExpiryDate.HasValue)
+                        {
+                            error = "Ngày hết hạn không được để trống";
+                        }
+                        else
+                        {
+                            var today = DateTime.Today;
+                            if (StockinExpiryDate.Value.Date <= today)
+                            {
+                                error = "Ngày hết hạn phải sau ngày hôm nay";
+                            }
+                        }
+                        break;
+                    case nameof(UnitName):
+                        if (_unitFieldsTouched.Contains(columnName) && string.IsNullOrWhiteSpace(UnitName))
+                        {
+                            error = "Tên đơn vị không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(UnitName))
+                        {
+                            if (UnitName.Trim().Length < 2)
+                                error = "Tên đơn vị phải có ít nhất 2 ký tự";
+                            else if (UnitName.Trim().Length > 50)
+                                error = "Tên đơn vị không được vượt quá 50 ký tự";
+                        }
+                        break;
+
+                    case nameof(UnitDescription):
+                        if (!string.IsNullOrWhiteSpace(UnitDescription) && UnitDescription.Trim().Length > 255)
+                        {
+                            error = "Mô tả đơn vị không được vượt quá 255 ký tự";
+                        }
+                        break;
+
+                    // Category validation rules
+                    case nameof(CategoryName):
+                        if (_categoryFieldsTouched.Contains(columnName) && string.IsNullOrWhiteSpace(CategoryName))
+                        {
+                            error = "Tên loại thuốc không được để trống";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(CategoryName))
+                        {
+                            if (CategoryName.Trim().Length < 2)
+                                error = "Tên loại thuốc phải có ít nhất 2 ký tự";
+                            else if (CategoryName.Trim().Length > 50)
+                                error = "Tên loại thuốc không được vượt quá 50 ký tự";
+                        }
+                        break;
+
+                    case nameof(CategoryDescription):
+                        if (!string.IsNullOrWhiteSpace(CategoryDescription) && CategoryDescription.Trim().Length > 255)
+                        {
+                            error = "Mô tả loại thuốc không được vượt quá 255 ký tự";
                         }
                         break;
                 }
@@ -2522,10 +2980,21 @@ namespace ClinicManagement.ViewModels
         {
             if (medicine == null)
                 return false;
+
+            // Check if the medicine has any StockIns
+            if (medicine.StockIns == null || !medicine.StockIns.Any())
+                return true; // Can delete if no stock batches exist
+
+            // Get today's date
             var today = DateOnly.FromDateTime(DateTime.Today);
-            if (medicine.CurrentExpiryDate > today)
-                return false;
-            return true;
+
+            // Check if all batches are either terminated or expired
+            bool allBatchesTerminatedOrExpired = medicine.StockIns.All(si =>
+                si.IsTerminated ||
+                (si.ExpiryDate.HasValue && si.ExpiryDate.Value <= today)
+            );
+
+            return allBatchesTerminatedOrExpired;
         }
         // Phương thức xuất Excel cập nhật để hỗ trợ cả hai chế độ xem
         /// <summary>
@@ -3320,6 +3789,58 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // Enable validation for all medicine fields
+                _isMedicineValidating = true;
+                _medicineFieldsTouched.Add(nameof(StockinMedicineName));
+                _medicineFieldsTouched.Add(nameof(StockinQuantity));
+                _medicineFieldsTouched.Add(nameof(StockinUnitPrice));
+                _medicineFieldsTouched.Add(nameof(StockinSellPrice));
+                _medicineFieldsTouched.Add(nameof(StockinExpiryDate));
+
+                // Trigger validation by notifying property changes
+                OnPropertyChanged(nameof(StockinMedicineName));
+                OnPropertyChanged(nameof(StockinBarCode));
+                OnPropertyChanged(nameof(StockinQrCode));
+                OnPropertyChanged(nameof(StockinQuantity));
+                OnPropertyChanged(nameof(StockinUnitPrice));
+                OnPropertyChanged(nameof(StockinSellPrice));
+                OnPropertyChanged(nameof(StockinExpiryDate));
+
+                // Check for medicine validation errors
+                if (!string.IsNullOrEmpty(this[nameof(StockinMedicineName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(StockinBarCode)]) ||
+                    !string.IsNullOrEmpty(this[nameof(StockinQrCode)]) ||
+                    !string.IsNullOrEmpty(this[nameof(StockinQuantity)]) ||
+                    !string.IsNullOrEmpty(this[nameof(StockinUnitPrice)]) ||
+                    !string.IsNullOrEmpty(this[nameof(StockinSellPrice)]) ||
+                    !string.IsNullOrEmpty(this[nameof(StockinExpiryDate)]))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi thêm thuốc.",
+                        "Lỗi thông tin");
+                    return;
+                }
+
+                // Category validation
+                if (StockinSelectedCategory == null)
+                {
+                    MessageBoxService.ShowWarning("Vui lòng chọn loại thuốc", "Thiếu thông tin");
+                    return;
+                }
+
+                // Unit validation
+                if (StockinSelectedUnit == null)
+                {
+                    MessageBoxService.ShowWarning("Vui lòng chọn đơn vị tính", "Thiếu thông tin");
+                    return;
+                }
+
+                // Supplier validation
+                if (StockinSelectedSupplier == null)
+                {
+                    MessageBoxService.ShowWarning("Vui lòng chọn nhà cung cấp", "Thiếu thông tin");
+                    return;
+                }
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
                     try
@@ -3470,7 +3991,9 @@ namespace ClinicManagement.ViewModels
                             resultMessage,
                             "Thêm thuốc thành công"
                         );
-
+                        // After successful save, reset validation state
+                        _isMedicineValidating = false;
+                        _medicineFieldsTouched.Clear();
                         // Refresh data
                         LoadData();
                         ExecuteRestart();
@@ -3524,14 +4047,19 @@ namespace ClinicManagement.ViewModels
 
         private void ExecuteRestart()
         {
-            // Clear all form fields
+            // Clear validation state
+            _isMedicineValidating = false;
+            _medicineFieldsTouched.Clear();
+
+            // Clear all form fields as in your original method
             StockinMedicineName = string.Empty;
-            StockinBarCode = string.Empty;     // Clear BarCode
-            StockinQrCode = string.Empty;      // Clear QRCode
-            StockinQuantity = 0;
+            StockinBarCode = string.Empty;
+            StockinQrCode = string.Empty;
+            StockinQuantity = 1;  // Reset to 1 instead of 0 for better usability
             StockinUnitPrice = 0;
             StockinSellPrice = 0;
-            StockinExpiryDate = null;
+            StockProfitMargin = 20; // Reset to default profit margin
+            StockinExpiryDate = DateTime.Now.AddYears(1); // Reset to default expiry
             StockinSelectedCategory = null;
             StockinSelectedSupplier = null;
             StockinSelectedUnit = null;

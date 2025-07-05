@@ -5,10 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClinicManagement.SubWindow"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:conver="clr-namespace:ClinicManagement.Converter"
         xmlns:uc="clr-namespace:ClinicManagement.UserControlToUse"
         mc:Ignorable="d"
         Height="900" 
-        Width="1100"
+        Width="1200"
         Name="medicineDetailsWindow"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -21,12 +22,15 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors" 
         WindowStyle="None"
         Title="{Binding DialogTitle}">
+ 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding RefreshDataCommand}" CommandParameter="{Binding ElementName=medicineDetailsWindow}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>
+        <!-- Converter để kiểm tra phủ định của IsTerminated -->
+        <conver:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         <ContextMenu x:Key="ContextMenu">
             <MenuItem Header="🔄 Làm mới" 
              Command="{Binding RefreshDataCommand}"
@@ -65,109 +69,122 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" 
-                           Text="Thông tin thuốc" 
-                           FontWeight="Bold" 
-                           FontSize="16" 
-                           Margin="0,0,0,16"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" 
+           Text="Thông tin thuốc và lô thuốc" 
+           FontWeight="Bold" 
+           FontSize="16" 
+           Margin="0,0,0,16"/>
 
                 <!-- Medicine Name -->
                 <TextBox Grid.Row="1" Grid.Column="0" 
-                         Text="{Binding Medicine.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                         materialDesign:HintAssist.Hint="Tên thuốc"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Margin="0,0,8,8"/>
-
-                <!-- Expiry Date -->
-                <DatePicker Grid.Row="2" Grid.Column="1" 
-                            SelectedDate="{Binding StockinExpiryDate, Mode=TwoWay}" 
-                            materialDesign:HintAssist.Hint="Hạn sử dụng"
-                            Style="{StaticResource MaterialDesignOutlinedDatePicker}"
-                            Width="220"
-                            Margin="0,0,8,8"/>
-
-                <!-- Category -->
-                <ComboBox Grid.Row="2" Grid.Column="0" 
-                          ItemsSource="{Binding CategoryList}"
-                          SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                          DisplayMemberPath="CategoryName"
-                          materialDesign:HintAssist.Hint="Loại thuốc"
-                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          Margin="0,0,8,8"/>
+         Text="{Binding Medicine.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+         materialDesign:HintAssist.Hint="Tên thuốc"
+         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+         Margin="0,0,8,8"/>
 
                 <!-- Unit -->
                 <ComboBox Grid.Row="1" Grid.Column="1" 
-                          ItemsSource="{Binding UnitList}"
-                          SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
-                          Width="220"
-                          DisplayMemberPath="UnitName"
-                          materialDesign:HintAssist.Hint="Đơn vị thuốc"
-                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          Margin="0,0,8,8"/>
+          ItemsSource="{Binding UnitList}"
+          SelectedItem="{Binding SelectedUnit, Mode=TwoWay}"
+          Width="220"
+          DisplayMemberPath="UnitName"
+          materialDesign:HintAssist.Hint="Đơn vị thuốc"
+          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+          Margin="0,0,8,8"/>
+
+                <!-- Category -->
+                <ComboBox Grid.Row="2" Grid.Column="0" 
+          ItemsSource="{Binding CategoryList}"
+          SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+          DisplayMemberPath="CategoryName"
+          materialDesign:HintAssist.Hint="Loại thuốc"
+          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+          Margin="0,0,8,8"/>
+
+                <!-- Expiry Date -->
+                <DatePicker Grid.Row="2" Grid.Column="1" 
+            SelectedDate="{Binding StockinExpiryDate, Mode=TwoWay}" 
+            materialDesign:HintAssist.Hint="Hạn sử dụng lô mới"
+            Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+            Width="220"
+            Margin="0,0,8,8"/>
 
                 <!-- Stock Quantity -->
                 <materialDesign:NumericUpDown
-                       Grid.Column="1" Grid.Row="3"
-                       Value="{Binding StockinQuantity, Mode=TwoWay}"
-                       Minimum="0"
-                       Margin="0,0,8,8"
-                       Width="220"
-                       HorizontalAlignment="Center"
-                       materialDesign:HintAssist.Hint="Số lượng"
-                       Style="{StaticResource MaterialDesignOutlinedNumericUpDown}">
+       Grid.Column="1" Grid.Row="3"
+       Value="{Binding StockinQuantity, Mode=TwoWay}"
+       Minimum="1"
+       Margin="0,0,8,8"
+       Width="220"
+       HorizontalAlignment="Center"
+       materialDesign:HintAssist.Hint="Số lượng nhập mới"
+       Style="{StaticResource MaterialDesignOutlinedNumericUpDown}">
                 </materialDesign:NumericUpDown>
 
-                <!-- Nhà cung cấp gần nhất -->
+                <!-- Supplier Information -->
                 <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,8,8">
                     <TextBlock 
-                        Text="Nhà cung cấp gần nhất:" 
-                        FontWeight="Medium"
-                        Margin="0,0,0,4"/>
+        Text="Nhà cung cấp gần nhất:" 
+        FontWeight="Medium"
+        Margin="0,0,0,4"/>
                     <TextBlock 
-                        Text="{Binding LatestSupplierName}" 
-                        Style="{StaticResource MaterialDesignBody1TextBlock}"
-                        Margin="4,0,0,0"/>
+        Text="{Binding LatestSupplierName}" 
+        Style="{StaticResource MaterialDesignBody1TextBlock}"
+        FontWeight="SemiBold"
+        Margin="4,0,0,0"/>
                 </StackPanel>
 
                 <!-- Unit Price -->
                 <TextBox
-                        Grid.Column="2" Grid.Row="1"
-                        Text="{Binding StockinUnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
-                        Margin="0,0,8,8"
-                        Width="220"
-                        HorizontalAlignment="Left"
-                        materialDesign:HintAssist.Hint="Giá nhập (VNĐ)"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+        Grid.Column="2" Grid.Row="1"
+        Text="{Binding StockinUnitPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+        Margin="0,0,8,8"
+        Width="220"
+        HorizontalAlignment="Left"
+        materialDesign:HintAssist.Hint="Giá nhập lô mới (VNĐ)"
+        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                 <!-- Profit Margin -->
                 <TextBox
-                        Grid.Column="2" Grid.Row="2"
-                        Text="{Binding StockProfitMargin, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged}"
-                        Margin="0,0,8,8"
-                        Width="220"
-                        HorizontalAlignment="Left"
-                        materialDesign:HintAssist.Hint="Tỉ lệ lợi nhuận (%)"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+        Grid.Column="2" Grid.Row="2"
+        Text="{Binding StockProfitMargin, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged}"
+        Margin="0,0,8,8"
+        Width="220"
+        HorizontalAlignment="Left"
+        materialDesign:HintAssist.Hint="Tỉ lệ lợi nhuận (%)"
+        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                 <!-- Selling Price -->
                 <TextBox
-                        Grid.Column="2" Grid.Row="3"
-                        Text="{Binding StockinSellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
-                        Margin="0,0,8,8"
-                        Width="220"
-                        HorizontalAlignment="Left"
-                        materialDesign:HintAssist.Hint="Giá bán (VNĐ)"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+        Grid.Column="2" Grid.Row="3"
+        Text="{Binding StockinSellPrice, StringFormat='{}{0:N0}', UpdateSourceTrigger=PropertyChanged}"
+        Margin="0,0,8,8"
+        Width="220"
+        HorizontalAlignment="Left"
+        materialDesign:HintAssist.Hint="Giá bán lô mới (VNĐ)"
+        Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                 <!-- Import Date -->
                 <DatePicker
-                    Grid.Column="3" Grid.Row="1"
-                    SelectedDate="{Binding ImportDate, Mode=TwoWay}"
-                    Margin="0,0,8,8"
-                    Width="220"
-                    HorizontalAlignment="Center"
-                    materialDesign:HintAssist.Hint="Ngày nhập"
-                    Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+    Grid.Column="3" Grid.Row="1"
+    SelectedDate="{Binding ImportDate, Mode=TwoWay}"
+    Margin="0,0,8,8"
+    Width="220"
+    HorizontalAlignment="Center"
+    materialDesign:HintAssist.Hint="Ngày nhập lô mới"
+    Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
+
+                <!-- Refresh Button -->
+                <Button Grid.Column="3" Grid.Row="2"
+    Command="{Binding RefreshDataCommand}"
+    Style="{StaticResource MaterialDesignOutlinedButton}"
+    Width="160" Height="36" Margin="5"
+    HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Refresh" Margin="0,0,8,0"/>
+                        <TextBlock Text="Làm mới"/>
+                    </StackPanel>
+                </Button>
 
                 <!-- Refresh Button -->
                 <Button Grid.Column="3" Grid.Row="2"
@@ -222,40 +239,82 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto">
                     <DataGrid ItemsSource="{Binding DetailedStockList}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          SelectedItem="{Binding SelectedStockEntry, Mode=TwoWay}"
-                          CanUserAddRows="False"
-                          CanUserDeleteRows="False"
-                          CanUserReorderColumns="True"
-                          CanUserResizeColumns="True"
-                          SelectionMode="Single"
-                          SelectionUnit="FullRow"
-                          BorderThickness="1"
-                         BorderBrush="{DynamicResource MaterialDesignDivider}"
-                         Background="White"
-                         VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-                         HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
-                              
-                          CanUserSortColumns="True">
+          AutoGenerateColumns="False"
+          IsReadOnly="True"
+          SelectedItem="{Binding SelectedStockEntry, Mode=TwoWay}"
+          CanUserAddRows="False"
+          CanUserDeleteRows="False"
+          CanUserReorderColumns="True"
+          CanUserResizeColumns="True"
+          SelectionMode="Single"
+          SelectionUnit="FullRow"
+          BorderThickness="1"
+          BorderBrush="{DynamicResource MaterialDesignDivider}"
+          Background="White"
+          VerticalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+          HorizontalGridLinesBrush="{DynamicResource MaterialDesignDivider}"
+          CanUserSortColumns="True">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridRow">
                                 <Style.Triggers>
+                                    <!-- Thứ tự ưu tiên cao nhất: Lô đã bị tiêu hủy -->
+                                    <DataTrigger Binding="{Binding StockIn.IsTerminated}" Value="True">
+                                        <Setter Property="Background" Value="#757575" />
+                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                        <Setter Property="FontStyle" Value="Italic" />
+                                        <Setter Property="ToolTip" Value="Lô thuốc đã được tiêu hủy" />
+                                    </DataTrigger>
+
+                                    <!-- Cập nhật trigger cho lô đã hết hàng (số lượng còn lại = 0) nhưng chưa bị tiêu hủy -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding RemainingQuantity}" Value="0"/>
+                                            <Condition Binding="{Binding StockIn.IsTerminated}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#ECEFF1" />
+                                        <Setter Property="Foreground" Value="#78909C" />
+                                        <Setter Property="FontStyle" Value="Italic" />
+                                        <Setter Property="ToolTip" Value="Lô thuốc đã hết hàng" />
+                                    </MultiDataTrigger>
+
                                     <!-- Cập nhật trigger cho lô đang được bán -->
-                                    <DataTrigger Binding="{Binding IsCurrentSellingBatch}" Value="True">
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsCurrentSellingBatch}" Value="True"/>
+                                            <Condition Binding="{Binding StockIn.IsTerminated}" Value="False"/>
+                                            <Condition Binding="{Binding HasAvailableStock}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Background" Value="#B6F500" />
                                         <Setter Property="FontWeight" Value="Bold" />
-                                    </DataTrigger>
-                                    <!-- Lô sắp hết hạn -->
-                                    <DataTrigger Binding="{Binding IsNearExpiry}" Value="True">
-                                        <Setter Property="Background" Value="#FFF9C4" />
-                                    </DataTrigger>
-                                    <!-- Lô đã hết hạn -->
-                                    <DataTrigger Binding="{Binding IsExpired}" Value="True">
+                                        <Setter Property="ToolTip" Value="Lô thuốc đang được sử dụng để bán" />
+                                    </MultiDataTrigger>
+
+                                    <!-- Lô đã hết hạn nhưng chưa bị tiêu hủy -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsExpired}" Value="True"/>
+                                            <Condition Binding="{Binding StockIn.IsTerminated}" Value="False"/>
+                                            <Condition Binding="{Binding HasAvailableStock}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Background" Value="#FFCDD2" />
-                                    </DataTrigger>
+                                        <Setter Property="ToolTip" Value="Lô thuốc đã hết hạn, cần tiêu hủy" />
+                                    </MultiDataTrigger>
+
+                                    <!-- Lô sắp hết hạn và chưa bị tiêu hủy -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsNearExpiry}" Value="True"/>
+                                            <Condition Binding="{Binding StockIn.IsTerminated}" Value="False"/>
+                                            <Condition Binding="{Binding IsExpired}" Value="False"/>
+                                            <Condition Binding="{Binding HasAvailableStock}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#FFF9C4" />
+                                        <Setter Property="ToolTip" Value="Lô thuốc sắp hết hạn" />
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
+
+                            <!-- Rest of the styles remain unchanged -->
                             <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
                                 <Setter Property="Background" Value="#E3F2FD" />
                                 <Setter Property="FontWeight" Value="SemiBold" />
@@ -266,120 +325,205 @@
                             </Style>
 
                             <Style x:Key="CenteredCellStyle" TargetType="TextBlock">
-                                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="TextWrapping" Value="Wrap"/>
-                                    <Setter Property="Padding" Value="4,0"/>
-                                </Style>
-                            </DataGrid.Resources>
-              
+                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Padding" Value="4,0"/>
+                            </Style>
+                        </DataGrid.Resources>
+
+
 
                         <DataGrid.ContextMenu>
                             <ContextMenu>
-                                <!-- Menu item để chỉnh sửa thông tin lô -->
+                                <!-- Menu item để chỉnh sửa thông tin lô - chỉ hiển thị cho lô chưa bị tiêu hủy -->
                                 <MenuItem Header="Chỉnh sửa lô" 
                      Command="{Binding EditStockEntryCommand}" 
-                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
+                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem.StockIn.IsTerminated}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
 
-                                <!-- Menu item để đặt làm lô đang bán -->
+                                <!-- Menu item để đặt làm lô đang bán - chỉ hiển thị cho lô chưa bị tiêu hủy -->
                                 <MenuItem Header="Đặt làm lô đang bán" 
                      Command="{Binding SetAsSellingBatchCommand}" 
-                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
+                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem.StockIn.IsTerminated}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
+
+                                <!-- Menu item để tiêu hủy lô - chỉ hiển thị cho lô chưa bị tiêu hủy -->
+                                <MenuItem Header="Tiêu hủy lô" 
+                     Command="{Binding TerminateStockBatchCommand}" 
+                     CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}">
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem.StockIn.IsTerminated}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
+
+                                <!-- Menu item chỉ hiển thị khi đã tiêu hủy -->
+                                <MenuItem Header="Lô đã bị tiêu hủy" IsEnabled="False">
+                                    <MenuItem.Style>
+                                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                            <Setter Property="Foreground" Value="Gray"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem.StockIn.IsTerminated}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </MenuItem.Style>
+                                </MenuItem>
                             </ContextMenu>
                         </DataGrid.ContextMenu>
 
                         <DataGrid.Columns>
                             <!-- Cột hiển thị trạng thái lô -->
-                            <DataGridTemplateColumn Header="Trạng thái" Width="120">
+                            <DataGridTemplateColumn Header="Trạng thái" Width="135">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0">
                                             <!-- Icon đánh dấu lô đang bán -->
                                             <materialDesign:PackIcon 
-                                                Kind="ShoppingCart" 
-                                                Width="16" Height="16"
-                                                Foreground="#1976D2"
-                                                Visibility="{Binding IsCurrentSellingBatch, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                ToolTip="Đang sử dụng để bán"
-                                                Margin="0,0,6,0"/>
+                            Kind="ShoppingCart" 
+                            Width="16" Height="16"
+                            Foreground="#1976D2"
+                            Visibility="{Binding IsCurrentSellingBatch, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            ToolTip="Đang sử dụng để bán"
+                            Margin="0,0,6,0"/>
+
+                                            <!-- Icon đánh dấu lô đã hủy -->
+                                            <materialDesign:PackIcon 
+                            Kind="Delete" 
+                            Width="16" Height="16"
+                            Foreground="#FF0000"
+                            Visibility="{Binding StockIn.IsTerminated, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            ToolTip="Đã tiêu hủy"
+                            Margin="0,0,6,0"/>
 
                                             <!-- Hiển thị trạng thái dạng text -->
-                                            <TextBlock 
-                                                Text="{Binding StatusDescription}"/>
+                                            <TextBlock Text="{Binding StatusDescription}"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-
 
                             <!-- Các cột khác như đã có -->
                             <DataGridTextColumn Header="Ngày nhập" 
                          Binding="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}" 
                          Width="120"
-                         ElementStyle="{StaticResource CenteredCellStyle}"
-                                                />
+                         ElementStyle="{StaticResource CenteredCellStyle}"/>
                             <DataGridTextColumn Header="Số lượng nhập" 
-                                                Binding="{Binding StockIn.Quantity}" 
-                                                   ElementStyle="{StaticResource CenteredCellStyle}"
-                                                Width="120"/>
+                                    Binding="{Binding StockIn.Quantity}" 
+                                    ElementStyle="{StaticResource CenteredCellStyle}"
+                                    Width="120"/>
                             <DataGridTextColumn Header="Hạn sử dụng"
                          Binding="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                                   ElementStyle="{StaticResource CenteredCellStyle}"
+                         ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="120"/>
                             <DataGridTextColumn Header="Số lượng còn lại" 
                          Binding="{Binding RemainingQuantity}" 
-                                                   ElementStyle="{StaticResource CenteredCellStyle}"
+                         ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="120"/>
                             <DataGridTextColumn Header="Giá nhập" 
                          Binding="{Binding UnitPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                                   ElementStyle="{StaticResource CenteredCellStyle}"
+                         ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="130"/>
                             <DataGridTextColumn Header="Giá bán" 
                          Binding="{Binding SellPrice, StringFormat='{}{0:N0} VNĐ'}" 
-                                                   ElementStyle="{StaticResource CenteredCellStyle}"
+                         ElementStyle="{StaticResource CenteredCellStyle}"
                          Width="130"/>
-                            
+
                             <!-- Cột chứa các nút thao tác -->
-                            <DataGridTemplateColumn Width="*">
+                            <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal" >
-                                            <!-- Nút chỉnh sửa lô -->
-                                            <Button 
-                                                Style="{StaticResource MaterialDesignIconButton}" 
-                                                Command="{Binding DataContext.EditStockEntryCommand, 
-                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                CommandParameter="{Binding}"
-                                                Width="30" Height="30"
-                                                Padding="2"
-                                                Margin="0,0,4,0"
-                                                ToolTip="Chỉnh sửa lô">
-                                                <materialDesign:PackIcon 
-                                                    Kind="EditOutline" 
-                                                    Width="18" Height="18"
-                                                    Foreground="#1976D2"/>
-                                            </Button>
-                                            
-                                            <!-- Nút đặt làm lô đang bán -->
-                                            <Button 
-                                                Style="{StaticResource MaterialDesignIconButton}"
-                                                Command="{Binding DataContext.SetAsSellingBatchCommand, 
-                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                                CommandParameter="{Binding}"
-                                                Width="30" Height="30" 
-                                                Padding="2"
-                                                ToolTip="Đặt làm lô đang bán">
-                                                <materialDesign:PackIcon 
-                                                    Kind="ShoppingCartPlus" 
-                                                    Width="18" Height="18"
-                                                    Foreground="#4CAF50"/>
-                                            </Button>
-                                        </StackPanel>
+                                        <Grid>
+                                            <!-- Buttons for non-terminated batches -->
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal"
+                                  Visibility="{Binding StockIn.IsTerminated, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                                <!-- Nút chỉnh sửa lô -->
+                                                <Button 
+                                Style="{StaticResource MaterialDesignIconButton}" 
+                                Command="{Binding DataContext.EditStockEntryCommand, 
+                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                CommandParameter="{Binding}"
+                                Width="30" Height="30"
+                                Padding="2"
+                                Margin="0,0,4,0"
+                                ToolTip="Chỉnh sửa lô">
+                                                    <materialDesign:PackIcon 
+                                    Kind="EditOutline" 
+                                    Width="18" Height="18"
+                                    Foreground="#1976D2"/>
+                                                </Button>
+
+                                                <!-- Nút đặt làm lô đang bán -->
+                                                <Button 
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                Command="{Binding DataContext.SetAsSellingBatchCommand, 
+                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                CommandParameter="{Binding}"
+                                Width="30" Height="30" 
+                                Padding="2"
+                                Margin="0,0,4,0"
+                                ToolTip="Đặt làm lô đang bán">
+                                                    <materialDesign:PackIcon 
+                                    Kind="ShoppingCartPlus" 
+                                    Width="18" Height="18"
+                                    Foreground="#4CAF50"/>
+                                                </Button>
+
+                                                <!-- Nút tiêu hủy lô -->
+                                                <Button 
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                Command="{Binding DataContext.TerminateStockBatchCommand, 
+                                    RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                CommandParameter="{Binding}"
+                                Width="30" Height="30" 
+                                Padding="2"
+                                ToolTip="Tiêu hủy lô">
+                                                    <materialDesign:PackIcon 
+                                    Kind="DeleteOutline" 
+                                    Width="18" Height="18"
+                                    Foreground="#F44336"/>
+                                                </Button>
+                                            </StackPanel>
+
+                                            <!-- Indicator for terminated batches -->
+                                            <TextBlock Text="Đã tiêu hủy" 
+                                  Foreground="Gray" 
+                                  FontStyle="Italic"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  Visibility="{Binding StockIn.IsTerminated, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        </Grid>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
-                    </DataGrid>
+                        </DataGrid>
+
 
                 </ScrollViewer>
             </Grid>

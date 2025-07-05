@@ -1037,11 +1037,7 @@ namespace ClinicManagement.ViewModels
                 switch (columnName)
                 {
                     case nameof(PatienName):
-                      if (PatienName.Length < 2)
-                        {
-                            error = "Tên bệnh nhân phải có ít nhất 2 ký tự";
-                        }
-                        else if (PatienName.Length > 100)
+                         if (PatienName.Length > 100)
                         {
                             error = "Tên bệnh nhân không được vượt quá 100 ký tự";
                         }

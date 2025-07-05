@@ -66,14 +66,23 @@ namespace ClinicManagement.ViewModels
 
             public bool CanExecute(object? parameter)
             {
-                if (parameter == null)
-                    return _canExecute == null || typeof(T).IsClass;
+                // Always call the delegate if provided, regardless of parameter
+                if (_canExecute != null)
+                {
+                    // For null parameter with reference type T
+                    if (parameter == null && typeof(T).IsClass)
+                        return _canExecute((T)parameter!);
 
-                // Add safe casting for the parameter
-                if (parameter is T typedParameter)
-                    return _canExecute?.Invoke(typedParameter) ?? true;
+                    // For non-null parameter that can be cast to T
+                    if (parameter is T typedParameter)
+                        return _canExecute(typedParameter);
 
-                return false;
+                    // Parameter can't be cast to T
+                    return false;
+                }
+
+                // If no canExecute delegate provided, default to enabled
+                return true;
             }
 
             public void Execute(object? parameter)

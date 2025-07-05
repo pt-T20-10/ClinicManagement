@@ -19,7 +19,11 @@
     <UserControl.Resources>
         <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
-
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedUCCommand}" CommandParameter="{Binding ElementName=StaffUc}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <materialDesign:Card Margin="10">   
         
     <Grid >
@@ -89,7 +93,7 @@
                                 <ComboBox Width="180"
          Margin="15 0 0 0"
          Visibility="{Binding IsSpecialtyVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-         ItemsSource="{Binding ListSpecialty}"
+         ItemsSource="{Binding ListSpecialtyForFilter}"
          DisplayMemberPath="SpecialtyName"
          SelectedItem="{Binding SelectedSpecialty}"
          materialDesign:HintAssist.Hint="Chuyên khoa"
@@ -268,7 +272,14 @@
 
             <TabItem
             Header="Quản lí chuyên khoa">
-                <Grid Margin="10">
+                    <TabItem.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="🔄 Làm mới" 
+    Command="{Binding RefreshSpecialtyCommand}"
+FontWeight="Bold"/>
+                        </ContextMenu>
+                    </TabItem.ContextMenu>
+                    <Grid Margin="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="350"/>
                         <ColumnDefinition Width="*"/>
@@ -302,7 +313,7 @@
                             <!-- Input Fields -->
                             <TextBox 
                  Grid.Row="1"
-                 Text="{Binding SpecialtyName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                 Text="{Binding SpecialtyName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, ValidatesOnDataErrors=True}"
                  materialDesign:HintAssist.Hint="Tên đơn vị đo"
                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                  Margin="0,0,0,15"
@@ -312,7 +323,7 @@
                             <!-- Description Field -->
                             <TextBox 
                  Grid.Row="2"
-                 Text="{Binding Description, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                 Text="{Binding Description, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, ValidatesOnDataErrors=True}"
                  materialDesign:HintAssist.Hint="Mô tả chi tiết"
                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                  TextWrapping="Wrap"
@@ -329,47 +340,50 @@
                  Orientation="Horizontal" 
                  HorizontalAlignment="Center"
                  Margin="0,0,0,20">
-                                <Button 
-                     Command="{Binding AddCommand}" 
-                     Style="{StaticResource MaterialDesignRaisedButton}"
-                     materialDesign:ButtonAssist.CornerRadius="5"
-                     Margin="5" 
-                     Width="90"
-                     Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Thêm"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button 
-                     Command="{Binding EditCommand}" 
-                     Style="{StaticResource MaterialDesignRaisedButton}"
-                     materialDesign:ButtonAssist.CornerRadius="5"
-                     Background="#FF3F51B5"
-                     BorderBrush="#FF3F51B5"
-                     Margin="5" 
-                     Width="90"
-                     Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Sửa"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button 
-                     Command="{Binding DeleteCommand}" 
-                     Style="{StaticResource MaterialDesignRaisedButton}"
-                     materialDesign:ButtonAssist.CornerRadius="5"
-                     Background="#FFE91E63"
-                     BorderBrush="#FFE91E63"
-                     Margin="5" 
-                     Width="90"
-                     Height="36">
-                                    <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                        <TextBlock Text="Xóa"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
+                                    <Button 
+    Command="{Binding AddCommand}" 
+    Style="{StaticResource MaterialDesignRaisedButton}"
+    materialDesign:ButtonAssist.CornerRadius="5"
+    Margin="5" 
+    Width="90"
+    Height="36"
+    IsEnabled="{Binding CanModifySpecialties}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="Thêm"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button 
+    Command="{Binding EditCommand}" 
+    Style="{StaticResource MaterialDesignRaisedButton}"
+    materialDesign:ButtonAssist.CornerRadius="5"
+    Background="#FF3F51B5"
+    BorderBrush="#FF3F51B5"
+    Margin="5" 
+    Width="90"
+    Height="36"
+    IsEnabled="{Binding CanModifySpecialties}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="Sửa"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button 
+    Command="{Binding DeleteCommand}" 
+    Style="{StaticResource MaterialDesignRaisedButton}"
+    materialDesign:ButtonAssist.CornerRadius="5"
+    Background="#FFE91E63"
+    BorderBrush="#FFE91E63"
+    Margin="5" 
+    Width="90"
+    Height="36"
+    IsEnabled="{Binding CanModifySpecialties}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="Xóa"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
 
                             <!-- Information Box -->
                             <materialDesign:Card 

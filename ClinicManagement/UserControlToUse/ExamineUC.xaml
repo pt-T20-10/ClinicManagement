@@ -31,7 +31,6 @@
 
     <UserControl.ContextMenu>
 
-   
                 <ContextMenu>
                     <MenuItem Header="🔄 Làm mới" 
                         Command="{Binding ResetRecordCommand}"

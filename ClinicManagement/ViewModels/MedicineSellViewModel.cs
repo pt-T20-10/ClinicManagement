@@ -19,7 +19,17 @@ namespace ClinicManagement.ViewModels
     public class MedicineSellViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
-
+        // Cờ kiểm soát việc khởi tạo dữ liệu
+        private bool _isInitialized = false;
+        public bool IsInitialized
+        {
+            get => _isInitialized;
+            private set
+            {
+                _isInitialized = value;
+                OnPropertyChanged();
+            }
+        }
         // Danh sách thuốc
         private ObservableCollection<Medicine> _medicineList;
         public ObservableCollection<Medicine> MedicineList
@@ -355,20 +365,34 @@ namespace ClinicManagement.ViewModels
         public ICommand AddNewPatientCommand { get; set; }
         public ICommand FindPatientCommand { get; set; }
         public ICommand LoadedUCCommand { get; set; }
+        public ICommand InitializeDataCommand { get; set; }
         #endregion
 
         #region Constructors
-        // Constructor mặc định
+        // Constructor mặc định - Không tự động load dữ liệu
         public MedicineSellViewModel()
         {
             InitializeCommands();
-            LoadData();
+            // Không gọi LoadData() ở đây để tránh tải dữ liệu trước khi đăng nhập
         }
 
-        // Constructor với Invoice
+        // Constructor với parameter lazy initialization
+        public MedicineSellViewModel(bool lazyInitialization)
+        {
+            InitializeCommands();
+            // Chỉ khởi tạo dữ liệu nếu không yêu cầu lazy initialization
+            if (!lazyInitialization)
+            {
+                IsInitialized = true;
+                LoadData();
+            }
+        }
+
+        // Constructor với Invoice - Luôn khởi tạo dữ liệu ngay lập tức
         public MedicineSellViewModel(Invoice invoice)
         {
             InitializeCommands();
+            IsInitialized = true;
             LoadData();
             CurrentInvoice = invoice;
         }
@@ -376,6 +400,18 @@ namespace ClinicManagement.ViewModels
 
         private void InitializeCommands()
         {
+            // Command khởi tạo dữ liệu - mới
+            InitializeDataCommand = new RelayCommand<object>(
+                p => {
+                    if (!IsInitialized)
+                    {
+                        IsInitialized = true;
+                        LoadData();
+                    }
+                },
+                p => !IsInitialized
+            );
+
             LoadedUCCommand = new RelayCommand<UserControl>(
                (userControl) => {
                    if (userControl != null)
@@ -386,67 +422,105 @@ namespace ClinicManagement.ViewModels
                        {
                            // Update current account
                            CurrentAccount = mainVM.CurrentAccount;
+
+                           // Khởi tạo dữ liệu khi user control được load và đã đăng nhập
+                           if (!IsInitialized)
+                           {
+                               IsInitialized = true;
+                               LoadData();
+                           }
                        }
                    }
                },
                (userControl) => true
            );
 
+            // Các command khác cần kiểm tra IsInitialized
             SearchCommand = new RelayCommand<object>(
                 p => SearchMedicines(),
-                p => true
+                p => IsInitialized // Thêm điều kiện kiểm tra
             );
 
             AddToCartCommand = new RelayCommand<Medicine>(
                 p => AddToCart(p),
-                p => p != null && p.TotalStockQuantity > 0
+                p => IsInitialized && p != null && p.TotalStockQuantity > 0 // Thêm điều kiện kiểm tra
             );
 
             RemoveFromCartCommand = new RelayCommand<CartItem>(
                 p => RemoveFromCart(p),
-                p => p != null
+                p => IsInitialized && p != null // Thêm điều kiện kiểm tra
             );
 
             ClearCartCommand = new RelayCommand<object>(
                 p => ClearCart(),
-                p => CartItems != null && CartItems.Count > 0
+                p => IsInitialized && CartItems != null && CartItems.Count > 0 // Thêm điều kiện kiểm tra
             );
 
             CheckoutCommand = new RelayCommand<object>(
                 p => Checkout(),
-                p => CartItems != null && CartItems.Count > 0
+                p => IsInitialized && CartItems != null && CartItems.Count > 0 // Thêm điều kiện kiểm tra
             );
 
             AddNewPatientCommand = new RelayCommand<object>(
                 p => AddNewPatient(),
-                p => true
+                p => IsInitialized // Thêm điều kiện kiểm tra
             );
 
             FindPatientCommand = new RelayCommand<object>(
                 p => FindPatient(),
-                p => !string.IsNullOrWhiteSpace(PatientName) || !string.IsNullOrWhiteSpace(Phone)
+                p => IsInitialized && (!string.IsNullOrWhiteSpace(PatientName) || !string.IsNullOrWhiteSpace(Phone)) // Thêm điều kiện kiểm tra
             );
         }
 
+
         public void LoadData()
         {
-            LoadMedicines();
-            LoadCategories();
-
-            // Đề xuất số hóa đơn mới nếu không có hóa đơn hiện tại
-            if (string.IsNullOrEmpty(InvoiceNumber))
+            // Kiểm tra xem đã khởi tạo chưa
+            if (!IsInitialized)
             {
-                var lastInvoiceId = DataProvider.Instance.Context.Invoices
-                    .OrderByDescending(i => i.InvoiceId)
-                    .Select(i => i.InvoiceId)
-                    .FirstOrDefault();
+                return;
+            }
 
-                InvoiceNumber = $"#{lastInvoiceId + 1} (Mới)";
+            try
+            {
+                LoadMedicines();
+                LoadCategories();
+
+                // Đề xuất số hóa đơn mới nếu không có hóa đơn hiện tại
+                if (string.IsNullOrEmpty(InvoiceNumber))
+                {
+                    var lastInvoiceId = DataProvider.Instance.Context.Invoices
+                        .OrderByDescending(i => i.InvoiceId)
+                        .Select(i => i.InvoiceId)
+                        .FirstOrDefault();
+
+                    InvoiceNumber = $"#{lastInvoiceId + 1} (Mới)";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Chỉ hiển thị lỗi khi ứng dụng đã được khởi tạo hoàn toàn
+                if (Application.Current != null &&
+                    Application.Current.MainWindow != null &&
+                    Application.Current.MainWindow.IsLoaded)
+                {
+                    MessageBoxService.ShowError($"Không thể tải dữ liệu: {ex.Message}", "Lỗi");
+                }
+                else
+                {
+               
+                }
             }
         }
 
         private void LoadMedicines()
         {
+            // Kiểm tra xem đã khởi tạo chưa
+            if (!IsInitialized)
+            {
+                return;
+            }
+
             try
             {
                 var today = DateOnly.FromDateTime(DateTime.Today);
@@ -483,23 +557,63 @@ namespace ClinicManagement.ViewModels
                     m.StockIns.Any(si => si.RemainQuantity > 0)
                 ).ToList();
 
-                // Check and warn about medicines that may be near/past expiry but still have stock
-                foreach (var medicine in validMedicines)
+                // Chỉ hiển thị cảnh báo khi ứng dụng đã hoàn toàn tải xong
+                if (Application.Current != null &&
+                    Application.Current.MainWindow != null &&
+                    Application.Current.MainWindow.IsLoaded)
                 {
-                    if (medicine.HasExpiredStock)
+                    // Check and warn about medicines that may be near/past expiry but still have stock
+                    foreach (var medicine in validMedicines)
                     {
-                        MessageBoxService.ShowWarning(
-                            $"Lưu ý: {medicine.Name} có lô thuốc đã hết hạn nhưng vẫn còn hàng.",
-                            "Cảnh báo thuốc hết hạn"
-                        );
-                    }
-                    else if (medicine.HasNearExpiryStock && medicine.IsLastestStockIn)
-                    {
-                        // Cảnh báo nếu lô cuối cùng sắp hết hạn
-                        MessageBoxService.ShowWarning(
-                            $"Lưu ý: {medicine.Name} đang sử dụng lô cuối cùng và sắp hết hạn. Cần nhập thêm hàng.",
-                            "Cảnh báo hạn sử dụng"
-                        );
+                        // Kiểm tra có lô hết hạn chưa được tiêu hủy không
+                        bool hasNonTerminatedExpiredStock = medicine.StockIns.Any(si =>
+                            si.RemainQuantity > 0 &&
+                            si.ExpiryDate.HasValue &&
+                            si.ExpiryDate.Value < today &&
+                            !si.IsTerminated);
+
+                        if (hasNonTerminatedExpiredStock)
+                        {
+                            MessageBoxService.ShowWarning(
+                                $"Lưu ý: {medicine.Name} có lô thuốc đã hết hạn nhưng chưa được tiêu hủy. Vui lòng tiêu hủy các lô đã hết hạn.",
+                                "Cảnh báo thuốc hết hạn"
+                            );
+                        }
+                        // Kiểm tra xem có lô sắp hết hạn và là lô cuối cùng không
+                        else if (medicine.HasNearExpiryStock && medicine.IsLastestStockIn)
+                        {
+                            // Lấy lô đang sử dụng để bán và sắp hết hạn
+                            var nearExpirySellingBatch = medicine.StockIns.FirstOrDefault(si =>
+                                si.IsSelling &&
+                                si.RemainQuantity > 0 &&
+                                si.ExpiryDate.HasValue &&
+                                si.ExpiryDate.Value >= today &&
+                                si.ExpiryDate.Value <= today.AddDays(Medicine.MinimumDaysBeforeExpiry) &&
+                                !si.IsTerminated);
+
+                            if (nearExpirySellingBatch != null)
+                            {
+                                int daysRemaining = (nearExpirySellingBatch.ExpiryDate.Value.ToDateTime(TimeOnly.MinValue) - today.ToDateTime(TimeOnly.MinValue)).Days;
+
+                                MessageBoxService.ShowWarning(
+                                    $"Lưu ý: {medicine.Name} đang sử dụng lô cuối cùng và sẽ hết hạn sau {daysRemaining} ngày. Cần nhập thêm hàng.",
+                                    "Cảnh báo hạn sử dụng"
+                                );
+                            }
+                        }
+
+                        // Kiểm tra nếu lô đang bán đã bị tiêu hủy
+                        var sellingBatchIsTerminated = medicine.StockIns.Any(si =>
+                            si.IsSelling &&
+                            si.IsTerminated);
+
+                        if (sellingBatchIsTerminated)
+                        {
+                            MessageBoxService.ShowWarning(
+                                $"Cảnh báo: {medicine.Name} có lô đang bán đã được đánh dấu là tiêu hủy. Cần chọn lô khác để bán.",
+                                "Cảnh báo lô đã tiêu hủy"
+                            );
+                        }
                     }
                 }
 
@@ -517,13 +631,27 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi");
+                // Chỉ hiển thị lỗi khi ứng dụng đã được khởi tạo hoàn toàn
+                if (Application.Current != null &&
+                    Application.Current.MainWindow != null &&
+                    Application.Current.MainWindow.IsLoaded)
+                {
+                    MessageBoxService.ShowError($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi");
+                }
             }
         }
 
 
+
+
         private void LoadCategories()
         {
+            // Kiểm tra xem đã khởi tạo chưa
+            if (!IsInitialized)
+            {
+                return;
+            }
+
             try
             {
                 var categories = DataProvider.Instance.Context.MedicineCategories
@@ -539,7 +667,17 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Không thể tải danh sách loại thuốc: {ex.Message}", "Lỗi");
+                // Chỉ hiển thị lỗi khi ứng dụng đã được khởi tạo hoàn toàn
+                if (Application.Current != null &&
+                    Application.Current.MainWindow != null &&
+                    Application.Current.MainWindow.IsLoaded)
+                {
+                    MessageBoxService.ShowError($"Không thể tải danh sách loại thuốc: {ex.Message}", "Lỗi");
+                }
+                else
+                {
+                   
+                }
             }
         }
 

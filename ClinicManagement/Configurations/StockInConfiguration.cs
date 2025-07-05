@@ -9,12 +9,12 @@ namespace ClinicManagement.Configurations
     {
         public void Configure(EntityTypeBuilder<StockIn> builder)
         {
-            builder.ToTable("NhapKho");
+            builder.ToTable("LoThuoc");
 
-            builder.HasKey(e => e.StockInId).HasName("PK_NhapKho");
+            builder.HasKey(e => e.StockInId).HasName("PK_LoThuoc");
 
             builder.Property(e => e.StockInId)
-                .HasColumnName("MaNhapKho");
+                .HasColumnName("MaLoThuoc");
 
             builder.Property(e => e.MedicineId)
                 .HasColumnName("MaThuoc"); 
@@ -55,6 +55,10 @@ namespace ClinicManagement.Configurations
                 .HasColumnName("DangBan")
                 .HasDefaultValue(false);
 
+            builder.Property(e => e.IsTerminated)
+             .HasColumnName("DaHuy")
+             .HasDefaultValue(false);
+
             builder.Property(e => e.ExpiryDate)
                .HasColumnName("HanSuDung")
             
@@ -64,13 +68,13 @@ namespace ClinicManagement.Configurations
                 .WithMany(p => p.StockIns)
                 .HasForeignKey(d => d.MedicineId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_NhapKho_Thuoc"); 
+                .HasConstraintName("FK_LoThuoc_Thuoc"); 
             
             builder.HasOne(d => d.Staff)
                 .WithMany(p => p.StockIns)
                 .HasForeignKey(d => d.StaffId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_NhapKho_NhanVien");
+                .HasConstraintName("FK_LoThuoc_NhanVien");
 
             builder.Property(e => e.SupplierId)
          .HasColumnName("MaNhaCungCap");
@@ -79,7 +83,7 @@ namespace ClinicManagement.Configurations
              .WithMany(p => p.StockIns)
              .HasForeignKey(e => e.SupplierId)
              .OnDelete(DeleteBehavior.ClientSetNull)
-             .HasConstraintName("FK_NhapKho_NhaCungCap");
+             .HasConstraintName("FK_LoThuoc_NhaCungCap");
         }
     }
 }

@@ -526,6 +526,10 @@ public partial class Medicine : BaseViewModel
         public decimal? SellPrice => StockIn.SellPrice;
         public DateTime? ImportDate => StockIn.ImportDate;
         public DateOnly? ExpiryDate => StockIn.ExpiryDate;
+
+        // Add this property to check if stock is available (more than 0)
+        public bool HasAvailableStock => RemainingQuantity > 0;
+
         public bool IsExpired => StockIn.ExpiryDate.HasValue &&
                                StockIn.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.Today);
         public bool IsNearExpiry
@@ -543,6 +547,10 @@ public partial class Medicine : BaseViewModel
         {
             get
             {
+                if (StockIn.IsTerminated)
+                    return "Đã tiêu hủy";
+                if (RemainingQuantity <= 0)
+                    return "Hết hàng";
                 if (IsCurrentSellingBatch)
                     return "Đang bán";
                 if (IsExpired)
@@ -553,4 +561,7 @@ public partial class Medicine : BaseViewModel
             }
         }
     }
+
+
 }
+

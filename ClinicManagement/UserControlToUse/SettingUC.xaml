@@ -15,8 +15,15 @@
             FontFamily="{DynamicResource MaterialDesignFont}"
             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
             Name="SettingUc">
+    <UserControl.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="🔄 Làm mới" 
+             Command="{Binding RefreshDataCommand}"
+         FontWeight="Bold"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
     <materialDesign:Card Margin="10">
-        
+
         <materialDesign:Card Margin="16">
             <Grid>
                 <Grid.RowDefinitions>
@@ -50,6 +57,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <!-- Left Column -->
@@ -68,7 +76,7 @@
                         <TextBox
                                 Grid.Row="1" 
                                 Grid.Column="0"
-                                Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                 materialDesign:HintAssist.Hint="Họ tên"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Margin="5,10,15,10"
@@ -76,32 +84,41 @@
 
                         <!-- Specialty -->
                         <ComboBox
-                                Grid.Row="2" 
-                                Grid.Column="0"
-                                ItemsSource="{Binding SpecialtyList}"
-                                DisplayMemberPath="SpecialName"
-                                SelectedItem="{Binding SelectedSpecialty}"
-                                materialDesign:HintAssist.Hint="Chuyên khoa"
-                                Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                Margin="5,10,15,10"
-                                VerticalAlignment="Center"/>
+    Grid.Row="2" 
+    Grid.Column="0"
+    ItemsSource="{Binding SpecialtyList}"
+    DisplayMemberPath="SpecialtyName"
+    SelectedItem="{Binding SelectedSpecialty}"
+    materialDesign:HintAssist.Hint="Chuyên khoa"
+    Style="{StaticResource MaterialDesignOutlinedComboBox}"
+    Margin="5,10,15,10"
+    VerticalAlignment="Center"/>
 
                         <!-- Certificate Link -->
                         <TextBox
                                 Grid.Row="3" 
                                 Grid.Column="0"
-                                Text="{Binding CertificateLink, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding CertificateLink, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                 materialDesign:HintAssist.Hint="Link chứng chỉ"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Margin="5,10,15,10"
                                 VerticalAlignment="Center"/>
 
+                        <!-- Email - New field -->
+                        <TextBox
+                                Grid.Row="4" 
+                                Grid.Column="0"
+                                Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                                materialDesign:HintAssist.Hint="Email"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="5,10,15,10"
+                                VerticalAlignment="Center"/>
 
                         <!-- Phone -->
                         <TextBox
                                 Grid.Row="0" 
                                 Grid.Column="1"
-                                Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                 materialDesign:HintAssist.Hint="Số điện thoại"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Margin="15,10,5,10"
@@ -111,7 +128,7 @@
                         <TextBox
                                 Grid.Row="1" 
                                 Grid.Column="1"
-                                Text="{Binding Schedule, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding Schedule, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                 materialDesign:HintAssist.Hint="Lịch làm việc"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Margin="15,10,5,10"
@@ -121,7 +138,7 @@
                         <TextBox
                                 Grid.Row="2" 
                                 Grid.Column="1"
-                                Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding Address, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                 materialDesign:HintAssist.Hint="Địa chỉ"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Margin="15,10,5,10"
@@ -199,6 +216,7 @@
                                     <TextBlock Text="Đăng xuất"/>
                                 </StackPanel>
                             </Button>
+                            
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>

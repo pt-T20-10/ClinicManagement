@@ -30,6 +30,8 @@ public partial class StockIn
 
     public bool IsSelling { get; set; } = false;
 
+    public bool IsTerminated { get; set; } = false;
+
     public int SupplierId { get; set; }
 
     public virtual Supplier Supplier { get; set; } = null!;
