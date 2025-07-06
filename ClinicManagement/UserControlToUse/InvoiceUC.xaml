@@ -261,7 +261,7 @@
                         <DataGrid.Columns>
                            
                             <!-- TextColumn Mã hóa đơn Binding từ InvoiceId  -->
-                            <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="80"
+                            <DataGridTextColumn Header="Mã hóa đơn" Binding="{Binding InvoiceId}" Width="90"
                                                  ElementStyle="{StaticResource CenteredCellStyle}"
                                                         />
 

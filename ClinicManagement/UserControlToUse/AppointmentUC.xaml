@@ -465,7 +465,6 @@
                             </Grid>
 
                             <!-- Appointment List -->
-                            <!-- Appointment List -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                                 <DataGrid Grid.Row="1" 
                                   ItemsSource="{Binding AppointmentsDisplay}" 
@@ -519,7 +518,7 @@
                               ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Bác sĩ" 
                               Width="190"
-                              Binding="{Binding OriginalAppointment.Doctor.FullName, FallbackValue=N/A}"
+                              Binding="{Binding OriginalAppointment.Staff.FullName, FallbackValue=N/A}"
                               ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Phân loại" 
                               Width="130"

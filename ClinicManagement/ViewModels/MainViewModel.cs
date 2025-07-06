@@ -447,7 +447,9 @@ namespace ClinicManagement.ViewModels
                     if (appointmentVM.CurrentAccount == null && CurrentAccount != null)
                     {
                         appointmentVM.CurrentAccount = CurrentAccount;
+
                     }
+                    appointmentVM.LoadAppointments();
                    
                 }
             });

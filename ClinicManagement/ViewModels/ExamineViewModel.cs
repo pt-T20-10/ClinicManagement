@@ -599,8 +599,10 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
+                // First, make sure we get all doctors regardless of specialty
+                // This ensures we don't accidentally filter out the current doctor
                 var staffs = DataProvider.Instance.Context.Staffs
-                    .Where(d => d.IsDeleted != true)
+                    .Where(d => d.IsDeleted != true && d.Role.RoleName.Contains("Bác sĩ"))
                     .OrderBy(d => d.FullName)
                     .ToList();
 
@@ -609,8 +611,26 @@ namespace ClinicManagement.ViewModels
                 // If current user is a doctor, select them automatically
                 if (CurrentStaff != null && CurrentStaff.Role?.RoleName?.Contains("Bác sĩ") == true)
                 {
-                    SelectedDoctor = DoctorList.FirstOrDefault(d => d.StaffId == CurrentStaff.StaffId);
-                    IsDoctorSelectionEnabled = false; // Disable the selection
+                    // Find the doctor in the list by StaffId
+                    var currentDoctor = DoctorList.FirstOrDefault(d => d.StaffId == CurrentStaff.StaffId);
+
+                    // If the current doctor isn't in the list (which shouldn't happen, but just in case)
+                    if (currentDoctor == null)
+                    {
+                        // Add the current doctor to the list
+                        DoctorList.Add(CurrentStaff);
+                        SelectedDoctor = CurrentStaff; // Select the doctor we just added
+                    }
+                    else
+                    {
+                        SelectedDoctor = currentDoctor; // Select the existing doctor in the list
+                    }
+
+                    // Make sure to disable doctor selection for doctor users
+                    IsDoctorSelectionEnabled = false;
+
+                    // Force UI to update with the selected doctor
+                    OnPropertyChanged(nameof(SelectedDoctor));
                 }
                 else
                 {
@@ -631,6 +651,7 @@ namespace ClinicManagement.ViewModels
                     "Lỗi");
             }
         }
+
 
         private void SearchPatient()
         {

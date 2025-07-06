@@ -2934,7 +2934,7 @@ namespace ClinicManagement.ViewModels
             // Parse the current filter text to determine which period we're viewing
             if (CurrentFilterText.Contains("Hôm nay"))
             {
-                return $"hôm nay ({DateTime.Now:dd/MM/yyyy})";
+                return $"({DateTime.Now:dd-MM-yyyy})";
             }
             else if (CurrentFilterText.Contains("Tháng"))
             {
@@ -2943,7 +2943,7 @@ namespace ClinicManagement.ViewModels
             else if (CurrentFilterText.Contains("Quý"))
             {
                 int quarterNumber = (DateTime.Now.Month - 1) / 3 + 1;
-                return $"quý {quarterNumber}/{DateTime.Now.Year}";
+                return $"quý {quarterNumber}-{DateTime.Now.Year}";
             }
             else if (CurrentFilterText.Contains("Năm"))
             {
@@ -2952,7 +2952,7 @@ namespace ClinicManagement.ViewModels
             else
             {
                 // Custom date range
-                return $"từ {StartDate:dd/MM/yyyy} đến {EndDate:dd/MM/yyyy}";
+                return $"từ {StartDate:dd-MM-yyyy} đến {EndDate:dd-MM-yyyy}";
             }
         }
 
@@ -2963,6 +2963,7 @@ namespace ClinicManagement.ViewModels
         /// </summary>
         private int ExportTopRevenueDaysChart(IXLWorksheet worksheet, int startRow)
         {
+            // Add section title
             // Add section title
             worksheet.Cell(startRow, 1).Value = "DOANH THU THEO NGÀY";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
