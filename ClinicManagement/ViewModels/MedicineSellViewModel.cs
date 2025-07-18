@@ -2,12 +2,9 @@
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,10 +13,19 @@ using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel quản lý chức năng bán thuốc
+    /// Hỗ trợ tạo hóa đơn bán thuốc mới và chỉnh sửa hóa đơn khám bệnh
+    /// Sử dụng lazy initialization để tránh tải dữ liệu trước khi đăng nhập
+    /// </summary>
     public class MedicineSellViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties
-        // Cờ kiểm soát việc khởi tạo dữ liệu
+
+        /// <summary>
+        /// Cờ kiểm soát việc khởi tạo dữ liệu
+        /// Đảm bảo dữ liệu chỉ được tải sau khi đăng nhập thành công
+        /// </summary>
         private bool _isInitialized = false;
         public bool IsInitialized
         {
@@ -30,7 +36,11 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-        // Danh sách thuốc
+
+        /// <summary>
+        /// Danh sách thuốc có sẵn để bán
+        /// Chỉ hiển thị thuốc còn tồn kho và chưa bị xóa
+        /// </summary>
         private ObservableCollection<Medicine> _medicineList;
         public ObservableCollection<Medicine> MedicineList
         {
@@ -42,7 +52,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Danh sách giỏ hàng
+        /// <summary>
+        /// Danh sách các mặt hàng trong giỏ hàng
+        /// Hỗ trợ theo dõi thay đổi để cập nhật tổng tiền tự động
+        /// </summary>
         private ObservableCollection<CartItem> _cartItems;
         public ObservableCollection<CartItem> CartItems
         {
@@ -84,6 +97,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tài khoản người dùng hiện tại
+        /// Được sử dụng để ghi nhận người tạo hóa đơn
+        /// </summary>
         private Account _currentAccount;
         public Account CurrentAccount
         {
@@ -95,10 +112,13 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Handle collection changes (items added or removed)
+        /// <summary>
+        /// Xử lý sự kiện thay đổi trong collection giỏ hàng (thêm/xóa item)
+        /// Đăng ký/hủy đăng ký event listener cho PropertyChanged của từng item
+        /// </summary>
         private void CartItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            // Subscribe to new items
+            // Đăng ký theo dõi các item mới được thêm vào
             if (e.NewItems != null)
             {
                 foreach (CartItem item in e.NewItems)
@@ -107,7 +127,7 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Unsubscribe from removed items
+            // Hủy đăng ký theo dõi các item bị xóa
             if (e.OldItems != null)
             {
                 foreach (CartItem item in e.OldItems)
@@ -116,28 +136,37 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Update totals
+            // Cập nhật tổng tiền
             UpdateCartTotals();
         }
 
-        // Handle property changes within cart items (e.g., quantity changes)
+        /// <summary>
+        /// Xử lý sự kiện thay đổi thuộc tính trong các cart item (ví dụ: thay đổi số lượng)
+        /// Tự động cập nhật tổng tiền khi có thay đổi
+        /// </summary>
         private void CartItem_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            // If the Quantity or LineTotal property changed, update the cart totals
+            // Nếu số lượng hoặc tổng tiền của item thay đổi, cập nhật tổng giỏ hàng
             if (e.PropertyName == nameof(CartItem.Quantity) || e.PropertyName == nameof(CartItem.LineTotal))
             {
                 UpdateCartTotals();
             }
         }
 
-        // Update the cart total properties and notify UI
+        /// <summary>
+        /// Cập nhật tổng tiền và số lượng item trong giỏ hàng
+        /// Thông báo UI để cập nhật hiển thị
+        /// </summary>
         private void UpdateCartTotals()
         {
             OnPropertyChanged(nameof(TotalItems));
             OnPropertyChanged(nameof(TotalAmount));
         }
 
-        // Danh sách loại thuốc để lọc
+        /// <summary>
+        /// Danh sách loại thuốc để lọc
+        /// Hỗ trợ tìm kiếm thuốc theo phân loại
+        /// </summary>
         private ObservableCollection<MedicineCategory> _categoryList;
         public ObservableCollection<MedicineCategory> CategoryList
         {
@@ -149,13 +178,22 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Tổng số tiền
+        /// <summary>
+        /// Tổng số tiền của tất cả item trong giỏ hàng
+        /// Calculated property - tự động tính toán dựa trên CartItems
+        /// </summary>
         public decimal TotalAmount => CartItems?.Sum(i => i.LineTotal) ?? 0;
 
-        // Tổng số mục trong giỏ
+        /// <summary>
+        /// Tổng số lượng item trong giỏ hàng
+        /// Calculated property - tự động tính toán dựa trên CartItems
+        /// </summary>
         public int TotalItems => CartItems?.Sum(i => i.Quantity) ?? 0;
 
-        // Số hóa đơn (khi sửa hóa đơn hoặc đề xuất số mới)
+        /// <summary>
+        /// Số hóa đơn hiển thị
+        /// Có thể là số hóa đơn hiện tại (khi chỉnh sửa) hoặc số đề xuất (khi tạo mới)
+        /// </summary>
         private string _invoiceNumber;
         public string InvoiceNumber
         {
@@ -167,7 +205,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Thông tin bệnh nhân
+        /// <summary>
+        /// Tên bệnh nhân
+        /// Hỗ trợ validation và tìm kiếm bệnh nhân
+        /// </summary>
         private string _patientName;
         public string PatientName
         {
@@ -181,6 +222,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Số điện thoại bệnh nhân
+        /// Hỗ trợ validation định dạng và tìm kiếm bệnh nhân
+        /// </summary>
         private string _phone;
         public string Phone
         {
@@ -194,7 +239,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Thuốc được chọn
+        /// <summary>
+        /// Thuốc được chọn trong danh sách
+        /// Sử dụng để thêm vào giỏ hàng
+        /// </summary>
         private Medicine _selectedMedicine;
         public Medicine SelectedMedicine
         {
@@ -206,7 +254,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Loại thuốc được chọn
+        /// <summary>
+        /// Loại thuốc được chọn để lọc
+        /// Tự động kích hoạt lọc danh sách thuốc khi thay đổi
+        /// </summary>
         private MedicineCategory _selectedCategory;
         public MedicineCategory SelectedCategory
         {
@@ -215,11 +266,14 @@ namespace ClinicManagement.ViewModels
             {
                 _selectedCategory = value;
                 OnPropertyChanged();
-                FilterMedicines();
+                FilterMedicines(); // Tự động lọc khi thay đổi loại thuốc
             }
         }
 
-        // Text tìm kiếm
+        /// <summary>
+        /// Từ khóa tìm kiếm thuốc
+        /// Hỗ trợ tìm theo tên, mã thuốc, barcode
+        /// </summary>
         private string _searchText;
         public string SearchText
         {
@@ -231,7 +285,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Giảm giá
+        /// <summary>
+        /// Số tiền giảm giá cho hóa đơn
+        /// Có thể áp dụng theo loại bệnh nhân hoặc nhập thủ công
+        /// </summary>
         private decimal _discount;
         public decimal Discount
         {
@@ -240,11 +297,14 @@ namespace ClinicManagement.ViewModels
             {
                 _discount = value;
                 OnPropertyChanged();
-                UpdateCartTotals();
+                UpdateCartTotals(); // Cập nhật tổng tiền khi giảm giá thay đổi
             }
         }
 
-        // Hóa đơn (khi được truyền vào từ hóa đơn có sẵn)
+        /// <summary>
+        /// Hóa đơn hiện tại khi chỉnh sửa hóa đơn có sẵn
+        /// Null khi tạo hóa đơn mới
+        /// </summary>
         private Invoice _currentInvoice;
         public Invoice CurrentInvoice
         {
@@ -256,7 +316,7 @@ namespace ClinicManagement.ViewModels
 
                 if (_currentInvoice != null)
                 {
-                    // Cập nhật thông tin từ hóa đơn
+                    // Cập nhật thông tin từ hóa đơn hiện tại
                     InvoiceNumber = $"{_currentInvoice.InvoiceId}";
 
                     if (_currentInvoice.Patient != null)
@@ -267,13 +327,16 @@ namespace ClinicManagement.ViewModels
 
                     Discount = _currentInvoice.Discount ?? 0;
 
-                    // Tải các mục trong hóa đơn
+                    // Tải các item từ hóa đơn vào giỏ hàng
                     LoadInvoiceItems();
                 }
             }
         }
 
-        // Bệnh nhân đã chọn
+        /// <summary>
+        /// Bệnh nhân đã được chọn/tìm thấy
+        /// Tự động cập nhật thông tin tên, số điện thoại và giảm giá
+        /// </summary>
         private Patient _selectedPatient;
         public Patient SelectedPatient
         {
@@ -297,16 +360,35 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Validation properties
+        // === VALIDATION PROPERTIES ===
+
+        /// <summary>
+        /// Error property cho IDataErrorInfo
+        /// Trả về null vì validation được thực hiện per-property
+        /// </summary>
         public string Error => null;
+
+        /// <summary>
+        /// Set theo dõi các field đã được người dùng tương tác
+        /// Chỉ validate các field này để tránh hiển thị lỗi ngay khi mở form
+        /// </summary>
         private HashSet<string> _touchedFields = new HashSet<string>();
+
+        /// <summary>
+        /// Cờ bật/tắt validation
+        /// True = thực hiện validation, False = bỏ qua validation
+        /// </summary>
         private bool _isValidating = false;
 
+        /// <summary>
+        /// Indexer cho IDataErrorInfo - thực hiện validation cho từng property
+        /// Chỉ validate khi field đã được touched hoặc đang trong chế độ validating
+        /// </summary>
         public string this[string columnName]
         {
             get
             {
-                // Don't validate until user has interacted with the field
+                // Chỉ validate khi user đã tương tác với field hoặc đang trong chế độ validating
                 if (!_isValidating && !_touchedFields.Contains(columnName))
                     return null;
 
@@ -345,6 +427,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Kiểm tra xem có lỗi validation nào không
+        /// True = có lỗi, False = không có lỗi
+        /// </summary>
         public bool HasErrors
         {
             get
@@ -357,26 +443,72 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region Commands
+
+        /// <summary>
+        /// Lệnh tìm kiếm thuốc theo từ khóa
+        /// </summary>
         public ICommand SearchCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh thêm thuốc vào giỏ hàng
+        /// </summary>
         public ICommand AddToCartCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh xóa item khỏi giỏ hàng
+        /// </summary>
         public ICommand RemoveFromCartCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh xóa tất cả item trong giỏ hàng
+        /// </summary>
         public ICommand ClearCartCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh thanh toán - tạo/cập nhật hóa đơn
+        /// </summary>
         public ICommand CheckoutCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh thêm bệnh nhân mới
+        /// </summary>
         public ICommand AddNewPatientCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh tìm kiếm bệnh nhân theo tên/số điện thoại
+        /// </summary>
         public ICommand FindPatientCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh xử lý khi UserControl được load
+        /// Khởi tạo dữ liệu nếu đã đăng nhập
+        /// </summary>
         public ICommand LoadedUCCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh khởi tạo dữ liệu thủ công
+        /// Sử dụng khi cần force load dữ liệu
+        /// </summary>
         public ICommand InitializeDataCommand { get; set; }
         #endregion
 
         #region Constructors
-        // Constructor mặc định - Không tự động load dữ liệu
+
+        /// <summary>
+        /// Constructor mặc định - Không tự động load dữ liệu
+        /// Sử dụng lazy initialization để tránh tải dữ liệu trước khi đăng nhập
+        /// </summary>
         public MedicineSellViewModel()
         {
             InitializeCommands();
             // Không gọi LoadData() ở đây để tránh tải dữ liệu trước khi đăng nhập
         }
 
-        // Constructor với parameter lazy initialization
+        /// <summary>
+        /// Constructor với tham số lazy initialization
+        /// Cho phép kiểm soát việc tải dữ liệu ngay lập tức hay trì hoãn
+        /// </summary>
+        /// <param name="lazyInitialization">True = trì hoãn tải dữ liệu, False = tải ngay</param>
         public MedicineSellViewModel(bool lazyInitialization)
         {
             InitializeCommands();
@@ -388,7 +520,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Constructor với Invoice - Luôn khởi tạo dữ liệu ngay lập tức
+        /// <summary>
+        /// Constructor với Invoice - Luôn khởi tạo dữ liệu ngay lập tức
+        /// Sử dụng khi chỉnh sửa hóa đơn có sẵn
+        /// </summary>
+        /// <param name="invoice">Hóa đơn cần chỉnh sửa</param>
         public MedicineSellViewModel(Invoice invoice)
         {
             InitializeCommands();
@@ -398,9 +534,13 @@ namespace ClinicManagement.ViewModels
         }
         #endregion
 
+        /// <summary>
+        /// Khởi tạo tất cả các command và thiết lập logic thực thi
+        /// Các command có điều kiện CanExecute dựa trên trạng thái IsInitialized
+        /// </summary>
         private void InitializeCommands()
         {
-            // Command khởi tạo dữ liệu - mới
+            // Command khởi tạo dữ liệu thủ công
             InitializeDataCommand = new RelayCommand<object>(
                 p => {
                     if (!IsInitialized)
@@ -409,18 +549,19 @@ namespace ClinicManagement.ViewModels
                         LoadData();
                     }
                 },
-                p => !IsInitialized
+                p => !IsInitialized // Chỉ có thể thực thi khi chưa khởi tạo
             );
 
+            // Command xử lý khi UserControl được load
             LoadedUCCommand = new RelayCommand<UserControl>(
                (userControl) => {
                    if (userControl != null)
                    {
-                       // Get the MainViewModel from Application resources
+                       // Lấy MainViewModel từ Application resources
                        var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
                        if (mainVM != null && mainVM.CurrentAccount != null)
                        {
-                           // Update current account
+                           // Cập nhật tài khoản hiện tại
                            CurrentAccount = mainVM.CurrentAccount;
 
                            // Khởi tạo dữ liệu khi user control được load và đã đăng nhập
@@ -432,47 +573,50 @@ namespace ClinicManagement.ViewModels
                        }
                    }
                },
-               (userControl) => true
+               (userControl) => true // Luôn có thể thực thi
            );
 
-            // Các command khác cần kiểm tra IsInitialized
+            // Các command khác đều yêu cầu IsInitialized = true
             SearchCommand = new RelayCommand<object>(
                 p => SearchMedicines(),
-                p => IsInitialized // Thêm điều kiện kiểm tra
+                p => IsInitialized // Chỉ có thể tìm kiếm khi đã khởi tạo dữ liệu
             );
 
             AddToCartCommand = new RelayCommand<Medicine>(
                 p => AddToCart(p),
-                p => IsInitialized && p != null && p.TotalStockQuantity > 0 // Thêm điều kiện kiểm tra
+                p => IsInitialized && p != null && p.TotalStockQuantity > 0 // Cần khởi tạo, có thuốc và còn tồn kho
             );
 
             RemoveFromCartCommand = new RelayCommand<CartItem>(
                 p => RemoveFromCart(p),
-                p => IsInitialized && p != null // Thêm điều kiện kiểm tra
+                p => IsInitialized && p != null // Cần khởi tạo và có item để xóa
             );
 
             ClearCartCommand = new RelayCommand<object>(
                 p => ClearCart(),
-                p => IsInitialized && CartItems != null && CartItems.Count > 0 // Thêm điều kiện kiểm tra
+                p => IsInitialized && CartItems != null && CartItems.Count > 0 // Cần khởi tạo và có item trong giỏ
             );
 
             CheckoutCommand = new RelayCommand<object>(
                 p => Checkout(),
-                p => IsInitialized && CartItems != null && CartItems.Count > 0 // Thêm điều kiện kiểm tra
+                p => IsInitialized && CartItems != null && CartItems.Count > 0 // Cần khởi tạo và có item để thanh toán
             );
 
             AddNewPatientCommand = new RelayCommand<object>(
                 p => AddNewPatient(),
-                p => IsInitialized // Thêm điều kiện kiểm tra
+                p => IsInitialized // Chỉ cần khởi tạo
             );
 
             FindPatientCommand = new RelayCommand<object>(
                 p => FindPatient(),
-                p => IsInitialized && (!string.IsNullOrWhiteSpace(PatientName) || !string.IsNullOrWhiteSpace(Phone)) // Thêm điều kiện kiểm tra
+                p => IsInitialized && (!string.IsNullOrWhiteSpace(PatientName) || !string.IsNullOrWhiteSpace(Phone)) // Cần khởi tạo và có thông tin tìm kiếm
             );
         }
 
-
+        /// <summary>
+        /// Tải dữ liệu chính cho ViewModel
+        /// Bao gồm danh sách thuốc, loại thuốc và đề xuất số hóa đơn
+        /// </summary>
         public void LoadData()
         {
             // Kiểm tra xem đã khởi tạo chưa
@@ -483,8 +627,8 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                LoadMedicines();
-                LoadCategories();
+                LoadMedicines();     // Tải danh sách thuốc
+                LoadCategories();    // Tải danh sách loại thuốc
 
                 // Đề xuất số hóa đơn mới nếu không có hóa đơn hiện tại
                 if (string.IsNullOrEmpty(InvoiceNumber))
@@ -508,11 +652,17 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
-               
+                    // Log lỗi nhưng không hiển thị MessageBox khi ứng dụng chưa sẵn sàng
+                    System.Diagnostics.Debug.WriteLine($"LoadData Error: {ex.Message}");
                 }
             }
         }
 
+        /// <summary>
+        /// Tải danh sách thuốc có sẵn để bán
+        /// Chỉ hiển thị thuốc chưa bị xóa và còn tồn kho
+        /// Bao gồm cảnh báo về thuốc hết hạn và sắp hết hạn
+        /// </summary>
         private void LoadMedicines()
         {
             // Kiểm tra xem đã khởi tạo chưa
@@ -525,34 +675,34 @@ namespace ClinicManagement.ViewModels
             {
                 var today = DateOnly.FromDateTime(DateTime.Today);
 
-                // Load medicines with eager loading of related entities
+                // Tải thuốc với eager loading các thực thể liên quan
                 var medicines = DataProvider.Instance.Context.Medicines
-                    .AsNoTracking() // Use AsNoTracking for better performance
+                    .AsNoTracking() // Sử dụng AsNoTracking để tăng hiệu suất
                     .Where(m => m.IsDeleted != true)
                     .Include(m => m.Category)
                     .Include(m => m.Unit)
                     .ToList();
 
-                // Process stock data separately to avoid LINQ translation errors
+                // Xử lý dữ liệu tồn kho riêng để tránh lỗi LINQ translation
                 foreach (var medicine in medicines)
                 {
-                    // Manually load StockIns to get RemainQuantity data
+                    // Tải thủ công StockIns để lấy dữ liệu RemainQuantity
                     var stockIns = DataProvider.Instance.Context.StockIns
                         .AsNoTracking()
                         .Where(si => si.MedicineId == medicine.MedicineId)
                         .ToList();
 
-                    // Replace the collections with our manually loaded data
+                    // Thay thế collection bằng dữ liệu đã tải thủ công
                     medicine.StockIns = stockIns;
 
-                    // Reset the cache to ensure fresh calculations
+                    // Reset cache để đảm bảo tính toán mới
                     medicine._availableStockInsCache = null;
 
-                    // Set default quantity to 1
+                    // Thiết lập số lượng mặc định là 1
                     medicine.TempQuantity = 1;
                 }
 
-                // Filter out medicines that don't have valid stock
+                // Lọc ra các thuốc có tồn kho hợp lệ
                 var validMedicines = medicines.Where(m =>
                     m.StockIns.Any(si => si.RemainQuantity > 0)
                 ).ToList();
@@ -562,7 +712,7 @@ namespace ClinicManagement.ViewModels
                     Application.Current.MainWindow != null &&
                     Application.Current.MainWindow.IsLoaded)
                 {
-                    // Check and warn about medicines that may be near/past expiry but still have stock
+                    // Kiểm tra và cảnh báo về thuốc có thể gần/đã hết hạn nhưng vẫn còn tồn kho
                     foreach (var medicine in validMedicines)
                     {
                         // Kiểm tra có lô hết hạn chưa được tiêu hủy không
@@ -619,7 +769,7 @@ namespace ClinicManagement.ViewModels
 
                 MedicineList = new ObservableCollection<Medicine>(validMedicines);
 
-                // Apply view filtering for searching
+                // Áp dụng lọc view để tìm kiếm
                 CollectionViewSource.GetDefaultView(MedicineList).Filter = item =>
                 {
                     if (item is Medicine medicine)
@@ -641,9 +791,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
-
+        /// <summary>
+        /// Tải danh sách loại thuốc để lọc
+        /// Thêm option "Tất cả loại thuốc" ở đầu danh sách
+        /// </summary>
         private void LoadCategories()
         {
             // Kiểm tra xem đã khởi tạo chưa
@@ -659,11 +810,11 @@ namespace ClinicManagement.ViewModels
                     .OrderBy(c => c.CategoryName)
                     .ToList();
 
-                // Add "All Categories" option
+                // Thêm option "Tất cả loại thuốc" ở đầu
                 categories.Insert(0, new MedicineCategory { CategoryId = 0, CategoryName = "-- Tất cả loại thuốc --" });
 
                 CategoryList = new ObservableCollection<MedicineCategory>(categories);
-                SelectedCategory = CategoryList.FirstOrDefault();
+                SelectedCategory = CategoryList.FirstOrDefault(); // Chọn "Tất cả loại thuốc" làm mặc định
             }
             catch (Exception ex)
             {
@@ -676,11 +827,16 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
-                   
+                    System.Diagnostics.Debug.WriteLine($"LoadCategories Error: {ex.Message}");
                 }
             }
         }
 
+        /// <summary>
+        /// Tải các item từ hóa đơn hiện tại vào giỏ hàng
+        /// Sử dụng khi chỉnh sửa hóa đơn có sẵn
+        /// Điều chỉnh số lượng nếu vượt quá tồn kho hiện tại
+        /// </summary>
         private void LoadInvoiceItems()
         {
             if (CurrentInvoice == null || CurrentInvoice.InvoiceDetails == null)
@@ -706,21 +862,21 @@ namespace ClinicManagement.ViewModels
                 // Thêm các item từ hóa đơn vào giỏ
                 foreach (var detail in invoiceWithDetails.InvoiceDetails.Where(d => d.MedicineId.HasValue))
                 {
-                    // Load full medicine data with fresh RemainQuantity information
+                    // Tải thông tin thuốc đầy đủ với dữ liệu RemainQuantity mới nhất
                     var medicine = DataProvider.Instance.Context.Medicines
                         .Include(m => m.StockIns)
                         .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
 
                     if (medicine != null)
                     {
-                        // Create cart item from invoice detail
+                        // Tạo cart item từ invoice detail
                         var cartItem = new CartItem(detail);
 
-                        // Original quantity from invoice
+                        // Số lượng gốc từ hóa đơn
                         int originalQty = detail.Quantity ?? 0;
 
-                        // Calculate available stock plus original quantity
-                        // (since when editing, we should be able to keep at least our original quantity)
+                        // Tính tồn kho khả dụng cộng số lượng gốc
+                        // (vì khi chỉnh sửa, chúng ta ít nhất phải giữ được số lượng gốc)
                         int availableStock = medicine.TotalPhysicalStockQuantity + originalQty;
 
                         if (cartItem.Quantity > availableStock)
@@ -742,44 +898,64 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Lọc thuốc dựa trên loại thuốc được chọn và từ khóa tìm kiếm
+        /// Sử dụng cho CollectionViewSource.Filter
+        /// </summary>
+        /// <param name="medicine">Thuốc cần kiểm tra</param>
+        /// <returns>True nếu thuốc thỏa mãn điều kiện lọc</returns>
         private bool FilterMedicine(Medicine medicine)
         {
-            // Filter by category if selected
+            // Lọc theo loại thuốc nếu đã chọn (không phải "Tất cả loại thuốc")
             if (SelectedCategory != null && SelectedCategory.CategoryId != 0 &&
                 medicine.CategoryId != SelectedCategory.CategoryId)
             {
                 return false;
             }
 
-            // Filter by search text if provided
+            // Lọc theo từ khóa tìm kiếm nếu có
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 string searchLower = SearchText.ToLower();
-                return medicine.Name.ToLower().Contains(searchLower) ||
-                       $"M{medicine.MedicineId}".ToLower().Contains(searchLower) ||
-                       (medicine.BarCode != null && medicine.BarCode.ToLower().Contains(searchLower));
+                return medicine.Name.ToLower().Contains(searchLower) ||           // Tìm theo tên
+                       $"M{medicine.MedicineId}".ToLower().Contains(searchLower) || // Tìm theo mã thuốc
+                       (medicine.BarCode != null && medicine.BarCode.ToLower().Contains(searchLower)); // Tìm theo barcode
             }
 
-            return true;
+            return true; // Hiển thị tất cả nếu không có điều kiện lọc
         }
 
+        /// <summary>
+        /// Thực hiện tìm kiếm thuốc
+        /// Refresh CollectionView để áp dụng bộ lọc mới
+        /// </summary>
         private void SearchMedicines()
         {
             CollectionViewSource.GetDefaultView(MedicineList).Refresh();
         }
 
+        /// <summary>
+        /// Thực hiện lọc thuốc theo loại
+        /// Refresh CollectionView để áp dụng bộ lọc mới
+        /// </summary>
         private void FilterMedicines()
         {
             CollectionViewSource.GetDefaultView(MedicineList).Refresh();
         }
 
+        /// <summary>
+        /// Thêm thuốc vào giỏ hàng
+        /// Kiểm tra tồn kho và cảnh báo nếu cần
+        /// Cập nhật số lượng nếu thuốc đã có trong giỏ
+        /// </summary>
+        /// <param name="medicine">Thuốc cần thêm vào giỏ</param>
         private void AddToCart(Medicine medicine)
         {
             if (medicine == null) return;
 
             try
             {
-                // Ensure we have the most up-to-date stock information with fresh RemainQuantity values
+                // Đảm bảo có thông tin tồn kho mới nhất với giá trị RemainQuantity fresh
                 var context = DataProvider.Instance.Context;
                 var refreshedMedicine = context.Medicines
                     .Include(m => m.StockIns)
@@ -791,7 +967,7 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Reset cache to ensure fresh calculations
+                // Reset cache để đảm bảo tính toán mới
                 refreshedMedicine._availableStockInsCache = null;
 
                 // Kiểm tra xem đây có phải là lô cuối cùng không
@@ -803,23 +979,20 @@ namespace ClinicManagement.ViewModels
                     );
                 }
 
-                // Reset cache to ensure fresh calculations
-                refreshedMedicine._availableStockInsCache = null;
-
-                // Get accurate physical stock quantity using RemainQuantity directly
+                // Lấy số lượng tồn kho vật lý chính xác sử dụng RemainQuantity trực tiếp
                 int actualStock = refreshedMedicine.TotalPhysicalStockQuantity;
 
-                // Get user-requested quantity
+                // Lấy số lượng người dùng yêu cầu
                 int requestedQuantity = medicine.TempQuantity > 0 ? medicine.TempQuantity : 1;
 
-                // Check if any of this medicine is already in cart
+                // Kiểm tra xem thuốc này đã có trong giỏ hàng chưa
                 var existingItem = CartItems.FirstOrDefault(i => i.Medicine.MedicineId == medicine.MedicineId);
                 int quantityInCart = existingItem?.Quantity ?? 0;
 
-                // Calculate available stock considering what's already in cart
+                // Tính số lượng có thể thêm (tồn kho - số lượng đã có trong giỏ)
                 int availableToAdd = actualStock - quantityInCart;
 
-                // Check if requested quantity exceeds available stock
+                // Kiểm tra số lượng yêu cầu có vượt quá tồn kho không
                 if (requestedQuantity > availableToAdd)
                 {
                     if (availableToAdd <= 0)
@@ -838,23 +1011,21 @@ namespace ClinicManagement.ViewModels
                     requestedQuantity = availableToAdd;
                 }
 
-                // Update or add to cart
+                // Cập nhật hoặc thêm vào giỏ hàng
                 if (existingItem != null)
                 {
-                    // Update quantity of existing item
+                    // Cập nhật số lượng của item đã có
                     existingItem.Quantity += requestedQuantity;
                 }
                 else
                 {
-                    // Add new item to cart with accurate price information
+                    // Thêm item mới vào giỏ với thông tin giá chính xác
                     var cartItem = new CartItem(refreshedMedicine, requestedQuantity);
                     CartItems.Add(cartItem);
                 }
 
-                // Reset temp quantity for next add
+                // Reset số lượng tạm thời cho lần thêm tiếp theo
                 medicine.TempQuantity = 1;
-
-
             }
             catch (Exception ex)
             {
@@ -862,18 +1033,30 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Xóa item khỏi giỏ hàng
+        /// </summary>
+        /// <param name="item">Item cần xóa</param>
         private void RemoveFromCart(CartItem item)
         {
             if (item == null) return;
             CartItems.Remove(item);
         }
 
+        /// <summary>
+        /// Xóa tất cả item trong giỏ hàng
+        /// </summary>
         private void ClearCart()
         {
             if (CartItems == null || CartItems.Count == 0) return;
             CartItems.Clear();
         }
 
+        /// <summary>
+        /// Mở cửa sổ thêm bệnh nhân mới
+        /// Truyền thông tin đã nhập vào ViewModel của cửa sổ mới
+        /// Cập nhật thông tin bệnh nhân và giảm giá sau khi thêm thành công
+        /// </summary>
         private void AddNewPatient()
         {
             try
@@ -913,20 +1096,25 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tìm kiếm bệnh nhân theo tên hoặc số điện thoại
+        /// Thực hiện validation trước khi tìm kiếm
+        /// Đề xuất tạo bệnh nhân mới nếu không tìm thấy
+        /// </summary>
         private void FindPatient()
         {
             try
             {
-                // Enable validation for patient fields
+                // Bật validation cho các field bệnh nhân
                 _isValidating = true;
                 _touchedFields.Add(nameof(PatientName));
                 _touchedFields.Add(nameof(Phone));
 
-                // Trigger validation
+                // Kích hoạt validation
                 OnPropertyChanged(nameof(PatientName));
                 OnPropertyChanged(nameof(Phone));
 
-                // Check for validation errors
+                // Kiểm tra lỗi validation
                 if (HasErrors)
                 {
                     MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi tìm kiếm bệnh nhân.", "Lỗi dữ liệu");
@@ -945,7 +1133,7 @@ namespace ClinicManagement.ViewModels
                     .Include(p => p.PatientType)
                     .Where(p => p.IsDeleted != true);
 
-                // Tìm theo số điện thoại nếu có
+                // Tìm theo số điện thoại nếu có (ưu tiên vì chính xác hơn)
                 if (!string.IsNullOrWhiteSpace(Phone))
                 {
                     query = query.Where(p => p.Phone == Phone.Trim());
@@ -960,6 +1148,7 @@ namespace ClinicManagement.ViewModels
 
                 if (patient != null)
                 {
+                    // Tìm thấy bệnh nhân - cập nhật thông tin
                     SelectedPatient = patient;
                     PatientName = patient.FullName;
                     Phone = patient.Phone;
@@ -977,6 +1166,7 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
+                    // Không tìm thấy - đề xuất tạo mới
                     MessageBoxService.ShowWarning(
                         "Không tìm thấy bệnh nhân nào phù hợp với thông tin đã nhập.",
                         "Không tìm thấy"

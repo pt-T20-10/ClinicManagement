@@ -1,28 +1,39 @@
 using ClinicManagement.Models;
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel quản lý cài đặt hệ thống và thông tin tài khoản cá nhân
+    /// Cung cấp chức năng xem/chỉnh sửa thông tin nhân viên, đổi mật khẩu và đăng xuất
+    /// Triển khai IDataErrorInfo để validation dữ liệu thông tin cá nhân
+    /// Hỗ trợ touched-based validation để UX tốt hơn
+    /// </summary>
     public class SettingViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Doctor Information Properties
 
+        /// <summary>
+        /// Set theo dõi các field đã được người dùng tương tác
+        /// Chỉ validate các field này để tránh hiển thị lỗi ngay khi mở form
+        /// </summary>
         private HashSet<string> _touchedFields = new HashSet<string>();
+
+        /// <summary>
+        /// Cờ bật/tắt validation
+        /// True = thực hiện validation, False = bỏ qua validation
+        /// </summary>
         private bool _isValidating = false;
+
+        /// <summary>
+        /// ID nhân viên hiện tại - chỉ đọc
+        /// </summary>
         private int _StaffId;
         public int StaffId
         {
@@ -34,6 +45,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Họ và tên nhân viên - có validation và theo dõi touched state
+        /// Trường bắt buộc với độ dài tối thiểu 2 ký tự
+        /// </summary>
         private string _fullName;
         public string FullName
         {
@@ -45,8 +60,10 @@ namespace ClinicManagement.ViewModels
                     bool wasEmpty = string.IsNullOrWhiteSpace(_fullName);
                     bool isEmpty = string.IsNullOrWhiteSpace(value);
 
+                    // Thêm vào touched fields khi người dùng nhập giá trị không rỗng
                     if (wasEmpty && !isEmpty)
                         _touchedFields.Add(nameof(FullName));
+                    // Xóa khỏi touched fields khi field trở thành rỗng
                     else if (!wasEmpty && isEmpty)
                         _touchedFields.Remove(nameof(FullName));
 
@@ -56,6 +73,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Chuyên khoa được chọn cho nhân viên
+        /// Chỉ áp dụng cho bác sĩ, các vai trò khác có thể để null
+        /// </summary>
         private DoctorSpecialty _selectedSpecialty;
         public DoctorSpecialty SelectedSpecialty
         {
@@ -67,6 +88,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Danh sách chuyên khoa có sẵn trong hệ thống
+        /// Sử dụng cho ComboBox chọn chuyên khoa
+        /// </summary>
         private ObservableCollection<DoctorSpecialty> _specialtyList = new();
         public ObservableCollection<DoctorSpecialty> SpecialtyList
         {
@@ -78,6 +103,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Số điện thoại nhân viên - có validation và theo dõi touched state
+        /// Trường bắt buộc với định dạng số điện thoại Việt Nam
+        /// </summary>
         private string _phone = string.Empty;
         public string Phone
         {
@@ -100,6 +129,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Lịch làm việc của nhân viên - có validation định dạng phức tạp
+        /// Hỗ trợ nhiều định dạng: "T2-T6: 8h-17h", "T2, T3: 7h-13h", "T2: 8h-12h, 13h-17h"
+        /// </summary>
         private string _schedule = string.Empty;
         public string Schedule
         {
@@ -122,7 +155,9 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Địa chỉ nhân viên - trường tùy chọn, không có validation
+        /// </summary>
         private string _address = string.Empty;
         public string Address
         {
@@ -134,6 +169,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Đường dẫn tới chứng chỉ/bằng cấp - có validation và theo dõi touched state
+        /// Trường bắt buộc cho bác sĩ
+        /// </summary>
         private string _certificateLink = string.Empty;
         public string CertificateLink
         {
@@ -156,6 +195,9 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tên đăng nhập - chỉ đọc, lấy từ tài khoản hiện tại
+        /// </summary>
         private string _userName = string.Empty;
         public string UserName
         {
@@ -167,6 +209,9 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Vai trò/chức vụ - chỉ đọc, lấy từ tài khoản hiện tại
+        /// </summary>
         private string _role = string.Empty;
         public string Role
         {
@@ -177,6 +222,11 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// Email nhân viên - có validation định dạng email và theo dõi touched state
+        /// Trường tùy chọn nhưng nếu nhập phải đúng định dạng
+        /// </summary>
         private string _email = string.Empty;
         public string Email
         {
@@ -198,43 +248,76 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+
+        /// <summary>
+        /// Tham chiếu đến MainViewModel để thực hiện đăng xuất
+        /// </summary>
         private MainViewModel _mainViewModel;
 
         #endregion
 
-
         #region Commands
 
+        /// <summary>
+        /// Lệnh cập nhật thông tin nhân viên
+        /// </summary>
         public ICommand UpdateDoctorInfoCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh đổi mật khẩu - mở cửa sổ đổi mật khẩu
+        /// </summary>
         public ICommand ChangePasswordCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh xử lý khi control được tải - làm mới dữ liệu
+        /// </summary>
         public ICommand LoadedCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh đăng xuất - delegate đến MainViewModel
+        /// </summary>
         public ICommand SignOutCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh làm mới thông tin từ database
+        /// </summary>
         public ICommand RefreshDataCommand { get; set; }
 
         #endregion
 
+        /// <summary>
+        /// Tài khoản hiện tại đang đăng nhập
+        /// </summary>
         private Account _currentAccount;
+
+        /// <summary>
+        /// Thông tin nhân viên tương ứng với tài khoản hiện tại
+        /// </summary>
         private Staff _currentDoctor;
 
+        /// <summary>
+        /// Constructor khởi tạo SettingViewModel
+        /// Thiết lập commands và đăng ký lắng nghe thay đổi CurrentAccount từ MainViewModel
+        /// </summary>
         public SettingViewModel()
         {
             _mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
-            // Initialize commands
+            // Khởi tạo commands
             InitializeCommands();
-            
-            
-            // Load doctor information when MainViewModel's CurrentAccount changes
+
+            // Tải thông tin nhân viên khi MainViewModel's CurrentAccount thay đổi
             MainViewModel mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
             if (mainVM != null)
             {
+                // Đăng ký lắng nghe sự kiện PropertyChanged của MainViewModel
                 mainVM.PropertyChanged += (s, e) => {
                     if (e.PropertyName == nameof(mainVM.CurrentAccount))
                     {
                         LoadDoctorInformation(mainVM.CurrentAccount);
                     }
                 };
-                
-                // Load initial data if CurrentAccount is already set
+
+                // Tải dữ liệu ban đầu nếu CurrentAccount đã được set
                 if (mainVM.CurrentAccount != null)
                 {
                     LoadDoctorInformation(mainVM.CurrentAccount);
@@ -242,21 +325,27 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Khởi tạo tất cả các command với logic thực thi và điều kiện kích hoạt
+        /// </summary>
         private void InitializeCommands()
         {
+            // Command cập nhật thông tin nhân viên - luôn có thể thực thi
             UpdateDoctorInfoCommand = new RelayCommand<object>(
                 p => UpdateDoctorInfo(),
                 p => true
             );
 
+            // Command đổi mật khẩu - chỉ khi có tài khoản hiện tại
             ChangePasswordCommand = new RelayCommand<object>(
                 p => ChangePassword(),
                 p => _currentAccount != null
             );
 
+            // Command xử lý khi control được tải - làm mới dữ liệu
             LoadedCommand = new RelayCommand<object>(
                 p => {
-                    // Refresh data when control is loaded
+                    // Refresh dữ liệu khi control được tải
                     MainViewModel mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
                     if (mainVM != null && mainVM.CurrentAccount != null)
                     {
@@ -265,27 +354,40 @@ namespace ClinicManagement.ViewModels
                 },
                 p => true
             );
-            // Tạo SignOutCommand mới từ RelayCommand để chuyển tiếp đến MainViewModel.SignOutCommand
+
+            // Command đăng xuất - delegate đến MainViewModel.SignOutCommand
             SignOutCommand = new RelayCommand<object>(
                 p => ExecuteSignOut(),
                 p => CanExecuteSignOut()
             );
+
+            // Command làm mới thông tin - chỉ khi có tài khoản hiện tại
             RefreshDataCommand = new RelayCommand<object>(
        p => RefreshDoctorInformation(),
        p => _currentAccount != null
    );
         }
 
+        /// <summary>
+        /// Kiểm tra điều kiện có thể đăng xuất
+        /// Yêu cầu có MainViewModel và tài khoản hiện tại
+        /// </summary>
+        /// <returns>True nếu có thể đăng xuất</returns>
         private bool CanExecuteSignOut()
         {
             return _mainViewModel != null && _mainViewModel.CurrentAccount != null;
         }
 
+        /// <summary>
+        /// Thực hiện đăng xuất với xác nhận từ người dùng
+        /// Xử lý toàn bộ flow đăng xuất và đăng nhập lại
+        /// Delegate logic chính đến MainViewModel.SignOut()
+        /// </summary>
         private void ExecuteSignOut()
         {
             try
             {
-                // Get the latest MainViewModel reference
+                // Lấy MainViewModel reference mới nhất
                 var mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
 
                 if (mainViewModel == null || mainViewModel.CurrentAccount == null)
@@ -301,7 +403,7 @@ namespace ClinicManagement.ViewModels
 
                 if (result)
                 {
-                    // Call MainViewModel's SignOut method instead of duplicating logic
+                    // Gọi phương thức SignOut của MainViewModel thay vì duplicate logic
                     mainViewModel.SignOut();
 
                     // Lấy MainWindow
@@ -315,7 +417,7 @@ namespace ClinicManagement.ViewModels
                         LoginWindow loginWindow = new LoginWindow();
                         loginWindow.ShowDialog();
 
-                        // Get the latest MainViewModel reference again after login
+                        // Lấy MainViewModel reference mới sau khi đăng nhập
                         mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
 
                         // Kiểm tra kết quả đăng nhập
@@ -325,7 +427,7 @@ namespace ClinicManagement.ViewModels
                         if (loginVM != null && loginVM.IsLogin && mainViewModel != null && mainViewModel.CurrentAccount != null)
                         {
                             mainWindow.Show();
-                            // No need for welcome message here - it's shown in LoginViewModel.Login
+                            // Không cần hiển thị welcome message ở đây - đã được hiển thị trong LoginViewModel.Login
                         }
                         else
                         {
@@ -342,6 +444,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tải thông tin nhân viên từ tài khoản đăng nhập
+        /// Cập nhật tất cả thuộc tính UI và danh sách chuyên khoa
+        /// </summary>
+        /// <param name="account">Tài khoản cần tải thông tin</param>
         public void LoadDoctorInformation(Account account)
         {
             if (account == null) return;
@@ -350,36 +457,37 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                // Load doctor information from account
+                // Tải thông tin nhân viên từ tài khoản
                 _currentDoctor = DataProvider.Instance.Context.Staffs
                     .FirstOrDefault(d => d.StaffId == account.StaffId && d.IsDeleted != true);
 
                 if (_currentDoctor != null)
                 {
+                    // Cập nhật thông tin cá nhân
                     StaffId = _currentDoctor.StaffId;
                     FullName = _currentDoctor.FullName;
                     Phone = _currentDoctor.Phone ?? string.Empty;
-                    Email = _currentDoctor.Email ?? string.Empty; // Add this line to load Email
+                    Email = _currentDoctor.Email ?? string.Empty; // Thêm dòng này để tải Email
                     Schedule = _currentDoctor.Schedule ?? string.Empty;
                     Address = _currentDoctor.Address ?? string.Empty;
                     CertificateLink = _currentDoctor.CertificateLink ?? string.Empty;
 
-                    // Load specialties
+                    // Tải danh sách chuyên khoa
                     SpecialtyList = new ObservableCollection<DoctorSpecialty>(
                         DataProvider.Instance.Context.DoctorSpecialties
                         .Where(s => s.IsDeleted != true)
                         .ToList()
                     );
 
-                    // Set selected specialty
+                    // Thiết lập chuyên khoa được chọn
                     SelectedSpecialty = SpecialtyList.FirstOrDefault(s => s.SpecialtyId == _currentDoctor.SpecialtyId);
                 }
 
-                // Set account information
+                // Thiết lập thông tin tài khoản
                 UserName = account.Username;
                 Role = account.Role ?? string.Empty;
 
-                // Update command state
+                // Cập nhật trạng thái command
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
@@ -388,8 +496,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-     
-
+        /// <summary>
+        /// Cập nhật thông tin nhân viên vào cơ sở dữ liệu
+        /// Bao gồm validation đầy đủ, kiểm tra trùng lặp và sử dụng transaction
+        /// </summary>
         private void UpdateDoctorInfo()
         {
             try
@@ -400,7 +510,7 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Enable validation for all fields
+                // Bật validation cho tất cả field
                 _isValidating = true;
                 _touchedFields.Add(nameof(FullName));
                 _touchedFields.Add(nameof(Phone));
@@ -408,26 +518,26 @@ namespace ClinicManagement.ViewModels
                 _touchedFields.Add(nameof(Schedule));
                 _touchedFields.Add(nameof(CertificateLink));
 
-                // Trigger validation for required fields
+                // Kích hoạt validation cho các field bắt buộc
                 OnPropertyChanged(nameof(FullName));
                 OnPropertyChanged(nameof(Phone));
                 OnPropertyChanged(nameof(Email));
                 OnPropertyChanged(nameof(Schedule));
                 OnPropertyChanged(nameof(CertificateLink));
 
-                // Check if there are validation errors
+                // Kiểm tra có lỗi validation không
                 if (HasErrors)
                 {
                     MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi cập nhật thông tin.", "Lỗi dữ liệu");
                     return;
                 }
 
-                // Use transaction to ensure data consistency
+                // Sử dụng transaction để đảm bảo tính nhất quán dữ liệu
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
                     try
                     {
-                        // Check if email already exists (excluding current doctor)
+                        // Kiểm tra email đã tồn tại chưa (trừ nhân viên hiện tại)
                         if (!string.IsNullOrWhiteSpace(Email))
                         {
                             bool emailExists = DataProvider.Instance.Context.Staffs
@@ -440,7 +550,7 @@ namespace ClinicManagement.ViewModels
                             }
                         }
 
-                        // Check if phone number already exists (excluding current doctor)
+                        // Kiểm tra số điện thoại đã tồn tại chưa (trừ nhân viên hiện tại)
                         bool phoneExists = DataProvider.Instance.Context.Staffs
                             .Any(d => d.Phone == Phone.Trim() && d.StaffId != _currentDoctor.StaffId && d.IsDeleted == false);
 
@@ -450,13 +560,13 @@ namespace ClinicManagement.ViewModels
                             return;
                         }
 
-                        // Get doctor record from database
+                        // Lấy bản ghi nhân viên từ database
                         var doctorToUpdate = DataProvider.Instance.Context.Staffs
                             .FirstOrDefault(d => d.StaffId == _currentDoctor.StaffId);
 
                         if (doctorToUpdate != null)
                         {
-                            // Update properties
+                            // Cập nhật các thuộc tính
                             doctorToUpdate.FullName = FullName.Trim();
                             doctorToUpdate.SpecialtyId = SelectedSpecialty?.SpecialtyId;
                             doctorToUpdate.CertificateLink = CertificateLink?.Trim();
@@ -465,13 +575,13 @@ namespace ClinicManagement.ViewModels
                             doctorToUpdate.Phone = Phone?.Trim();
                             doctorToUpdate.Address = Address?.Trim();
 
-                            // Save changes
+                            // Lưu thay đổi
                             DataProvider.Instance.Context.SaveChanges();
 
                             // Commit transaction
                             transaction.Commit();
 
-                            // Update local copy
+                            // Cập nhật bản sao local
                             _currentDoctor = doctorToUpdate;
 
                             MessageBoxService.ShowSuccess("Đã cập nhật thông tin thành công!", "Thành công");
@@ -483,9 +593,9 @@ namespace ClinicManagement.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        // Rollback transaction if error occurs
+                        // Rollback transaction nếu có lỗi xảy ra
                         transaction.Rollback();
-                        throw; // Re-throw to be caught by outer catch block
+                        throw; // Ném lại để được xử lý bởi catch block bên ngoài
                     }
                 }
             }
@@ -495,6 +605,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Kiểm tra xem có lỗi validation nào không
+        /// Kết hợp tất cả field có thể có lỗi
+        /// </summary>
         public bool HasErrors
         {
             get
@@ -506,7 +620,11 @@ namespace ClinicManagement.ViewModels
                        !string.IsNullOrEmpty(this[nameof(CertificateLink)]);
             }
         }
-        // Trong SettingViewModel
+
+        /// <summary>
+        /// Mở cửa sổ đổi mật khẩu
+        /// Tạo ViewModel riêng cho chức năng đổi mật khẩu
+        /// </summary>
         private void ChangePassword()
         {
             var viewModel = new ChangeDoctorPasswordViewModel();
@@ -518,20 +636,24 @@ namespace ClinicManagement.ViewModels
             changePasswordWindow.ShowDialog();
         }
 
+        /// <summary>
+        /// Làm mới thông tin nhân viên từ database
+        /// Reset validation state và tải lại dữ liệu
+        /// </summary>
         private void RefreshDoctorInformation()
         {
             try
             {
                 if (_currentAccount != null)
                 {
-                    // Clear any touched fields to reset validation
+                    // Xóa tất cả touched fields để reset validation
                     _touchedFields.Clear();
                     _isValidating = false;
 
-                    // Reload doctor information from the database
+                    // Tải lại thông tin nhân viên từ database
                     LoadDoctorInformation(_currentAccount);
 
-                    // Display message to user
+                    // Hiển thị thông báo cho người dùng
                     MessageBoxService.ShowSuccess(
                         "Thông tin đã được làm mới thành công.",
                         "Thành công"
@@ -546,7 +668,12 @@ namespace ClinicManagement.ViewModels
                 );
             }
         }
+
         #region Validation
+
+        /// <summary>
+        /// Error property cho IDataErrorInfo - trả về null vì validation per-property
+        /// </summary>
         public string Error
         {
             get
@@ -554,11 +681,16 @@ namespace ClinicManagement.ViewModels
                 return null;
             }
         }
+
+        /// <summary>
+        /// Indexer cho IDataErrorInfo - thực hiện validation cho từng property
+        /// Chỉ validate khi người dùng đã tương tác với form hoặc khi submit
+        /// </summary>
         public string this[string columnName]
         {
             get
             {
-                // Don't validate until user has interacted with the form or when submitting
+                // Chỉ validate khi user đã tương tác với form hoặc khi submit
                 if (!_isValidating && !_touchedFields.Contains(columnName))
                     return null;
 
@@ -616,16 +748,19 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-   
         /// <summary>
-        /// Validates that the schedule follows the format: "T2, T3, T4: 7h-13h"
+        /// Validation cho định dạng lịch làm việc
+        /// Hỗ trợ nhiều định dạng phức tạp cho lịch làm việc
+        /// Ví dụ: "T2, T3, T4: 7h-13h", "T2-T6: 8h-17h", "T2: 8h-12h, 13h30-17h"
         /// </summary>
+        /// <param name="schedule">Chuỗi lịch làm việc cần validate</param>
+        /// <returns>True nếu định dạng hợp lệ</returns>
         private bool IsValidScheduleFormat(string schedule)
         {
             if (string.IsNullOrWhiteSpace(schedule))
-                return true; // Empty schedule is valid (not required)
+                return true; // Lịch rỗng là hợp lệ (không bắt buộc)
 
-            // Multiple pattern support
+            // Hỗ trợ nhiều pattern
             string pattern1 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
             string pattern2 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
             string pattern3 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
@@ -640,7 +775,7 @@ namespace ClinicManagement.ViewModels
             {
                 try
                 {
-                    // Parse all time slots and check each slot's start < end
+                    // Parse tất cả time slots và kiểm tra từng slot có start < end
                     string[] parts = schedule.Split(':');
                     if (parts.Length < 2)
                         return false;
@@ -656,9 +791,9 @@ namespace ClinicManagement.ViewModels
                             var start = ParseTimeString(times[0].Trim());
                             var end = ParseTimeString(times[1].Trim());
                             if (start == TimeSpan.Zero && end == TimeSpan.Zero)
-                                return false; // Invalid time format
+                                return false; // Định dạng thời gian không hợp lệ
                             if (start >= end)
-                                return false; // Start must be before end
+                                return false; // Thời gian bắt đầu phải trước thời gian kết thúc
                         }
                     }
                     return true;
@@ -672,7 +807,12 @@ namespace ClinicManagement.ViewModels
             return false;
         }
 
-        // Helper: parses "8h", "8h30", "13h", "13h30" etc.
+        /// <summary>
+        /// Helper method: parse chuỗi thời gian thành TimeSpan
+        /// Hỗ trợ "8h", "8h30", "13h", "13h30" etc.
+        /// </summary>
+        /// <param name="timeStr">Chuỗi thời gian</param>
+        /// <returns>TimeSpan tương ứng hoặc TimeSpan.Zero nếu không parse được</returns>
         private TimeSpan ParseTimeString(string timeStr)
         {
             timeStr = timeStr.Replace("h", ":").Replace(" ", "");
@@ -685,8 +825,5 @@ namespace ClinicManagement.ViewModels
             return TimeSpan.Zero;
         }
         #endregion    
-       
     }
-
-    }
-
+}

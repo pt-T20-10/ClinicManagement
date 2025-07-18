@@ -1708,63 +1708,66 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Get all Staffs
-                var staffs = context.Staffs
-                    .Where(d => d.IsDeleted != true)
-                    .Take(10)
+                // Get only staff members who are doctors (roleid = 1)
+                var doctors = context.Staffs
+                    .Where(s => s.RoleId == 1 && s.IsDeleted != true)
                     .ToList();
 
-                if (!staffs.Any())
+                if (!doctors.Any())
                 {
-                    // No doctors found - create empty chart
-                    PatientsByStaffseries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Số bệnh nhân",
-                    Values = new ChartValues<double>(),
-                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                    LabelPoint = point => string.Format("{0:N0}", point.Y)
-                }
-            };
-                    DoctorLabels = new string[] { "Không có dữ liệu" };
+                    PatientsByStaffseries = new SeriesCollection();
+                    DoctorLabels = new string[0];
                     return;
                 }
 
-                // Get appointments in the date range
-                var appointments = context.Appointments
-                    .Where(a => a.AppointmentDate >= StartDate &&
-                           a.AppointmentDate <= EndDate &&
-                           a.IsDeleted != true)
-                    .ToList();
+                // Create a list to store doctor names and patient counts
+                var doctorData = new List<(string DoctorName, int PatientCount)>();
 
-                var doctorNames = new List<string>();
-                var patientCounts = new List<double>();
+                // Filter date range for appointments
+                var startDateFilter = StartDate.Date;
+                var endDateFilter = EndDate.Date.AddDays(1).AddSeconds(-1); // End of the selected day
 
-                foreach (var doctor in staffs)
+                // For each doctor, count their unique patients within the date range
+                foreach (var doctor in doctors)
                 {
-                    doctorNames.Add(doctor.FullName);
-                    patientCounts.Add(appointments.Count(a => a.StaffId == doctor.StaffId));
+                    var patientCount = context.Appointments
+                        .Where(a => a.StaffId == doctor.StaffId &&
+                                   a.AppointmentDate >= startDateFilter &&
+                                   a.AppointmentDate <= endDateFilter)
+                        .Select(a => a.PatientId)
+                        .Distinct()
+                        .Count();
+
+                    // Add all doctors even if they have no patients
+                    doctorData.Add((doctor.FullName ?? "Unknown", patientCount));
                 }
 
-                PatientsByStaffseries = new SeriesCollection
-        {
-            new ColumnSeries
-            {
-                Title = "Số bệnh nhân",
-                Values = new ChartValues<double>(patientCounts),
-                Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                LabelPoint = point => string.Format("{0:N0}", point.Y)
-            }
-        };
+                // Sort by patient count descending
+                doctorData = doctorData.OrderByDescending(d => d.PatientCount).ToList();
 
-                DoctorLabels = doctorNames.ToArray();
+                // Create the chart series
+                var patientSeries = new ColumnSeries
+                {
+                    Title = "Số lượng bệnh nhân",
+                    Values = new ChartValues<int>(doctorData.Select(d => d.PatientCount)),
+                    Fill = GetRandomBrush(),
+                    DataLabels = true
+                };
+
+                // Update the doctor labels
+                DoctorLabels = doctorData.Select(d => d.DoctorName).ToArray();
+
+                // Update the chart series
+                PatientsByStaffseries = new SeriesCollection { patientSeries };
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ bệnh nhân theo bác sĩ: {ex.Message}", "Lỗi");
+                System.Diagnostics.Debug.WriteLine($"Error loading patients by doctor chart: {ex.Message}");
+                PatientsByStaffseries = new SeriesCollection();
+                DoctorLabels = new string[0];
             }
         }
+
 
         private void LoadTopSellingProducts(ClinicDbContext context)
         {
@@ -1829,66 +1832,68 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Process in memory
-                var invoices = context.Invoices
-                    .Where(i => i.Status == "Đã thanh toán" &&
-                           i.PatientId != null &&
-                           i.InvoiceDate >= StartDate &&
-                           i.InvoiceDate <= EndDate)
-                    .ToList();
+                IsLoading = true;
 
-                var topPatients = invoices
-                    .GroupBy(i => i.PatientId)
-                    .Select(g => new
+                // Filter date range
+                var startDateFilter = StartDate.Date;
+                var endDateFilter = EndDate.Date.AddDays(1).AddSeconds(-1); // End of the selected day
+
+                // Get all patients with their spending in the specified date range
+                var topPatients = context.Patients
+                    .Where(p => p.IsDeleted != true) // Include all patient types, not just VIP
+                    .Select(p => new
                     {
-                        PatientId = g.Key,
-                        TotalSpending = g.Sum(i => i.TotalAmount)
+                        Patient = p,
+                        TotalSpending = context.Invoices
+                            .Where(i => i.PatientId == p.PatientId &&
+                                        i.Status == "Đã thanh toán" &&
+                                        i.InvoiceDate >= startDateFilter &&
+                                        i.InvoiceDate <= endDateFilter)
+                            .Sum(i => i.TotalAmount)
                     })
-                    .OrderByDescending(x => x.TotalSpending)
-                    .Take(5)
+                    .Where(x => x.TotalSpending > 0) // Only include patients who have spent money
+                    .OrderByDescending(x => x.TotalSpending) // Sort by highest spending first
+                    .Take(10) // Get top 10 spenders
                     .ToList();
 
-                if (topPatients.Any())
+                // Include patient type information for display
+                var enrichedPatients = topPatients.Select(x =>
                 {
-                    var vipPatients = new List<VIPPatient>();
+                    var patientType = context.PatientTypes
+                        .FirstOrDefault(pt => pt.PatientTypeId == x.Patient.PatientTypeId);
 
-                    // Now fetch patient details
-                    foreach (var patientData in topPatients)
+                    return new VIPPatient
                     {
-                        var patient = context.Patients
-                            .FirstOrDefault(p => p.PatientId == patientData.PatientId);
+                        Id = x.Patient.PatientId,
+                        FullName = x.Patient.FullName,
+                        Phone = x.Patient.Phone,
+                        TotalSpending = x.TotalSpending,
+                        PatientType = patientType?.TypeName ?? "Unknown" // Include patient type for display
+                    };
+                }).ToList();
 
-                        if (patient != null)
-                        {
-                            vipPatients.Add(new VIPPatient
-                            {
-                                Id = patient.PatientId,
-                                FullName = patient.FullName,
-                                Phone = patient.Phone,
-                                TotalSpending = patientData.TotalSpending
-                            });
-                        }
-                    }
-
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        TopVIPPatients = new ObservableCollection<VIPPatient>(vipPatients);
-                    });
-                }
-                else
+                // Update the UI
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        TopVIPPatients.Clear();
-                    });
-                }
+                    TopVIPPatients = new ObservableCollection<VIPPatient>(enrichedPatients);
+                });
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải dữ liệu khách hàng VIP: {ex.Message}",
-                               "Lỗi"    );
+                // Handle exception appropriately
+        
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    TopVIPPatients = new ObservableCollection<VIPPatient>();
+                });
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
+
+
 
         // Change from private to public
         public void LoadWarningMedicines(ClinicDbContext context)
@@ -3459,33 +3464,72 @@ namespace ClinicManagement.ViewModels
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
-            if (PatientsByStaffseries?.Count > 0 && DoctorLabels?.Length > 0)
+            // Debug logging or verification
+            bool hasData = PatientsByStaffseries?.Count > 0 && DoctorLabels?.Length > 0;
+            if (!hasData)
             {
-                var series = PatientsByStaffseries[0] as LiveCharts.Wpf.ColumnSeries;
-
-                if (series?.Values is LiveCharts.ChartValues<double> values)
-                {
-                    for (int i = 0; i < DoctorLabels.Length; i++)
-                    {
-                        worksheet.Cell(startRow, 1).Value = DoctorLabels[i];
-                        worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
-                        startRow++;
-                    }
-
-                    // Add total row
-                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
-                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                    worksheet.Cell(startRow, 2).Value = values.Sum();
-                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                    startRow++;
-                }
+                // Handle empty data - add a note in the worksheet
+                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
+                worksheet.Range(startRow, 1, startRow, 2).Merge();
+                startRow += 2;
+                return startRow;
             }
+
+            // Try to get the series safely
+            var series = PatientsByStaffseries.FirstOrDefault() as LiveCharts.Wpf.Series;
+            if (series == null)
+            {
+                worksheet.Cell(startRow, 1).Value = "Lỗi định dạng dữ liệu";
+                worksheet.Range(startRow, 1, startRow, 2).Merge();
+                startRow += 2;
+                return startRow;
+            }
+
+            // Extract values (handling different series types)
+            IList<double> values;
+            if (series is LiveCharts.Wpf.ColumnSeries columnSeries && columnSeries.Values is LiveCharts.ChartValues<double> doubleValues)
+            {
+                values = doubleValues;
+            }
+            else if (series.Values is LiveCharts.ChartValues<double> otherDoubleValues)
+            {
+                values = otherDoubleValues;
+            }
+            else
+            {
+                // Handle incompatible values type
+                worksheet.Cell(startRow, 1).Value = "Không thể trích xuất giá trị";
+                worksheet.Range(startRow, 1, startRow, 2).Merge();
+                startRow += 2;
+                return startRow;
+            }
+
+            // Make sure we have enough values
+            int maxLength = Math.Min(DoctorLabels.Length, values.Count);
+            double totalPatients = 0;
+
+            // Add data rows
+            for (int i = 0; i < maxLength; i++)
+            {
+                worksheet.Cell(startRow, 1).Value = DoctorLabels[i];
+                double patientCount = values[i];
+                worksheet.Cell(startRow, 2).Value = patientCount;
+                totalPatients += patientCount;
+                startRow++;
+            }
+
+            // Add total row
+            worksheet.Cell(startRow, 1).Value = "Tổng cộng";
+            worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+            worksheet.Cell(startRow, 2).Value = totalPatients;
+            worksheet.Cell(startRow, 2).Style.Font.Bold = true;
+            startRow++;
 
             // Add empty row as separator
             startRow += 2;
             return startRow;
         }
+
 
         /// <summary>
         /// Exports Revenue By Category chart to Excel
@@ -3870,6 +3914,7 @@ namespace ClinicManagement.ViewModels
             startRow += 2;
             return startRow;
         }
+
         private int ExportRevenueByCategoryChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Category, double Value)> categories)
         {
             // Add section title
@@ -4126,6 +4171,8 @@ namespace ClinicManagement.ViewModels
             public string FullName { get; set; }
             public string Phone { get; set; }
             public decimal TotalSpending { get; set; }
+            public string PatientType { get; set; } // New property for displaying patient type
+            public int Percentage { get; set; }
         }
 
         public class WarningMedicine

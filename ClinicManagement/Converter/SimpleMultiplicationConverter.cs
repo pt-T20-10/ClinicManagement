@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
-using System.Windows.Input;
-using ClinicManagement.Models;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
-using System.Windows.Controls;
 
 namespace ClinicManagement.Converter
 {

@@ -218,27 +218,27 @@
                                     <!-- Add to StockUC.xaml in the "Kho" TabItem header section -->
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
                                         <Button
-        Command="{Binding ManualGenerateMonthlyStockCommand}"
-        Style="{StaticResource MaterialDesignRaisedButton}"
-       Width="50"
-Height="32"
-        Margin="0,0,10,0"
-        ToolTip="Tổng kết tồn kho tháng hiện tại"
-        Visibility="{Binding CanManageSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            Command="{Binding ManualGenerateMonthlyStockCommand}"
+                                            Style="{StaticResource MaterialDesignRaisedButton}"
+                                           Width="50"
+                                            Height="32"
+                                            Margin="0,0,10,0"
+                                            ToolTip="Tổng kết tồn kho tháng hiện tại"
+                                            Visibility="{Binding CanManageSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="CalendarCheck" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                            
                                             </StackPanel>
                                         </Button>
                                         <Button
-        Command="{Binding UndoMonthlyStockCommand}"
-        Style="{StaticResource MaterialDesignOutlinedButton}"
-      Width="50"
-Height="32"
-        Margin="0,0,10,0"
-        ToolTip="Hủy bỏ tổng kết tồn kho gần nhất"
-        Visibility="{Binding CanManageSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <StackPanel Orientation="Horizontal">
+                                                Command="{Binding UndoMonthlyStockCommand}"
+                                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                              Width="50"
+                                        Height="32"
+                                                Margin="0,0,10,0"
+                                                ToolTip="Hủy bỏ tổng kết tồn kho gần nhất"
+                                                Visibility="{Binding CanManageSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="Undo" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                             
                                             </StackPanel>
@@ -271,7 +271,8 @@ Height="32"
                                         </Grid>
                                         
 
-                                        <Grid HorizontalAlignment="Left" Margin="0,5,0,5">
+                                        <Grid  HorizontalAlignment="Left" Margin="0,5,0,5"
+                                                >
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>

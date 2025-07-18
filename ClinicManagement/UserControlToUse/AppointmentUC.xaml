@@ -362,7 +362,7 @@
                                     Height="60"
                                  
                                     FontSize="11"
-                                    materialDesign:HintAssist.Hint="Ghi chú"
+                        
                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                             </StackPanel>
 

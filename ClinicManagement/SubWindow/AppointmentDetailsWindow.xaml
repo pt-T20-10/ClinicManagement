@@ -182,31 +182,49 @@
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="70"/>
-                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Bác sĩ:" FontWeight="Medium"/>
-                            <TextBlock Grid.Column="1"  Text="{Binding OriginalAppointment.Staff.FullName}" TextWrapping="Wrap" Margin="70,-10,-70,10"/>
+                            <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="Bác sĩ:" FontWeight="Medium"/>
+                    
+                            <ComboBox Grid.Column="1" 
+          ItemsSource="{Binding DoctorList}" 
+          SelectedItem="{Binding SelectedDoctor}"
+          Margin="0,0,0,2"
+          Width="200"
+                                      Padding="5"
+          Height="30"
+          HorizontalAlignment="Left"
+          Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FullName, TargetNullValue='Không chỉ định'}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
                         </Grid>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Chuyên khoa:" FontWeight="Medium"/>
-                            <TextBlock Grid.Column="1"   Text="{Binding OriginalAppointment.Staff.Specialty.SpecialtyName}" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedDoctor.Specialty.SpecialtyName}" TextWrapping="Wrap"/>
                         </Grid>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Số điện thoại:" FontWeight="Medium"/>
-                            <TextBlock Grid.Column="1" Text="{Binding OriginalAppointment.Staff.Phone}" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedDoctor.Phone}" TextWrapping="Wrap"/>
                         </Grid>
                     </StackPanel>
+
+
 
                     <!-- Appointment Details -->
                     <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,0">
@@ -225,7 +243,7 @@
                                         <ColumnDefinition Width="120"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <TextBlock Grid.Column="0" Text="Mã lịch hẹn:" FontWeight="Medium"/>
                                     <TextBlock Grid.Column="1" Text="{Binding OriginalAppointment.AppointmentId}" TextWrapping="Wrap"/>
                                 </Grid>
@@ -406,7 +424,7 @@
                                 </StackPanel>
 
                             </Grid>
-            
+
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -463,17 +481,17 @@
 
             <!-- Edit Button -->
             <Button 
-                Grid.Column="2" 
-                Content="Chỉnh sửa" 
-                Command="{Binding EditAppointmentCommand}"
-                CommandParameter="{Binding}"
-                Style="{StaticResource MaterialDesignRaisedButton}" 
-                Background="#3F51B5" 
-                BorderBrush="#303F9F" 
-                Foreground="White"
-                Width="120" 
-                Margin="0,0,15,0"
-                Height="40">
+    Grid.Column="2" 
+    Content="Chỉnh sửa" 
+    Command="{Binding EditAppointmentCommand}"
+    CommandParameter="{Binding}"
+    Style="{StaticResource MaterialDesignRaisedButton}" 
+    Background="#3F51B5" 
+    BorderBrush="#303F9F" 
+    Foreground="White"
+    Width="120" 
+    Margin="0,0,15,0"
+    Height="40">
                 <Button.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="4"/>
@@ -483,22 +501,31 @@
 
             <!-- Proceed Button -->
             <Button 
-                Grid.Column="3" 
-                Content="Tiến hành khám" 
-                      Command="{Binding AcceptAppointmentCommand}"
-                    CommandParameter="{Binding}"
-                Style="{StaticResource MaterialDesignRaisedButton}" 
-                Background="#4CAF50" 
-                BorderBrush="#388E3C" 
-                Foreground="White"
-                Width="150"
-                Height="40">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="4"/>
+    Grid.Column="3" 
+    Content="Tiến hành khám"
+    Command="{Binding AcceptAppointmentCommand}"
+    CommandParameter="{Binding}"
+    Width="150"
+    Height="40">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                        <Setter Property="Background" Value="#4CAF50"/>
+                        <Setter Property="BorderBrush" Value="#388E3C"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="IsEnabled" Value="True"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CanCurrentDoctorAccept}" Value="False">
+                                <Setter Property="IsEnabled" Value="False"/>
+                                <Setter Property="Background" Value="#E0E0E0"/>
+                                <Setter Property="BorderBrush" Value="#9E9E9E"/>
+                                <Setter Property="ToolTip" Value="Lịch hẹn này đã được chỉ định cho bác sĩ khác"/>
+                            </DataTrigger>
+                        </Style.Triggers>
                     </Style>
-                </Button.Resources>
+                </Button.Style>
             </Button>
+
+
         </Grid>
     </Grid>
 </Window>

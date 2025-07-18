@@ -48,7 +48,7 @@
                     Style="{StaticResource MaterialDesignFilledTabControl}">
 
             <!-- Doctor Information Tab -->
-            <TabItem Header="Thông tin bác sĩ">
+            <TabItem Header="Thông tin">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid Margin="20">
                         <Grid.RowDefinitions>
@@ -81,7 +81,7 @@
                                 <TextBox Grid.Row="0" Grid.Column="0"
                                          Text="{Binding StaffId, Mode=OneWay}"
                                          IsReadOnly="True"
-                                         materialDesign:HintAssist.Hint="ID bác sĩ"
+                                         materialDesign:HintAssist.Hint="ID"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          Margin="5,10,15,10"/>
 
@@ -161,7 +161,7 @@
                       Height="45">
                                             <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <TextBlock Text="Xóa bác sĩ"/>
+                                                <TextBlock Text="Xóa nhân viên"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -268,7 +268,7 @@
             </TabItem>
 
             <!-- Appointments Tab -->
-            <TabItem Header="Lịch hẹn của bác sĩ">
+            <TabItem Header="Lịch hẹn của bác sĩ" Visibility="{Binding IsDoctor, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -408,7 +408,7 @@
                             </DataGridTextColumn>
 
                             <!-- Action Buttons -->
-                            <DataGridTemplateColumn Width="130">
+                            <DataGridTemplateColumn Width="auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Content="Xem chi tiết"
@@ -418,7 +418,7 @@
                           Style="{StaticResource MaterialDesignRaisedButton}"
                           Background="#4CAF50"
                           Foreground="White"
-                          Width="120" Height="30"
+                          Width="140" Height="30"
                           materialDesign:ButtonAssist.CornerRadius="5"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

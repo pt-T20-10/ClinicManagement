@@ -1,25 +1,33 @@
 ﻿using ClinicManagement.Models;
-using ClinicManagement.SubWindow;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Input;
-using ClosedXML.Excel;
-using Microsoft.Win32;
-using System.IO;
 using ClinicManagement.Services;
+using ClinicManagement.SubWindow;
+using ClosedXML.Excel;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel chính quản lý bệnh nhân và loại bệnh nhân
+    /// Cung cấp chức năng CRUD cho loại bệnh nhân, quản lý danh sách bệnh nhân
+    /// Hỗ trợ lọc, tìm kiếm, xuất Excel và nâng cấp tự động bệnh nhân VIP
+    /// Triển khai IDataErrorInfo để validation dữ liệu loại bệnh nhân
+    /// </summary>
     public class PatientViewModel : BaseViewModel, IDataErrorInfo
     {
         #region Properties  
 
         #region DisplayProperties
 
-
+        /// <summary>
+        /// Tài khoản người dùng hiện tại
+        /// Được sử dụng để kiểm tra quyền thao tác với loại bệnh nhân
+        /// </summary>
         private Account _currentAccount;
         public Account CurrentAccount
         {
@@ -28,12 +36,17 @@ namespace ClinicManagement.ViewModels
             {
                 _currentAccount = value;
                 OnPropertyChanged();
-                // Update permissions whenever account changes
+                // Cập nhật quyền mỗi khi tài khoản thay đổi
                 UpdatePermissions();
             }
         }
 
-        // Permission properties
+        // === QUYỀN THAO TÁC VỚI LOẠI BỆNH NHÂN ===
+
+        /// <summary>
+        /// Quyền thêm loại bệnh nhân mới
+        /// Chỉ Admin và Manager mới có quyền này
+        /// </summary>
         private bool _canAddPatientType = false;
         public bool CanAddPatientType
         {
@@ -45,6 +58,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Quyền chỉnh sửa loại bệnh nhân
+        /// Chỉ Admin và Manager mới có quyền này
+        /// </summary>
         private bool _canEditPatientType = false;
         public bool CanEditPatientType
         {
@@ -56,6 +73,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Quyền xóa loại bệnh nhân
+        /// Chỉ Admin và Manager mới có quyền này
+        /// </summary>
         private bool _canDeletePatientType = false;
         public bool CanDeletePatientType
         {
@@ -66,6 +87,13 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        // === THUỘC TÍNH LOẠI BỆNH NHÂN ===
+
+        /// <summary>
+        /// Loại bệnh nhân được chọn từ danh sách
+        /// Tự động cập nhật các field thông tin khi thay đổi
+        /// </summary>
         private PatientType? _SelectedType;
         public PatientType? SelectedType
         {
@@ -84,16 +112,24 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID loại bệnh nhân - tự động được gán khi chọn SelectedType
+        /// </summary>
         private int _PatientTypeId;
         public int PatientTypeId
         {
             get => _PatientTypeId;
             set
             {
-                _PatientTypeId = value; OnPropertyChanged();
+                _PatientTypeId = value;
+                OnPropertyChanged();
             }
         }
 
+        /// <summary>
+        /// Tên loại bệnh nhân - trường bắt buộc
+        /// Có validation và theo dõi touched state để UX tốt hơn
+        /// </summary>
         private string _TypeName;
         public string TypeName
         {
@@ -103,27 +139,31 @@ namespace ClinicManagement.ViewModels
                 bool wasEmpty = string.IsNullOrWhiteSpace(_TypeName);
                 bool isEmpty = string.IsNullOrWhiteSpace(value);
 
-                // Add to touched fields only when user interacts with a non-empty value
+                // Thêm vào touched fields chỉ khi người dùng tương tác với giá trị không rỗng
                 if (wasEmpty && !isEmpty)
                     _touchedFields.Add(nameof(TypeName));
 
-                // If field becomes empty again, remove from touched fields and clear any validation errors
+                // Nếu field trở thành rỗng, xóa khỏi touched fields và xóa lỗi validation
                 if (!wasEmpty && isEmpty)
                 {
                     _touchedFields.Remove(nameof(TypeName));
-                    // Force error clearing by triggering validation refresh
+                    // Buộc xóa lỗi bằng cách kích hoạt refresh validation
                     _isValidating = false; // Tạm thời tắt validation khi xóa dữ liệu
                 }
 
                 _TypeName = value;
                 OnPropertyChanged();
 
-                // If the field is being validated, update validation state
+                // Nếu field đang được validate, cập nhật trạng thái validation
                 if (_touchedFields.Contains(nameof(TypeName)))
                     OnPropertyChanged(nameof(Error));
             }
         }
 
+        /// <summary>
+        /// Tỷ lệ giảm giá của loại bệnh nhân - trường bắt buộc
+        /// Có validation để đảm bảo giá trị từ 0-100
+        /// </summary>
         private string _Discount;
         public string Discount
         {
@@ -133,58 +173,89 @@ namespace ClinicManagement.ViewModels
                 bool wasEmpty = string.IsNullOrWhiteSpace(_Discount);
                 bool isEmpty = string.IsNullOrWhiteSpace(value);
 
-                // Add to touched fields only when user interacts with a non-empty value
+                // Thêm vào touched fields chỉ khi người dùng tương tác với giá trị không rỗng
                 if (wasEmpty && !isEmpty)
                     _touchedFields.Add(nameof(Discount));
 
-                // If field becomes empty again, remove from touched fields and clear any validation errors
+                // Nếu field trở thành rỗng, xóa khỏi touched fields và xóa lỗi validation
                 if (!wasEmpty && isEmpty)
                 {
                     _touchedFields.Remove(nameof(Discount));
-                    // Force error clearing by triggering validation refresh
+                    // Buộc xóa lỗi bằng cách kích hoạt refresh validation
                     _isValidating = false; // Tạm thời tắt validation khi xóa dữ liệu
                 }
 
                 _Discount = value;
                 OnPropertyChanged();
 
-                // If the field is being validated, update validation state
+                // Nếu field đang được validate, cập nhật trạng thái validation
                 if (_touchedFields.Contains(nameof(Discount)))
                     OnPropertyChanged(nameof(Error));
             }
         }
 
-
+        /// <summary>
+        /// Danh sách tất cả bệnh nhân trong hệ thống
+        /// Được lọc và hiển thị dựa trên các điều kiện filter
+        /// </summary>
         private ObservableCollection<Patient> _PatientList;
         public ObservableCollection<Patient> PatientList
         {
             get => _PatientList;
             set
             {
-                _PatientList = value; OnPropertyChanged();
+                _PatientList = value;
+                OnPropertyChanged();
             }
         }
 
+        /// <summary>
+        /// Danh sách loại bệnh nhân (Thường, VIP, Bảo hiểm y tế, etc.)
+        /// Sử dụng cho ComboBox và các thao tác CRUD
+        /// </summary>
         private ObservableCollection<PatientType> _PatientTypeList;
         public ObservableCollection<PatientType> PatientTypeList
         {
             get => _PatientTypeList;
             set
             {
-                _PatientTypeList = value; OnPropertyChanged();
+                _PatientTypeList = value;
+                OnPropertyChanged();
             }
         }
 
+        // === VALIDATION PROPERTIES ===
+
+        /// <summary>
+        /// Error property cho IDataErrorInfo - trả về null vì validation per-property
+        /// </summary>
         public string Error => null;
+
+        /// <summary>
+        /// Set theo dõi các field đã được người dùng tương tác
+        /// Chỉ validate các field này để tránh hiển thị lỗi ngay khi mở form
+        /// </summary>
         private HashSet<string> _touchedFields = new HashSet<string>();
+
+        /// <summary>
+        /// Cờ bật/tắt validation
+        /// True = thực hiện validation, False = bỏ qua validation
+        /// </summary>
         private bool _isValidating = false;
         #endregion
 
         #region Filter Properties
 
+        /// <summary>
+        /// Danh sách tất cả bệnh nhân gốc (không được filter)
+        /// Sử dụng làm nguồn dữ liệu cho việc lọc
+        /// </summary>
         private ObservableCollection<Patient> _AllPatients;
 
-
+        /// <summary>
+        /// Ngày được chọn để lọc bệnh nhân theo ngày đăng ký
+        /// Tự động kích hoạt lọc khi thay đổi
+        /// </summary>
         private DateTime? _SelectedDate;
         public DateTime? SelectedDate
         {
@@ -198,6 +269,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Từ khóa tìm kiếm bệnh nhân
+        /// Tìm theo tên hoặc mã bảo hiểm y tế
+        /// Tự động kích hoạt lọc khi thay đổi
+        /// </summary>
         private string _SearchText;
         public string SearchText
         {
@@ -210,6 +286,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID loại bệnh nhân được chọn để lọc
+        /// Được set tự động bởi các checkbox filter
+        /// </summary>
         private int? _FilterPatientTypeId;
         public int? FilterPatientTypeId
         {
@@ -222,6 +302,14 @@ namespace ClinicManagement.ViewModels
                 ExecuteAutoFilter();
             }
         }
+
+        // === CHECKBOX FILTERS ===
+        // Các checkbox để lọc nhanh theo loại bệnh nhân
+
+        /// <summary>
+        /// Checkbox lọc bệnh nhân VIP
+        /// Tự động set FilterPatientTypeId và uncheck các checkbox khác
+        /// </summary>
         private bool _IsVIPSelected;
         public bool IsVIPSelected
         {
@@ -239,6 +327,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Checkbox hiển thị tất cả bệnh nhân
+        /// Xóa tất cả filter khi được chọn
+        /// </summary>
         private bool _IsAllSelected;
         public bool IsAllSelected
         {
@@ -252,13 +344,16 @@ namespace ClinicManagement.ViewModels
                     IsInsuranceSelected = false;
                     IsNormalSelected = false;
                     IsVIPSelected = false;
-                    FilterPatientTypeId = null; // ← Thêm dòng này để xóa filter theo loại
+                    FilterPatientTypeId = null; // Xóa filter theo loại
                     ExecuteAutoFilter();
                 }
             }
         }
 
-
+        /// <summary>
+        /// Checkbox lọc bệnh nhân có bảo hiểm y tế
+        /// Tự động set FilterPatientTypeId và uncheck các checkbox khác
+        /// </summary>
         private bool _IsInsuranceSelected;
         public bool IsInsuranceSelected
         {
@@ -276,6 +371,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Checkbox lọc bệnh nhân thường
+        /// Tự động set FilterPatientTypeId và uncheck các checkbox khác
+        /// </summary>
         private bool _IsNormalSelected;
         public bool IsNormalSelected
         {
@@ -294,6 +393,10 @@ namespace ClinicManagement.ViewModels
         }
         #endregion
 
+        /// <summary>
+        /// Bệnh nhân được chọn trong danh sách
+        /// Sử dụng để xem chi tiết thông tin bệnh nhân
+        /// </summary>
         private Patient _selectedPatient;
         public Patient SelectedPatient
         {
@@ -305,42 +408,51 @@ namespace ClinicManagement.ViewModels
 
         #region Command
 
-        public ICommand AddCommand { get; set; }
-        public ICommand EditCommand { get; set; }
-        public ICommand DeleteCommand { get; set; }
-        public ICommand AddPatientCommand { get; set; }
-        public ICommand OpenPatientDetailsCommand { get; set; }
-        public ICommand LoadedUCCommand { get; set; }
-        public ICommand AutoUpgradePatientsCommand { get; private set; }
+        // === CRUD COMMANDS CHO LOẠI BỆNH NHÂN ===
+        public ICommand AddCommand { get; set; }                    // Thêm loại bệnh nhân mới
+        public ICommand EditCommand { get; set; }                   // Chỉnh sửa loại bệnh nhân
+        public ICommand DeleteCommand { get; set; }                 // Xóa loại bệnh nhân
+        public ICommand RefreshTypeDataCommand { get; set; }        // Làm mới form loại bệnh nhân
 
-        // Filter Commands
-        public ICommand SearchCommand { get; set; }
-        public ICommand VIPSelectedCommand { get; set; }
-        public ICommand InsuranceSelectedCommand { get; set; }
-        public ICommand NormalSelectedCommand { get; set; }
-        public ICommand AllSelectedCommand { get; set; }
-        public ICommand ResetFiltersCommand { get; set; }
-        public ICommand RefreshTypeDataCommand { get; set; }
-        public ICommand ExportExcelCommand { get; private set; }
+        // === PATIENT MANAGEMENT COMMANDS ===
+        public ICommand AddPatientCommand { get; set; }             // Thêm bệnh nhân mới
+        public ICommand OpenPatientDetailsCommand { get; set; }     // Xem chi tiết bệnh nhân
+        public ICommand LoadedUCCommand { get; set; }               // Command khi UserControl được tải
+
+        // === SPECIAL FEATURES ===
+        public ICommand AutoUpgradePatientsCommand { get; private set; } // Nâng cấp tự động bệnh nhân VIP
+        public ICommand ExportExcelCommand { get; private set; }    // Xuất danh sách ra Excel
+
+        // === FILTER COMMANDS ===
+        public ICommand SearchCommand { get; set; }                 // Tìm kiếm bệnh nhân
+        public ICommand VIPSelectedCommand { get; set; }            // Lọc bệnh nhân VIP
+        public ICommand InsuranceSelectedCommand { get; set; }      // Lọc bệnh nhân bảo hiểm
+        public ICommand NormalSelectedCommand { get; set; }         // Lọc bệnh nhân thường
+        public ICommand AllSelectedCommand { get; set; }            // Hiển thị tất cả bệnh nhân
+        public ICommand ResetFiltersCommand { get; set; }           // Reset tất cả filter
         #endregion
 
+        /// <summary>
+        /// Constructor khởi tạo PatientViewModel
+        /// Thiết lập commands, tải dữ liệu và cấu hình account loading
+        /// </summary>
         public PatientViewModel()
         {
-            LoadData();
-            InitializTypeCommands();
-            InitializeFilterCommands();
-            IsAllSelected = true;
+            LoadData();                         // Tải dữ liệu ban đầu
+            InitializTypeCommands();            // Khởi tạo commands cho loại bệnh nhân
+            InitializeFilterCommands();         // Khởi tạo commands cho filter
+            IsAllSelected = true;               // Mặc định hiển thị tất cả bệnh nhân
 
-            // Initialize LoadedUCCommand for proper account loading
+            // Khởi tạo LoadedUCCommand để tải tài khoản đúng cách
             LoadedUCCommand = new RelayCommand<UserControl>(
                 (userControl) => {
                     if (userControl != null)
                     {
-                        // Get the MainViewModel from Application resources
+                        // Lấy MainViewModel từ Application resources
                         var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
                         if (mainVM != null && mainVM.CurrentAccount != null)
                         {
-                            // Update current account
+                            // Cập nhật tài khoản hiện tại
                             CurrentAccount = mainVM.CurrentAccount;
                         }
                     }
@@ -351,45 +463,55 @@ namespace ClinicManagement.ViewModels
 
         #region Type Commands
 
+        /// <summary>
+        /// Khởi tạo các command liên quan đến loại bệnh nhân
+        /// Bao gồm thêm, sửa, xóa, làm mới và xuất Excel
+        /// </summary>
         private void InitializTypeCommands()
         {
+            // Command thêm loại bệnh nhân - yêu cầu quyền và validation
             AddCommand = new RelayCommand<object>(
             (p) => ExecuteAddNewType(),
             (p) => CanAddPatientType && CanExecuteAddCommand()
         );
 
+            // Command chỉnh sửa loại bệnh nhân - yêu cầu quyền và validation
             EditCommand = new RelayCommand<object>(
                 (p) => ExecuteEditType(),
                 (p) => CanEditPatientType && CanExecuteEditCommand()
             );
 
+            // Command xóa loại bệnh nhân - yêu cầu quyền và có item được chọn
             DeleteCommand = new RelayCommand<object>(
                 (p) => ExecuteDeleteType(),
                 (p) => CanDeletePatientType && CanExecuteDeleteCommand()
             );
+
+            // Command thêm bệnh nhân mới - mở cửa sổ AddPatientWindow
             AddPatientCommand = new RelayCommand<object>(
                    (p) =>
                    {
                        // Mở cửa sổ thêm bệnh nhân mới
                        AddPatientWindow addPatientWindow = new AddPatientWindow();
                        addPatientWindow.ShowDialog();
-                       // Refresh data after adding a new patient
+                       // Refresh dữ liệu sau khi thêm bệnh nhân mới
                        LoadData();
                    },
                    (p) => true
                );
+
+            // Command làm mới form loại bệnh nhân - xóa tất cả input
             RefreshTypeDataCommand = new RelayCommand<object>(
                 (p) =>
                 {
-                    
-                   TypeName = string.Empty;
-                   Discount = string.Empty;
+                    TypeName = string.Empty;
+                    Discount = string.Empty;
                     SelectedType = null;
-
                 },
                 (p) => true
             );
-            // In the constructor, initialize the command:
+
+            // Command xuất Excel - chỉ khi có dữ liệu bệnh nhân
             ExportExcelCommand = new RelayCommand<object>(
                 p => ExportToExcel(),
                 p => PatientList != null && PatientList.Count > 0
@@ -397,27 +519,32 @@ namespace ClinicManagement.ViewModels
         }
 
         #endregion
+
+        /// <summary>
+        /// Thực hiện thêm loại bệnh nhân mới
+        /// Bao gồm validation, kiểm tra trùng lặp và sử dụng transaction
+        /// </summary>
         private void ExecuteAddNewType()
         {
             try
             {
-                // Enable validation for all fields when user submits form
+                // Bật validation cho tất cả field khi user submit form
                 _isValidating = true;
                 _touchedFields.Add(nameof(TypeName));
                 _touchedFields.Add(nameof(Discount));
 
-                // Trigger validation by notifying property changes
+                // Kích hoạt validation bằng cách thông báo property changes
                 OnPropertyChanged(nameof(TypeName));
                 OnPropertyChanged(nameof(Discount));
 
-                // Check for validation errors
+                // Kiểm tra lỗi validation
                 if (HasErrors)
                 {
                     MessageBoxService.ShowWarning("Vui lòng sửa các lỗi trước khi thêm loại bệnh nhân mới.", "Lỗi thông tin");
                     return;
                 }
 
-                // Check if the patient type already exists
+                // Kiểm tra loại bệnh nhân đã tồn tại chưa
                 bool isExist = DataProvider.Instance.Context.PatientTypes
                       .Any(pt => pt.TypeName.Trim().ToLower() == TypeName.Trim().ToLower() && pt.IsDeleted == false);
 
@@ -427,13 +554,14 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Try to parse the discount value before starting the transaction
+                // Thử parse giá trị discount trước khi bắt đầu transaction
                 if (!decimal.TryParse(Discount, out decimal parsedDiscount))
                 {
                     MessageBoxService.ShowWarning("Vui lòng nhập giảm giá hợp lệ (số thực).", "Lỗi nhập liệu");
                     return;
                 }
-                // Confirm with user before proceeding
+
+                // Xác nhận với người dùng trước khi tiếp tục
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn thêm loại bệnh nhân '{TypeName}' không?",
                     "Xác Nhận Thêm"
@@ -442,12 +570,12 @@ namespace ClinicManagement.ViewModels
                 if (!result)
                     return;
 
-                // Use transaction to ensure data integrity
+                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
                     try
                     {
-                        // Create and save the new patient type
+                        // Tạo và lưu loại bệnh nhân mới
                         var newPatientType = new PatientType()
                         {
                             TypeName = TypeName.Trim(),
@@ -458,31 +586,31 @@ namespace ClinicManagement.ViewModels
                         DataProvider.Instance.Context.PatientTypes.Add(newPatientType);
                         DataProvider.Instance.Context.SaveChanges();
 
-                        // Commit the transaction when all operations succeed
+                        // Commit transaction khi tất cả thao tác thành công
                         transaction.Commit();
 
-                        // Show success message
+                        // Hiển thị thông báo thành công
                         MessageBoxService.ShowSuccess(
                             "Đã thêm loại bệnh nhân thành công!",
                             "Thành Công"
                         );
 
-                        // Refresh data after successful add
+                        // Refresh dữ liệu sau khi thêm thành công
                         LoadData();
                     }
                     catch (Exception ex)
                     {
-                        // Rollback transaction if any error occurs
+                        // Rollback transaction nếu có lỗi xảy ra
                         transaction.Rollback();
 
-                        // Re-throw the exception to be handled in outer catch block
+                        // Ném lại exception để xử lý ở catch block bên ngoài
                         throw;
                     }
                 }
             }
             catch (DbUpdateException ex)
             {
-                // Handle database-related errors
+                // Xử lý lỗi liên quan đến database
                 MessageBoxService.ShowError(
                      $"Không thể thêm loại bệnh nhân: {ex.InnerException?.Message ?? ex.Message}",
                      "Lỗi Cơ Sở Dữ Liệu"
@@ -490,7 +618,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                // Handle general errors
+                // Xử lý lỗi chung
                 MessageBoxService.ShowError(
                      $"Đã xảy ra lỗi không mong muốn: {ex.Message}",
                      "Lỗi"
@@ -498,6 +626,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Thực hiện chỉnh sửa loại bệnh nhân
+        /// Kiểm tra trùng lặp (ngoại trừ chính nó) và sử dụng transaction
+        /// </summary>
         private void ExecuteEditType()
         {
             try
@@ -537,7 +669,7 @@ namespace ClinicManagement.ViewModels
                             return;
                         }
 
-                        // Kiểm tra Discount
+                        // Kiểm tra và parse Discount
                         if (decimal.TryParse(Discount, out decimal parsedDiscount))
                         {
                             patientTypeToUpdate.TypeName = TypeName;
@@ -553,7 +685,7 @@ namespace ClinicManagement.ViewModels
                                  "Thành Công"
                             );
 
-                            // Refresh data after edit
+                            // Refresh dữ liệu sau khi chỉnh sửa
                             LoadData();
                         }
                         else
@@ -587,6 +719,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Thực hiện xóa mềm loại bệnh nhân
+        /// Đánh dấu IsDeleted = true thay vì xóa khỏi database
+        /// </summary>
         private void ExecuteDeleteType()
         {
             try
@@ -629,7 +765,7 @@ namespace ClinicManagement.ViewModels
                             "Xóa Thành Công"
                         );
 
-                        // Refresh data after delete
+                        // Refresh dữ liệu sau khi xóa
                         LoadData();
                         SelectedType = null;
                     }
@@ -652,6 +788,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Kiểm tra điều kiện có thể thực hiện lệnh Add
+        /// Yêu cầu TypeName không rỗng và không có lỗi validation
+        /// </summary>
+        /// <returns>True nếu có thể thực hiện Add</returns>
         private bool CanExecuteAddCommand()
         {
             if (TypeName == null || string.IsNullOrWhiteSpace(TypeName) || HasErrors)
@@ -660,6 +801,11 @@ namespace ClinicManagement.ViewModels
             return true;
         }
 
+        /// <summary>
+        /// Kiểm tra điều kiện có thể thực hiện lệnh Edit
+        /// Yêu cầu có SelectedType, TypeName không rỗng, không có lỗi và có thay đổi
+        /// </summary>
+        /// <returns>True nếu có thể thực hiện Edit</returns>
         private bool CanExecuteEditCommand()
         {
             if (SelectedType == null)
@@ -671,13 +817,18 @@ namespace ClinicManagement.ViewModels
             if (HasErrors)
                 return false;
 
-            // Only check TypeName comparison if SelectedType is not null
+            // Chỉ kiểm tra so sánh TypeName nếu SelectedType không null
             if (TypeName == SelectedType.TypeName)
                 return false;
 
             return true;
         }
 
+        /// <summary>
+        /// Kiểm tra điều kiện có thể thực hiện lệnh Delete
+        /// Yêu cầu có SelectedType và TypeName không rỗng
+        /// </summary>
+        /// <returns>True nếu có thể thực hiện Delete</returns>
         private bool CanExecuteDeleteCommand()
         {
             if (SelectedType == null)
@@ -686,26 +837,28 @@ namespace ClinicManagement.ViewModels
             if (string.IsNullOrWhiteSpace(TypeName))
                 return false;
 
-       
-
             return true;
         }
 
+        /// <summary>
+        /// Cập nhật quyền dựa trên vai trò của tài khoản hiện tại
+        /// Chỉ Admin và Manager mới có quyền thao tác với loại bệnh nhân
+        /// </summary>
         private void UpdatePermissions()
         {
-            // Default to no permissions
+            // Mặc định không có quyền gì
             CanAddPatientType = false;
             CanEditPatientType = false;
             CanDeletePatientType = false;
 
-            // Check if the current account exists
+            // Kiểm tra xem tài khoản hiện tại có tồn tại không
             if (CurrentAccount == null)
                 return;
 
-            // Check role-based permissions
+            // Kiểm tra quyền dựa trên vai trò
             string role = CurrentAccount.Role?.Trim() ?? string.Empty;
 
-            // Set permissions based on role
+            // Thiết lập quyền dựa trên vai trò
             switch (role)
             {
                 case UserRoles.Admin:
@@ -719,24 +872,26 @@ namespace ClinicManagement.ViewModels
                 case UserRoles.Pharmacist:
                 case UserRoles.Cashier:
                 default:
-                    // Non-administrative roles have no permissions to modify patient types
+                    // Các vai trò không phải quản trị không có quyền thay đổi loại bệnh nhân
                     CanAddPatientType = false;
                     CanEditPatientType = false;
                     CanDeletePatientType = false;
                     break;
             }
 
-            // Force command CanExecute to be reevaluated
+            // Buộc command CanExecute được đánh giá lại
             CommandManager.InvalidateRequerySuggested();
         }
 
-   
-   
-
         #region Data Loading Methods
 
+        /// <summary>
+        /// Tải tất cả dữ liệu cần thiết cho ViewModel
+        /// Bao gồm bệnh nhân, loại bệnh nhân và thiết lập command
+        /// </summary>
         public void LoadData()
         {
+            // Tải danh sách bệnh nhân gốc với thông tin loại bệnh nhân
             _AllPatients = new ObservableCollection<Patient>(
                 DataProvider.Instance.Context.Patients
                 .Include(p => p.PatientType)
@@ -744,40 +899,53 @@ namespace ClinicManagement.ViewModels
                 .ToList()
             );
 
+            // Copy vào danh sách hiển thị
             PatientList = new ObservableCollection<Patient>(_AllPatients);
 
+            // Tải danh sách loại bệnh nhân
             PatientTypeList = new ObservableCollection<PatientType>(
                 DataProvider.Instance.Context.PatientTypes
                 .Where(pt => (bool)!pt.IsDeleted)
                 .ToList()
             );
 
+            // Thiết lập command xem chi tiết bệnh nhân
             OpenPatientDetailsCommand = new RelayCommand<Patient>(
                 (p) => OpenPatientDetails(p),
                 (p) => p != null
                 );
+
+            // Kiểm tra và nâng cấp bệnh nhân VIP tự động
             CheckAndUpgradePatients();
         }
 
+        /// <summary>
+        /// Mở cửa sổ chi tiết bệnh nhân
+        /// Tải đầy đủ thông tin bệnh nhân và refresh dữ liệu sau khi đóng
+        /// </summary>
+        /// <param name="patient">Bệnh nhân cần xem chi tiết</param>
         private void OpenPatientDetails(Patient patient)
         {
             if (patient == null) return;
 
             var viewModel = new PatientDetailsWindowViewModel();
-            viewModel.Patient = patient;  // This will now properly set all derived properties
-            
+            viewModel.Patient = patient;  // Sẽ tự động thiết lập tất cả thuộc tính liên quan
+
             var detailsWindow = new PatientDetailsWindow
             {
                 DataContext = viewModel
             };
             detailsWindow.ShowDialog();
-            LoadData();  // Refresh data after the details window is closed
+            LoadData();  // Refresh dữ liệu sau khi cửa sổ chi tiết đóng
         }
 
         #endregion
 
         #region Filter Methods
 
+        /// <summary>
+        /// Khởi tạo các command liên quan đến filter và tìm kiếm
+        /// </summary>
         private void InitializeFilterCommands()
         {
             SearchCommand = new RelayCommand<object>(
@@ -808,42 +976,67 @@ namespace ClinicManagement.ViewModels
                 (p) => ExecuteResetFilters(),
                 (p) => true
             );
+
+            // Command tự động nâng cấp bệnh nhân VIP
             AutoUpgradePatientsCommand = new RelayCommand<object>(
               (p) => CheckAndUpgradePatients(),
               (p) => true
             );
         }
 
+        /// <summary>
+        /// Thực hiện tìm kiếm - áp dụng filter hiện tại
+        /// </summary>
         private void ExecuteSearch()
         {
             ApplyFilters();
         }
+
+        /// <summary>
+        /// Thực hiện filter tất cả - áp dụng filter hiện tại
+        /// </summary>
         private void ExecuteAllFilter()
         {
             ApplyFilters();
         }
 
+        /// <summary>
+        /// Thực hiện filter VIP - set checkbox VIP
+        /// </summary>
         private void ExecuteVIPFilter()
         {
             IsVIPSelected = true;
         }
 
+        /// <summary>
+        /// Thực hiện filter bảo hiểm - set checkbox bảo hiểm
+        /// </summary>
         private void ExecuteInsuranceFilter()
         {
             IsInsuranceSelected = true;
         }
 
+        /// <summary>
+        /// Thực hiện filter thường - set checkbox thường
+        /// </summary>
         private void ExecuteNormalFilter()
         {
             IsNormalSelected = true;
         }
 
+        /// <summary>
+        /// Thực hiện auto filter khi có thay đổi trong điều kiện lọc
+        /// Tự động kích hoạt khi thay đổi ngày hoặc loại bệnh nhân
+        /// </summary>
         private void ExecuteAutoFilter()
         {
-            // Lọc tự động khi thay đổi ngày hoặc loại bệnh nhân
             ApplyFilters();
         }
 
+        /// <summary>
+        /// Reset tất cả filter về trạng thái ban đầu
+        /// Hiển thị tất cả bệnh nhân
+        /// </summary>
         private void ExecuteResetFilters()
         {
             SelectedDate = null;
@@ -856,6 +1049,10 @@ namespace ClinicManagement.ViewModels
             PatientList = new ObservableCollection<Patient>(_AllPatients);
         }
 
+        /// <summary>
+        /// Áp dụng tất cả điều kiện filter lên danh sách bệnh nhân
+        /// Lọc theo ngày tạo, loại bệnh nhân và từ khóa tìm kiếm
+        /// </summary>
         private void ApplyFilters()
         {
             if (_AllPatients == null || _AllPatients.Count == 0)
@@ -891,6 +1088,12 @@ namespace ClinicManagement.ViewModels
             PatientList = new ObservableCollection<Patient>(filteredList.ToList());
         }
 
+        /// <summary>
+        /// Lấy ID loại bệnh nhân theo tên
+        /// Sử dụng cho việc set FilterPatientTypeId khi chọn checkbox
+        /// </summary>
+        /// <param name="typeName">Tên loại bệnh nhân</param>
+        /// <returns>ID loại bệnh nhân hoặc null nếu không tìm thấy</returns>
         private int? GetPatientTypeIdByName(string typeName)
         {
             var patientType = PatientTypeList?.FirstOrDefault(pt =>
@@ -901,11 +1104,16 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region Validation
+
+        /// <summary>
+        /// Indexer cho IDataErrorInfo - thực hiện validation cho từng property
+        /// Chỉ validate khi người dùng đã tương tác với form hoặc khi submit
+        /// </summary>
         public string this[string columnName]
         {
             get
             {
-                // Don't validate until user has interacted with the form or when submitting
+                // Chỉ validate khi user đã tương tác với form hoặc khi submit
                 if (!_isValidating && !_touchedFields.Contains(columnName))
                     return null;
 
@@ -935,23 +1143,29 @@ namespace ClinicManagement.ViewModels
                 return error;
             }
         }
-    
 
+        /// <summary>
+        /// Kiểm tra xem có lỗi validation nào không
+        /// Chỉ kiểm tra TypeName vì Discount là optional
+        /// </summary>
         public bool HasErrors
         {
             get
             {
                 return !string.IsNullOrEmpty(this[nameof(TypeName)]);
-                       
             }
         }
         #endregion
 
+        /// <summary>
+        /// Xuất danh sách bệnh nhân ra file Excel
+        /// Sử dụng ClosedXML với progress dialog và background thread
+        /// </summary>
         private void ExportToExcel()
         {
             try
             {
-                // Create a save file dialog
+                // Tạo dialog chọn nơi lưu file
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
                     Filter = "Excel files (*.xlsx)|*.xlsx",
@@ -962,10 +1176,10 @@ namespace ClinicManagement.ViewModels
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Create and show progress dialog
+                    // Tạo và hiển thị progress dialog
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Start export operation in background thread
+                    // Bắt đầu thao tác xuất trong background thread
                     Task.Run(() =>
                     {
                         try
@@ -974,10 +1188,10 @@ namespace ClinicManagement.ViewModels
                             {
                                 var worksheet = workbook.Worksheets.Add("Danh sách bệnh nhân");
 
-                                // Report progress: 5% - Created workbook
+                                // Báo cáo tiến trình: 5% - Tạo workbook
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
-                                // Add title (merged cells)
+                                // Thêm tiêu đề (merged cells)
                                 worksheet.Cell(1, 1).Value = "DANH SÁCH BỆNH NHÂN";
                                 var titleRange = worksheet.Range(1, 1, 1, 9);
                                 titleRange.Merge();
@@ -985,18 +1199,18 @@ namespace ClinicManagement.ViewModels
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
+                                // Thêm ngày hiện tại
                                 worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
                                 var dateRange = worksheet.Range(2, 1, 2, 9);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Report progress: 10% - Added title
+                                // Báo cáo tiến trình: 10% - Thêm tiêu đề
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Add headers (with spacing of 4 cells from title)
-                                int headerRow = 6; // Row 6 (leaving 3 blank rows after title)
+                                // Thêm headers (với khoảng cách 4 cell từ tiêu đề)
+                                int headerRow = 6; // Hàng 6 (để lại 3 hàng trống sau tiêu đề)
                                 worksheet.Cell(headerRow, 1).Value = "Mã BN";
                                 worksheet.Cell(headerRow, 2).Value = "Bảo hiểm y tế";
                                 worksheet.Cell(headerRow, 3).Value = "Họ và tên";
@@ -1007,24 +1221,24 @@ namespace ClinicManagement.ViewModels
                                 worksheet.Cell(headerRow, 8).Value = "Địa chỉ";
                                 worksheet.Cell(headerRow, 9).Value = "Ngày đăng kí";
 
-                                // Style header row
+                                // Style cho header row
                                 var headerRange = worksheet.Range(headerRow, 1, headerRow, 9);
                                 headerRange.Style.Font.Bold = true;
                                 headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
                                 headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add borders to header
+                                // Thêm viền cho header
                                 headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                 headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
-                                // Report progress: 20% - Headers added
+                                // Báo cáo tiến trình: 20% - Headers thêm xong
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(20));
 
-                                // Add data
-                                int row = headerRow + 1; // Start data from next row after header
+                                // Thêm dữ liệu
+                                int row = headerRow + 1; // Bắt đầu dữ liệu từ hàng tiếp theo sau header
                                 int totalPatients = PatientList.Count;
 
-                                // Create data range (to apply borders later)
+                                // Tạo data range (để áp dụng viền sau)
                                 var dataStartRow = row;
 
                                 for (int i = 0; i < totalPatients; i++)
@@ -1052,25 +1266,25 @@ namespace ClinicManagement.ViewModels
 
                                     row++;
 
-                                    // Update progress based on percentage of patients processed
+                                    // Cập nhật tiến trình dựa trên phần trăm bệnh nhân đã xử lý
                                     int progressValue = 20 + (i * 60 / totalPatients);
                                     Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(progressValue));
 
-                                    // Add a small delay to make the progress visible
+                                    // Thêm độ trễ nhỏ để hiển thị tiến trình
                                     Thread.Sleep(30);
                                 }
 
-                                // Report progress: 80% - Data added
+                                // Báo cáo tiến trình: 80% - Dữ liệu thêm xong
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
 
-                                // Apply borders to the data range
+                                // Áp dụng viền cho data range
                                 if (totalPatients > 0)
                                 {
                                     var dataRange = worksheet.Range(dataStartRow, 1, row - 1, 9);
                                     dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
                                     dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
-                                    // Center-align ID, Date, Gender columns
+                                    // Căn giữa các cột ID, Date, Gender
                                     worksheet.Column(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                     worksheet.Column(4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                     worksheet.Column(5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -1078,49 +1292,48 @@ namespace ClinicManagement.ViewModels
                                     worksheet.Column(9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                 }
 
-                                // Add total row
+                                // Thêm hàng tổng
                                 worksheet.Cell(row + 1, 2).Value = "Tổng số:";
                                 worksheet.Cell(row + 1, 3).Value = totalPatients;
                                 worksheet.Cell(row + 1, 3).Style.Font.Bold = true;
 
-                                // Auto-fit columns
+                                // Auto-fit các cột
                                 worksheet.Columns().AdjustToContents();
 
-                                // Set minimum widths for better readability
+                                // Đặt độ rộng tối thiểu cho khả năng đọc tốt hơn
                                 worksheet.Column(1).Width = 10; // ID
                                 worksheet.Column(3).Width = 25; // Name
                                 worksheet.Column(6).Width = 15; // Patient Type
                                 worksheet.Column(8).Width = 50; // Address
 
-                                // Report progress: 90% - Formatting complete
+                                // Báo cáo tiến trình: 90% - Định dạng hoàn tất
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
 
-                                // Save the workbook
+                                // Lưu workbook
                                 workbook.SaveAs(saveFileDialog.FileName);
 
-                                // Report progress: 100% - File saved
+                                // Báo cáo tiến trình: 100% - File đã lưu
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
 
-                                // Small delay to show 100%
+                                // Độ trễ nhỏ để hiển thị 100%
                                 Thread.Sleep(300);
 
-                                // Close progress dialog
+                                // Đóng progress dialog
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.Close());
 
-                                // Show success message
+                                // Hiển thị thông báo thành công
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     MessageBoxService.ShowSuccess(
                                         $"Đã xuất danh sách bệnh nhân thành công!\nĐường dẫn: {saveFileDialog.FileName}",
                                         "Thành công"
-                                         
                                           );
                                 });
                             }
                         }
                         catch (Exception ex)
                         {
-                            // Close progress dialog on error
+                            // Đóng progress dialog khi có lỗi
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
@@ -1128,13 +1341,12 @@ namespace ClinicManagement.ViewModels
                                 MessageBoxService.ShowError(
                                     $"Lỗi khi xuất Excel: {ex.Message}",
                                     "Lỗi"
-                                     
                                      );
                             });
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // Hiển thị dialog - sẽ block cho đến khi dialog đóng
                     progressDialog.ShowDialog();
                 }
             }
@@ -1143,36 +1355,37 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError(
                     $"Lỗi khi xuất Excel: {ex.Message}",
                     "Lỗi"
-                     
                      );
             }
         }
 
         /// <summary>
-        /// Checks all patients for upgrade eligibility and promotes them to VIP status if they qualify
+        /// Kiểm tra tất cả bệnh nhân để nâng cấp và đưa lên VIP nếu đủ điều kiện
+        /// Điều kiện: chi tiêu >= 8,000,000 VND hoặc có >= 30 hóa đơn đã thanh toán
+        /// Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
         /// </summary>
         public void CheckAndUpgradePatients()
         {
-            // Use transaction to ensure data integrity
+            // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
             using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
             {
                 try
                 {
-                    // Get the VIP patient type - using string comparison that EF Core can translate
+                    // Lấy loại bệnh nhân VIP - sử dụng so sánh string mà EF Core có thể dịch
                     var vipType = DataProvider.Instance.Context.PatientTypes
                         .FirstOrDefault(pt => pt.TypeName.Trim().ToLower() == "vip".ToLower() && pt.IsDeleted != true);
 
                     if (vipType == null)
                         return;
 
-                    // Get the standard patient type - using string comparison that EF Core can translate
+                    // Lấy loại bệnh nhân thường - sử dụng so sánh string mà EF Core có thể dịch
                     var normalType = DataProvider.Instance.Context.PatientTypes
                         .FirstOrDefault(pt => pt.TypeName.Trim().ToLower() == "thường".ToLower() && pt.IsDeleted != true);
 
                     if (normalType == null)
                         return;
 
-                    // Rest of your method remains the same
+                    // Lấy tất cả bệnh nhân thường
                     var regularPatients = DataProvider.Instance.Context.Patients
                         .Where(p => p.PatientTypeId == normalType.PatientTypeId && p.IsDeleted != true)
                         .ToList();
@@ -1180,14 +1393,14 @@ namespace ClinicManagement.ViewModels
                     if (regularPatients.Count == 0)
                         return;
 
-                    // Get all invoices
+                    // Lấy tất cả hóa đơn đã thanh toán
                     var invoices = DataProvider.Instance.Context.Invoices
                         .Where(i => i.Status == "Đã thanh toán")
                         .ToList();
 
                     List<string> upgradedPatients = new List<string>();
 
-                    // Rest of the method remains unchanged
+                    // Kiểm tra từng bệnh nhân thường
                     foreach (var patient in regularPatients)
                     {
                         var patientInvoices = invoices
@@ -1197,8 +1410,8 @@ namespace ClinicManagement.ViewModels
                         decimal totalSpending = patientInvoices.Sum(i => i.TotalAmount);
                         int invoiceCount = patientInvoices.Count;
 
-                        bool qualifiedBySpending = totalSpending >= 8000000;
-                        bool qualifiedByCount = invoiceCount >= 30;
+                        bool qualifiedBySpending = totalSpending >= 8000000; // 8 triệu VND
+                        bool qualifiedByCount = invoiceCount >= 30;          // 30 hóa đơn
 
                         if (qualifiedBySpending || qualifiedByCount)
                         {
@@ -1207,7 +1420,7 @@ namespace ClinicManagement.ViewModels
                         }
                     }
 
-                    // Save changes if any patients were upgraded
+                    // Lưu thay đổi nếu có bệnh nhân được nâng cấp
                     if (upgradedPatients.Count > 0)
                     {
                         DataProvider.Instance.Context.SaveChanges();
@@ -1237,11 +1450,5 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
-
-
-
-
-
     }
-
 }

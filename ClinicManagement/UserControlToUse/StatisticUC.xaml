@@ -87,6 +87,8 @@
                             <TextBlock Text="{Binding MonthRevenue, StringFormat={}{0:N0}đ}" 
                                  FontSize="18" Opacity="0.8"/>
                         </StackPanel>
+                        <TextBlock Text="So với cùng thời điểm tháng trước" 
+                          Margin="0,4,0,0"/>
                         <TextBlock Text="{Binding RevenueGrowth}" 
                              Foreground="#4CAF50" Margin="0,4,0,0"/>
                     </StackPanel>
@@ -290,13 +292,11 @@
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
                                                                         <Setter Property="Background" Value="#FFF8E8"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã xác nhận">
-                                                                        <Setter Property="Background" Value="#E1F5FE"/>
-                                                                    </DataTrigger>
+                                                                    
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đang khám">
                                                                         <Setter Property="Background" Value="#E8F5E9"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Hoàn thành">
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Đã khám">
                                                                         <Setter Property="Background" Value="#F3E5F5"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
@@ -312,13 +312,11 @@
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đang chờ">
                                                                             <Setter Property="Foreground" Value="#E65100"/>
                                                                         </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã xác nhận">
-                                                                            <Setter Property="Foreground" Value="#01579B"/>
-                                                                        </DataTrigger>
+                                                                       
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đang khám">
                                                                             <Setter Property="Foreground" Value="#1B5E20"/>
                                                                         </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Status}" Value="Hoàn thành">
+                                                                        <DataTrigger Binding="{Binding Status}" Value="Đã khám">
                                                                             <Setter Property="Foreground" Value="#4A148C"/>
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Status}" Value="Đã hủy">
@@ -537,7 +535,7 @@
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
 
-                                        <TextBlock Grid.Row="0" Text="Top bệnh nhân VIP (chi tiêu nhiều nhất)" 
+                                        <TextBlock Grid.Row="0" Text="Top bệnh nhân chi tiêu nhiều nhất" 
                     FontWeight="Medium" Margin="0,0,0,15"/>
 
                                         <ListView Grid.Row="1" ItemsSource="{Binding TopVIPPatients}"
@@ -560,6 +558,8 @@
                                                             <TextBlock Text="{Binding FullName}" 
                                         FontWeight="Medium" FontSize="14"/>
                                                             <TextBlock Text="{Binding Phone}" 
+                                        FontSize="12" Opacity="0.7"/> 
+                                                            <TextBlock Text="{Binding PatientType}" 
                                         FontSize="12" Opacity="0.7"/>
                                                         </StackPanel>
 
@@ -616,7 +616,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                          
                             </Grid.RowDefinitions>
 
                             <!-- Tổng số lịch hẹn theo trạng thái -->
@@ -627,66 +627,73 @@
                                         <RowDefinition Height="300"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Text="Tổng số lịch hẹn theo trạng thái" 
-                                         FontWeight="Medium" Margin="0,0,0,15"/>
+                                    <TextBlock Grid.Row="0" Text="Số lượng bệnh nhân của từng bác sĩ" 
+   FontWeight="Medium" Margin="0,0,0,15"/>
 
-                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentStatusSeries}" 
-                                              LegendLocation="Top" DisableAnimations="False">
+                                    <lvc:CartesianChart Grid.Row="1" Series="{Binding PatientsByStaffseries}" 
+            LegendLocation="Top" DisableAnimations="False">
                                         <lvc:CartesianChart.AxisX>
-                                            <lvc:Axis Title="Trạng thái" Labels="{Binding AppointmentStatusLabels}"/>
+                                            <lvc:Axis Title="Bác sĩ" Labels="{Binding DoctorLabels}" 
+         LabelsRotation="45"/>
                                         </lvc:CartesianChart.AxisX>
-                                        <lvc:CartesianChart.AxisY>
-                                            <lvc:Axis Title="Số lượng" LabelFormatter="{Binding IntegerFormatter}" MinValue="0" />
-                                        </lvc:CartesianChart.AxisY>
                                     </lvc:CartesianChart>
                                 </Grid>
                             </materialDesign:Card>
 
-                            <!-- Tỷ lệ hủy lịch hẹn và Peak hours -->
+
+                        
                             <Grid Grid.Row="1">
-                          
-                                <!-- Peak hours đặt lịch nhiều nhất -->
-                                <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
-                                    <Grid Margin="15">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="300"/>
-                                        </Grid.RowDefinitions>
-
-                                        <TextBlock Grid.Row="0" Text="Peak hours đặt lịch nhiều nhất" 
-                                             FontWeight="Medium" Margin="0,0,0,15"/>
-
-                                        <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentPeakHoursSeries}" 
-                                                      LegendLocation="Top" DisableAnimations="False">
-                                            <lvc:CartesianChart.AxisX>
-                                                <lvc:Axis Title="Giờ" Labels="{Binding HourLabels}"/>
-                                            </lvc:CartesianChart.AxisX>
-                                        </lvc:CartesianChart>
-                                    </Grid>
-                                </materialDesign:Card>
-                            </Grid>
-
-
-                            <Grid Grid.Row="2">
 
                                 <!-- Số lượng bệnh nhân của từng bác sĩ -->
                                 <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
                                     <Grid Margin="15">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="300"/>
-                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <materialDesign:Card Grid.Column="0" Margin="8" UniformCornerRadius="8">
+                                            <Grid Margin="15">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="300"/>
+                                                </Grid.RowDefinitions>
 
-                                        <TextBlock Grid.Row="0" Text="Số lượng bệnh nhân của từng bác sĩ" 
-                                             FontWeight="Medium" Margin="0,0,0,15"/>
+                                        
 
-                                        <lvc:CartesianChart Grid.Row="1" Series="{Binding PatientsByStaffseries}" 
-                                                      LegendLocation="Top" DisableAnimations="False">
-                                            <lvc:CartesianChart.AxisX>
-                                                <lvc:Axis Title="Bác sĩ" Labels="{Binding DoctorLabels}" 
-                                                   LabelsRotation="45"/>
-                                            </lvc:CartesianChart.AxisX>
-                                        </lvc:CartesianChart>
+                                            <TextBlock Grid.Row="0" Text="Tổng số lịch hẹn theo trạng thái" 
+        FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                            <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentStatusSeries}" 
+             LegendLocation="Top" DisableAnimations="False">
+                                                <lvc:CartesianChart.AxisX>
+                                                    <lvc:Axis Title="Trạng thái" Labels="{Binding AppointmentStatusLabels}"/>
+                                                </lvc:CartesianChart.AxisX>
+                                                <lvc:CartesianChart.AxisY>
+                                                    <lvc:Axis Title="Số lượng" LabelFormatter="{Binding IntegerFormatter}" MinValue="0" />
+                                                </lvc:CartesianChart.AxisY>
+                                            </lvc:CartesianChart>
+                                            </Grid>
+                                        </materialDesign:Card>
+
+                                        <!-- Peak hours đặt lịch nhiều nhất -->
+                                        <materialDesign:Card Grid.Column="1" Margin="8" UniformCornerRadius="8">
+                                            <Grid Margin="15">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="300"/>
+                                                </Grid.RowDefinitions>
+
+                                                <TextBlock Grid.Row="0" Text="Peak hours đặt lịch nhiều nhất" 
+                FontWeight="Medium" Margin="0,0,0,15"/>
+
+                                                <lvc:CartesianChart Grid.Row="1" Series="{Binding AppointmentPeakHoursSeries}" 
+                         LegendLocation="Top" DisableAnimations="False">
+                                                    <lvc:CartesianChart.AxisX>
+                                                        <lvc:Axis Title="Giờ" Labels="{Binding HourLabels}"/>
+                                                    </lvc:CartesianChart.AxisX>
+                                                </lvc:CartesianChart>
+                                            </Grid>
+                                        </materialDesign:Card>
                                     </Grid>
                                 </materialDesign:Card>
 

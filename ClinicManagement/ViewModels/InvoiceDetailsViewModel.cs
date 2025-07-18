@@ -7,21 +7,30 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel quản lý chi tiết hóa đơn - hiển thị thông tin chi tiết và xử lý thanh toán
+    /// Triển khai từ BaseViewModel để hỗ trợ INotifyPropertyChanged
+    /// </summary>
     public class InvoiceDetailsViewModel : BaseViewModel
     {
         #region Properties
+        /// <summary>
+        /// Cửa sổ thanh toán - được tạo động khi người dùng chọn thanh toán
+        /// </summary>
         private Window _paymentWindow;
-        // The main invoice being displayed
+
+        /// <summary>
+        /// Hóa đơn chính được hiển thị - thuộc tính trung tâm của ViewModel
+        /// Khi được thiết lập sẽ tự động tải các thông tin liên quan
+        /// </summary>
         private Invoice _invoice;
         public Invoice Invoice
         {
@@ -30,13 +39,17 @@ namespace ClinicManagement.ViewModels
             {
                 _invoice = value;
                 OnPropertyChanged();
+                // Tự động tải các thông tin liên quan khi hóa đơn được thiết lập
                 LoadInvoiceDetails();
                 CheckMedicalRecord();
                 CheckPatient();
             }
         }
 
-        // Collection of invoice line items
+        /// <summary>
+        /// Danh sách các chi tiết hóa đơn (thuốc, dịch vụ) 
+        /// Sử dụng ObservableCollection để tự động cập nhật UI khi có thay đổi
+        /// </summary>
         private ObservableCollection<InvoiceDetail> _invoiceDetails;
         public ObservableCollection<InvoiceDetail> InvoiceDetails
         {
@@ -45,11 +58,15 @@ namespace ClinicManagement.ViewModels
             {
                 _invoiceDetails = value;
                 OnPropertyChanged();
+                // Tự động tính toán lại tổng tiền khi danh sách chi tiết thay đổi
                 CalculateInvoiceTotals();
             }
         }
 
-        // Related medical record (if this is a medical examination invoice)
+        /// <summary>
+        /// Hồ sơ bệnh án liên quan (nếu hóa đơn này là hóa đơn khám bệnh)
+        /// Chỉ có giá trị với hóa đơn loại "Khám bệnh" hoặc "Khám và bán thuốc"
+        /// </summary>
         private MedicalRecord _medicalRecord;
         public MedicalRecord MedicalRecord
         {
@@ -61,7 +78,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Flags for conditional UI display
+        /// <summary>
+        /// Cờ hiệu kiểm tra xem hóa đơn có thông tin bệnh nhân hay không
+        /// Được sử dụng để điều khiển hiển thị UI có điều kiện
+        /// </summary>
         private bool _hasPatient;
         public bool HasPatient
         {
@@ -73,6 +93,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Cờ hiệu kiểm tra xem hóa đơn có hồ sơ bệnh án liên quan hay không
+        /// Được sử dụng để điều khiển hiển thị thông tin bệnh án trong UI
+        /// </summary>
         private bool _hasMedicalRecord;
         public bool HasMedicalRecord
         {
@@ -84,6 +108,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Trạng thái thanh toán của hóa đơn
+        /// True = đã thanh toán, False = chưa thanh toán
+        /// </summary>
         private bool _isPaid;
         public bool IsPaid
         {
@@ -92,12 +120,15 @@ namespace ClinicManagement.ViewModels
             {
                 _isPaid = value;
                 OnPropertyChanged();
-                // Also update IsNotPaid to ensure they are always opposite
+                // Đảm bảo IsNotPaid luôn là trạng thái ngược lại
                 IsNotPaid = !value;
             }
         }
 
-        // Payment related properties
+        /// <summary>
+        /// Phương thức thanh toán đã được sử dụng (Tiền mặt, Chuyển khoản, etc.)
+        /// Được lưu trữ và hiển thị sau khi thanh toán hoàn tất
+        /// </summary>
         private string _paymentMethod;
         public string PaymentMethod
         {
@@ -109,6 +140,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Ngày giờ thực hiện thanh toán
+        /// Được ghi nhận tự động khi thực hiện thanh toán thành công
+        /// </summary>
         private DateTime? _paymentDate;
         public DateTime? PaymentDate
         {
@@ -120,7 +155,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // For payment dialog
+        /// <summary>
+        /// Lựa chọn thanh toán bằng tiền mặt trong giao diện thanh toán
+        /// Mặc định là true (được chọn sẵn)
+        /// </summary>
         private bool _isCashPayment = true;
         public bool IsCashPayment
         {
@@ -129,7 +167,7 @@ namespace ClinicManagement.ViewModels
             {
                 _isCashPayment = value;
                 OnPropertyChanged();
-                // If toggling payment type, need to set BankTransfer to opposite
+                // Đảm bảo chỉ một phương thức thanh toán được chọn tại một thời điểm
                 if (_isBankTransfer == _isCashPayment)
                 {
                     _isBankTransfer = !value;
@@ -138,6 +176,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Lựa chọn thanh toán bằng chuyển khoản ngân hàng
+        /// Khi được chọn sẽ hiển thị mã QR cho việc thanh toán
+        /// </summary>
         private bool _isBankTransfer;
         public bool IsBankTransfer
         {
@@ -146,7 +188,7 @@ namespace ClinicManagement.ViewModels
             {
                 _isBankTransfer = value;
                 OnPropertyChanged();
-                // If toggling payment type, need to set CashPayment to opposite
+                // Đảm bảo chỉ một phương thức thanh toán được chọn tại một thời điểm
                 if (_isCashPayment == _isBankTransfer)
                 {
                     _isCashPayment = !value;
@@ -155,6 +197,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Hình ảnh mã QR để thanh toán (khi chọn chuyển khoản)
+        /// Hiện tại sử dụng hình ảnh tĩnh từ resources
+        /// </summary>
         private BitmapImage _qrCodeImage;
         public BitmapImage QrCodeImage
         {
@@ -166,7 +212,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Financial calculations
+        /// <summary>
+        /// Tổng tiền trước khi áp dụng giảm giá và thuế
+        /// Được tính từ tổng các mục trong InvoiceDetails
+        /// </summary>
         private decimal _subTotal;
         public decimal SubTotal
         {
@@ -178,6 +227,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tổng giảm giá (thuộc tính cũ, hiện không sử dụng)
+        /// Được thay thế bởi DiscountAmount
+        /// </summary>
         private decimal _totalDiscount;
         public decimal TotalDiscount
         {
@@ -189,6 +242,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Số tiền thuế VAT được tính từ phần trăm thuế trong hóa đơn
+        /// Áp dụng sau khi đã trừ giảm giá
+        /// </summary>
         private decimal _taxAmount;
         public decimal TaxAmount
         {
@@ -200,17 +257,23 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tổng số tiền cuối cùng phải thanh toán
+        /// Được tính theo công thức: SubTotal - DiscountAmount + TaxAmount
+        /// </summary>
         public decimal TotalAmount
         {
             get
             {
-                // Calculate the total from components:
-                // Subtotal - Discount + Tax
+                // Công thức tính: Tạm tính - Giảm giá + Thuế
                 return SubTotal - DiscountAmount + TaxAmount;
             }
         }
 
-        // Properties needed for the updated XAML
+        /// <summary>
+        /// Trạng thái chưa thanh toán (ngược lại của IsPaid)
+        /// Được sử dụng để điều khiển hiển thị UI
+        /// </summary>
         private bool _isNotPaid;
         public bool IsNotPaid
         {
@@ -222,6 +285,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Phần trăm giảm giá theo loại bệnh nhân
+        /// Được lấy từ PatientType của bệnh nhân (nếu có)
+        /// </summary>
         private decimal? _patientTypeDiscount;
         public decimal? PatientTypeDiscount
         {
@@ -233,6 +300,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Số tiền giảm giá thực tế (đã tính theo phần trăm)
+        /// Được tính từ SubTotal và phần trăm giảm giá
+        /// </summary>
         private decimal _discountAmount;
         public decimal DiscountAmount
         {
@@ -241,7 +312,7 @@ namespace ClinicManagement.ViewModels
             {
                 _discountAmount = value;
                 OnPropertyChanged();
-                // Update TotalAmount when DiscountAmount changes
+                // Cập nhật TotalAmount khi số tiền giảm giá thay đổi
                 OnPropertyChanged();
             }
         }
@@ -250,132 +321,187 @@ namespace ClinicManagement.ViewModels
 
         #region Commands
 
+        /// <summary>
+        /// Command xử lý thanh toán - mở cửa sổ thanh toán
+        /// Chỉ khả dụng khi hóa đơn chưa thanh toán
+        /// </summary>
         public ICommand ProcessPaymentCommand { get; set; }
+
+        /// <summary>
+        /// Command đóng cửa sổ hiện tại
+        /// Tìm và đóng cửa sổ thông qua nhiều phương thức khác nhau
+        /// </summary>
         public ICommand CloseWindow { get; set; }
+
+        /// <summary>
+        /// Command tạo mã QR (hiện chưa được sử dụng)
+        /// Dự phòng cho tính năng tạo mã QR động
+        /// </summary>
         public ICommand GenerateQRCodeCommand { get; set; }
+
+        /// <summary>
+        /// Command xác nhận thanh toán - thực hiện thanh toán cuối cùng
+        /// Cập nhật trạng thái hóa đơn và tồn kho
+        /// </summary>
         public ICommand ConfirmPaymentCommand { get; set; }
+
+        /// <summary>
+        /// Command áp dụng giảm giá theo loại bệnh nhân
+        /// Chỉ khả dụng khi có thông tin loại bệnh nhân
+        /// </summary>
         public ICommand ApplyPatientDiscountCommand { get; set; }
+
+        /// <summary>
+        /// Command tính lại tổng tiền
+        /// Được sử dụng khi có thay đổi về giảm giá hoặc thuế
+        /// </summary>
         public ICommand RecalculateTotalsCommand { get; set; }
+
+        /// <summary>
+        /// Command chỉnh sửa hóa đơn bán thuốc
+        /// Chuyển về tab bán thuốc để chỉnh sửa hóa đơn
+        /// </summary>
         public ICommand EditSaleCommand { get; set; }
-        public ICommand ExportInvoiceCommand { get; set; } 
+
+        /// <summary>
+        /// Command xuất hóa đơn ra file PDF
+        /// Sử dụng thư viện QuestPDF để tạo báo cáo
+        /// </summary>
+        public ICommand ExportInvoiceCommand { get; set; }
 
         #endregion
 
-        // Constructor
+        /// <summary>
+        /// Constructor khởi tạo ViewModel với hóa đơn cụ thể
+        /// </summary>
+        /// <param name="invoice">Hóa đơn cần hiển thị chi tiết. Có thể null.</param>
         public InvoiceDetailsViewModel(Invoice invoice = null)
         {
             InitializeCommands();
-           
+
             if (invoice != null)
             {
                 Invoice = invoice;
             }
         }
-        
 
+        /// <summary>
+        /// Khởi tạo tất cả các command với logic thực thi và điều kiện kích hoạt
+        /// </summary>
         private void InitializeCommands()
         {
-           
-
+            // Command xử lý thanh toán - chỉ khả dụng khi hóa đơn chưa thanh toán
             ProcessPaymentCommand = new RelayCommand<object>(
                 p => ProcessPayment(),
                 p => Invoice != null && Invoice.Status == "Chưa thanh toán");
 
+            // Command đóng cửa sổ - luôn khả dụng
             CloseWindow = new RelayCommand<object>(
                 p =>
                 {
-                    // Try to find the window through different methods
+                    // Tìm cửa sổ để đóng thông qua nhiều phương thức khác nhau
                     Window window = null;
 
-                    // Method 1: If parameter is a Button or other UIElement
+                    // Phương thức 1: Nếu tham số là Button hoặc UIElement khác
                     if (p is UIElement element)
                     {
                         window = Window.GetWindow(element);
                     }
-                    // Method 2: If parameter is already a Window
+                    // Phương thức 2: Nếu tham số đã là Window
                     else if (p is Window w)
                     {
                         window = w;
                     }
-                    // Method 3: Find active window through Application
+                    // Phương thức 3: Tìm cửa sổ đang active thông qua Application
                     else if (Application.Current.Windows.Count > 0)
                     {
-                        // Try to get the window with focus first, otherwise get the main window
+                        // Ưu tiên cửa sổ đang focus, nếu không có thì lấy MainWindow
                         window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                             ?? Application.Current.MainWindow;
                     }
 
-                    // Close the window if found
+                    // Đóng cửa sổ nếu tìm thấy
                     window?.Close();
-                    
+
                 },
                 p => true
             );
+
+            // Command xuất PDF - chỉ khả dụng khi có hóa đơn
             ExportInvoiceCommand = new RelayCommand<object>(
               p => ExportInvoiceToPdf(),
               p => Invoice != null
           );
 
-        
+            // Command xác nhận thanh toán - chỉ khả dụng khi có hóa đơn
             ConfirmPaymentCommand = new RelayCommand<Window>(
                 p => ConfirmPayment(null),
                 p => Invoice != null);
 
+            // Command áp dụng giảm giá bệnh nhân - chỉ khả dụng khi có thông tin giảm giá
             ApplyPatientDiscountCommand = new RelayCommand<object>(
                 p => ApplyPatientDiscount(),
                 p => Invoice != null && Invoice.Patient?.PatientType != null && PatientTypeDiscount.HasValue);
 
+            // Command tính lại tổng tiền - chỉ khả dụng khi có hóa đơn
             RecalculateTotalsCommand = new RelayCommand<object>(
                 p => RecalculateTotals(),
                 p => Invoice != null);
 
+            // Command chỉnh sửa bán thuốc - chỉ khả dụng với hóa đơn bán thuốc chưa thanh toán
             EditSaleCommand = new RelayCommand<Window>(
            parameter => EditSale(parameter),
            parameter => CanEditMedicineSale
        );
         }
 
+        /// <summary>
+        /// Tải chi tiết hóa đơn từ cơ sở dữ liệu
+        /// Bao gồm thông tin thanh toán nếu hóa đơn đã được thanh toán
+        /// </summary>
         private void LoadInvoiceDetails()
         {
             if (Invoice == null) return;
 
             try
             {
-                // Load related invoice details
+                // Tải danh sách chi tiết hóa đơn từ database
                 var invoiceDetails = DataProvider.Instance.Context.InvoiceDetails
                     .Where(d => d.InvoiceId == Invoice.InvoiceId)
                     .ToList();
 
                 InvoiceDetails = new ObservableCollection<InvoiceDetail>(invoiceDetails);
 
-                // Check if invoice is already paid
+                // Kiểm tra trạng thái thanh toán
                 IsPaid = Invoice.Status == "Đã thanh toán";
                 IsNotPaid = !IsPaid;
 
-                // Ensure discount and tax values are initialized
+                // Đảm bảo giá trị giảm giá và thuế được khởi tạo
                 if (Invoice.Discount == null) Invoice.Discount = 0;
-                if (Invoice.Tax == null) Invoice.Tax = 10; // Default 10%
+                if (Invoice.Tax == null) Invoice.Tax = 10; // Mặc định 10%
 
-                // Calculate totals initially
+                // Tính toán tổng tiền ban đầu
                 CalculateInvoiceTotals();
+
+                // Nếu đã thanh toán, trích xuất thông tin thanh toán từ trường Notes
                 if (IsPaid)
                 {
-                    // Store payment information in the Notes field of Invoice
-                    // Format example: "PAYMENT_METHOD:Tiền mặt;PAYMENT_DATE:2023-06-06 14:30:00"
+                    // Thông tin thanh toán được lưu trong trường Notes theo định dạng:
+                    // "Phương thức thanh toán:Tiền mặt;Ngày thanh toán:2023-06-06 14:30:00"
                     if (!string.IsNullOrEmpty(Invoice.Notes) && Invoice.Notes.Contains("Phương thức thanh toán:"))
                     {
                         try
                         {
                             string notes = Invoice.Notes;
 
-                            // Extract payment method
+                            // Trích xuất phương thức thanh toán
                             int methodStartIndex = notes.IndexOf("Phương thức thanh toán:") + "Phương thức thanh toán:".Length;
                             int methodEndIndex = notes.IndexOf(';', methodStartIndex);
                             if (methodEndIndex == -1) methodEndIndex = notes.Length;
 
                             PaymentMethod = notes.Substring(methodStartIndex, methodEndIndex - methodStartIndex);
 
-                            // Extract payment date if available
+                            // Trích xuất ngày thanh toán nếu có
                             if (notes.Contains("Ngày thanh toán:"))
                             {
                                 int dateStartIndex = notes.IndexOf("Ngày thanh toán:") + "Ngày thanh toán:".Length;
@@ -391,14 +517,14 @@ namespace ClinicManagement.ViewModels
                         }
                         catch
                         {
-                            // If parsing fails, just use default values
+                            // Nếu phân tích thất bại, sử dụng giá trị mặc định
                             PaymentMethod = "Không xác định";
                             PaymentDate = Invoice.InvoiceDate;
                         }
                     }
                     else
                     {
-                        // Default values if no payment information is stored
+                        // Giá trị mặc định nếu không có thông tin thanh toán được lưu trữ
                         PaymentMethod = "Không xác định";
                         PaymentDate = Invoice.InvoiceDate;
                     }
@@ -406,35 +532,40 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBoxService.ShowError($"Lỗi khi tải chi tiết hóa đơn: {ex.Message}", "Lỗi"   );
+                MessageBoxService.ShowError($"Lỗi khi tải chi tiết hóa đơn: {ex.Message}", "Lỗi");
             }
         }
-        // Method to handle editing the sale
+
+        /// <summary>
+        /// Xử lý chức năng chỉnh sửa hóa đơn bán thuốc
+        /// Chuyển đến tab bán thuốc với hóa đơn hiện tại để chỉnh sửa
+        /// </summary>
+        /// <param name="window">Cửa sổ hiện tại để đóng sau khi chuyển tab</param>
         private void EditSale(Window window)
         {
             try
             {
-                // Access the MedicineSellViewModel from App resources
+                // Truy cập MedicineSellViewModel từ App resources
                 var medicineSellVM = Application.Current.Resources["MedicineSellVM"] as MedicineSellViewModel;
 
                 if (medicineSellVM == null)
                 {
                     MessageBoxService.ShowError("Không thể khởi tạo màn hình bán thuốc.",
-                                    "Lỗi"    );
+                                    "Lỗi");
                     return;
                 }
 
-                // Set the current invoice for editing
+                // Thiết lập hóa đơn hiện tại để chỉnh sửa
                 medicineSellVM.CurrentInvoice = Invoice;
 
-                // Find and activate the Medicine Sale tab
+                // Tìm và kích hoạt tab Bán thuốc
                 var mainWindow = Application.Current.MainWindow;
                 if (mainWindow == null) return;
 
                 var tabControl = LogicalTreeHelper.FindLogicalNode(mainWindow, "MainTabControl") as TabControl;
                 if (tabControl == null) return;
 
-                // Find the "Bán thuốc" tab
+                // Tìm tab "Bán thuốc"
                 foreach (var item in tabControl.Items)
                 {
                     if (item is TabItem tabItem)
@@ -450,10 +581,10 @@ namespace ClinicManagement.ViewModels
                                     {
                                         if (textBlockElement is TextBlock textBlock && textBlock.Text == "Bán thuốc")
                                         {
-                                            // Switch to medicine sales tab
+                                            // Chuyển đến tab bán thuốc
                                             tabControl.SelectedItem = tabItem;
 
-                                            // Close the current window
+                                            // Đóng cửa sổ hiện tại
                                             window?.Close();
                                             return;
                                         }
@@ -464,24 +595,28 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                // If we couldn't find the tab
+                // Nếu không tìm thấy tab
                 MessageBoxService.ShowWarning("Không tìm thấy tab Bán thuốc.",
                               "Thông báo");
             }
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi chuyển sang màn hình bán thuốc: {ex.Message}",
-                               "Lỗi"   );
+                               "Lỗi");
             }
         }
 
+        /// <summary>
+        /// Kiểm tra và thiết lập thông tin bệnh nhân
+        /// Bao gồm thông tin giảm giá theo loại bệnh nhân
+        /// </summary>
         private void CheckPatient()
         {
             if (Invoice == null) return;
 
             HasPatient = Invoice.Patient != null;
 
-            // Lấy thông tin giảm giá từ loại khách hàng nếu có
+            // Lấy thông tin giảm giá từ loại bệnh nhân nếu có
             if (HasPatient && Invoice.Patient?.PatientType != null)
             {
                 PatientTypeDiscount = Invoice.Patient.PatientType.Discount;
@@ -492,6 +627,9 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Áp dụng giảm giá theo loại bệnh nhân vào hóa đơn
+        /// </summary>
         private void ApplyPatientDiscount()
         {
             if (Invoice != null && PatientTypeDiscount.HasValue)
@@ -501,19 +639,22 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Kiểm tra và tải hồ sơ bệnh án liên quan (chỉ với hóa đơn khám bệnh)
+        /// </summary>
         private void CheckMedicalRecord()
         {
             if (Invoice == null) return;
 
-            // Only medical examination invoices have medical records
+            // Chỉ hóa đơn khám bệnh mới có hồ sơ bệnh án
             if (Invoice.InvoiceType == "Khám bệnh" || Invoice.InvoiceType == "Khám và bán thuốc")
             {
                 try
                 {
-                    // Check if the invoice has a medical record ID
+                    // Kiểm tra xem hóa đơn có liên kết với hồ sơ bệnh án không
                     if (Invoice.MedicalRecordId.HasValue)
                     {
-                        // Find the medical record using MedicalRecordId from Invoice
+                        // Tìm hồ sơ bệnh án sử dụng MedicalRecordId từ Invoice
                         var medicalRecord = DataProvider.Instance.Context.MedicalRecords
                             .FirstOrDefault(m => m.RecordId == Invoice.MedicalRecordId);
 
@@ -534,7 +675,7 @@ namespace ClinicManagement.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    MessageBoxService.ShowError($"Lỗi khi tải hồ sơ bệnh án: {ex.Message}", "Lỗi"   );
+                    MessageBoxService.ShowError($"Lỗi khi tải hồ sơ bệnh án: {ex.Message}", "Lỗi");
                     HasMedicalRecord = false;
                 }
             }
@@ -544,6 +685,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tính toán các tổng tiền trong hóa đơn
+        /// Bao gồm: tạm tính, giảm giá, thuế, và tổng cộng
+        /// </summary>
         private void CalculateInvoiceTotals()
         {
             if (InvoiceDetails == null || !InvoiceDetails.Any())
@@ -555,32 +700,39 @@ namespace ClinicManagement.ViewModels
                 return;
             }
 
-            // Calculate subtotal (before discounts)
+            // Tính tạm tính (trước giảm giá)
             SubTotal = InvoiceDetails.Sum(d => d.SalePrice * (d.Quantity ?? 1)) ?? 0;
 
-            // Calculate discount amount from invoice level discount
+            // Tính số tiền giảm giá từ phần trăm giảm giá của hóa đơn
             decimal discountPercent = Invoice?.Discount ?? 0;
             DiscountAmount = SubTotal * (discountPercent / 100m);
 
-            // Calculate tax amount from invoice level tax
-            decimal taxPercent = Invoice?.Tax ?? 10; // Default to 10% if not set
+            // Tính thuế VAT từ phần trăm thuế của hóa đơn
+            decimal taxPercent = Invoice?.Tax ?? 10; // Mặc định 10% nếu không được thiết lập
             decimal amountAfterDiscount = SubTotal - DiscountAmount;
             TaxAmount = amountAfterDiscount * (taxPercent / 100m);
 
             OnPropertyChanged(nameof(TotalAmount));
 
-            // If we are recalculating, update the invoice totalAmount
+            // Nếu đang tính lại, cập nhật tổng tiền của hóa đơn
             if (!IsPaid && Invoice != null)
             {
                 Invoice.TotalAmount = TotalAmount;
             }
         }
 
+        /// <summary>
+        /// Tính lại tất cả các tổng tiền
+        /// Wrapper method cho CalculateInvoiceTotals
+        /// </summary>
         private void RecalculateTotals()
         {
             CalculateInvoiceTotals();
         }
 
+        /// <summary>
+        /// Mở cửa sổ thanh toán với giao diện thanh toán tùy chỉnh
+        /// </summary>
         private void ProcessPayment()
         {
             if (Invoice == null || Invoice.Status == "Đã thanh toán") return;
@@ -592,15 +744,20 @@ namespace ClinicManagement.ViewModels
                 Height = 600,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 DataContext = this,
-                Content = CreatePaymentControl()
+                Content = CreatePaymentControl() // Tạo giao diện thanh toán động
             };
 
             _paymentWindow.ShowDialog();
         }
 
+        /// <summary>
+        /// Tạo giao diện thanh toán động với các tùy chọn thanh toán
+        /// Bao gồm: tiền mặt, chuyển khoản (với QR code)
+        /// </summary>
+        /// <returns>UIElement chứa toàn bộ giao diện thanh toán</returns>
         private UIElement CreatePaymentControl()
         {
-            // Tạo một control thanh toán đơn giản để hiển thị trong cửa sổ thanh toán
+            // Tạo panel chính chứa toàn bộ giao diện thanh toán
             var panel = new StackPanel
             {
                 Margin = new Thickness(20) // Tạo khoảng cách 20px xung quanh nội dung so với viền cửa sổ
@@ -663,12 +820,12 @@ namespace ClinicManagement.ViewModels
             };
             qrCodePanel.Children.Add(qrCodeTitle);
 
-            // --- QR CODE SECTION ---
-            // Try to load a QR code image from the project resources
+            // --- PHẦN HIỂN THỊ MÃ QR ---
+            // Thử tải hình ảnh mã QR từ resources của dự án
             bool qrImageLoaded = false;
             try
             {
-                // Get the executable's directory
+                // Lấy thư mục thực thi
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -800,6 +957,11 @@ namespace ClinicManagement.ViewModels
             return panel;
         }
 
+        /// <summary>
+        /// Xác nhận và xử lý thanh toán cuối cùng
+        /// Cập nhật trạng thái hóa đơn, lưu thông tin thanh toán và cập nhật tồn kho
+        /// </summary>
+        /// <param name="paymentWindow">Cửa sổ thanh toán (hiện không sử dụng)</param>
         private void ConfirmPayment(Window paymentWindow)
         {
             if (Invoice == null) return;
@@ -855,65 +1017,58 @@ namespace ClinicManagement.ViewModels
                     // Hoàn tác giao dịch nếu có lỗi xảy ra
                     transaction.Rollback();
 
-                
-
                     // Hiển thị thông báo lỗi
                     MessageBoxService.ShowError($"Lỗi khi xử lý thanh toán: {ex.Message}", "Lỗi");
                 }
             }
         }
 
-
-        // Add this method to update stock after payment
-        // Add this to InvoiceDetailsViewModel.cs
+        /// <summary>
+        /// Cập nhật tồn kho sau khi thanh toán thành công
+        /// Giảm số lượng RemainQuantity trong các lô nhập và cập nhật bảng Stock
+        /// </summary>
         private void UpdateStockAfterPayment()
         {
             try
             {
-                
                 var context = DataProvider.Instance.Context;
 
-                // Get all invoice details with medicines for this invoice
+                // Lấy tất cả chi tiết hóa đơn có chứa thuốc cho hóa đơn này
                 var invoiceDetails = context.InvoiceDetails
                     .Where(id => id.InvoiceId == Invoice.InvoiceId && id.MedicineId.HasValue)
                     .Include(id => id.Medicine)
                     .ToList();
 
-                
-
-                // Update stock for each medicine
+                // Cập nhật tồn kho cho từng loại thuốc
                 foreach (var detail in invoiceDetails)
                 {
-                   
-
-                    // Detach any loaded entities to avoid EF tracking conflicts
+                    // Detach các entity đã được load để tránh xung đột tracking của EF
                     if (detail.Medicine != null)
                         context.Entry(detail.Medicine).State = EntityState.Detached;
 
-                    // Get fresh medicine data with all relationships
+                    // Lấy dữ liệu thuốc mới với tất cả các mối quan hệ
                     var medicine = context.Medicines
                         .Include(m => m.StockIns)
                         .Include(m => m.InvoiceDetails)
-                        .ThenInclude(id => id.Invoice) // Include Invoice to check status
+                        .ThenInclude(id => id.Invoice) // Include Invoice để kiểm tra trạng thái
                         .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
 
                     if (medicine == null)
                     {
-                  
                         continue;
                     }
 
-                    // Clear cache to ensure fresh calculations
+                    // Xóa cache để đảm bảo tính toán mới
                     medicine._availableStockInsCache = null;
 
-                    // Calculate correct physical stock quantity
+                    // Tính số lượng tồn kho vật lý chính xác
                     int totalStockIn = medicine.StockIns?.Sum(si => si.Quantity) ?? 0;
                     int totalSold = medicine.InvoiceDetails
                         .Where(id => id.Invoice.Status == "Đã thanh toán")
                         .Sum(id => id.Quantity ?? 0);
                     int actualQuantity = Math.Max(0, totalStockIn - totalSold);
 
-                    // Calculate usable quantity with proper expiry date filtering
+                    // Tính số lượng có thể sử dụng với lọc ngày hết hạn phù hợp
                     var today = DateOnly.FromDateTime(DateTime.Today);
                     var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
 
@@ -931,15 +1086,13 @@ namespace ClinicManagement.ViewModels
                         remainingToSubtract = Math.Max(0, remainingToSubtract - stockIn.Quantity);
                     }
 
-
-                    // Update or create Stock record
+                    // Cập nhật hoặc tạo bản ghi Stock
                     var stock = context.Stocks.FirstOrDefault(s => s.MedicineId == detail.MedicineId);
                     if (stock != null)
                     {
                         stock.Quantity = actualQuantity;
                         stock.UsableQuantity = usableStock;
                         stock.LastUpdated = DateTime.Now;
-                 
                     }
                     else
                     {
@@ -951,31 +1104,37 @@ namespace ClinicManagement.ViewModels
                             LastUpdated = DateTime.Now
                         };
                         context.Stocks.Add(newStock);
-                    
                     }
                 }
 
-                // Save all changes at once
+                // Lưu tất cả thay đổi cùng một lúc
                 context.SaveChanges();
-          
             }
             catch (Exception ex)
             {
-                
                 MessageBoxService.ShowError($"Lỗi khi cập nhật tồn kho: {ex.Message}", "Lỗi");
             }
         }
 
+        /// <summary>
+        /// Thuộc tính kiểm tra xem có thể chỉnh sửa hóa đơn bán thuốc hay không
+        /// Chỉ cho phép chỉnh sửa hóa đơn chưa thanh toán và có bán thuốc
+        /// </summary>
         public bool CanEditMedicineSale => Invoice != null &&
                                     Invoice.Status == "Chưa thanh toán" &&
                                     (Invoice.InvoiceType == "Bán thuốc" || Invoice.InvoiceType == "Khám và bán thuốc");
-       #region PDF
+
+        #region PDF
+        /// <summary>
+        /// Xuất hóa đơn ra file PDF với thanh tiến trình
+        /// Sử dụng thư viện QuestPDF để tạo báo cáo professional
+        /// </summary>
         private void ExportInvoiceToPdf()
         {
             QuestPDF.Settings.License = LicenseType.Community;
             try
             {
-                // Create save file dialog to let the user choose where to save the PDF
+                // Tạo hộp thoại lưu file để người dùng chọn nơi lưu PDF
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
                     Filter = "PDF files (*.pdf)|*.pdf",
@@ -988,36 +1147,36 @@ namespace ClinicManagement.ViewModels
                 {
                     string filePath = saveFileDialog.FileName;
 
-                    // Create and show progress dialog
+                    // Tạo và hiển thị hộp thoại tiến trình
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Start export operation in background thread
+                    // Bắt đầu thao tác xuất trong background thread
                     Task.Run(() =>
                     {
                         try
                         {
-                            // Report progress: 10% - Starting
+                            // Báo cáo tiến trình: 10% - Bắt đầu
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                            // Report progress: 30% - Preparing document
+                            // Báo cáo tiến trình: 30% - Chuẩn bị tài liệu
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
-                            Thread.Sleep(100); // Small delay for visibility
+                            Thread.Sleep(100); // Delay nhỏ để hiển thị
 
-                            // Report progress: 60% - Generating content
+                            // Báo cáo tiến trình: 60% - Tạo nội dung
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(60));
 
-                            // Generate PDF using QuestPDF - với phương thức đơn giản hóa
+                            // Tạo PDF sử dụng QuestPDF - với phương thức đơn giản hóa
                             GenerateSimplePdfDocument(filePath);
 
-                            // Report progress: 90% - Saving file
+                            // Báo cáo tiến trình: 90% - Lưu file
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
-                            Thread.Sleep(100); // Small delay for visibility
+                            Thread.Sleep(100); // Delay nhỏ để hiển thị
 
-                            // Report progress: 100% - Complete
+                            // Báo cáo tiến trình: 100% - Hoàn thành
                             Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                            Thread.Sleep(300); // Show 100% briefly
+                            Thread.Sleep(300); // Hiển thị 100% trong chốc lát
 
-                            // Close progress dialog and show success message
+                            // Đóng hộp thoại tiến trình và hiển thị thông báo thành công
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
@@ -1027,7 +1186,7 @@ namespace ClinicManagement.ViewModels
                                     "Xuất hóa đơn"
                                 );
 
-                                // Open the PDF file with the default PDF viewer
+                                // Mở file PDF bằng ứng dụng xem PDF mặc định
                                 if (MessageBoxService.ShowQuestion("Bạn có muốn mở file PDF không?", "Mở file"))
                                 {
                                     try
@@ -1055,7 +1214,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // Hiển thị dialog - sẽ block cho đến khi dialog được đóng
                     progressDialog.ShowDialog();
                 }
             }
@@ -1065,80 +1224,93 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Phương thức tạo PDF đơn giản, không chia nhỏ
+     /// <summary>
+        /// Tạo tài liệu PDF đơn giản cho hóa đơn
+        /// Sử dụng thư viện QuestPDF để tạo layout professional với đầy đủ thông tin hóa đơn
+        /// </summary>
+        /// <param name="filePath">Đường dẫn file PDF sẽ được lưu</param>
         private void GenerateSimplePdfDocument(string filePath)
         {
+            // Tạo tài liệu PDF mới bằng QuestPDF
             Document.Create(document =>
             {
                 document.Page(page =>
                 {
+                    // Thiết lập kích thước trang A4 với margin 50px
                     page.Size(PageSizes.A4);
                     page.Margin(50);
-                    page.DefaultTextStyle(x => x.FontSize(11));
+                    page.DefaultTextStyle(x => x.FontSize(11)); // Font mặc định 11pt
 
-                    // Main content container - use Column to allow adding multiple items
+                    // Container chính sử dụng layout Column để xếp chồng các phần tử theo chiều dọc
                     page.Content().Column(column =>
                     {
-                        // HEADER SECTION with Row layout
+                        // === PHẦN HEADER VỚI LAYOUT ROW ===
                         column.Item().Row(row =>
                         {
-                            // Left side - clinic info
+                            // Bên trái - thông tin phòng khám (chiếm 2/3 chiều rộng)
                             row.RelativeItem(2).Column(col =>
                             {
                                 col.Item().Text("PHÒNG KHÁM ABC")
-                                    .FontSize(16).Bold();
+                                    .FontSize(16).Bold(); // Tên phòng khám in đậm, cỡ chữ lớn
                                 col.Item().Text("Địa chỉ: 123 Đường 456, Quận 789, TP.XYZ")
-                                    .FontSize(10);
+                                    .FontSize(10); // Địa chỉ với font nhỏ hơn
                                 col.Item().Text("SĐT: 028.1234.5678 | Email: email@gmail.com")
-                                    .FontSize(10);
+                                    .FontSize(10); // Thông tin liên hệ
                             });
                        
-                            // Right side - invoice info
+                            // Bên phải - thông tin hóa đơn (chiếm 1/3 chiều rộng)
                             row.RelativeItem(1).Column(col =>
                             {
+                                // Số hóa đơn with màu xanh nổi bật
                                 col.Item().AlignRight().Text($"HÓA ĐƠN #{Invoice.InvoiceId}")
                                     .FontSize(16).Bold().FontColor(Colors.Blue.Medium);
+                                // Ngày tạo hóa đơn
                                 col.Item().AlignRight().Text($"Ngày: {Invoice.InvoiceDate:dd/MM/yyyy HH:mm}")
                                     .FontSize(10);
+                                // Loại hóa đơn (Khám bệnh, Bán thuốc, etc.)
                                 col.Item().AlignRight().Text($"Loại hóa đơn: {Invoice.InvoiceType}")
                                      .FontSize(10);
+                                // Trạng thái với màu sắc tương ứng (xanh = đã thanh toán, cam = chưa thanh toán)
                                 col.Item().AlignRight().Text($"Trạng thái: {Invoice.Status}")
                                     .FontSize(10)
                                     .FontColor(Invoice.Status == "Đã thanh toán" ? Colors.Green.Medium : Colors.Orange.Medium);
-
                             });
                         });
 
-                        // Separator line
-                        column.Item().PaddingVertical(10)
-                            .BorderBottom(1).BorderColor(Colors.Grey.Lighten2);
+                        // === ĐƯỜNG KẺ PHÂN CÁCH ===
+                        column.Item().PaddingVertical(10) // Khoảng cách trên dưới 10px
+                            .BorderBottom(1).BorderColor(Colors.Grey.Lighten2); // Đường kẻ màu xám nhạt
 
-                        // Patient information with 2 columns
+                        // === THÔNG TIN BỆNH NHÂN (CHỈ HIỂN THỊ NẾU CÓ) ===
                         if (HasPatient)
                         {
-                            column.Item().PaddingTop(15).Border(1)
-                                .BorderColor(Colors.Grey.Lighten3)
-                                .Background(Colors.Grey.Lighten5)
-                                .Padding(10)
+                            column.Item().PaddingTop(15).Border(1) // Viền xung quanh
+                                .BorderColor(Colors.Grey.Lighten3) // Màu viền xám nhạt
+                                .Background(Colors.Grey.Lighten5)  // Nền xám rất nhạt
+                                .Padding(10) // Khoảng cách trong 10px
                                 .Column(patientCol =>
                                 {
+                                    // Tiêu đề phần thông tin khách hàng
                                     patientCol.Item().Text("THÔNG TIN KHÁCH HÀNG").Bold();
 
+                                    // Layout 2 cột cho thông tin bệnh nhân
                                     patientCol.Item().PaddingTop(5).Row(patientInfoRow =>
                                     {
-                                        // Left column of patient info
+                                        // Cột trái - thông tin cơ bản
                                         patientInfoRow.RelativeItem().Column(leftCol =>
                                         {
                                             leftCol.Item().Text($"Họ tên: {Invoice.Patient?.FullName}");
                                             leftCol.Item().Text($"Số điện thoại: {Invoice.Patient?.Phone}");
                                         });
 
-                                        // Right column of patient info
+                                        // Cột phải - thông tin bổ sung
                                         patientInfoRow.RelativeItem().Column(rightCol =>
                                         {
+                                            // Chỉ hiển thị mã BHYT nếu có
                                             if (!string.IsNullOrEmpty(Invoice.Patient?.InsuranceCode))
                                                 rightCol.Item().Text($"Mã BHYT: {Invoice.Patient?.InsuranceCode}");
 
+                                            // Chỉ hiển thị loại khách hàng nếu có
                                             if (Invoice.Patient?.PatientType != null)
                                                 rightCol.Item().Text($"Loại khách hàng: {Invoice.Patient?.PatientType?.TypeName}");
                                         });
@@ -1146,23 +1318,25 @@ namespace ClinicManagement.ViewModels
                                 });
                         }
 
-                        // Invoice details section
+                        // === PHẦN CHI TIẾT HÓA ĐƠN ===
                         column.Item().PaddingTop(20).Column(detailsCol =>
                         {
+                            // Tiêu đề phần chi tiết
                             detailsCol.Item().Text("CHI TIẾT HÓA ĐƠN").Bold().FontSize(12);
 
+                            // Bảng chi tiết các sản phẩm/dịch vụ
                             detailsCol.Item().PaddingTop(5).Table(table =>
                             {
-                                // Define columns
+                                // Định nghĩa cấu trúc cột của bảng
                                 table.ColumnsDefinition(columns =>
                                 {
-                                    columns.RelativeColumn(3); // Item name
-                                    columns.RelativeColumn(1); // Quantity
-                                    columns.RelativeColumn(2); // Unit price
-                                    columns.RelativeColumn(2); // Total price
+                                    columns.RelativeColumn(3); // Tên sản phẩm - chiếm nhiều nhất
+                                    columns.RelativeColumn(1); // Số lượng - nhỏ
+                                    columns.RelativeColumn(2); // Đơn giá - trung bình
+                                    columns.RelativeColumn(2); // Thành tiền - trung bình
                                 });
 
-                                // Add header row
+                                // Tạo hàng tiêu đề của bảng
                                 table.Header(header =>
                                 {
                                     header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Tên thuốc/dịch vụ").Bold();
@@ -1171,115 +1345,124 @@ namespace ClinicManagement.ViewModels
                                     header.Cell().Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Thành tiền").Bold();
                                 });
 
-                                // Add data rows
+                                // Tạo các hàng dữ liệu cho từng item trong hóa đơn
                                 foreach (var detail in InvoiceDetails)
                                 {
+                                    // Xác định tên sản phẩm (ưu tiên tên dịch vụ nếu có, không thì lấy tên thuốc)
                                     string itemName = !string.IsNullOrEmpty(detail.ServiceName)
                                         ? detail.ServiceName
                                         : detail.Medicine?.Name ?? "Không xác định";
 
+                                    // Lấy thông tin số lượng, đơn giá và tính thành tiền
                                     int quantity = detail.Quantity ?? 1;
                                     decimal unitPrice = detail.SalePrice ?? 0;
                                     decimal totalPrice = unitPrice * quantity;
 
+                                    // Tạo 4 ô cho mỗi hàng dữ liệu
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                        .Padding(5).Text(itemName);
+                                        .Padding(5).Text(itemName); // Tên sản phẩm
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                        .Padding(5).AlignCenter().Text(quantity.ToString());
+                                        .Padding(5).AlignCenter().Text(quantity.ToString()); // Số lượng (căn giữa)
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                        .Padding(5).AlignRight().Text($"{unitPrice:N0} VNĐ");
+                                        .Padding(5).AlignRight().Text($"{unitPrice:N0} VNĐ"); // Đơn giá (căn phải)
                                     table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                        .Padding(5).AlignRight().Text($"{totalPrice:N0} VNĐ");
+                                        .Padding(5).AlignRight().Text($"{totalPrice:N0} VNĐ"); // Thành tiền (căn phải)
                                 }
                             });
                         });
 
-                        // Payment Summary
+                        // === PHẦN TỔNG KẾT THANH TOÁN ===
                         column.Item().PaddingTop(20).AlignRight().Table(summaryTable =>
                         {
-                            // Define table columns
+                            // Bảng tổng kết với 2 cột: nhãn và giá trị
                             summaryTable.ColumnsDefinition(columns =>
                             {
-                                columns.RelativeColumn(1); // Label column
-                                columns.RelativeColumn(1); // Value column
+                                columns.RelativeColumn(1); // Cột nhãn (Tạm tính, Giảm giá, etc.)
+                                columns.RelativeColumn(1); // Cột giá trị
                             });
 
-                            // Subtotal row
+                            // Hàng tạm tính (tổng tiền trước giảm giá và thuế)
                             summaryTable.Cell().AlignRight().Padding(8).Text("Tạm tính:").Bold();
                             summaryTable.Cell().AlignRight().Padding(8).Text($"{SubTotal:N0} VNĐ");
 
-                            // Discount row (if applicable)
+                            // Hàng giảm giá (chỉ hiển thị nếu có giảm giá)
                             if (DiscountAmount > 0)
                             {
                                 summaryTable.Cell().AlignRight().Padding(8).Text("Giảm giá:").Bold();
                                 summaryTable.Cell().AlignRight().Padding(8).Text($"{DiscountAmount:N0} VNĐ").FontColor(Colors.Green.Medium);
                             }
 
-                            // Tax row (if applicable)
+                            // Hàng thuế VAT (chỉ hiển thị nếu có thuế)
                             if (TaxAmount > 0)
                             {
                                 summaryTable.Cell().AlignRight().Padding(8).Text($"Thuế VAT ({Invoice.Tax}%):").Bold();
                                 summaryTable.Cell().AlignRight().Padding(8).Text($"{TaxAmount:N0} VNĐ");
                             }
 
-                            // Separator
-                            summaryTable.Cell().ColumnSpan(2).BorderBottom(2)
+                            // Đường kẻ phân cách trước tổng cộng
+                            summaryTable.Cell().ColumnSpan(2).BorderBottom(2) // Kéo dài qua 2 cột, đường kẻ dày 2px
                                 .BorderColor(Colors.Grey.Medium)
-                                .PaddingVertical(8);
+                                .PaddingVertical(8); // Khoảng cách trên dưới
 
-                            // Total amount row
+                            // Hàng tổng cộng cuối cùng (nổi bật với font lớn và màu đỏ)
                             summaryTable.Cell().AlignRight().Padding(8).Text("TỔNG CỘNG:").Bold().FontSize(12);
                             summaryTable.Cell().AlignRight().Padding(8).Text($"{TotalAmount:N0} VNĐ")
                                 .Bold().FontSize(12).FontColor(Colors.Red.Medium);
                         });
 
-                        // Payment Information
+                        // === THÔNG TIN THANH TOÁN (CHỈ HIỂN THỊ NẾU ĐÃ THANH TOÁN) ===
                         if (IsPaid && PaymentDate.HasValue)
                         {
                             column.Item().PaddingTop(10)
-                                .AlignCenter()
+                                .AlignCenter() // Căn giữa
                                 .Text($"Thanh toán bằng {PaymentMethod} ngày {PaymentDate:dd/MM/yyyy HH:mm}")
-                                .FontColor(Colors.Green.Medium);
+                                .FontColor(Colors.Green.Medium); // Màu xanh cho thông tin đã thanh toán
                         }
 
-                        // Doctor's notes (if applicable)
+                        // === LỜI DẶN CỦA BÁC SĨ (CHỈ HIỂN THỊ NẾU CÓ HỒ SƠ BỆNH ÁN) ===
                         if (HasMedicalRecord && MedicalRecord != null && !string.IsNullOrWhiteSpace(MedicalRecord.DoctorAdvice))
                         {
                             column.Item().PaddingTop(15)
-                                .Border(1).BorderColor(Colors.Grey.Lighten3)
-                                .Padding(10)
+                                .Border(1).BorderColor(Colors.Grey.Lighten3) // Viền xung quanh
+                                .Padding(10) // Khoảng cách trong
                                 .Column(notesCol =>
                                 {
+                                    // Tiêu đề phần lời dặn
                                     notesCol.Item().Text("LỜI DẶN CỦA BÁC SĨ").Bold().FontSize(11);
+                                    // Nội dung lời dặn
                                     notesCol.Item().PaddingTop(5).Text(MedicalRecord.DoctorAdvice).FontSize(10);
+                                    // Tên bác sĩ (căn phải)
                                     notesCol.Item().PaddingTop(5).AlignRight()
                                         .Text($"Bác sĩ: {MedicalRecord.Doctor?.FullName ?? "Không xác định"}")
                                         .FontSize(10).Bold();
                                 });
                         }
 
-                        // Footer
+                        // === FOOTER CỦA TÀI LIỆU ===
                         column.Item().PaddingTop(20)
-                            .BorderTop(1).BorderColor(Colors.Grey.Lighten2)
+                            .BorderTop(1).BorderColor(Colors.Grey.Lighten2) // Đường kẻ trên
                             .PaddingTop(10)
                             .Row(footerRow =>
                             {
+                                // Bên trái - thông điệp cảm ơn và ghi chú
                                 footerRow.RelativeItem().Column(footerCol =>
                                 {
+                                    // Thông điệp cảm ơn
                                     footerCol.Item().Text("Xin cám ơn quý khách đã sử dụng dịch vụ của phòng khám chúng tôi!")
-                                        .FontSize(9).Italic();
+                                        .FontSize(9).Italic(); // Font nhỏ và in nghiêng
 
-                                    // Display notes if available
+                                    // Hiển thị ghi chú nếu có (loại bỏ thông tin thanh toán khỏi ghi chú)
                                     if (!string.IsNullOrEmpty(Invoice.Notes))
                                     {
                                         string displayNotes = Invoice.Notes;
-                                        // Remove payment info from displayed notes
+                                        // Loại bỏ thông tin thanh toán khỏi ghi chú hiển thị
                                         if (displayNotes.Contains("Phương thức thanh toán:"))
                                         {
                                             int index = displayNotes.IndexOf("Phương thức thanh toán:");
                                             displayNotes = displayNotes.Substring(0, index).Trim();
                                         }
 
+                                        // Chỉ hiển thị ghi chú nếu còn nội dung sau khi loại bỏ thông tin thanh toán
                                         if (!string.IsNullOrWhiteSpace(displayNotes))
                                         {
                                             footerCol.Item().Text($"Ghi chú: {displayNotes}")
@@ -1288,18 +1471,19 @@ namespace ClinicManagement.ViewModels
                                     }
                                 });
 
+                                // Bên phải - thông tin phân trang
                                 footerRow.RelativeItem().AlignRight().Text(text =>
                                 {
-                                    text.Span("Trang ").FontSize(9);
-                                    text.CurrentPageNumber().FontSize(9);
-                                    text.Span(" / ").FontSize(9);
-                                    text.TotalPages().FontSize(9);
+                                    text.Span("Trang ").FontSize(9);      // Chữ "Trang"
+                                    text.CurrentPageNumber().FontSize(9); // Số trang hiện tại
+                                    text.Span(" / ").FontSize(9);         // Dấu phân cách
+                                    text.TotalPages().FontSize(9);        // Tổng số trang
                                 });
                             });
                     });
                 });
             })
-            .GeneratePdf(filePath);
+            .GeneratePdf(filePath); // Tạo file PDF tại đường dẫn đã chỉ định
         }
         #endregion
 

@@ -909,15 +909,16 @@ namespace ClinicManagement.ViewModels
 
         private void ResetForm()
         {
-            // If this is from an appointment, keep the patient and doctor
-            if (RelatedAppointment == null)
-            {
-                SelectedPatient = null;
-                PatienName = string.Empty;
-                Phone = string.Empty;
-                InsuranceCode = string.Empty; // Add this line
-                SelectedDoctor = DoctorList.FirstOrDefault();
-            }
+            // Always reset patient information after saving a record
+            SelectedPatient = null;
+            PatienName = string.Empty;
+            Phone = string.Empty;
+            InsuranceCode = string.Empty;
+
+            // Reset appointment reference
+            RelatedAppointment = null;
+
+           
 
             // Reset examination details
             RecordDate = DateTime.Today;
@@ -931,7 +932,12 @@ namespace ClinicManagement.ViewModels
             DoctorAdvice = string.Empty;
             TestResults = string.Empty;
             Prescription = string.Empty;
+
+            // Reset validation state
+            _touchedFields.Clear();
+            _isValidating = false;
         }
+
 
         private void UpdateAppointmentStatus(Appointment appointment, string newStatus)
         {
@@ -1057,16 +1063,22 @@ namespace ClinicManagement.ViewModels
 
                 switch (columnName)
                 {
+                    
                     case nameof(PatienName):
-                         if (PatienName.Length > 100)
+                        if (!string.IsNullOrWhiteSpace(PatienName))
                         {
-                            error = "Tên bệnh nhân không được vượt quá 100 ký tự";
-                        }
-                        else if (!Regex.IsMatch(PatienName, @"^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$"))
-                        {
-                            error = "Tên bệnh nhân chỉ được chứa chữ cái và khoảng trắng";
+                            if (PatienName.Length > 100)
+                            {
+                                error = "Tên bệnh nhân không được vượt quá 100 ký tự";
+                            }
+                       
+                            else if (!Regex.IsMatch(PatienName, @"^[^0-9!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]+$"))
+                            {
+                                error = "Tên bệnh nhân không được chứa số hoặc ký tự đặc biệt";
+                            }
                         }
                         break;
+
                     case nameof(Phone):
                         if (!string.IsNullOrWhiteSpace(Phone) &&
                             !Regex.IsMatch(Phone, @"^(0[3|5|7|8|9])[0-9]{8}$"))

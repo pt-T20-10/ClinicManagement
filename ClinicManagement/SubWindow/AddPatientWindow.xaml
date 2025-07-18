@@ -76,6 +76,7 @@
                         <DatePicker Grid.Column="0" 
                 SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                 materialDesign:HintAssist.Hint="Ngày sinh"
+                Padding="10 20"
                 Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                 Margin="0,0,8,0"/>
 

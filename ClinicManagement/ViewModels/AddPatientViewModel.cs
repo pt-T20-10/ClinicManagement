@@ -10,16 +10,30 @@ using System.Windows.Input;
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel cho cửa sổ thêm bệnh nhân mới
+    /// Kế thừa từ BaseViewModel để có sẵn các chức năng INotifyPropertyChanged và RelayCommand
+    /// Triển khai IDataErrorInfo để hỗ trợ validation cho giao diện
+    /// </summary>
     public class AddPatientViewModel : BaseViewModel, IDataErrorInfo
     {
-        #region Properties
+        #region Properties - Các thuộc tính của ViewModel
+
+        // Tham chiếu đến cửa sổ hiện tại
         private Window _window;
 
+        // Thuộc tính bắt buộc của IDataErrorInfo - trả về null vì ta không sử dụng validation cấp object
         public string Error => null;
+
+        // Theo dõi các trường người dùng đã tương tác để chỉ validate khi cần thiết
         private HashSet<string> _touchedFields = new HashSet<string>();
+        
+        // Cờ để bật validation khi người dùng nhấn Save
         private bool _isValidating = false;
 
-        // Selected patient type
+        #region Loại bệnh nhân
+
+        // Loại bệnh nhân đã chọn (Thường, VIP, Bảo hiểm y tế)
         private PatientType _selectedPatientType;
         public PatientType SelectedPatientType
         {
@@ -31,6 +45,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Danh sách loại bệnh nhân để hiển thị trong ComboBox
         private ObservableCollection<PatientType> _patientTypeList;
         public ObservableCollection<PatientType> PatientTypeList
         {
@@ -42,7 +57,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Patient information properties
+        #endregion
+
+        #region Thông tin cá nhân bệnh nhân
+
+        // Họ và tên - trường bắt buộc
         private string _fullName;
         public string FullName
         {
@@ -51,6 +70,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (_fullName != value)
                 {
+                    // Theo dõi trạng thái tương tác của người dùng
                     bool wasEmpty = string.IsNullOrWhiteSpace(_fullName);
                     bool isEmpty = string.IsNullOrWhiteSpace(value);
 
@@ -65,6 +85,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Ngày sinh - trường tùy chọn, mặc định là ngày hiện tại
         private DateTime? _birthDate = DateTime.Now;
         public DateTime? BirthDate
         {
@@ -73,6 +94,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (_birthDate != value)
                 {
+                    // Theo dõi trạng thái tương tác của người dùng
                     if (value.HasValue || _birthDate.HasValue)
                         _touchedFields.Add(nameof(BirthDate));
                     else
@@ -84,6 +106,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        #endregion
+
+        #region Giới tính
+
+        // Giá trị giới tính được lưu vào database
         private string _gender;
         public string Gender
         {
@@ -95,6 +122,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Checkbox cho giới tính Nam - mặc định được chọn
         private bool _isMale = true;
         public bool IsMale
         {
@@ -107,6 +135,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Checkbox cho giới tính Nữ
         private bool _isFemale;
         public bool IsFemale
         {
@@ -119,6 +148,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Checkbox cho giới tính Khác
         private bool _isOther;
         public bool IsOther
         {
@@ -131,6 +161,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        #endregion
+
+        #region Thông tin liên hệ
+
+        // Số điện thoại - trường bắt buộc và phải unique
         private string _phone;
         public string Phone
         {
@@ -139,6 +174,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (_phone != value)
                 {
+                    // Theo dõi trạng thái tương tác của người dùng
                     bool wasEmpty = string.IsNullOrWhiteSpace(_phone);
                     bool isEmpty = string.IsNullOrWhiteSpace(value);
 
@@ -153,6 +189,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Email - trường tùy chọn nhưng phải đúng định dạng nếu có nhập
         private string _email;
         public string Email
         {
@@ -161,6 +198,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (_email != value)
                 {
+                    // Theo dõi trạng thái tương tác của người dùng
                     bool wasEmpty = string.IsNullOrWhiteSpace(_email);
                     bool isEmpty = string.IsNullOrWhiteSpace(value);
 
@@ -175,6 +213,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // Địa chỉ - trường tùy chọn
         private string _address;
         public string Address
         {
@@ -186,7 +225,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Insurance Code
+        #endregion
+
+        #region Thông tin bảo hiểm
+
+        // Mã bảo hiểm y tế - trường tùy chọn nhưng phải đúng định dạng và unique nếu có nhập
         private string _insuranceCode;
         public string InsuranceCode
         {
@@ -195,6 +238,7 @@ namespace ClinicManagement.ViewModels
             {
                 if (_insuranceCode != value)
                 {
+                    // Theo dõi trạng thái tương tác của người dùng
                     bool wasEmpty = string.IsNullOrWhiteSpace(_insuranceCode);
                     bool isEmpty = string.IsNullOrWhiteSpace(value);
 
@@ -205,14 +249,13 @@ namespace ClinicManagement.ViewModels
 
                     _insuranceCode = value;
                     OnPropertyChanged();
-
-  
                 }
             }
         }
 
+        #endregion
 
-
+        // Đối tượng bệnh nhân mới được tạo - để truy cập từ bên ngoài sau khi lưu
         private Patient _newPatient;
         public Patient NewPatient
         {
@@ -223,32 +266,46 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-        // Commands
-        public ICommand LoadedWindowCommand { get; }
-        public ICommand SaveCommand { get; }
-        public ICommand CancelCommand { get; }
+
+        #region Commands - Các lệnh xử lý sự kiện
+
+        public ICommand LoadedWindowCommand { get; }    // Lệnh khi cửa sổ được tải
+        public ICommand SaveCommand { get; }            // Lệnh lưu thông tin bệnh nhân
+        public ICommand CancelCommand { get; }          // Lệnh hủy và đóng cửa sổ
+
         #endregion
 
+        #endregion
+
+        /// <summary>
+        /// Constructor khởi tạo ViewModel
+        /// </summary>
         public AddPatientViewModel()
         {
-            // Initialize commands
+            // Khởi tạo các command
             LoadedWindowCommand = new RelayCommand<Window>((p) => { _window = p; }, (p) => true);
             SaveCommand = new RelayCommand<object>((p) => ExecuteSave(), (p) => CanSave());
             CancelCommand = new RelayCommand<object>((p) => ExecuteCancel(), (p) => true);
 
-            // Initialize gender
+            // Khởi tạo giới tính mặc định
             Gender = "Nam";
 
-            // Load patient types
+            // Tải danh sách loại bệnh nhân
             LoadPatientTypes();
         }
 
-        #region Validation
+        #region Validation - Xác thực dữ liệu
+
+        /// <summary>
+        /// Indexer cho IDataErrorInfo - xác thực từng trường dữ liệu
+        /// </summary>
+        /// <param name="columnName">Tên trường cần xác thực</param>
+        /// <returns>Thông báo lỗi hoặc null nếu hợp lệ</returns>
         public string this[string columnName]
         {
             get
             {
-                // Don't validate until user has interacted with the form
+                // Chỉ xác thực khi người dùng đã tương tác với trường hoặc khi đang submit form
                 if (!_isValidating && !_touchedFields.Contains(columnName))
                     return null;
 
@@ -257,11 +314,12 @@ namespace ClinicManagement.ViewModels
                 switch (columnName)
                 {
                     case nameof(FullName):
-                        // Only show "required" error if field was touched and is empty
+                        // Chỉ hiển thị lỗi "bắt buộc" nếu trường đã được tương tác và để trống
                         if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(FullName))
                         {
                             error = "Họ tên không được để trống";
                         }
+                        // Kiểm tra độ dài tối thiểu
                         else if (!string.IsNullOrWhiteSpace(FullName) && FullName.Trim().Length < 2)
                         {
                             error = "Họ tên phải có ít nhất 2 ký tự";
@@ -269,11 +327,12 @@ namespace ClinicManagement.ViewModels
                         break;
 
                     case nameof(Phone):
-                        // Only validate if user has entered something
+                        // Chỉ validate nếu người dùng đã nhập gì đó
                         if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(Phone))
                         {
                             error = "Số điện thoại không được để trống";
                         }
+                        // Kiểm tra định dạng số điện thoại Việt Nam
                         else if (!string.IsNullOrWhiteSpace(Phone) &&
                             !Regex.IsMatch(Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
                         {
@@ -282,7 +341,7 @@ namespace ClinicManagement.ViewModels
                         break;
 
                     case nameof(Email):
-                        // Only validate if user has entered something
+                        // Chỉ validate nếu người dùng đã nhập gì đó
                         if (!string.IsNullOrWhiteSpace(Email) &&
                             !Regex.IsMatch(Email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                         {
@@ -291,6 +350,7 @@ namespace ClinicManagement.ViewModels
                         break;
 
                     case nameof(BirthDate):
+                        // Kiểm tra ngày sinh không được lớn hơn ngày hiện tại
                         if (_birthDate.HasValue && _birthDate.Value > DateTime.Now)
                         {
                             error = "Ngày sinh không được lớn hơn ngày hiện tại";
@@ -298,6 +358,7 @@ namespace ClinicManagement.ViewModels
                         break;
 
                     case nameof(InsuranceCode):
+                        // Kiểm tra định dạng mã BHYT nếu có nhập
                         if (!string.IsNullOrWhiteSpace(InsuranceCode))
                         {
                             if (!Regex.IsMatch(InsuranceCode.Trim(), @"^\d{10}$"))
@@ -312,7 +373,9 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Kiểm tra xem có lỗi validation nào không
+        /// </summary>
         public bool HasErrors
         {
             get
@@ -327,7 +390,11 @@ namespace ClinicManagement.ViewModels
 
         #endregion
 
-        #region Methods
+        #region Methods - Các phương thức xử lý
+
+        /// <summary>
+        /// Tải danh sách loại bệnh nhân từ database
+        /// </summary>
         private void LoadPatientTypes()
         {
             PatientTypeList = new ObservableCollection<PatientType>(
@@ -336,18 +403,25 @@ namespace ClinicManagement.ViewModels
                 .ToList()
             );
 
-            // Default to Normal patient type
+            // Mặc định chọn loại bệnh nhân "Thường"
             SelectedPatientType = PatientTypeList.FirstOrDefault(pt =>
                 pt.TypeName?.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase) == true);
         }
 
+        /// <summary>
+        /// Kiểm tra điều kiện để có thể lưu
+        /// </summary>
+        /// <returns>True nếu có thể lưu, False nếu chưa đủ điều kiện</returns>
         private bool CanSave()
         {
             return !string.IsNullOrWhiteSpace(FullName) &&
                    !string.IsNullOrWhiteSpace(Phone);
         }
 
-        // Then modify your ExecuteSave method to set this property
+        /// <summary>
+        /// Thực hiện lưu thông tin bệnh nhân mới
+        /// Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+        /// </summary>
         private void ExecuteSave()
         {
             try
@@ -410,7 +484,7 @@ namespace ClinicManagement.ViewModels
                             }
                         }
 
-                        // Chuyển đổi ngày sinh thành DateOnly nếu có
+                        // Chuyển đổi ngày sinh thành DateOnly nếu có (kiểu dữ liệu mới của .NET)
                         DateOnly? birthDate = null;
                         if (BirthDate.HasValue)
                         {
@@ -470,20 +544,24 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
-
+        /// <summary>
+        /// Thực hiện hủy và đóng cửa sổ
+        /// </summary>
         private void ExecuteCancel()
         {
-            // Reset form
+            // Đặt lại form về trạng thái ban đầu
             ResetForm();
 
-            // Optionally close window
+            // Đóng cửa sổ
             _window?.Close();
         }
 
+        /// <summary>
+        /// Đặt lại form về trạng thái ban đầu
+        /// </summary>
         private void ResetForm()
         {
+            // Xóa tất cả dữ liệu nhập
             FullName = string.Empty;
             BirthDate = null;
             IsMale = true;
@@ -494,14 +572,15 @@ namespace ClinicManagement.ViewModels
             Address = string.Empty;
             InsuranceCode = string.Empty;
 
-            // Reset patient type to default
+            // Đặt lại loại bệnh nhân về mặc định
             SelectedPatientType = PatientTypeList.FirstOrDefault(pt =>
                 pt.TypeName?.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase) == true);
 
-            // Reset validation state
+            // Đặt lại trạng thái validation
             _touchedFields.Clear();
             _isValidating = false;
         }
+
         #endregion
     }
 }

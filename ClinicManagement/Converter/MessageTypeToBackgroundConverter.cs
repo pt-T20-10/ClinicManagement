@@ -1,9 +1,7 @@
-﻿using System;
+﻿using ClinicManagement.SubWindow;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using ClinicManagement.SubWindow;
 
 namespace ClinicManagement.Converter
 {

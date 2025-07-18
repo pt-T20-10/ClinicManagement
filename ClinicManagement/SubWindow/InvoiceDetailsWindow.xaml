@@ -308,7 +308,7 @@
                             <!-- Doctor's Advice -->
                             <StackPanel Grid.Column="0" Margin="0,18,16,0">
                                 <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="2" Margin="0,0,0,0">
-                                    <TextBlock Text="{Binding MedicalRecord.DoctorNotes, TargetNullValue='Không có lời dặn'}" 
+                                    <TextBlock Text="{Binding MedicalRecord.DoctorAdvice, TargetNullValue='Không có lời dặn'}" 
                                TextWrapping="Wrap" MinHeight="60"/>
                                 </Border>
                             </StackPanel>
