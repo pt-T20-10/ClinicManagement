@@ -67,13 +67,77 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
+        /// Quyền xóa nhân viên
+        /// Chỉ Admin và Manager mới có quyền này
+        /// </summary>
+        private bool _canDeleteStaff = false;
+        public bool CanDeleteStaff
+        {
+            get => _canDeleteStaff;
+            set
+            {
+                _canDeleteStaff = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Quyền tạo tài khoản cho nhân viên
+        /// Chỉ Admin và Manager mới có quyền này
+        /// </summary>
+        private bool _canCreateAccount = false;
+        public bool CanCreateAccount
+        {
+            get => _canCreateAccount;
+            set
+            {
+                _canCreateAccount = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Quyền đặt lại mật khẩu
+        /// Chỉ Admin và Manager mới có quyền này
+        /// </summary>
+        private bool _canResetPassword = false;
+        public bool CanResetPassword
+        {
+            get => _canResetPassword;
+            set
+            {
+                _canResetPassword = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Quyền xem danh sách lịch hẹn của nhân viên
+        /// Phụ thuộc vào vai trò và nhân viên có phải là bác sĩ không
+        /// </summary>
+        private bool _canViewAppointments = false;
+        public bool CanViewAppointments
+        {
+            get => _canViewAppointments;
+            set
+            {
+                _canViewAppointments = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
         /// Cập nhật quyền UI dựa trên vai trò của tài khoản hiện tại
-        /// Admin và Manager có quyền chỉnh sửa nhân viên
+        /// Admin và Manager có quyền đầy đủ, Doctor có thể xem lịch hẹn của bác sĩ khác
         /// </summary>
         private void UpdatePermissions()
         {
             // Mặc định không có quyền gì
             CanEditStaff = false;
+            CanDeleteStaff = false;
+            CanCreateAccount = false;
+            CanResetPassword = false;
+            CanViewAppointments = false;
 
             // Kiểm tra xem tài khoản hiện tại có tồn tại không
             if (CurrentAccount == null)
@@ -82,11 +146,46 @@ namespace ClinicManagement.ViewModels
             // Kiểm tra quyền dựa trên vai trò
             string role = CurrentAccount.Role?.Trim() ?? string.Empty;
 
-            // Admin và Manager có quyền đầy đủ
-            if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
-                role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+            // Phân quyền theo vai trò
+            switch (role)
             {
-                CanEditStaff = true;
+                case UserRoles.Admin:
+                    // Admin có toàn quyền
+                    CanEditStaff = true;
+                    CanDeleteStaff = true;
+                    CanCreateAccount = true;
+                    CanResetPassword = true;
+                    CanViewAppointments = true;
+                    break;
+
+                case UserRoles.Manager:
+                    // Manager có quyền quản lý nhân viên nhưng hạn chế xóa
+                    CanEditStaff = true;
+                    CanDeleteStaff = true; // Manager có thể xóa nhưng với điều kiện
+                    CanCreateAccount = true;
+                    CanResetPassword = true;
+                    CanViewAppointments = true;
+                    break;
+
+                case UserRoles.Doctor:
+                    // Doctor chỉ có thể xem lịch hẹn của bác sĩ khác
+                    CanEditStaff = false;
+                    CanDeleteStaff = false;
+                    CanCreateAccount = false;
+                    CanResetPassword = false;
+                    CanViewAppointments = true; // Chỉ xem lịch hẹn
+                    break;
+
+                case UserRoles.Pharmacist:
+                case UserRoles.Cashier:
+                default:
+                    // Các vai trò khác không có quyền gì
+                    CanEditStaff = false;
+                    CanDeleteStaff = false;
+                    CanCreateAccount = false;
+                    CanResetPassword = false;
+                    CanViewAppointments = false;
+                    break;
             }
 
             // Buộc command CanExecute được đánh giá lại
@@ -374,7 +473,7 @@ namespace ClinicManagement.ViewModels
             set
             {
                 _hasAccount = value;
-                OnPropertyChanged(nameof(_hasAccount));
+                OnPropertyChanged(nameof(HasAccount));
                 // Refresh trạng thái can-execute của commands
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -548,37 +647,37 @@ namespace ClinicManagement.ViewModels
             // Command xử lý khi cửa sổ được load - lưu reference đến window
             LoadedWindowCommand = new RelayCommand<Window>((w) => _window = w, (p) => true);
 
-            // Command cập nhật thông tin nhân viên - yêu cầu quyền và validation
+            // Command cập nhật thông tin nhân viên - yêu cầu quyền chỉnh sửa và validation
             UpdateDoctorInfoCommand = new RelayCommand<object>(
                 (p) => ExecuteUpdateDoctorInfo(),
                 (p) => CanUpdateDoctorInfo()
             );
 
-            // Command xóa nhân viên - yêu cầu có nhân viên được chọn
+            // Command xóa nhân viên - yêu cầu quyền xóa và có nhân viên được chọn
             DeleteDoctorCommand = new RelayCommand<object>(
                 (p) => ExecuteDeleteDoctor(),
-                (p) => Doctor != null
+                (p) => CanDeleteStaff && Doctor != null && CanDeleteStaffData()
             );
 
-            // Command tìm kiếm lịch hẹn - yêu cầu có nhân viên được chọn
+            // Command tìm kiếm lịch hẹn - yêu cầu quyền xem lịch hẹn và có nhân viên được chọn
             SearchAppointmentsCommand = new RelayCommand<object>(
                 (p) => LoadAppointments(),
-                (p) => Doctor != null
+                (p) => CanViewAppointments && Doctor != null && IsDoctor
             );
 
-            // Command xem chi tiết lịch hẹn - yêu cầu có lịch hẹn được chọn
+            // Command xem chi tiết lịch hẹn - yêu cầu quyền xem và có lịch hẹn được chọn
             ViewAppointmentDetailsCommand = new RelayCommand<AppointmentDisplayInfo>(
                 (p) => ViewAppointmentDetails(p),
-                (p) => p != null
+                (p) => CanViewAppointments && p != null
             );
 
-            // Command đặt lại mật khẩu - chỉ enable khi có tài khoản
+            // Command đặt lại mật khẩu - yêu cầu quyền reset password và có tài khoản
             ChangePasswordCommand = new RelayCommand<object>(
                (p) => ExecuteResetPassword(),
-               (p) => Doctor != null && HasAccount
+               (p) => CanResetPassword && Doctor != null && HasAccount
            );
 
-            // Command tạo tài khoản mới - yêu cầu điều kiện phức tạp
+            // Command tạo tài khoản mới - yêu cầu quyền tạo tài khoản và điều kiện phức tạp
             AddDoctorAccountCommand = new RelayCommand<object>(
                 (p) => ExecuteAddDoctorAccount(),
                 (p) => CanAddDoctorAccount()
@@ -662,8 +761,11 @@ namespace ClinicManagement.ViewModels
                 CommandManager.InvalidateRequerySuggested();
             }
 
-            // Tải lịch hẹn
-            LoadAppointments();
+            // Tải lịch hẹn nếu có quyền và là bác sĩ
+            if (CanViewAppointments && IsDoctor)
+            {
+                LoadAppointments();
+            }
 
             // Reset trạng thái validation
             _touchedFields.Clear();
@@ -851,6 +953,25 @@ namespace ClinicManagement.ViewModels
                    !string.IsNullOrWhiteSpace(FullName) &&
                    !string.IsNullOrWhiteSpace(Phone) &&
                    SelectedSpecialty != null;
+        }
+
+        /// <summary>
+        /// Kiểm tra điều kiện có thể xóa nhân viên
+        /// Yêu cầu quyền xóa và không có ràng buộc dữ liệu
+        /// </summary>
+        /// <returns>True nếu có thể xóa</returns>
+        private bool CanDeleteStaffData()
+        {
+            if (Doctor == null)
+                return false;
+
+            // Kiểm tra các ràng buộc dữ liệu
+            bool hasActiveAppointments = DataProvider.Instance.Context.Appointments
+                .Any(a => a.StaffId == Doctor.StaffId &&
+                         (a.Status == "Đang chờ" || a.Status == "Đang khám") &&
+                         a.IsDeleted != true);
+
+            return !hasActiveAppointments;
         }
 
         /// <summary>
@@ -1218,13 +1339,14 @@ namespace ClinicManagement.ViewModels
 
         /// <summary>
         /// Kiểm tra điều kiện có thể tạo tài khoản cho nhân viên
-        /// Yêu cầu chưa có tài khoản, username hợp lệ và có vai trò
+        /// Yêu cầu quyền tạo tài khoản, chưa có tài khoản, username hợp lệ và có vai trò
         /// </summary>
         /// <returns>True nếu có thể tạo tài khoản</returns>
         private bool CanAddDoctorAccount()
         {
-            if (HasAccount)
+            if (!CanCreateAccount || HasAccount)
                 return false;
+
             // Chỉ cho phép thêm khi chưa có tài khoản và username hợp lệ
             bool isValidUsername = !string.IsNullOrWhiteSpace(NewUsername) && NewUsername.Trim().Length >= 4 && !HasUsernameErrors;
 

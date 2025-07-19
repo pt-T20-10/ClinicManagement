@@ -1328,7 +1328,23 @@ namespace ClinicManagement.ViewModels
                                         $"Đã xuất danh sách bệnh nhân thành công!\nĐường dẫn: {saveFileDialog.FileName}",
                                         "Thành công"
                                           );
+                                    if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
+                                    {
+                                        try
+                                        {
+                                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                            {
+                                                FileName = saveFileDialog.FileName,
+                                                UseShellExecute = true
+                                            });
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            MessageBoxService.ShowError($"Không thể mở file: {ex.Message}", "Lỗi");
+                                        }
+                                    }
                                 });
+                             
                             }
                         }
                         catch (Exception ex)

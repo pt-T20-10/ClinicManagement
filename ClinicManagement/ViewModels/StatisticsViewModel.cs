@@ -1,24 +1,36 @@
 using ClinicManagement.Models;
 using ClinicManagement.Services;
+using ClinicManagement.SubWindow;
+using ClosedXML.Excel;
 using LiveCharts;
 using LiveCharts.Wpf;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Win32;
-using ClosedXML.Excel;
-using System.IO;
-using ClinicManagement.SubWindow;
 
 namespace ClinicManagement.ViewModels
 {
+    /// <summary>
+    /// ViewModel quản lý trang thống kê
+    /// Hiển thị các biểu đồ, báo cáo doanh thu, bệnh nhân, lịch hẹn và các chỉ số kinh doanh quan trọng
+    /// </summary>
     public class StatisticsViewModel : BaseViewModel
     {
-        #region Basic Properties
+        #region Thuộc tính cơ bản
 
+        /// <summary>
+        /// Hàm định dạng tiền tệ cho các biểu đồ
+        /// Sử dụng để hiển thị giá trị tiền tệ theo định dạng Việt Nam
+        /// </summary>
         public Func<double, string> CurrencyFormatter { get; set; }
+
+        /// <summary>
+        /// Trạng thái đang tải dữ liệu
+        /// Sử dụng để hiển thị loading indicator trong UI
+        /// </summary>
         private bool _isLoading;
         public bool IsLoading
         {
@@ -30,6 +42,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Ngày bắt đầu của khoảng thời gian cần thống kê
+        /// Mặc định là ngày đầu tháng hiện tại
+        /// </summary>
         private DateTime _startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
         public DateTime StartDate
         {
@@ -38,11 +54,15 @@ namespace ClinicManagement.ViewModels
             {
                 _startDate = value;
                 OnPropertyChanged();
-                // We'll handle loading in the filter commands instead of automatically loading
-                // to prevent DbContext threading issues
+                // Xử lý tải dữ liệu sẽ được thực hiện trong các lệnh lọc
+                // để tránh xung đột threading với DbContext
             }
         }
 
+        /// <summary>
+        /// Ngày kết thúc của khoảng thời gian cần thống kê
+        /// Mặc định là ngày hiện tại
+        /// </summary>
         private DateTime _endDate = DateTime.Now;
         public DateTime EndDate
         {
@@ -51,12 +71,17 @@ namespace ClinicManagement.ViewModels
             {
                 _endDate = value;
                 OnPropertyChanged();
-                // We'll handle loading in the filter commands instead of automatically loading
-                // to prevent DbContext threading issues
+                // Xử lý tải dữ liệu sẽ được thực hiện trong các lệnh lọc
+                // để tránh xung đột threading với DbContext
             }
         }
 
-        // Today/Month Revenue Statistics
+        // === THỐNG KÊ DOANH THU NGÀY/THÁNG ===
+
+        /// <summary>
+        /// Tổng doanh thu trong ngày hôm nay
+        /// Bao gồm tất cả hóa đơn đã thanh toán trong ngày
+        /// </summary>
         private decimal _todayRevenue;
         public decimal TodayRevenue
         {
@@ -68,6 +93,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tổng doanh thu trong tháng hiện tại
+        /// Bao gồm tất cả hóa đơn đã thanh toán từ đầu tháng đến hiện tại
+        /// </summary>
         private decimal _monthRevenue;
         public decimal MonthRevenue
         {
@@ -78,7 +107,13 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
-        // Today's Appointment Count
+
+        // === THỐNG KÊ LỊCH HẸN ===
+
+        /// <summary>
+        /// Số lượng lịch hẹn trong ngày hôm nay
+        /// Bao gồm tất cả các trạng thái lịch hẹn
+        /// </summary>
         private int _todayAppointmentCount;
         public int TodayAppointmentCount
         {
@@ -90,7 +125,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Yesterday's Appointment Count
+        /// <summary>
+        /// Số lượng lịch hẹn trong ngày hôm qua
+        /// Sử dụng để tính toán tỷ lệ tăng trưởng
+        /// </summary>
         private int _yesterdayAppointmentCount;
         public int YesterdayAppointmentCount
         {
@@ -102,7 +140,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Appointment Growth Rate
+        /// <summary>
+        /// Tỷ lệ tăng trưởng lịch hẹn so với ngày hôm qua (dạng chuỗi)
+        /// Ví dụ: "+15%" hoặc "-5%"
+        /// </summary>
         private string _appointmentGrowth;
         public string AppointmentGrowth
         {
@@ -114,7 +155,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Appointment Growth Percentage
+        /// <summary>
+        /// Tỷ lệ tăng trưởng lịch hẹn so với ngày hôm qua (dạng số)
+        /// Sử dụng cho các biểu đồ và tính toán
+        /// </summary>
         private double _appointmentPercentage;
         public double AppointmentPercentage
         {
@@ -126,8 +170,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        // === THỐNG KÊ BỆNH NHÂN ===
 
-        // New Patients Count
+        /// <summary>
+        /// Số lượng bệnh nhân mới trong khoảng thời gian được chọn
+        /// </summary>
         private int _newPatients;
         public int NewPatients
         {
@@ -139,7 +186,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Low Stock Warning Count
+        /// <summary>
+        /// Số lượng thuốc sắp hết hàng hoặc cần cảnh báo tồn kho
+        /// Sử dụng để hiển thị cảnh báo trong dashboard
+        /// </summary>
         private int _lowStockCount;
         public int LowStockCount
         {
@@ -151,7 +201,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Basic Revenue Statistics
+        // === THỐNG KÊ DOANH THU TỔNG QUAN ===
+
+        /// <summary>
+        /// Tổng doanh thu trong khoảng thời gian được chọn
+        /// Tự động cập nhật phần trăm hoàn thành mục tiêu khi thay đổi
+        /// </summary>
         private decimal _totalRevenue;
         public decimal TotalRevenue
         {
@@ -160,11 +215,15 @@ namespace ClinicManagement.ViewModels
             {
                 _totalRevenue = value;
                 OnPropertyChanged();
-                // Update the revenue percentage when total revenue changes
+                // Cập nhật phần trăm hoàn thành mục tiêu doanh thu khi tổng doanh thu thay đổi
                 RevenuePercentage = RevenueTarget > 0 ? (double)((TotalRevenue / RevenueTarget) * 100) : 0;
             }
         }
 
+        /// <summary>
+        /// Mục tiêu doanh thu đã đặt ra
+        /// Mặc định là 600,000 (VND)
+        /// </summary>
         private decimal _revenueTarget = 600000;
         public decimal RevenueTarget
         {
@@ -173,11 +232,15 @@ namespace ClinicManagement.ViewModels
             {
                 _revenueTarget = value;
                 OnPropertyChanged();
-                // Update the revenue percentage when target changes
+                // Cập nhật phần trăm hoàn thành mục tiêu khi mục tiêu thay đổi
                 RevenuePercentage = RevenueTarget > 0 ? (double)((TotalRevenue / RevenueTarget) * 100) : 0;
             }
         }
 
+        /// <summary>
+        /// Phần trăm hoàn thành mục tiêu doanh thu
+        /// Được tính tự động dựa trên TotalRevenue và RevenueTarget
+        /// </summary>
         private double _revenuePercentage;
         public double RevenuePercentage
         {
@@ -192,6 +255,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tỷ lệ tăng trưởng doanh thu so với kỳ trước (dạng chuỗi)
+        /// Ví dụ: "+25%" hoặc "-10%"
+        /// </summary>
         private string _revenueGrowth;
         public string RevenueGrowth
         {
@@ -203,7 +270,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Patient Statistics
+        // === THỐNG KÊ BỆNH NHÂN CHI TIẾT ===
+
+        /// <summary>
+        /// Tổng số bệnh nhân trong khoảng thời gian được chọn
+        /// Tự động cập nhật phần trăm hoàn thành mục tiêu bệnh nhân
+        /// </summary>
         private int _totalPatients;
         public int TotalPatients
         {
@@ -212,10 +284,14 @@ namespace ClinicManagement.ViewModels
             {
                 _totalPatients = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(PatientPercentage));
+                OnPropertyChanged(nameof(PatientPercentage)); // Thông báo cập nhật phần trăm bệnh nhân
             }
         }
 
+        /// <summary>
+        /// Mục tiêu số lượng bệnh nhân đã đặt ra
+        /// Mặc định là 300 bệnh nhân
+        /// </summary>
         private int _patientTarget = 300;
         public int PatientTarget
         {
@@ -224,12 +300,20 @@ namespace ClinicManagement.ViewModels
             {
                 _patientTarget = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(PatientPercentage));
+                OnPropertyChanged(nameof(PatientPercentage)); // Thông báo cập nhật phần trăm bệnh nhân
             }
         }
 
+        /// <summary>
+        /// Phần trăm hoàn thành mục tiêu bệnh nhân
+        /// Calculated property - tự động tính toán dựa trên TotalPatients và PatientTarget
+        /// </summary>
         public double PatientPercentage => PatientTarget > 0 ? (double)((TotalPatients / (double)PatientTarget) * 100) : 0;
 
+        /// <summary>
+        /// Tỷ lệ tăng trưởng bệnh nhân so với kỳ trước (dạng chuỗi)
+        /// Ví dụ: "+18%" hoặc "-3%"
+        /// </summary>
         private string _patientGrowth;
         public string PatientGrowth
         {
@@ -241,7 +325,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Appointment Statistics
+        // === THỐNG KÊ LỊCH HẸN CHI TIẾT ===
+
+        /// <summary>
+        /// Tổng số lịch hẹn trong khoảng thời gian được chọn
+        /// Bao gồm tất cả các trạng thái lịch hẹn
+        /// </summary>
         private int _totalAppointments;
         public int TotalAppointments
         {
@@ -253,7 +342,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Medicine Statistics
+        // === THỐNG KÊ THUỐC ===
+
+        /// <summary>
+        /// Tổng số lượng thuốc đã bán trong khoảng thời gian được chọn
+        /// Tính từ các hóa đơn bán thuốc đã thanh toán
+        /// </summary>
         private int _totalMedicineSold;
         public int TotalMedicineSold
         {
@@ -265,46 +359,75 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Số lượng lịch hẹn đang chờ xử lý (dạng chuỗi)
+        /// Hiển thị trong dashboard để theo dõi công việc cần làm
+        /// </summary>
         private string _PendingAppointments;
         public string PendingAppointments
         {
             get => _PendingAppointments;
             set
             {
-                _PendingAppointments = value; OnPropertyChanged();
+                _PendingAppointments = value;
+                OnPropertyChanged();
             }
         }
 
+        /// <summary>
+        /// Danh sách lịch hẹn trong ngày hôm nay
+        /// Hiển thị trong bảng tổng quan dashboard
+        /// </summary>
         private ObservableCollection<TodayAppointment> _TodayAppointments;
         public ObservableCollection<TodayAppointment> TodayAppointments
         {
             get => _TodayAppointments;
             set
             {
-                _TodayAppointments = value; OnPropertyChanged();
+                _TodayAppointments = value;
+                OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// Ngày hiện tại để hiển thị trong dashboard
+        /// </summary>
         private DateTime _CurrentDate;
         public DateTime CurrentDate
         {
             get => _CurrentDate;
             set
             {
-                _CurrentDate = value; OnPropertyChanged();
+                _CurrentDate = value;
+                OnPropertyChanged();
             }
         }
 
         #endregion
 
-        #region Chart Properties
-        // Hour labels for charts
-        public string[] HourLabels { get; } = Enumerable.Range(0, 24)
+        #region Thuộc tính biểu đồ
+
+        // === NHÃN CHO CÁC BIỂU ĐỒ ===
+
+        /// <summary>
+        /// Nhãn giờ cho biểu đồ theo giờ (7:00 - 17:00)
+        /// Sử dụng cho biểu đồ doanh thu theo giờ và lịch hẹn theo giờ
+        /// </summary>
+        public string[] HourLabels { get; } = Enumerable.Range(7, 17)
             .Select(h => $"{h}:00").ToArray();
 
-        // Month labels
+        /// <summary>
+        /// Nhãn tháng cho biểu đồ theo tháng (T1 - T12)
+        /// Sử dụng cho biểu đồ doanh thu theo tháng
+        /// </summary>
         public string[] MonthLabels { get; } = { "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12" };
 
-        // Revenue by Time Period Chart
+        // === BIỂU ĐỒ DOANH THU THEO THỜI GIAN ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ doanh thu theo tháng
+        /// Hiển thị xu hướng doanh thu qua các tháng trong năm
+        /// </summary>
         private SeriesCollection _revenueByMonthSeries;
         public SeriesCollection RevenueByMonthSeries
         {
@@ -316,9 +439,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Revenue by Time
-       
-
+        /// <summary>
+        /// Nhãn thời gian cho biểu đồ doanh thu
+        /// Thay đổi tùy theo loại lọc (ngày, tháng, quý, năm)
+        /// </summary>
         private string[] _revenueByTimeLabels;
         public string[] RevenueByTimeLabels
         {
@@ -330,7 +454,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Invoice Type Series
+        // === BIỂU ĐỒ LOẠI HÓA ĐƠN ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ phân bố theo loại hóa đơn
+        /// Bao gồm: Khám bệnh, Bán thuốc, Khám và bán thuốc
+        /// </summary>
         private SeriesCollection _invoiceTypeSeries;
         public SeriesCollection InvoiceTypeSeries
         {
@@ -342,6 +471,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Nhãn cho biểu đồ loại hóa đơn
+        /// Tương ứng với các loại hóa đơn trong hệ thống
+        /// </summary>
         private string[] _invoiceTypeLabels;
         public string[] InvoiceTypeLabels
         {
@@ -353,7 +486,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Service Revenue Series
+        // === BIỂU ĐỒ DOANH THU DỊCH VỤ ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ doanh thu theo từng dịch vụ
+        /// Phân tích đóng góp của từng dịch vụ vào tổng doanh thu
+        /// </summary>
         private SeriesCollection _serviceRevenueSeries;
         public SeriesCollection ServiceRevenueSeries
         {
@@ -365,8 +503,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-  
-
+        /// <summary>
+        /// Nhãn so sánh doanh thu
+        /// Sử dụng cho các biểu đồ so sánh doanh thu giữa các kỳ
+        /// </summary>
         private string[] _revenueComparisonLabels;
         public string[] RevenueComparisonLabels
         {
@@ -378,7 +518,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Top Revenue Days Series
+        // === BIỂU ĐỒ TOP NGÀY CÓ DOANH THU CAO NHẤT ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ top ngày có doanh thu cao nhất
+        /// Hiển thị các ngày kinh doanh hiệu quả nhất
+        /// </summary>
         private SeriesCollection _topRevenueDaysSeries;
         public SeriesCollection TopRevenueDaysSeries
         {
@@ -390,6 +535,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Nhãn cho biểu đồ top ngày có doanh thu cao
+        /// Chứa thông tin ngày tháng tương ứng
+        /// </summary>
         private string[] _topRevenueDaysLabels;
         public string[] TopRevenueDaysLabels
         {
@@ -401,7 +550,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Revenue Trend Series
+        // === BIỂU ĐỒ XU HƯỚNG DOANH THU ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ xu hướng doanh thu theo thời gian
+        /// Hiển thị đường xu hướng tăng trưởng doanh thu
+        /// </summary>
         private SeriesCollection _revenueTrendSeries;
         public SeriesCollection RevenueTrendSeries
         {
@@ -413,6 +567,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Nhãn thời gian cho biểu đồ xu hướng doanh thu
+        /// Thay đổi theo khoảng thời gian được chọn
+        /// </summary>
         private string[] _revenueTrendLabels;
         public string[] RevenueTrendLabels
         {
@@ -424,7 +582,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Revenue By Hour Series
+        // === BIỂU ĐỒ DOANH THU THEO GIỜ ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ doanh thu theo từng giờ trong ngày
+        /// Phân tích thời gian kinh doanh hiệu quả nhất
+        /// </summary>
         private SeriesCollection _revenueByHourSeries;
         public SeriesCollection RevenueByHourSeries
         {
@@ -436,7 +599,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Patient Type Series
+        // === BIỂU ĐỒ PHÂN LOẠI BỆNH NHÂN ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ phân bố bệnh nhân theo loại
+        /// Bao gồm: Thường, VIP, Bảo hiểm y tế, v.v.
+        /// </summary>
         private SeriesCollection _patientTypeSeries;
         public SeriesCollection PatientTypeSeries
         {
@@ -448,9 +616,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-      
+        // === BIỂU ĐỒ TRẠNG THÁI LỊCH HẸN ===
 
-        // Appointment Status Series
+        /// <summary>
+        /// Dữ liệu biểu đồ phân bố lịch hẹn theo trạng thái
+        /// Bao gồm: Đang chờ, Đang khám, Đã khám, Đã hủy
+        /// </summary>
         private SeriesCollection _appointmentStatusSeries;
         public SeriesCollection AppointmentStatusSeries
         {
@@ -462,6 +633,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Nhãn cho biểu đồ trạng thái lịch hẹn
+        /// Tương ứng với các trạng thái lịch hẹn trong hệ thống
+        /// </summary>
         private string[] _appointmentStatusLabels;
         public string[] AppointmentStatusLabels
         {
@@ -473,7 +648,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Appointment Peak Hours Series
+        // === BIỂU ĐỒ GIỜ CAO ĐIỂM LỊCH HẸN ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ phân bố lịch hẹn theo giờ trong ngày
+        /// Xác định khung giờ có nhiều lịch hẹn nhất
+        /// </summary>
         private SeriesCollection _appointmentPeakHoursSeries;
         public SeriesCollection AppointmentPeakHoursSeries
         {
@@ -485,7 +665,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Patients By Doctor Series
+        // === BIỂU ĐỒ BỆNH NHÂN THEO BÁC SĨ ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ phân bố bệnh nhân theo từng bác sĩ/nhân viên
+        /// Đánh giá hiệu suất làm việc của từng bác sĩ
+        /// </summary>
         private SeriesCollection _patientsByStaffseries;
         public SeriesCollection PatientsByStaffseries
         {
@@ -497,6 +682,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Nhãn tên bác sĩ cho biểu đồ bệnh nhân theo bác sĩ
+        /// Chứa tên hoặc mã nhân viên
+        /// </summary>
         private string[] _doctorLabels;
         public string[] DoctorLabels
         {
@@ -508,7 +697,12 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Revenue By Category Series
+        // === BIỂU ĐỒ DOANH THU THEO DANH MỤC THUỐC ===
+
+        /// <summary>
+        /// Dữ liệu biểu đồ doanh thu theo từng danh mục thuốc
+        /// Phân tích danh mục thuốc nào mang lại doanh thu cao nhất
+        /// </summary>
         private SeriesCollection _revenueByCategorySeries;
         public SeriesCollection RevenueByCategorySeries
         {
@@ -520,6 +714,10 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Nhãn danh mục thuốc cho biểu đồ doanh thu
+        /// Tương ứng với các danh mục thuốc trong hệ thống
+        /// </summary>
         private string[] _categoryLabels;
         public string[] CategoryLabels
         {
@@ -530,6 +728,11 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// Dữ liệu biểu đồ phân phối sản phẩm
+        /// Hiển thị tỷ lệ đóng góp của từng sản phẩm vào tổng doanh thu
+        /// </summary>
         private SeriesCollection _productDistributionSeries;
         public SeriesCollection ProductDistributionSeries
         {
@@ -540,6 +743,11 @@ namespace ClinicManagement.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        /// <summary>
+        /// Dữ liệu biểu đồ tỷ lệ hủy lịch hẹn
+        /// Theo dõi xu hướng hủy lịch hẹn theo thời gian
+        /// </summary>
         private SeriesCollection _cancellationRateSeries;
         public SeriesCollection CancellationRateSeries
         {
@@ -551,6 +759,11 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Văn bản mô tả bộ lọc hiện tại
+        /// Hiển thị cho người dùng biết đang xem thống kê của khoảng thời gian nào
+        /// Ví dụ: "Đang xem: Tháng này", "Đang xem: Quý này"
+        /// </summary>
         private string _currentFilterText = "Đang xem: Tháng này";
         public string CurrentFilterText
         {
@@ -562,11 +775,16 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         #endregion
 
-        #region Collections
-        // Top Selling Products
+        #region Collections - Bộ sưu tập dữ liệu hiển thị
+
+        /// <summary>
+        /// Danh sách sản phẩm bán chạy nhất trong khoảng thời gian được chọn
+        /// Chứa thông tin về tên thuốc, danh mục, doanh thu và phần trăm đóng góp
+        /// Được sắp xếp theo doanh thu giảm dần, lấy top 10 sản phẩm
+        /// Hiển thị trong bảng "Top sản phẩm bán chạy" trên giao diện
+        /// </summary>
         private ObservableCollection<TopSellingProduct> _topSellingProducts;
         public ObservableCollection<TopSellingProduct> TopSellingProducts
         {
@@ -578,7 +796,13 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Top VIP Patients
+        /// <summary>
+        /// Danh sách top bệnh nhân VIP theo tổng chi tiêu trong khoảng thời gian được chọn
+        /// Chứa thông tin ID, họ tên, số điện thoại, loại bệnh nhân và tổng chi tiêu
+        /// Được sắp xếp theo tổng chi tiêu giảm dần, lấy top 10 bệnh nhân
+        /// Hiển thị trong bảng "Bệnh nhân VIP" để nhận biết khách hàng quan trọng
+        /// Hỗ trợ phân tích xu hướng chi tiêu và chăm sóc khách hàng đặc biệt
+        /// </summary>
         private ObservableCollection<VIPPatient> _topVIPPatients;
         public ObservableCollection<VIPPatient> TopVIPPatients
         {
@@ -590,7 +814,17 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // Warning Medicines
+        /// <summary>
+        /// Danh sách cảnh báo về thuốc cần chú ý trong kho
+        /// Bao gồm các loại cảnh báo:
+        /// - Thuốc đã hết hạn nhưng chưa được tiêu hủy (ưu tiên cao nhất)
+        /// - Thuốc sắp hết hạn (trong vòng 30 ngày)
+        /// - Thuốc tồn kho thấp (≤ 20 đơn vị)
+        /// - Lô thuốc cuối cùng (chỉ còn 1 lô)
+        /// - Lỗi cấu hình (lô bán bị đánh dấu tiêu hủy)
+        /// Được sắp xếp theo mức độ nghiêm trọng, hiển thị tối đa 10 cảnh báo
+        /// Giúp quản lý kho hiệu quả và tránh rủi ro về chất lượng thuốc
+        /// </summary>
         private ObservableCollection<WarningMedicine> _warningMedicines;
         public ObservableCollection<WarningMedicine> WarningMedicines
         {
@@ -604,368 +838,547 @@ namespace ClinicManagement.ViewModels
 
         #endregion
 
-        #region Formatters and Commands
-        // Display Formatter for Y-Axis
+        #region Formatters and Commands - Bộ định dạng và lệnh thao tác
+
+        /// <summary>
+        /// Hàm định dạng hiển thị cho trục Y của các biểu đồ
+        /// Chuyển đổi giá trị số thành chuỗi hiển thị phù hợp
+        /// Sử dụng cho các biểu đồ cần hiển thị đơn vị đo lường cụ thể
+        /// </summary>
         public Func<double, string> YFormatter { get; set; }
 
-        // Commands
+        // === CÁC LỆNH ĐIỀU KHIỂN THỐNG KÊ ===
+
+        /// <summary>
+        /// Lệnh làm mới toàn bộ dữ liệu thống kê
+        /// Tải lại tất cả biểu đồ, số liệu và cảnh báo từ cơ sở dữ liệu
+        /// Sử dụng khi cần cập nhật dữ liệu real-time hoặc sau khi có thay đổi
+        /// </summary>
         public ICommand RefreshCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh lọc dữ liệu thống kê theo ngày hiện tại
+        /// Thiết lập StartDate = hôm nay, EndDate = hiện tại
+        /// Hiển thị CurrentFilterText = "Đang xem: Hôm nay"
+        /// </summary>
         public ICommand FilterByDayCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh lọc dữ liệu thống kê theo tháng hiện tại
+        /// Thiết lập StartDate = đầu tháng, EndDate = hiện tại
+        /// Hiển thị CurrentFilterText = "Đang xem: Tháng này"
+        /// Đây là bộ lọc mặc định khi khởi động ứng dụng
+        /// </summary>
         public ICommand FilterByMonthCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh lọc dữ liệu thống kê theo quý hiện tại
+        /// Tự động xác định quý dựa trên tháng hiện tại (Q1: T1-T3, Q2: T4-T6, Q3: T7-T9, Q4: T10-T12)
+        /// Thiết lập StartDate = đầu quý, EndDate = hiện tại
+        /// Hiển thị CurrentFilterText = "Đang xem: Quý X"
+        /// </summary>
         public ICommand FilterByQuarterCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh lọc dữ liệu thống kê theo năm hiện tại
+        /// Thiết lập StartDate = 01/01 năm hiện tại, EndDate = hiện tại
+        /// Hiển thị CurrentFilterText = "Đang xem: Năm YYYY"
+        /// Phù hợp cho báo cáo tổng kết cuối năm
+        /// </summary>
         public ICommand FilterByYearCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh xem chi tiết danh sách thuốc cần cảnh báo
+        /// Hiển thị popup với thông tin đầy đủ về các thuốc cần chú ý
+        /// Chỉ khả dụng khi LowStockCount > 0
+        /// Giúp người dùng nhanh chóng nắm bắt tình trạng kho thuốc
+        /// </summary>
         public ICommand ViewLowStockCommand { get; set; }
+
+        /// <summary>
+        /// Lệnh xuất báo cáo doanh thu ra file Excel
+        /// Bao gồm các biểu đồ: doanh thu theo ngày, theo loại hóa đơn, xu hướng doanh thu, doanh thu theo giờ
+        /// Sử dụng ClosedXML để tạo file Excel với định dạng chuyên nghiệp
+        /// Hiển thị progress dialog trong quá trình xuất để theo dõi tiến trình
+        /// File được lưu với tên format: ThongKeDoanhThu_dd-MM-yyyy.xlsx
+        /// </summary>
         public ICommand ExportRevenueToExcelCommand { get; private set; }
 
-        // Additional export commands for each tab
+        // === CÁC LỆNH XUẤT EXCEL CHO TỪNG TAB CHUYÊN BIỆT ===
+
+        /// <summary>
+        /// Lệnh xuất báo cáo thống kê bệnh nhân ra file Excel
+        /// Bao gồm: phân tích theo loại bệnh nhân, danh sách bệnh nhân VIP
+        /// Tạo file với tên format: ThongKeBenhNhan_dd-MM-yyyy.xlsx
+        /// Sử dụng background thread và progress tracking để tối ưu UX
+        /// </summary>
         public ICommand ExportPatientsToExcelCommand { get; private set; }
+
+        /// <summary>
+        /// Lệnh xuất báo cáo thống kê lịch hẹn ra file Excel
+        /// Bao gồm: phân bố theo trạng thái, giờ cao điểm, thống kê theo bác sĩ
+        /// Tạo file với tên format: ThongKeLichHen_dd-MM-yyyy.xlsx
+        /// Hỗ trợ phân tích hiệu quả hoạt động và phân bổ công việc
+        /// </summary>
         public ICommand ExportAppointmentsToExcelCommand { get; private set; }
+
+        /// <summary>
+        /// Lệnh xuất báo cáo thống kê thuốc ra file Excel
+        /// Bao gồm: doanh thu theo danh mục, phân bố sản phẩm, top thuốc bán chạy, cảnh báo tồn kho
+        /// Tạo file với tên format: ThongKeThuoc_dd-MM-yyyy.xlsx
+        /// Đặc biệt hữu ích cho quản lý kho và chiến lược kinh doanh thuốc
+        /// Có code màu cho các mức độ cảnh báo khác nhau (đỏ: cần tiêu hủy, cam: sắp hết hạn, xanh: tồn kho thấp)
+        /// </summary>
         public ICommand ExportMedicineToExcelCommand { get; private set; }
         #endregion
+        // === THUỘC TÍNH KIỂM SOÁT LUỒNG ASYNC ===
 
-        // Track if async operation is running
+        /// <summary>
+        /// Cờ theo dõi xem có thao tác bất đồng bộ nào đang chạy không
+        /// Ngăn chặn việc thực hiện nhiều thao tác async cùng lúc để tránh:
+        /// - Xung đột DbContext (multiple concurrent operations)
+        /// - Tình trạng race condition khi cập nhật UI
+        /// - Tải trùng lặp dữ liệu gây hiệu suất kém
+        /// </summary>
         private bool _isAsyncOperationRunning = false;
+
+        /// <summary>
+        /// Object dùng để đồng bộ hóa luồng (thread synchronization)
+        /// Đảm bảo chỉ một luồng có thể kiểm tra/thiết lập _isAsyncOperationRunning tại một thời điểm
+        /// Sử dụng pattern lock() để thread-safe trong môi trường đa luồng
+        /// </summary>
         private object _lockObject = new object();
 
+        /// <summary>
+        /// Constructor khởi tạo StatisticsViewModel
+        /// Thiết lập các formatter, commands và tải dữ liệu dashboard ban đầu
+        /// Sử dụng Dispatcher để tự động lọc theo tháng sau khi UI được khởi tạo
+        /// </summary>
         public StatisticsViewModel()
         {
-            InitializeCommands();
+            InitializeCommands(); // Khởi tạo tất cả commands với logic CanExecute an toàn
 
-            // Định dạng tiền tệ với 0 chữ số thập phân và đơn vị VNĐ
+            // === THIẾT LẬP CÁC FORMATTER ===
+
+            /// Định dạng tiền tệ với 0 chữ số thập phân và đơn vị VNĐ
+            /// Sử dụng cho tất cả biểu đồ hiển thị doanh thu và giá trị tiền tệ
             YFormatter = value => string.Format("{0:N0} VNĐ", value);
             CurrencyFormatter = value => string.Format("{0:N0} VNĐ", value);
 
-            InitializeCharts();
-            LoadDashBoard();
+            InitializeCharts();  // Khởi tạo các biểu đồ với dữ liệu mặc định
+            LoadDashBoard();     // Tải dữ liệu dashboard cơ bản (lịch hẹn hôm nay, v.v.)
 
+            // Sử dụng Dispatcher để tự động lọc theo tháng hiện tại sau khi UI hoàn tất khởi tạo
+            // BeginInvoke với Background priority đảm bảo UI được render xong trước
             Application.Current.Dispatcher.BeginInvoke(
                 System.Windows.Threading.DispatcherPriority.Background,
                 new Action(() => FilterByMonth())
             );
         }
-        // Add this property to your class
+
+        /// <summary>
+        /// Formatter để hiển thị số nguyên (không có đơn vị)
+        /// Sử dụng cho các biểu đồ hiển thị số lượng (bệnh nhân, lịch hẹn, thuốc)
+        /// </summary>
         public Func<double, string> IntegerFormatter { get; set; }
 
+        /// <summary>
+        /// Khởi tạo tất cả các command với logic CanExecute an toàn
+        /// Tất cả commands đều kiểm tra trạng thái IsLoading và _isAsyncOperationRunning
+        /// để tránh thực hiện đồng thời nhiều thao tác có thể gây xung đột
+        /// </summary>
         private void InitializeCommands()
         {
+            // === COMMAND LÀM MỚI DỮ LIỆU ===
+            /// Tải lại toàn bộ thống kê từ database
+            /// CanExecute: chỉ khi không đang loading và không có async operation nào khác
             RefreshCommand = new RelayCommand<object>(
                 p => LoadStatisticsAsync(),
                 p => !IsLoading && !_isAsyncOperationRunning
             );
 
+            // === CÁC COMMAND LỌC THEO THỜI GIAN ===
+            /// Tất cả đều có cùng logic CanExecute để đảm bảo an toàn luồng
+
+            /// Lọc dữ liệu theo ngày hiện tại (hôm nay)
             FilterByDayCommand = new RelayCommand<object>(
                 p => FilterByDay(),
                 p => !IsLoading && !_isAsyncOperationRunning
             );
 
+            /// Lọc dữ liệu theo tháng hiện tại (từ đầu tháng đến hiện tại)
             FilterByMonthCommand = new RelayCommand<object>(
                 p => FilterByMonth(),
                 p => !IsLoading && !_isAsyncOperationRunning
             );
 
+            /// Lọc dữ liệu theo quý hiện tại (Q1: T1-T3, Q2: T4-T6, Q3: T7-T9, Q4: T10-T12)
             FilterByQuarterCommand = new RelayCommand<object>(
                 p => FilterByQuarter(),
                 p => !IsLoading && !_isAsyncOperationRunning
             );
 
+            /// Lọc dữ liệu theo năm hiện tại (từ 01/01 đến hiện tại)
             FilterByYearCommand = new RelayCommand<object>(
                 p => FilterByYear(),
                 p => !IsLoading && !_isAsyncOperationRunning
             );
 
+            // === COMMAND XEM CẢNH BÁO TỒN KHO ===
+            /// Hiển thị popup chi tiết về thuốc cần cảnh báo
+            /// CanExecute: có cảnh báo (LowStockCount > 0) và không đang thực hiện thao tác khác
             ViewLowStockCommand = new RelayCommand<object>(
                 p => ViewLowStock(),
                 p => LowStockCount > 0 && !IsLoading && !_isAsyncOperationRunning
             );
-            // Add these lines to your existing InitializeCommands method
+
+            // === CÁC COMMAND XUẤT EXCEL ===
+            /// Tất cả commands xuất Excel đều chỉ kiểm tra IsLoading (không cần kiểm tra async operation)
+            /// vì xuất Excel chạy trong background thread riêng biệt với progress dialog
+
+            /// Xuất báo cáo doanh thu ra Excel với các biểu đồ: theo ngày, loại hóa đơn, xu hướng, theo giờ
             ExportRevenueToExcelCommand = new RelayCommand<object>(
                 p => ExportRevenueToExcel(),
                 p => !IsLoading
             );
 
+            /// Xuất báo cáo bệnh nhân ra Excel với: phân loại theo loại, danh sách VIP
             ExportPatientsToExcelCommand = new RelayCommand<object>(
                 p => ExportPatientsToExcel(),
                 p => !IsLoading
             );
 
+            /// Xuất báo cáo lịch hẹn ra Excel với: trạng thái, giờ cao điểm, phân bố theo bác sĩ
             ExportAppointmentsToExcelCommand = new RelayCommand<object>(
                 p => ExportAppointmentsToExcel(),
                 p => !IsLoading
             );
 
+            /// Xuất báo cáo thuốc ra Excel với: doanh thu theo danh mục, top bán chạy, cảnh báo tồn kho
+            /// Có màu sắc phân biệt mức độ cảnh báo (đỏ: tiêu hủy, cam: sắp hết hạn, xanh: tồn kho thấp)
             ExportMedicineToExcelCommand = new RelayCommand<object>(
                 p => ExportMedicineToExcel(),
                 p => !IsLoading
             );
         }
 
+        /// <summary>
+        /// Khởi tạo tất cả các biểu đồ với dữ liệu mặc định và cấu hình ban đầu
+        /// Được gọi trong constructor để đảm bảo UI có dữ liệu ngay khi hiển thị
+        /// Tránh lỗi binding và null reference exception
+        /// </summary>
         public void InitializeCharts()
         {
-            // Initialize chart series collections
+            // === BIỂU ĐỒ DOANH THU THEO THÁNG ===
+            /// Khởi tạo biểu đồ doanh thu thực tế vs mục tiêu theo 12 tháng
+            /// Sử dụng ColumnSeries cho doanh thu thực tế và LineSeries cho mục tiêu
             RevenueByMonthSeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Thực tế",
-            Values = new ChartValues<double>(new double[12]),
-            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        },
-        new LineSeries
-        {
-            Title = "Mục tiêu",
-            Values = new ChartValues<double>(new double[12]),
-            PointGeometry = DefaultGeometries.Circle,
-            StrokeThickness = 3,
-            Stroke = new SolidColorBrush(Color.FromRgb(255, 82, 82)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        }
-    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Thực tế",
+                    Values = new ChartValues<double>(new double[12]), // Khởi tạo 12 tháng với giá trị 0
+                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)), // Màu xanh dương Material Design
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng hiển thị tiền tệ VN
+                },
+                new LineSeries
+                {
+                    Title = "Mục tiêu",
+                    Values = new ChartValues<double>(new double[12]), // Khởi tạo 12 tháng với giá trị mục tiêu
+                    PointGeometry = DefaultGeometries.Circle, // Hiển thị điểm tròn trên đường
+                    StrokeThickness = 3, // Độ dày đường vẽ
+                    Stroke = new SolidColorBrush(Color.FromRgb(255, 82, 82)), // Màu đỏ cho mục tiêu
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
+                }
+            };
 
+            // === BIỂU ĐỒ DOANH THU THEO GIỜ ===
+            /// Biểu đồ cột hiển thị doanh thu theo 24 giờ trong ngày
+            /// Giúp xác định khung giờ kinh doanh hiệu quả nhất
             RevenueByHourSeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Doanh thu theo giờ",
-            Values = new ChartValues<double>(new double[24]),
-            Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        }
-    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu theo giờ",
+                    Values = new ChartValues<double>(new double[24]), // 24 giờ từ 0:00 đến 23:00
+                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)), // Màu cam Material Design
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
+                }
+            };
 
-            // Initialize appointment status labels
+            // === BIỂU ĐỒ TRẠNG THÁI LỊCH HẸN ===
+            /// Khởi tạo nhãn trạng thái lịch hẹn với các giá trị chuẩn trong hệ thống
             AppointmentStatusLabels = new[] { "Đang chờ", "Đã khám", "Đã hủy", "Đang khám" };
 
-            // Initialize appointment status series
+            /// Biểu đồ cột hiển thị số lượng lịch hẹn theo từng trạng thái
             AppointmentStatusSeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Số lượng lịch hẹn",
-            Values = new ChartValues<double>(new double[AppointmentStatusLabels.Length]),
-            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-            LabelPoint = point => string.Format("{0:N0}", point.Y)
-        }
-    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Số lượng lịch hẹn",
+                    Values = new ChartValues<double>(new double[AppointmentStatusLabels.Length]), // Khởi tạo theo số lượng trạng thái
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá Material Design
+                    LabelPoint = point => string.Format("{0:N0}", point.Y) // Định dạng số nguyên (không có đơn vị)
+                }
+            };
 
-            // Initialize empty collections with default "No data" placeholders
+            // === BIỂU ĐỒ PHÂN BỔ SẢN PHẨM (PIE CHART) ===
+            /// Khởi tạo với placeholder "Không có dữ liệu" để tránh UI trống
+            /// Sẽ được thay thế bằng dữ liệu thực khi LoadStatisticsAsync() chạy
             ProductDistributionSeries = new SeriesCollection
-    {
-        new PieSeries
-        {
-            Title = "Không có dữ liệu",
-            Values = new ChartValues<double> { 100 },
-            DataLabels = true,
-            LabelPoint = chartPoint => "Không có dữ liệu",
-            Fill = new SolidColorBrush(Colors.Gray)
-        }
-    };
+            {
+                new PieSeries
+                {
+                    Title = "Không có dữ liệu",
+                    Values = new ChartValues<double> { 100 }, // Hiển thị 100% cho placeholder
+                    DataLabels = true, // Hiển thị nhãn dữ liệu trên biểu đồ
+                    LabelPoint = chartPoint => "Không có dữ liệu", // Text hiển thị
+                    Fill = new SolidColorBrush(Colors.Gray) // Màu xám cho placeholder
+                }
+            };
 
-            // Default for top revenue days chart
+            // === BIỂU ĐỒ TOP NGÀY CÓ DOANH THU CAO ===
+            /// Hiển thị 7 ngày gần nhất theo mặc định
             TopRevenueDaysSeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Doanh thu",
-            Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
-            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        }
-    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)), // 7 ngày với giá trị 0
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
+                }
+            };
 
-            // Default labels for days
+            /// Tạo nhãn ngày cho 7 ngày gần nhất (định dạng dd/MM)
             TopRevenueDaysLabels = Enumerable.Range(1, 7)
-                .Select(i => DateTime.Now.AddDays(-i).ToString("dd/MM"))
-                .Reverse()
+                .Select(i => DateTime.Now.AddDays(-i).ToString("dd/MM")) // Lấy 7 ngày trước
+                .Reverse() // Đảo ngược để hiển thị từ cũ đến mới
                 .ToArray();
 
-            // Default for revenue trend chart
+            // === BIỂU ĐỒ XU HƯỚNG DOANH THU (LINE CHART) ===
+            /// Đường xu hướng mượt mà hiển thị xu hướng doanh thu theo thời gian
             RevenueTrendSeries = new SeriesCollection
-    {
-        new LineSeries
-        {
-            Title = "Xu hướng doanh thu",
-            Values = new ChartValues<double>(new double[12]),
-            PointGeometry = null,
-            LineSmoothness = 1,
-            Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-            Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        }
-    };
-            RevenueTrendLabels = MonthLabels;
+            {
+                new LineSeries
+                {
+                    Title = "Xu hướng doanh thu",
+                    Values = new ChartValues<double>(new double[12]), // 12 tháng
+                    PointGeometry = null, // Không hiển thị điểm trên đường
+                    LineSmoothness = 1, // Đường cong mượt mà (giá trị 0-1)
+                    Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)), // Màu đỏ Material Design
+                    Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54)), // Vùng tô màu với độ trong suốt
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
+                }
+            };
+            RevenueTrendLabels = MonthLabels; // Sử dụng nhãn tháng đã định nghĩa (T1-T12)
 
-            // Default for invoice type series
+            // === BIỂU ĐỒ DOANH THU THEO LOẠI HÓA ĐƠN ===
+            /// Phân tích doanh thu theo 3 loại hóa đơn chính trong hệ thống
             InvoiceTypeSeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Doanh thu",
-            Values = new ChartValues<double>(new double[] { 0, 0, 0 }),
-            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        }
-    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(new double[] { 0, 0, 0 }), // 3 loại hóa đơn
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
+                }
+            };
+            /// Định nghĩa 3 loại hóa đơn chuẩn trong hệ thống quản lý phòng khám
             InvoiceTypeLabels = new[] { "Khám bệnh", "Bán thuốc", "Khám và bán thuốc" };
 
-            // Default for patient type series
+            // === BIỂU ĐỒ PHÂN LOẠI BỆNH NHÂN (PIE CHART) ===
+            /// Placeholder cho biểu đồ phân loại bệnh nhân theo loại (VIP, thường, BHYT...)
             PatientTypeSeries = new SeriesCollection
-    {
-        new PieSeries
-        {
-            Title = "Không có dữ liệu",
-            Values = new ChartValues<double> { 100 },
-            DataLabels = true,
-            LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
-            Fill = new SolidColorBrush(Colors.Gray)
-        }
-    };
+            {
+                new PieSeries
+                {
+                    Title = "Không có dữ liệu",
+                    Values = new ChartValues<double> { 100 },
+                    DataLabels = true,
+                    LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này", // Thông báo chi tiết hơn
+                    Fill = new SolidColorBrush(Colors.Gray)
+                }
+            };
 
-            // Default for service revenue
+            // === BIỂU ĐỒ DOANH THU DỊCH VỤ (PIE CHART) ===
+            /// Phân tích tỷ lệ đóng góp của từng dịch vụ vào tổng doanh thu
             ServiceRevenueSeries = new SeriesCollection
-    {
-        new PieSeries
-        {
-            Title = "Không có dữ liệu",
-            Values = new ChartValues<double> { 100 },
-            DataLabels = true,
-            LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
-            Fill = new SolidColorBrush(Colors.Gray)
-        }
-    };
+            {
+                new PieSeries
+                {
+                    Title = "Không có dữ liệu",
+                    Values = new ChartValues<double> { 100 },
+                    DataLabels = true,
+                    LabelPoint = chartPoint => "Không có dữ liệu trong khoảng thời gian này",
+                    Fill = new SolidColorBrush(Colors.Gray)
+                }
+            };
 
-            // Default for appointment peak hours
+            // === BIỂU ĐỒ GIỜ CAO ĐIỂM LỊCH HẸN ===
+            /// Phân tích 24 giờ trong ngày để tìm khung giờ có nhiều lịch hẹn nhất
             AppointmentPeakHoursSeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Số lịch hẹn",
-            Values = new ChartValues<double>(new double[24]),
-            Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
-            LabelPoint = point => string.Format("{0:N0}", point.Y)
-        }
-    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Số lịch hẹn",
+                    Values = new ChartValues<double>(new double[24]), // 24 giờ từ 0:00-23:00
+                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)), // Màu cam
+                    LabelPoint = point => string.Format("{0:N0}", point.Y) // Định dạng số nguyên
+                }
+            };
 
-            // Default for patients by staff series
+            // === BIỂU ĐỒ BỆNH NHÂN THEO NHÂN VIÊN ===
+            /// Thống kê số lượng bệnh nhân được phụ trách bởi từng nhân viên/bác sĩ
             PatientsByStaffseries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Số bệnh nhân",
-            Values = new ChartValues<double> { 0 },
-            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-            LabelPoint = point => string.Format("{0:N0}", point.Y)
-        }
-    };
-            DoctorLabels = new[] { "Không có dữ liệu" };
+            {
+                new ColumnSeries
+                {
+                    Title = "Số bệnh nhân",
+                    Values = new ChartValues<double> { 0 }, // Khởi tạo với 1 giá trị 0
+                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)), // Màu xanh dương
+                    LabelPoint = point => string.Format("{0:N0}", point.Y) // Định dạng số nguyên
+                }
+            };
+            DoctorLabels = new[] { "Không có dữ liệu" }; // Nhãn placeholder
 
-            // Default for revenue by category
+            // === BIỂU ĐỒ DOANH THU THEO DANH MỤC THUỐC ===
+            /// Phân tích đóng góp doanh thu của từng danh mục thuốc
             RevenueByCategorySeries = new SeriesCollection
-    {
-        new ColumnSeries
-        {
-            Title = "Doanh thu",
-            Values = new ChartValues<double> { 0 },
-            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-        }
-    };
-            CategoryLabels = new[] { "Không có dữ liệu" };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double> { 0 }, // Khởi tạo với 1 giá trị 0
+                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)), // Màu xanh dương
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
+                }
+            };
+            CategoryLabels = new[] { "Không có dữ liệu" }; // Nhãn placeholder
 
-            // Default for cancellation rate
+            // === BIỂU ĐỒ TỶ LỆ HỦY LỊCH HẸN (PIE CHART) ===
+            /// Thống kê tỷ lệ hủy lịch hẹn để đánh giá chất lượng dịch vụ
             CancellationRateSeries = new SeriesCollection
-    {
-        new PieSeries
-        {
-            Title = "Không có dữ liệu",
-            Values = new ChartValues<double> { 100 },
-            DataLabels = true,
-            LabelPoint = chartPoint => "Không có dữ liệu",
-            Fill = new SolidColorBrush(Colors.Gray)
+            {
+                new PieSeries
+                {
+                    Title = "Không có dữ liệu",
+                    Values = new ChartValues<double> { 100 },
+                    DataLabels = true,
+                    LabelPoint = chartPoint => "Không có dữ liệu",
+                    Fill = new SolidColorBrush(Colors.Gray)
+                }
+            };
         }
-    };
-        }
 
-
-
+        /// <summary>
+        /// Phương thức chính tải tất cả dữ liệu thống kê một cách bất đồng bộ
+        /// Sử dụng multiple DbContext instances để tránh xung đột threading
+        /// Áp dụng pattern Producer-Consumer để tối ưu hiệu suất
+        /// Bao gồm cơ chế lock để tránh multiple concurrent operations
+        /// </summary>
         public async void LoadStatisticsAsync()
         {
+            // === KIỂM TRA CONCURRENT OPERATION ===
+            /// Tránh tình trạng nhiều thao tác async cùng chạy gây xung đột DbContext
             if (_isAsyncOperationRunning)
             {
-                return;
+                return; // Thoát ngay nếu đã có operation đang chạy
             }
 
+            // === THREAD-SAFE LOCKING ===
+            /// Sử dụng lock để đảm bảo chỉ một luồng có thể thiết lập _isAsyncOperationRunning
+            /// Pattern double-checked locking để tối ưu hiệu suất
             lock (_lockObject)
             {
                 if (_isAsyncOperationRunning)
-                    return;
-                _isAsyncOperationRunning = true;
+                    return; // Kiểm tra lại sau khi có lock
+                _isAsyncOperationRunning = true; // Đánh dấu operation đang chạy
             }
 
+            // === THIẾT LẬP TRẠNG THÁI LOADING ===
+            /// Cập nhật UI để hiển thị loading indicator
             IsLoading = true;
 
             try
             {
-                // Sử dụng một DbContext riêng cho mỗi tác vụ và AsNoTracking để cải thiện hiệu suất
+                // === PHASE 1: TẢI THỐNG KÊ CƠ BẢN (BACKGROUND THREAD) ===
+                /// Sử dụng DbContext riêng biệt cho thao tác tính toán nặng
+                /// Chạy trên background thread để không block UI
                 using (var context = new ClinicDbContext())
                 {
-                    // Tải thống kê cơ bản
+                    // Tải thống kê cơ bản (dashboard metrics) trên background thread
                     await Task.Run(() => LoadBasicStatistics(context));
                 }
 
-                // Cập nhật biểu đồ trên luồng UI
+                // === PHASE 2: TẢI CÁC BIỂU ĐỒ (UI THREAD) ===
+                /// Cập nhật biểu đồ trên UI thread vì LiveCharts không thread-safe
+                /// Chia thành nhiều DbContext để tránh timeout và conflict
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    // === SUB-PHASE 2A: BIỂU ĐỒ DOANH THU ===
+                    /// Context riêng cho các biểu đồ liên quan đến doanh thu
                     using (var context = new ClinicDbContext())
                     {
-                        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+                        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking; // Tối ưu hiệu suất
 
                         // Tải các biểu đồ doanh thu
-                        LoadRevenueByMonthChart(context);
-                        LoadRevenueByHourChart(context);
-                        LoadProductDistributionChart(context);
-                        LoadTopRevenueDaysChart(context);
-                        LoadRevenueTrendChart(context);
-                        LoadInvoiceTypeChart(context);
-                        LoadServiceRevenueChart(context);
-                        LoadRevenueByCategoryChart(context);
+                        LoadRevenueByMonthChart(context);      // Doanh thu theo tháng
+                        LoadRevenueByHourChart(context);       // Doanh thu theo giờ
+                        LoadProductDistributionChart(context); // Phân bố sản phẩm
+                        LoadTopRevenueDaysChart(context);      // Top ngày doanh thu cao
+                        LoadRevenueTrendChart(context);        // Xu hướng doanh thu
+                        LoadInvoiceTypeChart(context);         // Doanh thu theo loại hóa đơn
+                        LoadServiceRevenueChart(context);      // Doanh thu dịch vụ
+                        LoadRevenueByCategoryChart(context);   // Doanh thu theo danh mục
                     }
 
+                    // === SUB-PHASE 2B: BIỂU ĐỒ BỆNH NHÂN VÀ LỊCH HẸN ===
+                    /// Context riêng cho dữ liệu bệnh nhân và lịch hẹn
                     using (var context = new ClinicDbContext())
                     {
                         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
                         // Tải biểu đồ về bệnh nhân và lịch hẹn
-                        LoadPatientTypeChart(context);
-                        LoadAppointmentStatusChart(context);
-                        LoadAppointmentPeakHoursChart(context);
-                        LoadPatientsByDoctorChart(context);
+                        LoadPatientTypeChart(context);          // Phân loại bệnh nhân
+                        LoadAppointmentStatusChart(context);    // Trạng thái lịch hẹn
+                        LoadAppointmentPeakHoursChart(context); // Giờ cao điểm lịch hẹn
+                        LoadPatientsByDoctorChart(context);     // Bệnh nhân theo bác sĩ
                     }
 
+                    // === SUB-PHASE 2C: DỮ LIỆU TÀI CHÍNH VÀ SẢN PHẨM ===
+                    /// Context riêng cho analytics tài chính và sản phẩm
                     using (var context = new ClinicDbContext())
                     {
                         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
                         // Tải dữ liệu tài chính và thông tin sản phẩm
-                        LoadTopSellingProducts(context);
-                        LoadTopVIPPatients(context);
-                        CalculateGrowthRates(context);
+                        LoadTopSellingProducts(context);  // Top sản phẩm bán chạy
+                        LoadTopVIPPatients(context);      // Top bệnh nhân VIP
+                        CalculateGrowthRates(context);    // Tính tỷ lệ tăng trưởng
                     }
 
+                    // === SUB-PHASE 2D: CẢNH BÁO THUỐC ===
+                    /// Context riêng để tránh vấn đề dịch LINQ phức tạp của medicine logic
                     using (var context = new ClinicDbContext())
                     {
                         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-                        // Tải cảnh báo thuốc (context riêng để tránh vấn đề dịch LINQ)
+                        // Tải cảnh báo thuốc (context riêng vì có logic LINQ phức tạp)
                         LoadWarningMedicines(context);
                     }
                 });
 
-                // Đảm bảo các command có thể được truy vấn lại sau khi tải dữ liệu
+                // === CẬP NHẬT TRẠNG THÁI COMMANDS ===
+                /// Đảm bảo các command có thể được đánh giá lại CanExecute sau khi tải dữ liệu
+                /// Quan trọng cho các command export và filter
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
+                // === XỬ LÝ LỖI VÀ THÔNG BÁO ===
+                /// Hiển thị lỗi trên UI thread để đảm bảo MessageBox hiển thị đúng
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessageBoxService.ShowError($"Lỗi khi tải thống kê: {ex.Message}", "Lỗi");
@@ -973,38 +1386,50 @@ namespace ClinicManagement.ViewModels
             }
             finally
             {
-                IsLoading = false;
-                _isAsyncOperationRunning = false;
+                // === CLEANUP VÀ RESET TRẠNG THÁI ===
+                /// Luôn đảm bảo reset trạng thái dù thành công hay thất bại
+                /// Quan trọng để tránh UI bị "lock" vĩnh viễn
+                IsLoading = false;                    // Tắt loading indicator
+                _isAsyncOperationRunning = false;     // Cho phép operation tiếp theo
             }
         }
 
+        #region Data Loading Methods - Các phương thức tải dữ liệu từ cơ sở dữ liệu
 
-        #region Data Loading Methods
+        /// <summary>
+        /// Tải các thống kê cơ bản cho dashboard
+        /// Chạy trên background thread để không block UI
+        /// Bao gồm: lịch hẹn hôm nay/hôm qua, doanh thu, bệnh nhân mới, thuốc đã bán
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu</param>
         private void LoadBasicStatistics(ClinicDbContext context)
         {
             try
             {
-                var today = DateTime.Today;
-                var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
-                var yesterday = today.AddDays(-1);
+                // === THIẾT LẬP CÁC NGÀY THAM CHIẾU ===
+                var today = DateTime.Today;                                    // Ngày hôm nay (00:00:00)
+                var firstDayOfMonth = new DateTime(today.Year, today.Month, 1); // Ngày đầu tháng hiện tại
+                var yesterday = today.AddDays(-1);                            // Ngày hôm qua
 
-                // Calculate today's appointments
+                // === THỐNG KÊ LỊCH HẸN HÔM NAY VÀ HÔM QUA ===
+                /// Đếm tổng số lịch hẹn hôm nay (bao gồm tất cả trạng thái)
                 int todayAppointments = context.Appointments
                     .Count(a => a.AppointmentDate.Date == today && a.IsDeleted != true);
 
-                // Calculate yesterday's appointments
+                /// Đếm tổng số lịch hẹn hôm qua (để tính tăng trưởng)
                 int yesterdayAppointments = context.Appointments
                     .Count(a => a.AppointmentDate.Date == yesterday && a.IsDeleted != true);
 
-                // Calculate appointment growth percentage
+                // === TÍNH TOÁN TỶ LỆ TĂNG TRƯỞNG LỊCH HẸN ===
                 double appointmentPercentage = 0;
                 string appointmentGrowth = "0.0%";
 
                 if (yesterdayAppointments > 0)
                 {
+                    // Có dữ liệu hôm qua để so sánh
                     appointmentPercentage = ((todayAppointments - yesterdayAppointments) / (double)yesterdayAppointments) * 100;
 
-                    // Format with + sign for positive growth
+                    // Định dạng với dấu + cho tăng trưởng dương
                     if (appointmentPercentage > 0)
                         appointmentGrowth = $"+{appointmentPercentage:0.0}%";
                     else
@@ -1012,18 +1437,19 @@ namespace ClinicManagement.ViewModels
                 }
                 else if (yesterdayAppointments == 0 && todayAppointments > 0)
                 {
-                    // If yesterday had no appointments but today has some
+                    // Hôm qua không có lịch hẹn nhưng hôm nay có
                     appointmentGrowth = "+100.0%";
                     appointmentPercentage = 100.0;
                 }
                 else if (yesterdayAppointments == 0 && todayAppointments == 0)
                 {
-                    // If both days have no appointments
+                    // Cả hai ngày đều không có lịch hẹn
                     appointmentGrowth = "0.0%";
                     appointmentPercentage = 0;
                 }
-       
-                // Today's revenue
+
+                // === THỐNG KÊ DOANH THU HÔM NAY ===
+                /// Lấy tất cả hóa đơn đã thanh toán trong ngày hôm nay
                 var todayInvoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
                            i.InvoiceDate.Value.Date == today &&
@@ -1031,7 +1457,8 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 decimal todayRevenue = todayInvoices.Sum(i => i.TotalAmount);
 
-                // Month's revenue
+                // === THỐNG KÊ DOANH THU THÁNG HIỆN TẠI ===
+                /// Lấy tất cả hóa đơn từ đầu tháng đến hiện tại
                 var monthInvoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
                            i.InvoiceDate.Value >= firstDayOfMonth &&
@@ -1040,7 +1467,8 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 decimal monthRevenue = monthInvoices.Sum(i => i.TotalAmount);
 
-                // Total revenue for selected period
+                // === THỐNG KÊ DOANH THU THEO KHOẢNG THỜI GIAN ĐƯỢC CHỌN ===
+                /// Doanh thu trong khoảng StartDate - EndDate (được thiết lập bởi filter)
                 var periodInvoices = context.Invoices
                     .Where(i => i.InvoiceDate >= StartDate &&
                            i.InvoiceDate <= EndDate &&
@@ -1048,22 +1476,26 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 decimal totalRevenue = periodInvoices.Sum(i => i.TotalAmount);
 
-                // New patients count
+                // === THỐNG KÊ BỆNH NHÂN MỚI ===
+                /// Đếm bệnh nhân được tạo trong khoảng thời gian được chọn
                 int newPatientsCount = context.Patients
                     .Count(p => p.CreatedAt >= StartDate &&
                            p.CreatedAt <= EndDate &&
                            p.IsDeleted != true);
 
-                // Total patients
+                // === THỐNG KÊ TỔNG SỐ BỆNH NHÂN ===
+                /// Tổng số bệnh nhân hiện có trong hệ thống (chưa bị xóa)
                 int totalPatientsCount = context.Patients
                     .Count(p => p.IsDeleted != true);
 
-                // Total appointments
+                // === THỐNG KÊ TỔNG SỐ LỊCH HẸN ===
+                /// Tổng số lịch hẹn trong khoảng thời gian được chọn
                 int totalAppointmentsCount = context.Appointments
                     .Count(a => a.AppointmentDate >= StartDate &&
                            a.AppointmentDate <= EndDate);
 
-                // Count total medicine sold (done in memory to avoid translation issues)
+                // === THỐNG KÊ THUỐC ĐÃ BÁN ===
+                /// Đếm tổng số lượng thuốc đã bán (thực hiện trong memory để tránh lỗi translation)
                 var invoiceDetails = context.InvoiceDetails
                     .Include(id => id.Invoice)
                     .Where(id => id.Invoice.InvoiceDate >= StartDate &&
@@ -1073,9 +1505,9 @@ namespace ClinicManagement.ViewModels
                     .ToList();
                 int medicineSoldCount = invoiceDetails.Sum(id => id.Quantity ?? 0);
 
-        
-   
-                // Update UI elements on the UI thread
+                // === CẬP NHẬT UI TRÊN UI THREAD ===
+                /// Dispatcher.Invoke đảm bảo cập nhật UI properties trên UI thread
+                /// Tránh cross-thread exception khi cập nhật từ background thread
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     TodayAppointmentCount = todayAppointments;
@@ -1089,11 +1521,12 @@ namespace ClinicManagement.ViewModels
                     TotalPatients = totalPatientsCount;
                     TotalAppointments = totalAppointmentsCount;
                     TotalMedicineSold = medicineSoldCount;
-                  
                 });
             }
             catch (Exception ex)
             {
+                // === XỬ LÝ LỖI ===
+                /// Hiển thị lỗi trên UI thread để đảm bảo MessageBox hiển thị đúng
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessageBoxService.ShowError($"Lỗi khi tải thống kê cơ bản: {ex.Message}", "Lỗi");
@@ -1101,50 +1534,62 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Tải dữ liệu biểu đồ doanh thu theo 12 tháng trong năm
+        /// So sánh doanh thu thực tế với mục tiêu đã đặt ra
+        /// Sử dụng ColumnSeries cho thực tế và LineSeries cho mục tiêu
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
         private void LoadRevenueByMonthChart(ClinicDbContext context)
         {
             try
             {
                 var currentYear = DateTime.Now.Year;
-                var monthlyRevenue = new double[12];
+                var monthlyRevenue = new double[12];  // Mảng 12 tháng (index 0-11)
+
+                /// Mục tiêu doanh thu cho từng tháng (có thể điều chỉnh theo chiến lược kinh doanh)
                 var monthlyTarget = new double[12] { 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000 };
 
-                // Fetch and process invoices in memory
+                // === TẢI VÀ XỬ LÝ DỮ LIỆU HÓA ĐƠN ===
+                /// Lấy tất cả hóa đơn đã thanh toán trong năm hiện tại
                 var invoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
                            i.InvoiceDate.Value.Year == currentYear &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
+                /// Nhóm doanh thu theo từng tháng
                 foreach (var invoice in invoices)
                 {
                     if (invoice.InvoiceDate.HasValue)
                     {
-                        int month = invoice.InvoiceDate.Value.Month - 1; // 0-based index
+                        int month = invoice.InvoiceDate.Value.Month - 1; // Chuyển về 0-based index
                         monthlyRevenue[month] += (double)invoice.TotalAmount;
                     }
                 }
 
-                // Update chart data
+                // === CẬP NHẬT DỮ LIỆU BIỂU ĐỒ ===
+                /// Kiểm tra biểu đồ đã được khởi tạo và có đủ 2 series (thực tế + mục tiêu)
                 if (RevenueByMonthSeries?.Count >= 2)
                 {
-                    var actualSeries = RevenueByMonthSeries[0] as ColumnSeries;
-                    var targetSeries = RevenueByMonthSeries[1] as LineSeries;
+                    var actualSeries = RevenueByMonthSeries[0] as ColumnSeries;    // Series doanh thu thực tế
+                    var targetSeries = RevenueByMonthSeries[1] as LineSeries;      // Series mục tiêu
 
+                    /// Cập nhật dữ liệu doanh thu thực tế
                     if (actualSeries?.Values is ChartValues<double> actualValues)
                     {
                         actualValues.Clear();
                         actualValues.AddRange(monthlyRevenue);
-                        // Thêm định dạng tiền tệ cho LabelPoint
+                        // Định dạng hiển thị tiền tệ Việt Nam
                         actualSeries.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
                     }
 
+                    /// Cập nhật dữ liệu mục tiêu
                     if (targetSeries?.Values is ChartValues<double> targetValues)
                     {
                         targetValues.Clear();
                         targetValues.AddRange(monthlyTarget);
-                        // Thêm định dạng tiền tệ cho LabelPoint
+                        // Định dạng hiển thị tiền tệ Việt Nam
                         targetSeries.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
                     }
                 }
@@ -1155,30 +1600,38 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Tải dữ liệu biểu đồ doanh thu theo 24 giờ trong ngày
+        /// Phân tích khung giờ kinh doanh hiệu quả nhất
+        /// Hỗ trợ tối ưu hóa ca làm việc và phân bổ nhân lực
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
         private void LoadRevenueByHourChart(ClinicDbContext context)
         {
             try
             {
-                var revenueByHour = new double[24];
+                var revenueByHour = new double[24]; // Mảng 24 giờ (0:00 - 23:00)
 
-                // Process data in memory
+                // === XỬ LÝ DỮ LIỆU TRONG MEMORY ===
+                /// Lấy hóa đơn trong khoảng thời gian được chọn
                 var invoices = context.Invoices
                     .Where(i => i.InvoiceDate >= StartDate &&
                            i.InvoiceDate <= EndDate &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
+                /// Phân nhóm doanh thu theo từng giờ
                 foreach (var invoice in invoices)
                 {
                     if (invoice.InvoiceDate.HasValue)
                     {
-                        int hour = invoice.InvoiceDate.Value.Hour;
+                        int hour = invoice.InvoiceDate.Value.Hour; // Lấy giờ (0-23)
                         revenueByHour[hour] += (double)invoice.TotalAmount;
                     }
                 }
 
-                // Update chart data
+                // === CẬP NHẬT BIỂU ĐỒ ===
+                /// Kiểm tra và cập nhật series dữ liệu
                 if (RevenueByHourSeries?.Count > 0)
                 {
                     var series = RevenueByHourSeries[0] as ColumnSeries;
@@ -1186,7 +1639,7 @@ namespace ClinicManagement.ViewModels
                     {
                         values.Clear();
                         values.AddRange(revenueByHour);
-                        // Thêm định dạng tiền tệ cho LabelPoint
+                        // Định dạng hiển thị tiền tệ cho tooltip
                         series.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
                     }
                 }
@@ -1197,18 +1650,25 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Tải biểu đồ phân bố sản phẩm theo danh mục thuốc
+        /// Hiển thị tỷ lệ đóng góp của từng danh mục vào tổng doanh thu
+        /// Sử dụng PieSeries để thể hiện phần trăm một cách trực quan
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu chi tiết hóa đơn</param>
         private void LoadProductDistributionChart(ClinicDbContext context)
         {
             try
             {
-                // Fetch medicine categories
+                // === LẤY DANH MỤC THUỐC ===
+                /// Giới hạn 5 danh mục để tránh biểu đồ quá phức tạp
                 var medicineCategories = context.MedicineCategories
                     .Where(c => c.IsDeleted != true)
                     .Take(5)
                     .ToList();
 
-                // Fetch invoice details with their related entities
+                // === LẤY CHI TIẾT HÓA ĐƠN THUỐC ===
+                /// Include các entity liên quan để tránh N+1 query problem
                 var invoiceDetails = context.InvoiceDetails
                     .Include(id => id.Invoice)
                     .Include(id => id.Medicine)
@@ -1219,7 +1679,8 @@ namespace ClinicManagement.ViewModels
                            id.MedicineId != null)
                     .ToList();
 
-                // Group by category and calculate total sales in memory
+                // === TÍNH TOÁN DOANH THU THEO DANH MỤC ===
+                /// Nhóm theo CategoryId và tính tổng doanh thu từ Quantity * SalePrice
                 var categorySales = invoiceDetails
                     .Where(id => id.Medicine?.Category != null)
                     .GroupBy(id => id.Medicine.Category.CategoryId)
@@ -1230,15 +1691,17 @@ namespace ClinicManagement.ViewModels
                         TotalSales = g.Sum(id => id.Quantity * id.SalePrice) ?? 0
                     })
                     .OrderByDescending(x => x.TotalSales)
-                    .Take(5)
+                    .Take(5) // Top 5 danh mục có doanh thu cao nhất
                     .ToList();
 
                 var totalSales = categorySales.Sum(c => c.TotalSales);
 
+                // === TẠO BIỂU ĐỒ PIE CHART ===
                 var newSeries = new SeriesCollection();
 
                 if (totalSales > 0 && categorySales.Any())
                 {
+                    /// Tạo PieSeries cho từng danh mục có doanh thu
                     foreach (var category in categorySales)
                     {
                         double percentage = (double)((category.TotalSales / totalSales) * 100);
@@ -1249,13 +1712,13 @@ namespace ClinicManagement.ViewModels
                             Values = new ChartValues<double> { Math.Round(percentage, 1) },
                             DataLabels = true,
                             LabelPoint = chartPoint => $"{category.CategoryName}: {chartPoint.Y:0.0}%",
-                            Fill = GetRandomBrush()
+                            Fill = GetRandomBrush() // Màu ngẫu nhiên cho mỗi segment
                         });
                     }
                 }
                 else
                 {
-                    // Add a default "No Data" segment when there's no data
+                    /// Hiển thị placeholder khi không có dữ liệu
                     newSeries.Add(new PieSeries
                     {
                         Title = "Không có dữ liệu",
@@ -1274,63 +1737,72 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tải biểu đồ top những ngày có doanh thu cao nhất
+        /// Hiển thị xu hướng theo thời gian thay vì sắp xếp theo doanh thu
+        /// Giúp phân tích mô hình kinh doanh theo thời gian
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
         private void LoadTopRevenueDaysChart(ClinicDbContext context)
         {
             try
             {
-                // Process in memory to avoid translation issues
+                // === XỬ LÝ DỮ LIỆU TRONG MEMORY ===
+                /// Tránh lỗi LINQ translation với các phép toán phức tạp
                 var invoices = context.Invoices
                     .Where(i => i.InvoiceDate >= StartDate &&
                            i.InvoiceDate <= EndDate &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
-                // Group by date but order by date ascending (chronological order) instead of by revenue
+                // === NHÓM THEO NGÀY VÀ SẮP XẾP THEO THỜI GIAN ===
+                /// Sử dụng OrderBy theo Date thay vì OrderByDescending theo Revenue
+                /// để hiển thị xu hướng thời gian thay vì ranking
                 var revenueByDate = invoices
                     .GroupBy(i => i.InvoiceDate.Value.Date)
                     .Select(g => new { Date = g.Key, Revenue = g.Sum(i => i.TotalAmount) })
-                    .OrderBy(x => x.Date) // Changed from OrderByDescending(x => x.Revenue)
-                    .Take(7)
+                    .OrderBy(x => x.Date) // Sắp xếp theo thời gian (chronological order)
+                    .Take(7) // Lấy 7 ngày đầu tiên trong khoảng thời gian
                     .ToList();
 
                 if (revenueByDate.Any())
                 {
+                    /// Có dữ liệu thực tế để hiển thị
                     var values = revenueByDate.Select(x => (double)x.Revenue).ToArray();
                     var labels = revenueByDate.Select(x => x.Date.ToString("dd/MM")).ToArray();
 
                     TopRevenueDaysSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu",
-                    Values = new ChartValues<double>(values),
-                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    // Thêm định dạng tiền tệ cho LabelPoint
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                }
-            };
+                    {
+                        new ColumnSeries
+                        {
+                            Title = "Doanh thu",
+                            Values = new ChartValues<double>(values),
+                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá Material Design
+                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                        }
+                    };
 
                     TopRevenueDaysLabels = labels;
                 }
                 else
                 {
-                    // Handle empty data case - provide default values
+                    /// Xử lý trường hợp không có dữ liệu - tạo labels mặc định
                     var defaultLabels = Enumerable.Range(1, 7)
                         .Select(i => DateTime.Now.AddDays(-i).ToString("dd/MM"))
-                        .Reverse()
+                        .Reverse() // Đảo ngược để hiển thị từ cũ đến mới
                         .ToArray();
 
-                    // Initialize with zero values but proper formatting
+                    /// Khởi tạo với giá trị 0 nhưng vẫn giữ định dạng đúng
                     TopRevenueDaysSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu",
-                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
-                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                }
-            };
+                    {
+                        new ColumnSeries
+                        {
+                            Title = "Doanh thu",
+                            Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
+                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                        }
+                    };
 
                     TopRevenueDaysLabels = defaultLabels;
                 }
@@ -1341,47 +1813,52 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
-
+        /// <summary>
+        /// Tải biểu đồ xu hướng doanh thu theo 12 tháng trong năm
+        /// Sử dụng LineSeries với đường cong mượt mà để thể hiện xu hướng
+        /// Bao gồm vùng tô màu bên dưới đường để tăng tính trực quan
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
         private void LoadRevenueTrendChart(ClinicDbContext context)
         {
             try
             {
                 var currentYear = DateTime.Now.Year;
-                var monthlyRevenue = new double[12];
+                var monthlyRevenue = new double[12]; // 12 tháng
 
-                // Process in memory
+                // === XỬ LÝ DỮ LIỆU TRONG MEMORY ===
                 var invoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
                            i.InvoiceDate.Value.Year == currentYear &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
+                /// Tính tổng doanh thu cho từng tháng
                 foreach (var invoice in invoices)
                 {
                     if (invoice.InvoiceDate.HasValue)
                     {
-                        int month = invoice.InvoiceDate.Value.Month - 1; // 0-based index
+                        int month = invoice.InvoiceDate.Value.Month - 1; // Chuyển về 0-based index
                         monthlyRevenue[month] += (double)invoice.TotalAmount;
                     }
                 }
 
+                // === TẠO BIỂU ĐỒ ĐƯỜNG XU HƯỚNG ===
                 RevenueTrendSeries = new SeriesCollection
-        {
-            new LineSeries
-            {
-                Title = "Xu hướng doanh thu",
-                Values = new ChartValues<double>(monthlyRevenue),
-                PointGeometry = null,
-                LineSmoothness = 1,
-                Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54)),
-                LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-            }
-        };
+                {
+                    new LineSeries
+                    {
+                        Title = "Xu hướng doanh thu",
+                        Values = new ChartValues<double>(monthlyRevenue),
+                        PointGeometry = null,               // Không hiển thị điểm trên đường
+                        LineSmoothness = 1,                 // Đường cong mượt mà (1 = tối đa)
+                        Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)), // Màu đỏ Material Design
+                        Fill = new SolidColorBrush(Color.FromArgb(50, 244, 67, 54)), // Vùng tô với độ trong suốt 50
+                        LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                    }
+                };
 
-                RevenueTrendLabels = MonthLabels;
+                RevenueTrendLabels = MonthLabels; // Sử dụng nhãn tháng đã định nghĩa (T1-T12)
             }
             catch (Exception ex)
             {
@@ -1389,20 +1866,28 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tải biểu đồ doanh thu theo loại hóa đơn
+        /// Phân tích đóng góp của từng loại dịch vụ: Khám bệnh, Bán thuốc, Khám và bán thuốc
+        /// Hỗ trợ chiến lược phát triển dịch vụ dựa trên hiệu quả kinh doanh
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
         private void LoadInvoiceTypeChart(ClinicDbContext context)
         {
             try
             {
+                /// Định nghĩa 3 loại hóa đơn chuẩn trong hệ thống
                 var invoiceTypes = new[] { "Khám bệnh", "Bán thuốc", "Khám và bán thuốc" };
                 var revenueByType = new double[invoiceTypes.Length];
 
-                // Process in memory
+                // === XỬ LÝ DỮ LIỆU TRONG MEMORY ===
                 var invoices = context.Invoices
                     .Where(i => i.InvoiceDate >= StartDate &&
                            i.InvoiceDate <= EndDate &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
+                /// Phân loại doanh thu theo từng loại hóa đơn
                 foreach (var invoice in invoices)
                 {
                     if (!string.IsNullOrEmpty(invoice.InvoiceType))
@@ -1415,33 +1900,35 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                // Check if we have any data
+                // === TẠO BIỂU ĐỒ CỘT ===
+                /// Kiểm tra có dữ liệu hay không
                 if (revenueByType.Sum() > 0)
                 {
+                    /// Có dữ liệu thực tế
                     InvoiceTypeSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu",
-                    Values = new ChartValues<double>(revenueByType),
-                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                }
-            };
+                    {
+                        new ColumnSeries
+                        {
+                            Title = "Doanh thu",
+                            Values = new ChartValues<double>(revenueByType),
+                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá
+                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                        }
+                    };
                 }
                 else
                 {
-                    // Add a default series with zero values
+                    /// Không có dữ liệu - hiển thị series với giá trị 0
                     InvoiceTypeSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu",
-                    Values = new ChartValues<double>(new double[] { 0, 0, 0 }),
-                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                }
-            };
+                    {
+                        new ColumnSeries
+                        {
+                            Title = "Doanh thu",
+                            Values = new ChartValues<double>(new double[] { 0, 0, 0 }),
+                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                        }
+                    };
                 }
 
                 InvoiceTypeLabels = invoiceTypes;
@@ -1452,13 +1939,19 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tải biểu đồ tỷ lệ doanh thu theo dịch vụ (Pie Chart)
+        /// Hiển thị phần trăm đóng góp của từng loại dịch vụ vào tổng doanh thu
+        /// Bao gồm cả số tiền cụ thể trong tooltip để dễ phân tích
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
         private void LoadServiceRevenueChart(ClinicDbContext context)
         {
             try
             {
                 var invoiceTypes = new[] { "Khám bệnh", "Bán thuốc", "Khám và bán thuốc" };
 
-                // Process in memory
+                // === XỬ LÝ DỮ LIỆU TRONG MEMORY ===
                 var invoices = context.Invoices
                     .Where(i => i.InvoiceDate >= StartDate &&
                          i.InvoiceDate <= EndDate &&
@@ -1471,6 +1964,7 @@ namespace ClinicManagement.ViewModels
 
                 if (totalRevenue > 0)
                 {
+                    /// Tạo PieSeries cho từng loại dịch vụ có doanh thu
                     foreach (var type in invoiceTypes)
                     {
                         var typeRevenue = invoices
@@ -1481,11 +1975,12 @@ namespace ClinicManagement.ViewModels
                         {
                             double percentage = Math.Round((double)((typeRevenue / totalRevenue) * 100), 1);
 
+                            /// Phân bổ màu sắc theo loại dịch vụ
                             var brushColor = type switch
                             {
-                                "Khám bệnh" => Color.FromRgb(76, 175, 80),
-                                "Bán thuốc" => Color.FromRgb(255, 152, 0),
-                                _ => Color.FromRgb(33, 150, 243)
+                                "Khám bệnh" => Color.FromRgb(76, 175, 80),   // Xanh lá
+                                "Bán thuốc" => Color.FromRgb(255, 152, 0),   // Cam
+                                _ => Color.FromRgb(33, 150, 243)             // Xanh dương (default)
                             };
 
                             seriesCollection.Add(new PieSeries
@@ -1493,6 +1988,7 @@ namespace ClinicManagement.ViewModels
                                 Title = type,
                                 Values = new ChartValues<double> { percentage },
                                 DataLabels = true,
+                                // Tooltip hiển thị cả phần trăm và số tiền
                                 LabelPoint = chartPoint => $"{type}: {chartPoint.Y:0.0}% ({string.Format("{0:N0} VNĐ", typeRevenue)})",
                                 Fill = new SolidColorBrush(brushColor)
                             });
@@ -1500,7 +1996,7 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                // If no data, add a default segment
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
                 if (seriesCollection.Count == 0)
                 {
                     seriesCollection.Add(new PieSeries
@@ -1521,18 +2017,25 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Tải biểu đồ phân loại bệnh nhân theo loại (VIP, thường, BHYT, v.v.)
+        /// Phân tích cơ cấu khách hàng để đưa ra chiến lược chăm sóc phù hợp
+        /// Sử dụng màu sắc khác nhau cho từng loại bệnh nhân
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu bệnh nhân và loại bệnh nhân</param>
         private void LoadPatientTypeChart(ClinicDbContext context)
         {
             try
             {
+                // === LẤY CÁC LOẠI BỆNH NHÂN ===
                 var patientTypes = context.PatientTypes
                     .Where(pt => pt.IsDeleted != true)
                     .ToList();
 
                 var seriesCollection = new SeriesCollection();
 
-                // Process in memory
+                // === XỬ LÝ DỮ LIỆU BỆNH NHÂN TRONG MEMORY ===
+                /// Lọc bệnh nhân mới trong khoảng thời gian được chọn
                 var patients = context.Patients
                     .Where(p => p.IsDeleted != true &&
                           p.CreatedAt >= StartDate &&
@@ -1543,6 +2046,7 @@ namespace ClinicManagement.ViewModels
 
                 if (totalPatients > 0 && patientTypes.Any())
                 {
+                    /// Tính phần trăm cho từng loại bệnh nhân
                     foreach (var type in patientTypes)
                     {
                         var patientCount = patients.Count(p => p.PatientTypeId == type.PatientTypeId);
@@ -1550,15 +2054,16 @@ namespace ClinicManagement.ViewModels
 
                         if (percentage > 0)
                         {
+                            /// Phân bổ màu sắc theo PatientTypeId
                             var colorIndex = type.PatientTypeId % 5;
                             var colors = new[]
                             {
-                        Color.FromRgb(244, 67, 54),
-                        Color.FromRgb(33, 150, 243),
-                        Color.FromRgb(76, 175, 80),
-                        Color.FromRgb(255, 152, 0),
-                        Color.FromRgb(156, 39, 176)
-                    };
+                                Color.FromRgb(244, 67, 54),   // Đỏ
+                                Color.FromRgb(33, 150, 243),  // Xanh dương
+                                Color.FromRgb(76, 175, 80),   // Xanh lá
+                                Color.FromRgb(255, 152, 0),   // Cam
+                                Color.FromRgb(156, 39, 176)   // Tím
+                            };
 
                             seriesCollection.Add(new PieSeries
                             {
@@ -1572,7 +2077,7 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                // If there's no data, add a default segment
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
                 if (seriesCollection.Count == 0)
                 {
                     seriesCollection.Add(new PieSeries
@@ -1593,11 +2098,17 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tải biểu đồ trạng thái lịch hẹn
+        /// Phân tích hiệu quả quản lý lịch hẹn: Đang chờ, Đã khám, Đã hủy, Đang khám
+        /// Hỗ trợ tối ưu hóa quy trình làm việc và giảm tỷ lệ hủy lịch
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu lịch hẹn</param>
         private void LoadAppointmentStatusChart(ClinicDbContext context)
         {
             try
             {
-                // Get all appointments in the date range
+                // === LẤY TẤT CẢ LỊCH HẸN TRONG KHOẢNG THỜI GIAN ===
                 var appointments = context.Appointments
                     .Where(a => a.AppointmentDate >= StartDate &&
                            a.AppointmentDate <= EndDate &&
@@ -1606,7 +2117,8 @@ namespace ClinicManagement.ViewModels
 
                 var statusCounts = new double[AppointmentStatusLabels.Length];
 
-                // Count appointments for each status
+                // === ĐẾM LỊCH HẸN CHO TỪNG TRẠNG THÁI ===
+                /// Sử dụng AppointmentStatusLabels đã định nghĩa: ["Đang chờ", "Đã khám", "Đã hủy", "Đang khám"]
                 foreach (var status in AppointmentStatusLabels)
                 {
                     int index = Array.IndexOf(AppointmentStatusLabels, status);
@@ -1616,7 +2128,7 @@ namespace ClinicManagement.ViewModels
                     }
                 }
 
-                // Update the chart data
+                // === CẬP NHẬT DỮ LIỆU BIỂU ĐỒ ===
                 if (AppointmentStatusSeries?.Count > 0)
                 {
                     var series = AppointmentStatusSeries[0] as ColumnSeries;
@@ -1624,18 +2136,18 @@ namespace ClinicManagement.ViewModels
                     {
                         values.Clear();
 
-                        // Check if we have any data
+                        /// Kiểm tra có dữ liệu hay không
                         if (statusCounts.Sum() > 0)
                         {
                             values.AddRange(statusCounts);
                         }
                         else
                         {
-                            // Add zero values if no data
+                            /// Thêm giá trị 0 nếu không có dữ liệu
                             values.AddRange(Enumerable.Repeat(0.0, AppointmentStatusLabels.Length));
                         }
 
-                        // Ensure we have a proper label formatter
+                        /// Đảm bảo formatter hiển thị số nguyên
                         series.LabelPoint = point => string.Format("{0:N0}", Math.Round(point.Y, 0));
                     }
                 }
@@ -1646,29 +2158,40 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        /// <summary>
+        /// Tải biểu đồ giờ cao điểm đặt lịch hẹn
+        /// Phân tích khung giờ trong ngày để xác định khung giờ có nhiều lịch hẹn nhất
+        /// Hỗ trợ tối ưu hóa lịch làm việc và phân bổ nhân lực theo giờ
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu lịch hẹn</param>
         private void LoadAppointmentPeakHoursChart(ClinicDbContext context)
         {
             try
             {
-                var appointmentsByHour = new double[24];
+                // Chỉ lấy giờ từ 7h đến 17h (11 giờ: 7,8,...,17)
+                int startHour = 7;
+                int endHour = 17;
+                int hourCount = endHour - startHour + 1;
+                var appointmentsByHour = new double[hourCount];
 
-                // Process in memory
+                // Lấy danh sách lịch hẹn trong khoảng thời gian và chưa bị xóa
                 var appointments = context.Appointments
                     .Where(a => a.AppointmentDate >= StartDate &&
-                           a.AppointmentDate <= EndDate &&
-                           a.IsDeleted != true)
+                                a.AppointmentDate <= EndDate &&
+                                a.IsDeleted != true)
                     .ToList();
 
+                // Đếm số lịch hẹn cho từng giờ trong khung giờ làm việc
                 foreach (var appointment in appointments)
                 {
                     int hour = appointment.AppointmentDate.Hour;
-                    if (hour >= 0 && hour < 24)
+                    if (hour >= startHour && hour <= endHour)
                     {
-                        appointmentsByHour[hour]++;
+                        appointmentsByHour[hour - startHour]++;
                     }
                 }
 
-                // Check if we have any appointments
+                // Tạo biểu đồ chỉ cho khung giờ làm việc
                 if (appointments.Any())
                 {
                     AppointmentPeakHoursSeries = new SeriesCollection
@@ -1677,25 +2200,28 @@ namespace ClinicManagement.ViewModels
                 {
                     Title = "Số lịch hẹn",
                     Values = new ChartValues<double>(appointmentsByHour),
-                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+                    Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)), // Màu cam
                     LabelPoint = point => string.Format("{0:N0}", Math.Round(point.Y, 0))
                 }
             };
                 }
                 else
                 {
-                    // Create a series with all zeros if there's no data
                     AppointmentPeakHoursSeries = new SeriesCollection
             {
                 new ColumnSeries
                 {
                     Title = "Số lịch hẹn",
-                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, 24)),
+                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, hourCount)),
                     Fill = new SolidColorBrush(Color.FromRgb(255, 152, 0)),
                     LabelPoint = point => string.Format("{0:N0}", Math.Round(point.Y, 0))
                 }
             };
                 }
+
+                // Nếu cần, có thể cập nhật nhãn trục X cho biểu đồ (giờ từ 7 đến 17)
+                RevenueByTimeLabels = Enumerable.Range(startHour, hourCount)
+                    .Select(h => $"{h}:00").ToArray();
             }
             catch (Exception ex)
             {
@@ -1703,31 +2229,38 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Tải biểu đồ số lượng bệnh nhân theo từng bác sĩ
+        /// Đánh giá hiệu suất làm việc và phân bổ công việc giữa các bác sĩ
+        /// Chỉ tính bệnh nhân unique (không trùng lặp) để đảm bảo độ chính xác
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu nhân viên và lịch hẹn</param>
         private void LoadPatientsByDoctorChart(ClinicDbContext context)
         {
             try
             {
-                // Get only staff members who are doctors (roleid = 1)
+                // === LẤY DANH SÁCH BÁC SĨ ===
+                /// Chỉ lấy nhân viên có RoleId = 1 (bác sĩ) và chưa bị xóa
                 var doctors = context.Staffs
                     .Where(s => s.RoleId == 1 && s.IsDeleted != true)
                     .ToList();
 
                 if (!doctors.Any())
                 {
+                    /// Không có bác sĩ nào - thiết lập biểu đồ trống
                     PatientsByStaffseries = new SeriesCollection();
                     DoctorLabels = new string[0];
                     return;
                 }
 
-                // Create a list to store doctor names and patient counts
+                // === TÍNH TOÁN SỐ LƯỢNG BỆNH NHÂN CHO TỪNG BÁC SĨ ===
                 var doctorData = new List<(string DoctorName, int PatientCount)>();
 
-                // Filter date range for appointments
+                /// Thiết lập bộ lọc thời gian chính xác
                 var startDateFilter = StartDate.Date;
-                var endDateFilter = EndDate.Date.AddDays(1).AddSeconds(-1); // End of the selected day
+                var endDateFilter = EndDate.Date.AddDays(1).AddSeconds(-1); // Cuối ngày được chọn
 
-                // For each doctor, count their unique patients within the date range
+                /// Đếm bệnh nhân unique cho từng bác sĩ
                 foreach (var doctor in doctors)
                 {
                     var patientCount = context.Appointments
@@ -1735,56 +2268,63 @@ namespace ClinicManagement.ViewModels
                                    a.AppointmentDate >= startDateFilter &&
                                    a.AppointmentDate <= endDateFilter)
                         .Select(a => a.PatientId)
-                        .Distinct()
+                        .Distinct() // Đảm bảo không đếm trùng bệnh nhân
                         .Count();
 
-                    // Add all doctors even if they have no patients
+                    /// Thêm tất cả bác sĩ, kể cả không có bệnh nhân
                     doctorData.Add((doctor.FullName ?? "Unknown", patientCount));
                 }
 
-                // Sort by patient count descending
+                /// Sắp xếp theo số lượng bệnh nhân giảm dần
                 doctorData = doctorData.OrderByDescending(d => d.PatientCount).ToList();
 
-                // Create the chart series
+                // === TẠO BIỂU ĐỒ ===
                 var patientSeries = new ColumnSeries
                 {
                     Title = "Số lượng bệnh nhân",
                     Values = new ChartValues<int>(doctorData.Select(d => d.PatientCount)),
-                    Fill = GetRandomBrush(),
-                    DataLabels = true
+                    Fill = GetRandomBrush(), // Màu ngẫu nhiên
+                    DataLabels = true // Hiển thị số liệu trên cột
                 };
 
-                // Update the doctor labels
+                /// Cập nhật nhãn và dữ liệu biểu đồ
                 DoctorLabels = doctorData.Select(d => d.DoctorName).ToArray();
-
-                // Update the chart series
                 PatientsByStaffseries = new SeriesCollection { patientSeries };
             }
             catch (Exception ex)
             {
+                /// Ghi log lỗi và thiết lập biểu đồ trống
                 System.Diagnostics.Debug.WriteLine($"Error loading patients by doctor chart: {ex.Message}");
                 PatientsByStaffseries = new SeriesCollection();
                 DoctorLabels = new string[0];
             }
         }
 
-
+        /// <summary>
+        /// Tải danh sách top sản phẩm bán chạy nhất
+        /// Phân tích hiệu quả kinh doanh từng loại thuốc để tối ưu hóa tồn kho
+        /// Tính toán phần trăm đóng góp vào tổng doanh thu thuốc
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu chi tiết hóa đơn và thuốc</param>
         private void LoadTopSellingProducts(ClinicDbContext context)
         {
             try
             {
-                // Sử dụng AsNoTracking cho hiệu suất tốt hơn với các truy vấn chỉ đọc
+                // === LẤY CHI TIẾT HÓA ĐƠN THUỐC ===
+                /// Sử dụng AsNoTracking cho hiệu suất tốt hơn với truy vấn chỉ đọc
                 var invoiceDetails = context.InvoiceDetails
                     .AsNoTracking()
                     .Include(id => id.Invoice)
                     .Include(id => id.Medicine)
-                        .ThenInclude(m => m.Category)
+                        .ThenInclude(m => m.Category) // Include danh mục thuốc
                     .Where(id => id.Invoice.InvoiceDate >= StartDate &&
                            id.Invoice.InvoiceDate <= EndDate &&
                            id.Invoice.Status == "Đã thanh toán" &&
                            id.MedicineId != null)
                     .ToList();
 
+                // === TÍNH TOÁN DOANH THU THEO TỪNG THUỐC ===
+                /// Nhóm theo MedicineId và tính tổng doanh thu từ Quantity * SalePrice
                 var medicineSales = invoiceDetails
                     .Where(id => id.Medicine != null)
                     .GroupBy(id => id.Medicine.MedicineId)
@@ -1795,19 +2335,21 @@ namespace ClinicManagement.ViewModels
                         Category = g.First().Medicine.Category?.CategoryName ?? "Không phân loại",
                         Sales = g.Sum(id => id.Quantity * id.SalePrice) ?? 0
                     })
-                    .OrderByDescending(x => x.Sales)
-                    .Take(10)
+                    .OrderByDescending(x => x.Sales) // Sắp xếp theo doanh thu giảm dần
+                    .Take(10) // Lấy top 10 sản phẩm
                     .ToList();
 
                 var totalSales = medicineSales.Sum(m => m.Sales);
 
                 if (totalSales > 0)
                 {
+                    /// Tính phần trăm đóng góp cho từng sản phẩm
                     foreach (var product in medicineSales)
                     {
                         product.Percentage = (int)Math.Round((product.Sales / totalSales) * 100);
                     }
 
+                    /// Cập nhật UI trên UI thread
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         TopSellingProducts = new ObservableCollection<TopSellingProduct>(medicineSales);
@@ -1815,6 +2357,7 @@ namespace ClinicManagement.ViewModels
                 }
                 else
                 {
+                    /// Không có dữ liệu - xóa danh sách hiện tại
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         TopSellingProducts.Clear();
@@ -1827,23 +2370,30 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
+        /// <summary>
+        /// Tải danh sách top bệnh nhân VIP theo tổng chi tiêu
+        /// Phân tích khách hàng có giá trị cao để xây dựng chương trình chăm sóc đặc biệt
+        /// Bao gồm thông tin loại bệnh nhân để phân khúc khách hàng
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu bệnh nhân và hóa đơn</param>
         private void LoadTopVIPPatients(ClinicDbContext context)
         {
             try
             {
                 IsLoading = true;
 
-                // Filter date range
+                // === THIẾT LẬP BỘ LỌC THỜI GIAN ===
                 var startDateFilter = StartDate.Date;
-                var endDateFilter = EndDate.Date.AddDays(1).AddSeconds(-1); // End of the selected day
+                var endDateFilter = EndDate.Date.AddDays(1).AddSeconds(-1); // Cuối ngày được chọn
 
-                // Get all patients with their spending in the specified date range
+                // === LẤY BỆNH NHÂN VÀ TÍNH TỔNG CHI TIÊU ===
+                /// Bao gồm tất cả loại bệnh nhân, không chỉ VIP
                 var topPatients = context.Patients
-                    .Where(p => p.IsDeleted != true) // Include all patient types, not just VIP
+                    .Where(p => p.IsDeleted != true)
                     .Select(p => new
                     {
                         Patient = p,
+                        /// Tính tổng chi tiêu từ các hóa đơn đã thanh toán trong khoảng thời gian
                         TotalSpending = context.Invoices
                             .Where(i => i.PatientId == p.PatientId &&
                                         i.Status == "Đã thanh toán" &&
@@ -1851,12 +2401,13 @@ namespace ClinicManagement.ViewModels
                                         i.InvoiceDate <= endDateFilter)
                             .Sum(i => i.TotalAmount)
                     })
-                    .Where(x => x.TotalSpending > 0) // Only include patients who have spent money
-                    .OrderByDescending(x => x.TotalSpending) // Sort by highest spending first
-                    .Take(10) // Get top 10 spenders
+                    .Where(x => x.TotalSpending > 0) // Chỉ lấy bệnh nhân có chi tiêu
+                    .OrderByDescending(x => x.TotalSpending) // Sắp xếp theo chi tiêu giảm dần
+                    .Take(10) // Lấy top 10 bệnh nhân chi tiêu nhiều nhất
                     .ToList();
 
-                // Include patient type information for display
+                // === THÊM THÔNG TIN LOẠI BỆNH NHÂN ===
+                /// Enrich dữ liệu với thông tin PatientType để hiển thị
                 var enrichedPatients = topPatients.Select(x =>
                 {
                     var patientType = context.PatientTypes
@@ -1868,11 +2419,11 @@ namespace ClinicManagement.ViewModels
                         FullName = x.Patient.FullName,
                         Phone = x.Patient.Phone,
                         TotalSpending = x.TotalSpending,
-                        PatientType = patientType?.TypeName ?? "Unknown" // Include patient type for display
+                        PatientType = patientType?.TypeName ?? "Unknown" // Thêm loại bệnh nhân để hiển thị
                     };
                 }).ToList();
 
-                // Update the UI
+                // === CẬP NHẬT UI ===
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     TopVIPPatients = new ObservableCollection<VIPPatient>(enrichedPatients);
@@ -1880,8 +2431,7 @@ namespace ClinicManagement.ViewModels
             }
             catch (Exception ex)
             {
-                // Handle exception appropriately
-        
+                /// Xử lý lỗi một cách thích hợp
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     TopVIPPatients = new ObservableCollection<VIPPatient>();
@@ -1893,9 +2443,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
-
-        // Change from private to public
+     
         public void LoadWarningMedicines(ClinicDbContext context)
         {
             try
@@ -2057,37 +2605,61 @@ namespace ClinicManagement.ViewModels
         /// - Cả hai kỳ đều có doanh thu bằng 0: hiển thị "0.0%"
         /// - Có lỗi trong quá trình tính toán: hiển thị "N/A"
         /// </remarks>
+        /// <summary>
+        /// Tính toán tỷ lệ tăng trưởng doanh thu và bệnh nhân mới giữa kỳ hiện tại và kỳ trước đó.
+        /// </summary>
+        /// <param name="context">Context cơ sở dữ liệu để truy xuất dữ liệu</param>
+        /// <remarks>
+        /// Phương thức này thực hiện các tính toán sau:
+        /// 1. Xác định khoảng thời gian của kỳ trước đó (có cùng độ dài với kỳ hiện tại)
+        /// 2. Tính toán doanh thu của cả hai kỳ từ các hóa đơn đã thanh toán
+        /// 3. Tính toán số lượng bệnh nhân mới trong cả hai kỳ
+        /// 4. Tính tỷ lệ tăng trưởng doanh thu và bệnh nhân dưới dạng phần trăm
+        /// 5. Định dạng kết quả với dấu +/- phù hợp và một chữ số thập phân
+        /// 
+        /// Các trường hợp đặc biệt:
+        /// - Kỳ trước có doanh thu bằng 0, kỳ này có doanh thu: hiển thị "+100.0%"
+        /// - Cả hai kỳ đều có doanh thu bằng 0: hiển thị "0.0%"
+        /// - Có lỗi trong quá trình tính toán: hiển thị "N/A"
+        /// </remarks>
         private void CalculateGrowthRates(ClinicDbContext context)
         {
             try
             {
-                // Calculate revenue growth compared to previous period
+                // === TÍNH TOÁN KHOẢNG THỜI GIAN KỲ TRƯỚC ===
+                /// Xác định kỳ trước có cùng độ dài với kỳ hiện tại
+                /// Ví dụ: nếu kỳ hiện tại là 10 ngày, kỳ trước cũng sẽ là 10 ngày
                 var previousPeriodStart = StartDate.AddDays(-(EndDate - StartDate).TotalDays);
-                var previousPeriodEnd = StartDate.AddDays(-1);
+                var previousPeriodEnd = StartDate.AddDays(-1); // Kết thúc ngay trước kỳ hiện tại
 
-                // Get invoices for current and previous periods
+                // === LẤY DỮ LIỆU HÓA ĐƠN CHO CẢ HAI KỲ ===
+                /// Lấy hóa đơn đã thanh toán của kỳ hiện tại
                 var currentPeriodInvoices = context.Invoices
                     .Where(i => i.InvoiceDate >= StartDate &&
                            i.InvoiceDate <= EndDate &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
+                /// Lấy hóa đơn đã thanh toán của kỳ trước đó
                 var previousPeriodInvoices = context.Invoices
                     .Where(i => i.InvoiceDate >= previousPeriodStart &&
                            i.InvoiceDate <= previousPeriodEnd &&
                            i.Status == "Đã thanh toán")
                     .ToList();
 
-                // Calculate in memory
+                // === TÍNH TOÁN DOANH THU CỦA CẢ HAI KỲ ===
+                /// Thực hiện tính toán trong memory để tránh lỗi LINQ translation
                 var currentRevenue = currentPeriodInvoices.Sum(i => i.TotalAmount);
                 var previousRevenue = previousPeriodInvoices.Sum(i => i.TotalAmount);
 
-                // Set value for RevenueGrowth with better formatting
+                // === TÍNH TỶ LỆ TĂNG TRƯỞNG DOANH THU ===
+                /// Xử lý các trường hợp đặc biệt để tránh chia cho 0
                 if (previousRevenue > 0)
                 {
+                    /// Trường hợp bình thường: có doanh thu kỳ trước để so sánh
                     var revenueGrowth = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
 
-                    // Chỉ hiển thị 1 số thập phân và đảm bảo hiển thị dấu + cho tăng trưởng dương
+                    // Định dạng với dấu + cho tăng trưởng dương và 1 chữ số thập phân
                     if (revenueGrowth > 0)
                         RevenueGrowth = $"+{revenueGrowth:0.0}%";
                     else
@@ -2095,32 +2667,38 @@ namespace ClinicManagement.ViewModels
                 }
                 else if (previousRevenue == 0 && currentRevenue > 0)
                 {
-                    // Nếu kỳ trước không có doanh thu nhưng kỳ này có
+                    /// Trường hợp đặc biệt: kỳ trước không có doanh thu, kỳ này có
+                    /// Coi như tăng trưởng 100%
                     RevenueGrowth = "+100.0%";
                 }
                 else if (previousRevenue == 0 && currentRevenue == 0)
                 {
-                    // Nếu cả hai kỳ đều không có doanh thu
+                    /// Trường hợp cả hai kỳ đều không có doanh thu
                     RevenueGrowth = "0.0%";
                 }
                 else
                 {
+                    /// Trường hợp không xác định được (lý thuyết không xảy ra)
                     RevenueGrowth = "N/A";
                 }
 
-                // Calculate patient growth with similar improvements
+                // === TÍNH TỶ LỆ TĂNG TRƯỞNG BỆNH NHÂN MỚI ===
+                /// Đếm số bệnh nhân mới được tạo trong kỳ hiện tại
                 var currentPeriodPatients = context.Patients
                     .Count(p => p.CreatedAt >= StartDate &&
                            p.CreatedAt <= EndDate &&
                            p.IsDeleted != true);
 
+                /// Đếm số bệnh nhân mới được tạo trong kỳ trước
                 var previousPeriodPatients = context.Patients
                     .Count(p => p.CreatedAt >= previousPeriodStart &&
                            p.CreatedAt <= previousPeriodEnd &&
                            p.IsDeleted != true);
 
+                /// Áp dụng logic tương tự như tăng trưởng doanh thu
                 if (previousPeriodPatients > 0)
                 {
+                    /// Trường hợp bình thường: có bệnh nhân mới kỳ trước để so sánh
                     var patientGrowth = ((currentPeriodPatients - previousPeriodPatients) / (double)previousPeriodPatients) * 100;
 
                     // Định dạng tương tự như RevenueGrowth
@@ -2131,46 +2709,62 @@ namespace ClinicManagement.ViewModels
                 }
                 else if (previousPeriodPatients == 0 && currentPeriodPatients > 0)
                 {
+                    /// Kỳ trước không có bệnh nhân mới, kỳ này có
                     PatientGrowth = "+100.0%";
                 }
                 else if (previousPeriodPatients == 0 && currentPeriodPatients == 0)
                 {
+                    /// Cả hai kỳ đều không có bệnh nhân mới
                     PatientGrowth = "0.0%";
                 }
                 else
                 {
+                    /// Trường hợp không xác định được
                     PatientGrowth = "N/A";
                 }
             }
             catch (Exception ex)
             {
+                // === XỬ LÝ LỖI ===
+                /// Ghi log lỗi và thiết lập giá trị mặc định
                 MessageBoxService.ShowError($"Lỗi khi tính toán tỷ lệ tăng trưởng: {ex.Message}", "Lỗi");
                 RevenueGrowth = "N/A";
                 PatientGrowth = "N/A";
             }
         }
 
+        /// <summary>
+        /// Tải biểu đồ doanh thu theo từng danh mục thuốc
+        /// Phân tích hiệu quả kinh doanh và đóng góp của từng danh mục vào tổng doanh thu
+        /// Giúp xác định danh mục thuốc nào mang lại lợi nhuận cao nhất
+        /// </summary>
+        /// <param name="context">DbContext để truy xuất dữ liệu chi tiết hóa đơn và danh mục thuốc</param>
         private void LoadRevenueByCategoryChart(ClinicDbContext context)
         {
             try
             {
-                // Lấy tất cả danh mục thuốc
+                // === LẤY DANH SÁCH TẤT CẢ DANH MỤC THUỐC ===
+                /// Chỉ lấy các danh mục chưa bị xóa để đảm bảo tính chính xác
                 var medicineCategories = context.MedicineCategories
                     .Where(c => c.IsDeleted != true)
                     .ToList();
 
-                // Lấy chi tiết hóa đơn thuốc trong khoảng thời gian đã chọn
+                // === LẤY CHI TIẾT HÓA ĐƠN THUỐC TRONG KHOẢNG THỜI GIAN ===
+                /// Include các thực thể liên quan để tránh lazy loading và N+1 query
+                /// Chỉ lấy hóa đơn đã thanh toán và có mặt hàng là thuốc
                 var invoiceDetails = context.InvoiceDetails
-                    .Include(id => id.Invoice)
-                    .Include(id => id.Medicine)
-                    .ThenInclude(m => m.Category)
+                    .Include(id => id.Invoice)              // Thông tin hóa đơn
+                    .Include(id => id.Medicine)             // Thông tin thuốc
+                    .ThenInclude(m => m.Category)           // Thông tin danh mục thuốc
                     .Where(id => id.Invoice.InvoiceDate >= StartDate &&
                            id.Invoice.InvoiceDate <= EndDate &&
                            id.Invoice.Status == "Đã thanh toán" &&
-                           id.MedicineId != null)
+                           id.MedicineId != null)          // Chỉ lấy các dòng có thuốc
                     .ToList();
 
-                // Nhóm theo danh mục và tính tổng doanh thu
+                // === TÍNH TỔNG DOANH THU THEO TỪNG DANH MỤC ===
+                /// Nhóm theo CategoryId và tính tổng doanh thu = Quantity × SalePrice
+                /// Lọc ra các thuốc có đầy đủ thông tin danh mục
                 var categoryRevenues = invoiceDetails
                     .Where(id => id.Medicine?.Category != null)
                     .GroupBy(id => id.Medicine.Category.CategoryId)
@@ -2180,10 +2774,11 @@ namespace ClinicManagement.ViewModels
                         CategoryName = g.First().Medicine.Category.CategoryName,
                         TotalRevenue = g.Sum(id => id.Quantity * id.SalePrice) ?? 0
                     })
-                    .OrderByDescending(x => x.TotalRevenue)
+                    .OrderByDescending(x => x.TotalRevenue) // Sắp xếp theo doanh thu giảm dần
                     .ToList();
 
-                // Chuẩn bị dữ liệu cho biểu đồ
+                // === CHUẨN BỊ DỮ LIỆU CHO BIỂU ĐỒ ===
+                /// Tách riêng tên danh mục và giá trị doanh thu để binding
                 var categoryNames = new List<string>();
                 var revenueValues = new List<double>();
 
@@ -2193,179 +2788,264 @@ namespace ClinicManagement.ViewModels
                     revenueValues.Add((double)categoryRevenue.TotalRevenue);
                 }
 
-                // Check if we have any data
+                // === TẠO BIỂU ĐỒ CỘT DOANH THU ===
+                /// Kiểm tra có dữ liệu hay không để hiển thị phù hợp
                 if (revenueValues.Any())
                 {
+                    /// Có dữ liệu thực tế - tạo biểu đồ với dữ liệu thực
                     RevenueByCategorySeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu",
-                    Values = new ChartValues<double>(revenueValues),
-                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                }
-            };
+                    {
+                        new ColumnSeries
+                        {
+                            Title = "Doanh thu",
+                            Values = new ChartValues<double>(revenueValues),
+                            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)), // Màu xanh dương Material Design
+                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ VN
+                        }
+                    };
 
                     CategoryLabels = categoryNames.ToArray();
                 }
                 else
                 {
-                    // Create a default chart with no data
+                    /// Không có dữ liệu - tạo biểu đồ placeholder
                     RevenueByCategorySeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Doanh thu",
-                    Values = new ChartValues<double> { 0 },
-                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                }
-            };
+                    {
+                        new ColumnSeries
+                        {
+                            Title = "Doanh thu",
+                            Values = new ChartValues<double> { 0 }, // Giá trị 0 cho placeholder
+                            Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                        }
+                    };
 
-                    CategoryLabels = new[] { "Không có dữ liệu" };
+                    CategoryLabels = new[] { "Không có dữ liệu" }; // Nhãn placeholder
                 }
             }
             catch (Exception ex)
             {
+                // === XỬ LÝ LỖI ===
+                /// Hiển thị thông báo lỗi chi tiết cho người dùng
                 MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo danh mục: {ex.Message}", "Lỗi");
             }
         }
 
+        /// <summary>
+        /// Tải dữ liệu dashboard chính của ứng dụng
+        /// Bao gồm lịch hẹn hôm nay, thống kê tổng quát và các chỉ số quan trọng
+        /// Sử dụng AsNoTracking để tối ưu hiệu suất cho dữ liệu chỉ đọc
+        /// </summary>
         private void LoadDashBoard()
         {
             try
             {
+                // === THIẾT LẬP NGÀY HIỆN TẠI ===
+                /// Lấy ngày hiện tại để lọc và hiển thị dữ liệu dashboard
                 CurrentDate = DateTime.Now.Date;
                 TodayAppointments = new ObservableCollection<TodayAppointment>();
 
+                // === SỬ DỤNG CONTEXT RIÊNG BIỆT VỚI ASNOTRACKING ===
+                /// Tạo context riêng cho dashboard để tránh xung đột
+                /// AsNoTracking để tăng hiệu suất vì chỉ đọc dữ liệu
                 using (var context = new ClinicDbContext())
                 {
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
+                    // === TẢI TẤT CẢ LỊCH HẸN VỚI DỮ LIỆU LIÊN QUAN ===
+                    /// Include các thực thể liên quan để tránh lazy loading
+                    /// Lọc ra các lịch hẹn chưa bị xóa
                     var appointments = context.Appointments
                         .AsNoTracking()
                         .Where(a => a.IsDeleted == false || a.IsDeleted == null)
-                        .Include(a => a.Patient)
-                        .Include(a => a.Staff)
-                        .Include(a => a.AppointmentType)
-                        .OrderBy(a => a.AppointmentDate)
+                        .Include(a => a.Patient)        // Thông tin bệnh nhân
+                        .Include(a => a.Staff)          // Thông tin nhân viên/bác sĩ
+                        .Include(a => a.AppointmentType) // Loại lịch hẹn
+                        .OrderBy(a => a.AppointmentDate) // Sắp xếp theo thời gian
                         .ToList();
 
+                    // === TÍNH SỐ LỊCH HẸN ĐANG CHỜ ===
+                    /// Đếm các lịch hẹn có trạng thái "Đang chờ" (sau khi trim khoảng trắng)
                     int waitingCount = appointments.Count(a => a.Status.Trim() == "Đang chờ");
 
+                    // === TẠO DANH SÁCH LỊCH HẸN HÔM NAY CHO DASHBOARD ===
+                    /// Lọc các lịch hẹn trong ngày hôm nay và tạo đối tượng TodayAppointment
                     foreach (var appointment in appointments.Where(a => a.AppointmentDate.Date == CurrentDate.Date))
                     {
                         TodayAppointment app = new TodayAppointment
                         {
                             Appointment = appointment,
-                            Initials = GetInitialsFromFullName(appointment.Patient?.FullName),
+                            Initials = GetInitialsFromFullName(appointment.Patient?.FullName), // Tạo chữ cái đầu
                             PatientName = appointment.Patient?.FullName,
                             DoctorName = appointment.Staff?.FullName,
                             Notes = appointment.Notes,
                             Status = appointment.Status?.Trim(),
-                            Time = appointment.AppointmentDate.TimeOfDay
+                            Time = appointment.AppointmentDate.TimeOfDay // Chỉ lấy phần thời gian
                         };
                         TodayAppointments.Add(app);
                     }
 
+                    // === CẬP NHẬT CÁC CHỈ SỐ DASHBOARD ===
+                    /// Tổng số lịch hẹn hôm nay
                     TotalAppointments = appointments.Count(a => a.AppointmentDate.Date == CurrentDate.Date);
+
+                    /// Số lịch hẹn đang chờ (hiển thị dưới dạng string)
                     PendingAppointments = waitingCount.ToString();
+
+                    /// Tổng số bệnh nhân trong hệ thống (chưa bị xóa)
                     TotalPatients = context.Patients.Count(p => p.IsDeleted != true);
                 }
             }
             catch (Exception ex)
             {
+                // === XỬ LÝ LỖI ===
+                /// Hiển thị lỗi chi tiết khi không thể tải dashboard
                 MessageBoxService.ShowError($"Lỗi khi tải Dashboard: {ex.Message}", "Lỗi");
             }
         }
 
+        /// <summary>
+        /// Trích xuất chữ cái đầu từ họ tên đầy đủ của bệnh nhân
+        /// Sử dụng để hiển thị avatar chữ cái trong danh sách lịch hẹn
+        /// Logic: lấy chữ cái đầu của từ áp cuối và từ cuối cùng
+        /// </summary>
+        /// <param name="fullName">Họ tên đầy đủ của bệnh nhân</param>
+        /// <returns>Chuỗi chữ cái đầu, ví dụ: "N.A" cho "Nguyễn Văn An"</returns>
         private string GetInitialsFromFullName(string fullName)
         {
+            // === KIỂM TRA ĐẦU VÀO ===
+            /// Trả về chuỗi rỗng nếu tên null hoặc chỉ có khoảng trắng
             if (string.IsNullOrWhiteSpace(fullName))
                 return string.Empty;
 
+            // === TÁCH CÁC TỪNG TỪ TRONG TÊN ===
+            /// Split theo khoảng trắng và loại bỏ các phần tử rỗng
+            /// Lọc ra các từ không null/empty để đảm bảo tính chính xác
             var parts = fullName
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Where(p => !string.IsNullOrWhiteSpace(p))
                 .ToArray();
 
+            // === LOGIC TẠO CHỮ CÁI ĐẦU ===
             if (parts.Length >= 2)
             {
-                var middle = parts[parts.Length - 2];
-                var last = parts[parts.Length - 1];
+                /// Trường hợp có ít nhất 2 từ: lấy từ áp cuối và từ cuối
+                /// Ví dụ: "Nguyễn Văn An" → "V.A"
+                var middle = parts[parts.Length - 2]; // Từ áp cuối
+                var last = parts[parts.Length - 1];   // Từ cuối
                 return $"{char.ToUpper(middle[0])}.{char.ToUpper(last[0])}";
             }
             else if (parts.Length == 1)
             {
+                /// Trường hợp chỉ có 1 từ: lấy chữ cái đầu của từ đó
+                /// Ví dụ: "An" → "A"
                 return char.ToUpper(parts[0][0]).ToString();
             }
 
+            /// Trường hợp không xác định được (lý thuyết không xảy ra)
             return string.Empty;
         }
         #endregion
 
+
         #region Action Methods
+        /// <summary>
+        /// Lọc dữ liệu thống kê theo ngày hiện tại (hôm nay)
+        /// Thiết lập StartDate = ngày hôm nay (00:00:00), EndDate = thời điểm hiện tại
+        /// Cập nhật text hiển thị và tải lại dữ liệu thống kê
+        /// </summary>
         private void FilterByDay()
         {
-            StartDate = DateTime.Now.Date;
-            EndDate = DateTime.Now;
-            CurrentFilterText = "Đang xem: Hôm nay";
-            LoadStatisticsAsync();
+            StartDate = DateTime.Now.Date;                          // Đặt ngày bắt đầu là đầu ngày hôm nay
+            EndDate = DateTime.Now;                                 // Đặt ngày kết thúc là thời điểm hiện tại
+            CurrentFilterText = "Đang xem: Hôm nay";               // Cập nhật text hiển thị bộ lọc
+            LoadStatisticsAsync();                                  // Tải lại dữ liệu thống kê
         }
 
+        /// <summary>
+        /// Lọc dữ liệu thống kê theo tháng hiện tại
+        /// Thiết lập StartDate = ngày đầu tháng hiện tại, EndDate = thời điểm hiện tại
+        /// Đây là bộ lọc mặc định khi khởi động ứng dụng
+        /// </summary>
         private void FilterByMonth()
         {
-            StartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            EndDate = DateTime.Now;
-            CurrentFilterText = "Đang xem: Tháng này";
-            LoadStatisticsAsync();
+            StartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);  // Ngày đầu tháng hiện tại
+            EndDate = DateTime.Now;                                              // Thời điểm hiện tại
+            CurrentFilterText = "Đang xem: Tháng này";                          // Cập nhật text hiển thị
+            LoadStatisticsAsync();                                               // Tải lại dữ liệu thống kê
         }
 
+        /// <summary>
+        /// Lọc dữ liệu thống kê theo quý hiện tại
+        /// Tự động xác định quý dựa trên tháng hiện tại:
+        /// - Quý 1: Tháng 1-3 (T1, T2, T3)
+        /// - Quý 2: Tháng 4-6 (T4, T5, T6)  
+        /// - Quý 3: Tháng 7-9 (T7, T8, T9)
+        /// - Quý 4: Tháng 10-12 (T10, T11, T12)
+        /// </summary>
         private void FilterByQuarter()
         {
-            int currentMonth = DateTime.Now.Month;
-            int quarterNumber = (currentMonth - 1) / 3 + 1;
-            int quarterStartMonth = (quarterNumber - 1) * 3 + 1;
+            int currentMonth = DateTime.Now.Month;                               // Lấy tháng hiện tại (1-12)
+            int quarterNumber = (currentMonth - 1) / 3 + 1;                     // Tính số quý (1-4)
+            int quarterStartMonth = (quarterNumber - 1) * 3 + 1;                // Tính tháng bắt đầu quý
 
-            StartDate = new DateTime(DateTime.Now.Year, quarterStartMonth, 1);
-            EndDate = DateTime.Now;
-            CurrentFilterText = $"Đang xem: Quý {quarterNumber}";
-            LoadStatisticsAsync();
+            StartDate = new DateTime(DateTime.Now.Year, quarterStartMonth, 1);   // Ngày đầu quý
+            EndDate = DateTime.Now;                                              // Thời điểm hiện tại
+            CurrentFilterText = $"Đang xem: Quý {quarterNumber}";               // Hiển thị quý hiện tại
+            LoadStatisticsAsync();                                               // Tải lại dữ liệu thống kê
         }
 
+        /// <summary>
+        /// Lọc dữ liệu thống kê theo năm hiện tại
+        /// Thiết lập StartDate = 01/01 năm hiện tại, EndDate = thời điểm hiện tại
+        /// Phù hợp cho báo cáo tổng kết cuối năm và phân tích xu hướng dài hạn
+        /// </summary>
         private void FilterByYear()
         {
-            StartDate = new DateTime(DateTime.Now.Year, 1, 1);
-            EndDate = DateTime.Now;
-            CurrentFilterText = $"Đang xem: Năm {DateTime.Now.Year}";
-            LoadStatisticsAsync();
+            StartDate = new DateTime(DateTime.Now.Year, 1, 1);                  // Ngày đầu năm hiện tại
+            EndDate = DateTime.Now;                                              // Thời điểm hiện tại
+            CurrentFilterText = $"Đang xem: Năm {DateTime.Now.Year}";           // Hiển thị năm hiện tại
+            LoadStatisticsAsync();                                               // Tải lại dữ liệu thống kê
         }
 
+        /// <summary>
+        /// Hiển thị chi tiết danh sách thuốc cần cảnh báo
+        /// Chỉ kích hoạt khi có thuốc cần chú ý (LowStockCount > 0)
+        /// Hiển thị popup với thông tin đầy đủ về từng loại cảnh báo
+        /// </summary>
         private void ViewLowStock()
         {
             if (WarningMedicines.Count > 0)
             {
+                // Tạo chuỗi text hiển thị tất cả cảnh báo
                 var warningText = string.Join("\n", WarningMedicines.Select(m => $"{m.Name}: {m.WarningMessage}"));
                 MessageBoxService.ShowError($"Danh sách thuốc cần chú ý:\n\n{warningText}",
-                               "Cảnh báo tồn kho"   );
+                               "Cảnh báo tồn kho");
             }
             else
             {
+                // Thông báo khi không có thuốc nào cần chú ý
                 MessageBoxService.ShowError("Không có thuốc nào cần chú ý trong kho.",
-                               "Thông báo"     );
+                               "Thông báo");
             }
         }
 
+        /// <summary>
+        /// Tạo màu sắc ngẫu nhiên cho các biểu đồ
+        /// Sử dụng bảng màu Material Design để đảm bảo tính thẩm mỹ
+        /// Trả về SolidColorBrush để sử dụng trong LiveCharts
+        /// </summary>
+        /// <returns>SolidColorBrush với màu ngẫu nhiên từ bảng màu định sẵn</returns>
         private SolidColorBrush GetRandomBrush()
         {
+            // Bảng màu Material Design đã được chọn lọc
             var colors = new[]
             {
-                Color.FromRgb(66, 133, 244),  // Blue
-                Color.FromRgb(219, 68, 55),   // Red
-                Color.FromRgb(244, 180, 0),   // Yellow
-                Color.FromRgb(15, 157, 88),   // Green
-                Color.FromRgb(171, 71, 188)   // Purple
+                Color.FromRgb(66, 133, 244),  // Blue - Xanh dương
+                Color.FromRgb(219, 68, 55),   // Red - Đỏ
+                Color.FromRgb(244, 180, 0),   // Yellow - Vàng
+                Color.FromRgb(15, 157, 88),   // Green - Xanh lá
+                Color.FromRgb(171, 71, 188)   // Purple - Tím
             };
 
             Random random = new Random();
@@ -2373,41 +3053,44 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Exports revenue statistics to Excel
+        /// Xuất báo cáo thống kê doanh thu ra file Excel
+        /// Sử dụng ClosedXML với progress dialog và background thread để tối ưu UX
+        /// Bao gồm các biểu đồ: doanh thu theo ngày, loại hóa đơn, xu hướng và theo giờ
+        /// File được lưu với tên format: ThongKeDoanhThu_dd-MM-yyyy.xlsx
         /// </summary>
         private void ExportRevenueToExcel()
         {
             try
             {
-                // Create a save file dialog
+                // === TẠO DIALOG CHỌN VỊ TRÍ LƯU FILE ===
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
-                    Filter = "Excel files (*.xlsx)|*.xlsx",
-                    DefaultExt = "xlsx",
-                    Title = "Chọn vị trí lưu file Excel",
-                    FileName = $"ThongKeDoanhThu_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                    Filter = "Excel files (*.xlsx)|*.xlsx",                        // Chỉ cho phép file Excel
+                    DefaultExt = "xlsx",                                            // Extension mặc định
+                    Title = "Chọn vị trí lưu file Excel",                          // Tiêu đề dialog
+                    FileName = $"ThongKeDoanhThu_{DateTime.Now:dd-MM-yyyy}.xlsx"   // Tên file với ngày hiện tại
                 };
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Create and show progress dialog
+                    // === TẠO VÀ HIỂN THỊ PROGRESS DIALOG ===
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Start export operation in background thread
+                    // === BẮT ĐẦU XỬ LÝ XUẤT EXCEL TRONG BACKGROUND THREAD ===
                     Task.Run(() =>
                     {
                         try
                         {
                             using (var workbook = new XLWorkbook())
                             {
-                                // Report progress: 5% - Created workbook
+                                // === BÁO CÁO TIẾN TRÌNH: 5% - TẠO WORKBOOK ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
-                                // Determine the title based on current filter
+                                // === XÁC ĐỊNH TIÊU ĐỀ DỰA TRÊN BỘ LỌC HIỆN TẠI ===
                                 string period = GetCurrentPeriodTitle();
                                 var worksheet = workbook.Worksheets.Add($"Thống kê doanh thu {period}");
 
-                                // Add title
+                                // === THÊM TIÊU ĐỀ CHÍNH (MERGED CELLS) ===
                                 worksheet.Cell(1, 1).Value = $"THỐNG KÊ DOANH THU {period.ToUpper()}";
                                 var titleRange = worksheet.Range(1, 1, 1, 10);
                                 titleRange.Merge();
@@ -2415,43 +3098,48 @@ namespace ClinicManagement.ViewModels
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
+                                // === THÊM NGÀY HIỆN TẠI (MERGED CELLS) ===
                                 worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
                                 var dateRange = worksheet.Range(2, 1, 2, 10);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Report progress: 10% - Added header
+                                // === BÁO CÁO TIẾN TRÌNH: 10% - THÊM HEADER ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Current row position tracker
+                                // === THEO DÕI VỊ TRÍ HÀNG HIỆN TẠI ===
                                 int currentRow = 4;
 
-                                // Export each chart data to separate tables
+                                // === XUẤT TỪNG BIỂU ĐỒ THÀNH CÁC BẢNG RIÊNG BIỆT ===
+
+                                // Xuất doanh thu theo ngày
                                 currentRow = ExportTopRevenueDaysChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
 
+                                // Xuất doanh thu theo loại hóa đơn  
                                 currentRow = ExportInvoiceTypeChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
 
+                                // Xuất xu hướng doanh thu
                                 currentRow = ExportRevenueTrendChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(70));
 
+                                // Xuất doanh thu theo giờ
                                 currentRow = ExportRevenueByHourChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
 
-                                // Format the worksheet for better readability
+                                // === ĐỊNH DẠNG WORKSHEET ĐỂ DỄ ĐỌC HƠN ===
                                 worksheet.Columns().AdjustToContents();
 
-                                // Save the workbook
+                                // === LƯU WORKBOOK ===
                                 workbook.SaveAs(saveFileDialog.FileName);
 
-                                // Report progress: 100% - Complete
+                                // === BÁO CÁO TIẾN TRÌNH: 100% - HOÀN THÀNH ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                                Thread.Sleep(300); // Show 100% briefly
+                                Thread.Sleep(300); // Hiển thị 100% trong thời gian ngắn
 
-                                // Close progress dialog and show success message
+                                // === ĐÓNG PROGRESS DIALOG VÀ HIỂN THỊ THÔNG BÁO THÀNH CÔNG ===
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     progressDialog.Close();
@@ -2461,7 +3149,7 @@ namespace ClinicManagement.ViewModels
                                         "Thành công"
                                     );
 
-                                    // Ask if user wants to open the Excel file
+                                    // === HỎI NGƯỜI DÙNG CÓ MUỐN MỞ FILE EXCEL KHÔNG ===
                                     if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
                                     {
                                         try
@@ -2482,7 +3170,7 @@ namespace ClinicManagement.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            // Close progress dialog on error
+                            // === ĐÓNG PROGRESS DIALOG KHI CÓ LỖI ===
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
@@ -2491,7 +3179,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // === HIỂN THỊ DIALOG - SẼ CHẶN CHO ĐẾN KHI DIALOG ĐÓNG ===
                     progressDialog.ShowDialog();
                 }
             }
@@ -2502,30 +3190,35 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Exports patient statistics to Excel
+        /// Xuất báo cáo thống kê bệnh nhân ra file Excel
+        /// Bao gồm: phân tích theo loại bệnh nhân và danh sách bệnh nhân VIP
+        /// Sử dụng pattern copy data trước khi chuyển sang background thread để tránh cross-thread issues
+        /// File được lưu với tên format: ThongKeBenhNhan_dd-MM-yyyy.xlsx
         /// </summary>
         private void ExportPatientsToExcel()
         {
             try
             {
-                // Create a save file dialog
+                // === TẠO DIALOG CHỌN VỊ TRÍ LƯU FILE ===
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
-                    Filter = "Excel files (*.xlsx)|*.xlsx",
-                    DefaultExt = "xlsx",
-                    Title = "Chọn vị trí lưu file Excel",
-                    FileName = $"ThongKeBenhNhan_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                    Filter = "Excel files (*.xlsx)|*.xlsx",                        // Chỉ cho phép file Excel
+                    DefaultExt = "xlsx",                                            // Extension mặc định
+                    Title = "Chọn vị trí lưu file Excel",                          // Tiêu đề dialog
+                    FileName = $"ThongKeBenhNhan_{DateTime.Now:dd-MM-yyyy}.xlsx"   // Tên file với ngày hiện tại
                 };
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Create and show progress dialog
+                    // === TẠO VÀ HIỂN THỊ PROGRESS DIALOG ===
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Create copies of data on UI thread before passing to background thread
+                    // === TẠO BẢN SAO DỮ LIỆU TRÊN UI THREAD TRƯỚC KHI CHUYỂN SANG BACKGROUND THREAD ===
+                    /// Pattern này tránh cross-thread exception khi truy cập ObservableCollection từ background thread
                     var patientTypeSeriesCopy = new List<(string Title, double Value)>();
                     if (PatientTypeSeries != null)
                     {
+                        // Trích xuất dữ liệu từ PieSeries của LiveCharts
                         foreach (var series in PatientTypeSeries)
                         {
                             if (series is LiveCharts.Wpf.PieSeries pieSeries &&
@@ -2537,23 +3230,24 @@ namespace ClinicManagement.ViewModels
                         }
                     }
 
+                    // Tạo bản sao danh sách bệnh nhân VIP
                     var topVIPPatientsCopy = TopVIPPatients?.ToList() ?? new List<VIPPatient>();
 
-                    // Start export operation in background thread
+                    // === BẮT ĐẦU XỬ LÝ XUẤT EXCEL TRONG BACKGROUND THREAD ===
                     Task.Run(() =>
                     {
                         try
                         {
                             using (var workbook = new XLWorkbook())
                             {
-                                // Report progress: 5% - Created workbook
+                                // === BÁO CÁO TIẾN TRÌNH: 5% - TẠO WORKBOOK ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
-                                // Determine the title based on current filter
+                                // === XÁC ĐỊNH TIÊU ĐỀ DỰA TRÊN BỘ LỌC HIỆN TẠI ===
                                 string period = GetCurrentPeriodTitle();
                                 var worksheet = workbook.Worksheets.Add($"Thống kê bệnh nhân {period}");
 
-                                // Add title
+                                // === THÊM TIÊU ĐỀ CHÍNH ===
                                 worksheet.Cell(1, 1).Value = $"THỐNG KÊ BỆNH NHÂN {period.ToUpper()}";
                                 var titleRange = worksheet.Range(1, 1, 1, 10);
                                 titleRange.Merge();
@@ -2561,37 +3255,40 @@ namespace ClinicManagement.ViewModels
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
+                                // === THÊM NGÀY HIỆN TẠI ===
                                 worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
                                 var dateRange = worksheet.Range(2, 1, 2, 10);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Report progress: 10% - Added header
+                                // === BÁO CÁO TIẾN TRÌNH: 10% - THÊM HEADER ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Current row position tracker
+                                // === THEO DÕI VỊ TRÍ HÀNG HIỆN TẠI ===
                                 int currentRow = 4;
 
-                                // Export each chart data to separate tables using copies
+                                // === XUẤT TỪNG BIỂU ĐỒ THÀNH CÁC BẢNG RIÊNG BIỆT SỬ DỤNG BẢN SAO ===
+
+                                // Xuất biểu đồ phân loại bệnh nhân
                                 currentRow = ExportPatientTypeChartFromCopy(worksheet, currentRow, patientTypeSeriesCopy);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(40));
 
+                                // Xuất bảng bệnh nhân VIP
                                 currentRow = ExportTopVIPPatientsTableFromCopy(worksheet, currentRow, topVIPPatientsCopy);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(80));
 
-                                // Format the worksheet for better readability
+                                // === ĐỊNH DẠNG WORKSHEET ĐỂ DỄ ĐỌC HƠN ===
                                 worksheet.Columns().AdjustToContents();
 
-                                // Save the workbook
+                                // === LƯU WORKBOOK ===
                                 workbook.SaveAs(saveFileDialog.FileName);
 
-                                // Report progress: 100% - Complete
+                                // === BÁO CÁO TIẾN TRÌNH: 100% - HOÀN THÀNH ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                                Thread.Sleep(300); // Show 100% briefly
+                                Thread.Sleep(300); // Hiển thị 100% trong thời gian ngắn
 
-                                // Close progress dialog and show success message
+                                // === ĐÓNG PROGRESS DIALOG VÀ HIỂN THỊ THÔNG BÁO THÀNH CÔNG ===
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     progressDialog.Close();
@@ -2601,7 +3298,7 @@ namespace ClinicManagement.ViewModels
                                         "Thành công"
                                     );
 
-                                    // Ask if user wants to open the Excel file
+                                    // === HỎI NGƯỜI DÙNG CÓ MUỐN MỞ FILE EXCEL KHÔNG ===
                                     if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
                                     {
                                         try
@@ -2622,7 +3319,7 @@ namespace ClinicManagement.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            // Close progress dialog on error
+                            // === ĐÓNG PROGRESS DIALOG KHI CÓ LỖI ===
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
@@ -2631,7 +3328,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // === HIỂN THỊ DIALOG - SẼ CHẶN CHO ĐẾN KHI DIALOG ĐÓNG ===
                     progressDialog.ShowDialog();
                 }
             }
@@ -2640,43 +3337,45 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi xuất Excel: {ex.Message}", "Lỗi");
             }
         }
-
         /// <summary>
-        /// Exports appointment statistics to Excel
+        /// Xuất báo cáo thống kê lịch hẹn ra file Excel
+        /// Bao gồm: phân bố theo trạng thái, giờ cao điểm và thống kê theo bác sĩ
+        /// File được lưu với tên format: ThongKeLichHen_dd-MM-yyyy.xlsx
+        /// Hỗ trợ phân tích hiệu quả hoạt động và phân bổ công việc trong phòng khám
         /// </summary>
         private void ExportAppointmentsToExcel()
         {
             try
             {
-                // Create a save file dialog
+                // === TẠO DIALOG CHỌN VỊ TRÍ LƯU FILE ===
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
-                    Filter = "Excel files (*.xlsx)|*.xlsx",
-                    DefaultExt = "xlsx",
-                    Title = "Chọn vị trí lưu file Excel",
-                    FileName = $"ThongKeLichHen_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                    Filter = "Excel files (*.xlsx)|*.xlsx",                        // Chỉ cho phép file Excel
+                    DefaultExt = "xlsx",                                            // Extension mặc định
+                    Title = "Chọn vị trí lưu file Excel",                          // Tiêu đề dialog
+                    FileName = $"ThongKeLichHen_{DateTime.Now:dd-MM-yyyy}.xlsx"   // Tên file với ngày hiện tại
                 };
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Create and show progress dialog
+                    // === TẠO VÀ HIỂN THỊ PROGRESS DIALOG ===
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Start export operation in background thread
+                    // === BẮT ĐẦU XỬ LÝ XUẤT EXCEL TRONG BACKGROUND THREAD ===
                     Task.Run(() =>
                     {
                         try
                         {
                             using (var workbook = new XLWorkbook())
                             {
-                                // Report progress: 5% - Created workbook
+                                // === BÁO CÁO TIẾN TRÌNH: 5% - TẠO WORKBOOK ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
-                                // Determine the title based on current filter
+                                // === XÁC ĐỊNH TIÊU ĐỀ DỰA TRÊN BỘ LỌC HIỆN TẠI ===
                                 string period = GetCurrentPeriodTitle();
                                 var worksheet = workbook.Worksheets.Add($"Thống kê lịch hẹn {period}");
 
-                                // Add title
+                                // === THÊM TIÊU ĐỀ CHÍNH (MERGED CELLS) ===
                                 worksheet.Cell(1, 1).Value = $"THỐNG KÊ LỊCH HẸN {period.ToUpper()}";
                                 var titleRange = worksheet.Range(1, 1, 1, 10);
                                 titleRange.Merge();
@@ -2684,40 +3383,44 @@ namespace ClinicManagement.ViewModels
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
+                                // === THÊM NGÀY HIỆN TẠI (MERGED CELLS) ===
                                 worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
                                 var dateRange = worksheet.Range(2, 1, 2, 10);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Report progress: 10% - Added header
+                                // === BÁO CÁO TIẾN TRÌNH: 10% - THÊM HEADER ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Current row position tracker
+                                // === THEO DÕI VỊ TRÍ HÀNG HIỆN TẠI ===
                                 int currentRow = 4;
 
-                                // Export each chart data to separate tables
+                                // === XUẤT TỪNG BIỂU ĐỒ THÀNH CÁC BẢNG RIÊNG BIỆT ===
+
+                                // Xuất thống kê lịch hẹn theo trạng thái
                                 currentRow = ExportAppointmentStatusChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(40));
 
+                                // Xuất thống kê giờ cao điểm đặt lịch hẹn
                                 currentRow = ExportAppointmentPeakHoursChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(70));
 
+                                // Xuất thống kê số lượng bệnh nhân theo bác sĩ
                                 currentRow = ExportPatientsByDoctorChart(worksheet, currentRow);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
 
-                                // Format the worksheet for better readability
+                                // === ĐỊNH DẠNG WORKSHEET ĐỂ DỄ ĐỌC HƠN ===
                                 worksheet.Columns().AdjustToContents();
 
-                                // Save the workbook
+                                // === LƯU WORKBOOK ===
                                 workbook.SaveAs(saveFileDialog.FileName);
 
-                                // Report progress: 100% - Complete
+                                // === BÁO CÁO TIẾN TRÌNH: 100% - HOÀN THÀNH ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                                Thread.Sleep(300); // Show 100% briefly
+                                Thread.Sleep(300); // Hiển thị 100% trong thời gian ngắn
 
-                                // Close progress dialog and show success message
+                                // === ĐÓNG PROGRESS DIALOG VÀ HIỂN THỊ THÔNG BÁO THÀNH CÔNG ===
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     progressDialog.Close();
@@ -2727,7 +3430,7 @@ namespace ClinicManagement.ViewModels
                                         "Thành công"
                                     );
 
-                                    // Ask if user wants to open the Excel file
+                                    // === HỎI NGƯỜI DÙNG CÓ MUỐN MỞ FILE EXCEL KHÔNG ===
                                     if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
                                     {
                                         try
@@ -2748,7 +3451,7 @@ namespace ClinicManagement.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            // Close progress dialog on error
+                            // === ĐÓNG PROGRESS DIALOG KHI CÓ LỖI ===
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
@@ -2757,7 +3460,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // === HIỂN THỊ DIALOG - SẼ CHẶN CHO ĐẾN KHI DIALOG ĐÓNG ===
                     progressDialog.ShowDialog();
                 }
             }
@@ -2768,30 +3471,36 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Exports medicine statistics to Excel
+        /// Xuất báo cáo thống kê thuốc ra file Excel
+        /// Bao gồm: doanh thu theo danh mục, phân bố sản phẩm, top thuốc bán chạy, cảnh báo tồn kho
+        /// File được lưu với tên format: ThongKeThuoc_dd-MM-yyyy.xlsx
+        /// Đặc biệt hữu ích cho quản lý kho và chiến lược kinh doanh thuốc
+        /// Có code màu cho các mức độ cảnh báo khác nhau (đỏ: cần tiêu hủy, cam: sắp hết hạn, xanh: tồn kho thấp)
         /// </summary>
         private void ExportMedicineToExcel()
         {
             try
             {
-                // Create a save file dialog
+                // === TẠO DIALOG CHỌN VỊ TRÍ LƯU FILE ===
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
-                    Filter = "Excel files (*.xlsx)|*.xlsx",
-                    DefaultExt = "xlsx",
-                    Title = "Chọn vị trí lưu file Excel",
-                    FileName = $"ThongKeThuoc_{DateTime.Now:dd-MM-yyyy}.xlsx"
+                    Filter = "Excel files (*.xlsx)|*.xlsx",                        // Chỉ cho phép file Excel
+                    DefaultExt = "xlsx",                                            // Extension mặc định
+                    Title = "Chọn vị trí lưu file Excel",                          // Tiêu đề dialog
+                    FileName = $"ThongKeThuoc_{DateTime.Now:dd-MM-yyyy}.xlsx"     // Tên file với ngày hiện tại
                 };
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    // Create and show progress dialog
+                    // === TẠO VÀ HIỂN THỊ PROGRESS DIALOG ===
                     ProgressDialog progressDialog = new ProgressDialog();
 
-                    // Create copies of collection data on UI thread
+                    // === TẠO BẢN SAO DỮ LIỆU TRÊN UI THREAD TRƯỚC KHI CHUYỂN SANG BACKGROUND THREAD ===
+                    /// Pattern này tránh cross-thread exception khi truy cập ObservableCollection từ background thread
                     var revenueByCategorySeries = new List<(string Category, double Value)>();
                     if (RevenueByCategorySeries?.Count > 0 && CategoryLabels?.Length > 0)
                     {
+                        // Trích xuất dữ liệu từ ColumnSeries của LiveCharts
                         var series = RevenueByCategorySeries[0] as LiveCharts.Wpf.ColumnSeries;
                         if (series?.Values is LiveCharts.ChartValues<double> values)
                         {
@@ -2803,10 +3512,11 @@ namespace ClinicManagement.ViewModels
                         }
                     }
 
-                    // Copy other collections
+                    // === SAO CHÉP CÁC COLLECTION KHÁC ===
                     var productDistributionCopy = new List<(string Title, double Value)>();
                     if (ProductDistributionSeries != null)
                     {
+                        // Trích xuất dữ liệu từ PieSeries của LiveCharts
                         foreach (var series in ProductDistributionSeries)
                         {
                             if (series is LiveCharts.Wpf.PieSeries pieSeries &&
@@ -2818,25 +3528,26 @@ namespace ClinicManagement.ViewModels
                         }
                     }
 
+                    // Sao chép danh sách sản phẩm bán chạy và cảnh báo thuốc
                     var topSellingProductsCopy = TopSellingProducts?.ToList() ?? new List<TopSellingProduct>();
                     var warningMedicinesCopy = WarningMedicines?.ToList() ?? new List<WarningMedicine>();
 
-                    // Get period title on UI thread
+                    // Lấy tiêu đề period trên UI thread
                     string period = GetCurrentPeriodTitle();
 
-                    // Start export operation in background thread
+                    // === BẮT ĐẦU XỬ LÝ XUẤT EXCEL TRONG BACKGROUND THREAD ===
                     Task.Run(() =>
                     {
                         try
                         {
                             using (var workbook = new XLWorkbook())
                             {
-                                // Report progress: 5% - Created workbook
+                                // === BÁO CÁO TIẾN TRÌNH: 5% - TẠO WORKBOOK ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(5));
 
                                 var worksheet = workbook.Worksheets.Add($"Thống kê thuốc {period}");
 
-                                // Add title
+                                // === THÊM TIÊU ĐỀ CHÍNH ===
                                 worksheet.Cell(1, 1).Value = $"THỐNG KÊ THUỐC {period.ToUpper()}";
                                 var titleRange = worksheet.Range(1, 1, 1, 10);
                                 titleRange.Merge();
@@ -2844,43 +3555,48 @@ namespace ClinicManagement.ViewModels
                                 titleRange.Style.Font.FontSize = 16;
                                 titleRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Add current date
+                                // === THÊM NGÀY HIỆN TẠI ===
                                 worksheet.Cell(2, 1).Value = $"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}";
                                 var dateRange = worksheet.Range(2, 1, 2, 10);
                                 dateRange.Merge();
                                 dateRange.Style.Font.Italic = true;
                                 dateRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                                // Report progress: 10% - Added header
+                                // === BÁO CÁO TIẾN TRÌNH: 10% - THÊM HEADER ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(10));
 
-                                // Current row position tracker
+                                // === THEO DÕI VỊ TRÍ HÀNG HIỆN TẠI ===
                                 int currentRow = 4;
 
-                                // Export each chart data to separate tables using copies
+                                // === XUẤT TỪNG BIỂU ĐỒ THÀNH CÁC BẢNG RIÊNG BIỆT SỬ DỤNG BẢN SAO ===
+
+                                // Xuất biểu đồ doanh thu theo danh mục thuốc
                                 currentRow = ExportRevenueByCategoryChartFromCopy(worksheet, currentRow, revenueByCategorySeries);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(30));
 
+                                // Xuất biểu đồ phân bố sản phẩm theo danh mục
                                 currentRow = ExportProductDistributionChartFromCopy(worksheet, currentRow, productDistributionCopy);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(50));
 
+                                // Xuất bảng top thuốc bán chạy nhất
                                 currentRow = ExportTopSellingProductsTableFromCopy(worksheet, currentRow, topSellingProductsCopy);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(70));
 
+                                // Xuất bảng cảnh báo tồn kho với color coding
                                 currentRow = ExportWarningMedicinesTableFromCopy(worksheet, currentRow, warningMedicinesCopy);
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(90));
 
-                                // Format the worksheet for better readability
+                                // === ĐỊNH DẠNG WORKSHEET ĐỂ DỄ ĐỌC HƠN ===
                                 worksheet.Columns().AdjustToContents();
 
-                                // Save the workbook
+                                // === LƯU WORKBOOK ===
                                 workbook.SaveAs(saveFileDialog.FileName);
 
-                                // Report progress: 100% - Complete
+                                // === BÁO CÁO TIẾN TRÌNH: 100% - HOÀN THÀNH ===
                                 Application.Current.Dispatcher.Invoke(() => progressDialog.UpdateProgress(100));
-                                Thread.Sleep(300); // Show 100% briefly
+                                Thread.Sleep(300); // Hiển thị 100% trong thời gian ngắn
 
-                                // Close progress dialog and show success message
+                                // === ĐÓNG PROGRESS DIALOG VÀ HIỂN THỊ THÔNG BÁO THÀNH CÔNG ===
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     progressDialog.Close();
@@ -2890,7 +3606,7 @@ namespace ClinicManagement.ViewModels
                                         "Thành công"
                                     );
 
-                                    // Ask if user wants to open the Excel file
+                                    // === HỎI NGƯỜI DÙNG CÓ MUỐN MỞ FILE EXCEL KHÔNG ===
                                     if (MessageBoxService.ShowQuestion("Bạn có muốn mở file Excel không?", "Mở file"))
                                     {
                                         try
@@ -2911,7 +3627,7 @@ namespace ClinicManagement.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            // Close progress dialog on error
+                            // === ĐÓNG PROGRESS DIALOG KHI CÓ LỖI ===
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 progressDialog.Close();
@@ -2920,7 +3636,7 @@ namespace ClinicManagement.ViewModels
                         }
                     });
 
-                    // Show dialog - this will block until the dialog is closed
+                    // === HIỂN THỊ DIALOG - SẼ CHẶN CHO ĐẾN KHI DIALOG ĐÓNG ===
                     progressDialog.ShowDialog();
                 }
             }
@@ -2930,46 +3646,63 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-
         /// <summary>
-        /// Gets a descriptive title for the current filter period
+        /// Lấy tiêu đề mô tả cho khoảng thời gian lọc hiện tại
+        /// Được sử dụng trong tiêu đề các file xuất Excel và báo cáo
+        /// Phân tích CurrentFilterText để xác định loại filter đang áp dụng
         /// </summary>
+        /// <returns>Chuỗi mô tả khoảng thời gian, ví dụ: "tháng 12-2024", "quý 4-2024", "(25-12-2024)"</returns>
         private string GetCurrentPeriodTitle()
         {
-            // Parse the current filter text to determine which period we're viewing
+            // === PHÂN TÍCH TEXT BỘ LỌC HIỆN TẠI ĐỂ XÁC ĐỊNH LOẠI KHOẢNG THỜI GIAN ===
+
             if (CurrentFilterText.Contains("Hôm nay"))
             {
+                /// Bộ lọc theo ngày hiện tại - hiển thị ngày cụ thể trong ngoặc
                 return $"({DateTime.Now:dd-MM-yyyy})";
             }
             else if (CurrentFilterText.Contains("Tháng"))
             {
+                /// Bộ lọc theo tháng hiện tại - hiển thị tháng và năm
                 return $"tháng {DateTime.Now.Month}-{DateTime.Now.Year}";
             }
             else if (CurrentFilterText.Contains("Quý"))
             {
+                /// Bộ lọc theo quý hiện tại - tính toán số quý dựa trên tháng hiện tại
                 int quarterNumber = (DateTime.Now.Month - 1) / 3 + 1;
                 return $"quý {quarterNumber}-{DateTime.Now.Year}";
             }
             else if (CurrentFilterText.Contains("Năm"))
             {
+                /// Bộ lọc theo năm hiện tại - chỉ hiển thị năm
                 return $"năm {DateTime.Now.Year}";
             }
             else
             {
-                // Custom date range
+                /// Bộ lọc tùy chỉnh - hiển thị khoảng ngày từ StartDate đến EndDate
+                /// Được sử dụng khi người dùng chọn khoảng thời gian tùy ý
                 return $"từ {StartDate:dd-MM-yyyy} đến {EndDate:dd-MM-yyyy}";
             }
         }
+        #endregion
 
         #region Export Chart Methods
 
         /// <summary>
         /// Exports Top Revenue Days chart to Excel
         /// </summary>
+        /// <summary>
+        /// Xuất biểu đồ top ngày có doanh thu cao nhất ra Excel
+        /// Tạo bảng với cột Ngày và Doanh thu, kèm hàng tổng cộng
+        /// Định dạng số tiền theo chuẩn Việt Nam với phân cách hàng nghìn
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportTopRevenueDaysChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
+            /// Tạo tiêu đề "DOANH THU THEO NGÀY" với merged cells và định dạng đậm
             worksheet.Cell(startRow, 1).Value = "DOANH THU THEO NGÀY";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -2977,33 +3710,40 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo tiêu đề cột với định dạng chuyên nghiệp
             worksheet.Cell(startRow, 1).Value = "Ngày";
             worksheet.Cell(startRow, 2).Value = "Doanh thu";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
+            /// Áp dụng style cho header: đậm, nền xám, căn giữa
             var headerRange = worksheet.Range(startRow, 1, startRow, 2);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
+            /// Kiểm tra có dữ liệu biểu đồ và labels không
             if (TopRevenueDaysSeries?.Count > 0 && TopRevenueDaysLabels?.Length > 0)
             {
+                // Trích xuất ColumnSeries từ SeriesCollection
                 var series = TopRevenueDaysSeries[0] as LiveCharts.Wpf.ColumnSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
+                    /// Lặp qua từng ngày và ghi dữ liệu tương ứng
                     for (int i = 0; i < TopRevenueDaysLabels.Length; i++)
                     {
                         worksheet.Cell(startRow, 1).Value = TopRevenueDaysLabels[i];
                         worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
+                        // Định dạng số tiền với phân cách hàng nghìn
                         worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
+                    /// Tính tổng doanh thu của tất cả các ngày
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Value = values.Sum();
@@ -3013,17 +3753,23 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
+            /// Tạo khoảng cách 2 hàng trước section tiếp theo
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Invoice Type chart to Excel
+        /// Xuất biểu đồ doanh thu theo loại hóa đơn ra Excel
+        /// Tạo bảng với cột Loại hóa đơn, Doanh thu và Phần trăm
+        /// Bao gồm 3 loại: Khám bệnh, Bán thuốc, Khám và bán thuốc
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportInvoiceTypeChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "DOANH THU THEO LOẠI HÓA ĐƠN";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3031,27 +3777,29 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 3 cột: Loại hóa đơn, Doanh thu và Phần trăm
             worksheet.Cell(startRow, 1).Value = "Loại hóa đơn";
             worksheet.Cell(startRow, 2).Value = "Doanh thu";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (InvoiceTypeSeries?.Count > 0 && InvoiceTypeLabels?.Length > 0)
             {
                 var series = InvoiceTypeSeries[0] as LiveCharts.Wpf.ColumnSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
-                    double total = values.Sum();
+                    double total = values.Sum(); // Tính tổng để tính phần trăm
 
+                    /// Ghi dữ liệu cho từng loại hóa đơn
                     for (int i = 0; i < InvoiceTypeLabels.Length; i++)
                     {
                         double value = i < values.Count ? values[i] : 0;
@@ -3059,36 +3807,41 @@ namespace ClinicManagement.ViewModels
 
                         worksheet.Cell(startRow, 1).Value = InvoiceTypeLabels[i];
                         worksheet.Cell(startRow, 2).Value = value;
-                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền
                         worksheet.Cell(startRow, 3).Value = percentage;
-                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Value = total;
                     worksheet.Cell(startRow, 2).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
-                    worksheet.Cell(startRow, 3).Value = 1;
+                    worksheet.Cell(startRow, 3).Value = 1; // 100%
                     worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Revenue Trend chart to Excel
+        /// Xuất biểu đồ xu hướng doanh thu theo thời gian ra Excel
+        /// Hiển thị doanh thu theo 12 tháng trong năm để phân tích xu hướng
+        /// Sử dụng dữ liệu từ LineSeries của LiveCharts
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportRevenueTrendChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "XU HƯỚNG DOANH THU THEO THỜI GIAN";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3096,24 +3849,27 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Chỉ có 2 cột: Thời gian và Doanh thu
             worksheet.Cell(startRow, 1).Value = "Thời gian";
             worksheet.Cell(startRow, 2).Value = "Doanh thu";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 2);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (RevenueTrendSeries?.Count > 0 && RevenueTrendLabels?.Length > 0)
             {
+                // Trích xuất LineSeries (khác với ColumnSeries ở các method khác)
                 var series = RevenueTrendSeries[0] as LiveCharts.Wpf.LineSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
+                    /// Ghi dữ liệu xu hướng theo từng tháng
                     for (int i = 0; i < RevenueTrendLabels.Length; i++)
                     {
                         worksheet.Cell(startRow, 1).Value = RevenueTrendLabels[i];
@@ -3122,7 +3878,7 @@ namespace ClinicManagement.ViewModels
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Value = values.Sum();
@@ -3132,17 +3888,22 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Revenue By Hour chart to Excel
+        /// Xuất biểu đồ doanh thu theo giờ trong ngày ra Excel
+        /// Phân tích 24 giờ (0:00-23:00) để xác định khung giờ kinh doanh hiệu quả
+        /// Hỗ trợ tối ưu hóa lịch làm việc và phân bổ nhân lực theo giờ
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportRevenueByHourChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "DOANH THU THEO GIỜ TRONG NGÀY";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3150,24 +3911,26 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "Giờ";
             worksheet.Cell(startRow, 2).Value = "Doanh thu";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 2);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (RevenueByHourSeries?.Count > 0)
             {
                 var series = RevenueByHourSeries[0] as LiveCharts.Wpf.ColumnSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
+                    /// Sử dụng HourLabels (0:00-23:00) thay vì labels riêng
+                    /// Ghi dữ liệu cho 24 giờ trong ngày
                     for (int i = 0; i < HourLabels.Length; i++)
                     {
                         worksheet.Cell(startRow, 1).Value = HourLabels[i];
@@ -3176,7 +3939,7 @@ namespace ClinicManagement.ViewModels
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Value = values.Sum();
@@ -3186,17 +3949,22 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Patient Type chart to Excel
+        /// Xuất biểu đồ phân tích theo loại bệnh nhân ra Excel
+        /// Trích xuất dữ liệu từ PieSeries để tạo bảng với số lượng và phần trăm
+        /// Bao gồm các loại: VIP, Thường, Bảo hiểm y tế, v.v.
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportPatientTypeChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "PHÂN TÍCH THEO LOẠI BỆNH NHÂN";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3204,25 +3972,27 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 3 cột: Loại bệnh nhân, Số lượng và Phần trăm
             worksheet.Cell(startRow, 1).Value = "Loại bệnh nhân";
             worksheet.Cell(startRow, 2).Value = "Số lượng";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === TRÍCH XUẤT DỮ LIỆU TỪ PIE CHART ===
             if (PatientTypeSeries?.Count > 0)
             {
                 double total = 0;
                 var patientTypes = new List<(string Label, double Value)>();
 
-                // Extract data from pie chart series
+                /// Lặp qua từng PieSeries trong SeriesCollection
+                /// PatientTypeSeries là pie chart nên cần xử lý khác với column/line chart
                 foreach (var series in PatientTypeSeries)
                 {
                     if (series is LiveCharts.Wpf.PieSeries pieSeries &&
@@ -3230,46 +4000,51 @@ namespace ClinicManagement.ViewModels
                         values.Count > 0)
                     {
                         string title = pieSeries.Title ?? "Không có tên";
-                        double value = values[0];
+                        double value = values[0]; // PieSeries chỉ có 1 giá trị
                         total += value;
                         patientTypes.Add((title, value));
                     }
                 }
 
-                // Add data rows
+                // === GHI DỮ LIỆU VÀO EXCEL ===
                 foreach (var item in patientTypes)
                 {
                     double percentage = total > 0 ? (item.Value / total) * 100 : 0;
 
                     worksheet.Cell(startRow, 1).Value = item.Label;
                     worksheet.Cell(startRow, 2).Value = item.Value;
-                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Format as percentage
-                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 2).Value = total;
                 worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Value = 1; // 100%
                 worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Top VIP Patients to Excel
+        /// Xuất bảng top bệnh nhân VIP (chi tiêu nhiều nhất) ra Excel
+        /// Tạo bảng với 4 cột: ID, Họ và tên, Số điện thoại, Tổng chi tiêu
+        /// Bao gồm hàng tổng cộng và xử lý trường hợp không có dữ liệu
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportTopVIPPatientsTable(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN VIP (CHI TIÊU NHIỀU NHẤT)";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3277,33 +4052,35 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 4 cột: ID, Họ và tên, Số điện thoại, Tổng chi tiêu
             worksheet.Cell(startRow, 1).Value = "ID";
             worksheet.Cell(startRow, 2).Value = "Họ và tên";
             worksheet.Cell(startRow, 3).Value = "Số điện thoại";
             worksheet.Cell(startRow, 4).Value = "Tổng chi tiêu";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 4);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (TopVIPPatients != null && TopVIPPatients.Count > 0)
             {
+                /// Có dữ liệu - ghi từng bệnh nhân VIP
                 foreach (var patient in TopVIPPatients)
                 {
                     worksheet.Cell(startRow, 1).Value = patient.Id;
                     worksheet.Cell(startRow, 2).Value = patient.FullName;
                     worksheet.Cell(startRow, 3).Value = patient.Phone;
                     worksheet.Cell(startRow, 4).Value = patient.TotalSpending;
-                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Value = TopVIPPatients.Sum(p => p.TotalSpending);
@@ -3313,24 +4090,30 @@ namespace ClinicManagement.ViewModels
             }
             else
             {
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
                 worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
                 var noDataRange = worksheet.Range(startRow, 1, startRow, 4);
-                noDataRange.Merge();
+                noDataRange.Merge(); // Merge 4 cột để hiển thị thông báo
                 noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Appointment Status chart to Excel
+        /// Xuất biểu đồ lịch hẹn theo trạng thái ra Excel
+        /// Tạo bảng với 3 cột: Trạng thái, Số lượng, Phần trăm
+        /// Bao gồm các trạng thái: Đang chờ, Đã khám, Đã hủy, Đang khám
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportAppointmentStatusChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "LỊCH HẸN THEO TRẠNG THÁI";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3338,27 +4121,29 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "Trạng thái";
             worksheet.Cell(startRow, 2).Value = "Số lượng";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (AppointmentStatusSeries?.Count > 0 && AppointmentStatusLabels?.Length > 0)
             {
+                // Trích xuất ColumnSeries từ SeriesCollection
                 var series = AppointmentStatusSeries[0] as LiveCharts.Wpf.ColumnSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
-                    double total = values.Sum();
+                    double total = values.Sum(); // Tính tổng để tính phần trăm
 
+                    /// Ghi dữ liệu cho từng trạng thái lịch hẹn
                     for (int i = 0; i < AppointmentStatusLabels.Length; i++)
                     {
                         double value = i < values.Count ? values[i] : 0;
@@ -3366,34 +4151,39 @@ namespace ClinicManagement.ViewModels
 
                         worksheet.Cell(startRow, 1).Value = AppointmentStatusLabels[i];
                         worksheet.Cell(startRow, 2).Value = value;
-                        worksheet.Cell(startRow, 3).Value = percentage / 100;
-                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                        worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
+                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Value = total;
                     worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                    worksheet.Cell(startRow, 3).Value = 1;
+                    worksheet.Cell(startRow, 3).Value = 1; // 100%
                     worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Appointment Peak Hours chart to Excel
+        /// Xuất biểu đồ giờ cao điểm đặt lịch hẹn ra Excel
+        /// Phân tích 24 giờ trong ngày để tìm khung giờ có nhiều lịch hẹn nhất
+        /// Hỗ trợ tối ưu hóa lịch làm việc và phân bổ nhân lực theo giờ
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportAppointmentPeakHoursChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "PEAK HOURS ĐẶT LỊCH NHIỀU NHẤT";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3401,51 +4191,61 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "Giờ";
             worksheet.Cell(startRow, 2).Value = "Số lịch hẹn";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 2);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (AppointmentPeakHoursSeries?.Count > 0)
             {
                 var series = AppointmentPeakHoursSeries[0] as LiveCharts.Wpf.ColumnSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
-                    for (int i = 0; i < HourLabels.Length; i++)
+                    // Chỉ xuất dữ liệu từ 7h đến 17h
+                    int startHour = 7;
+                    int endHour = 17;
+                    int hourCount = endHour - startHour + 1;
+
+                    for (int i = 0; i < hourCount; i++)
                     {
-                        worksheet.Cell(startRow, 1).Value = HourLabels[i];
+                        worksheet.Cell(startRow, 1).Value = $"{startHour + i}:00";
                         worksheet.Cell(startRow, 2).Value = i < values.Count ? values[i] : 0;
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                    worksheet.Cell(startRow, 2).Value = values.Sum();
+                    worksheet.Cell(startRow, 2).Value = values.Take(hourCount).Sum();
                     worksheet.Cell(startRow, 2).Style.Font.Bold = true;
                     startRow++;
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Patients By Doctor chart to Excel
+        /// Xuất biểu đồ số lượng bệnh nhân theo từng bác sĩ ra Excel
+        /// Đánh giá hiệu suất làm việc và phân bổ công việc giữa các bác sĩ
+        /// Xử lý an toàn các trường hợp: không có dữ liệu, lỗi định dạng, không trích xuất được giá trị
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportPatientsByDoctorChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "SỐ LƯỢNG BỆNH NHÂN CỦA TỪNG BÁC SĨ";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3453,29 +4253,31 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "Bác sĩ";
             worksheet.Cell(startRow, 2).Value = "Số bệnh nhân";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 2);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Debug logging or verification
+            // === KIỂM TRA DỮ LIỆU CÓ TỒN TẠI KHÔNG ===
+            /// Debug logging hoặc verification để đảm bảo có dữ liệu
             bool hasData = PatientsByStaffseries?.Count > 0 && DoctorLabels?.Length > 0;
             if (!hasData)
             {
-                // Handle empty data - add a note in the worksheet
+                // Xử lý trường hợp không có dữ liệu - thêm ghi chú vào worksheet
                 worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
                 worksheet.Range(startRow, 1, startRow, 2).Merge();
                 startRow += 2;
                 return startRow;
             }
 
-            // Try to get the series safely
+            // === THỬ LẤY SERIES MỘT CÁCH AN TOÀN ===
+            /// Lấy series đầu tiên và cast về base type Series
             var series = PatientsByStaffseries.FirstOrDefault() as LiveCharts.Wpf.Series;
             if (series == null)
             {
@@ -3485,7 +4287,8 @@ namespace ClinicManagement.ViewModels
                 return startRow;
             }
 
-            // Extract values (handling different series types)
+            // === TRÍCH XUẤT VALUES (XỬ LÝ CÁC LOẠI SERIES KHÁC NHAU) ===
+            /// Xử lý an toàn cho cả ColumnSeries và các loại series khác
             IList<double> values;
             if (series is LiveCharts.Wpf.ColumnSeries columnSeries && columnSeries.Values is LiveCharts.ChartValues<double> doubleValues)
             {
@@ -3497,46 +4300,53 @@ namespace ClinicManagement.ViewModels
             }
             else
             {
-                // Handle incompatible values type
+                // Xử lý trường hợp values không tương thích
                 worksheet.Cell(startRow, 1).Value = "Không thể trích xuất giá trị";
                 worksheet.Range(startRow, 1, startRow, 2).Merge();
                 startRow += 2;
                 return startRow;
             }
 
-            // Make sure we have enough values
+            // === ĐẢM BẢO CÓ ĐỦ VALUES ===
+            /// Lấy độ dài nhỏ hơn giữa labels và values để tránh index out of bounds
             int maxLength = Math.Min(DoctorLabels.Length, values.Count);
             double totalPatients = 0;
 
-            // Add data rows
+            // === THÊM CÁC HÀNG DỮ LIỆU ===
             for (int i = 0; i < maxLength; i++)
             {
                 worksheet.Cell(startRow, 1).Value = DoctorLabels[i];
                 double patientCount = values[i];
                 worksheet.Cell(startRow, 2).Value = patientCount;
-                totalPatients += patientCount;
+                totalPatients += patientCount; // Cộng dồn để tính tổng
                 startRow++;
             }
 
-            // Add total row
+            // === THÊM HÀNG TỔNG CỘNG ===
             worksheet.Cell(startRow, 1).Value = "Tổng cộng";
             worksheet.Cell(startRow, 1).Style.Font.Bold = true;
             worksheet.Cell(startRow, 2).Value = totalPatients;
             worksheet.Cell(startRow, 2).Style.Font.Bold = true;
             startRow++;
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
 
+
         /// <summary>
-        /// Exports Revenue By Category chart to Excel
+        /// Xuất biểu đồ doanh thu theo danh mục thuốc ra Excel
+        /// Tạo bảng với 3 cột: Danh mục, Doanh thu, Phần trăm
+        /// Bao gồm hàng tổng cộng và định dạng tiền VNĐ
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportRevenueByCategoryChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "DOANH THU THEO DANH MỤC THUỐC";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3544,27 +4354,30 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 3 cột: Danh mục, Doanh thu và Phần trăm
             worksheet.Cell(startRow, 1).Value = "Danh mục";
             worksheet.Cell(startRow, 2).Value = "Doanh thu";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (RevenueByCategorySeries?.Count > 0 && CategoryLabels?.Length > 0)
             {
+                // Trích xuất ColumnSeries từ SeriesCollection
                 var series = RevenueByCategorySeries[0] as LiveCharts.Wpf.ColumnSeries;
 
                 if (series?.Values is LiveCharts.ChartValues<double> values)
                 {
-                    double total = values.Sum();
+                    double total = values.Sum(); // Tính tổng để tính phần trăm
 
+                    /// Ghi dữ liệu cho từng danh mục thuốc
                     for (int i = 0; i < CategoryLabels.Length; i++)
                     {
                         double value = i < values.Count ? values[i] : 0;
@@ -3572,36 +4385,41 @@ namespace ClinicManagement.ViewModels
 
                         worksheet.Cell(startRow, 1).Value = CategoryLabels[i];
                         worksheet.Cell(startRow, 2).Value = value;
-                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
-                        worksheet.Cell(startRow, 3).Value = percentage / 100;
-                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
+                        worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
+                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
                         startRow++;
                     }
 
-                    // Add total row
+                    // === THÊM HÀNG TỔNG CỘNG ===
                     worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                     worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Value = total;
                     worksheet.Cell(startRow, 2).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
-                    worksheet.Cell(startRow, 3).Value = 1;
+                    worksheet.Cell(startRow, 3).Value = 1; // 100%
                     worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                     worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Product Distribution chart to Excel
+        /// Xuất biểu đồ phân bố sản phẩm theo danh mục thuốc ra Excel
+        /// Trích xuất dữ liệu từ PieSeries để tạo bảng với số lượng và phần trăm
+        /// Xử lý đặc biệt cho Pie Chart với nhiều series
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportProductDistributionChart(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "PHÂN BỔ THEO DANH MỤC THUỐC";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3609,25 +4427,26 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "Danh mục";
             worksheet.Cell(startRow, 2).Value = "Số lượng";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === TRÍCH XUẤT DỮ LIỆU TỪ PIE CHART ===
             if (ProductDistributionSeries?.Count > 0)
             {
                 double total = 0;
                 var categories = new List<(string Label, double Value)>();
 
-                // Extract data from pie chart series
+                /// Lặp qua từng PieSeries trong SeriesCollection
+                /// ProductDistributionSeries là pie chart nên cần xử lý khác với column chart
                 foreach (var series in ProductDistributionSeries)
                 {
                     if (series is LiveCharts.Wpf.PieSeries pieSeries &&
@@ -3635,46 +4454,51 @@ namespace ClinicManagement.ViewModels
                         values.Count > 0)
                     {
                         string title = pieSeries.Title ?? "Không có tên";
-                        double value = values[0];
+                        double value = values[0]; // PieSeries chỉ có 1 giá trị
                         total += value;
                         categories.Add((title, value));
                     }
                 }
 
-                // Add data rows
+                // === GHI DỮ LIỆU VÀO EXCEL ===
                 foreach (var item in categories)
                 {
                     double percentage = total > 0 ? (item.Value / total) * 100 : 0;
 
                     worksheet.Cell(startRow, 1).Value = item.Label;
                     worksheet.Cell(startRow, 2).Value = item.Value;
-                    worksheet.Cell(startRow, 3).Value = percentage / 100;
-                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
+                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
+                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 2).Value = total;
                 worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Value = 1; // 100%
                 worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Top Selling Products to Excel
+        /// Xuất bảng top thuốc bán chạy nhất ra Excel
+        /// Tạo bảng với 5 cột: ID, Tên thuốc, Danh mục, Doanh thu, Phần trăm
+        /// Bao gồm hàng tổng cộng và xử lý trường hợp không có dữ liệu
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportTopSellingProductsTable(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "TOP THUỐC BÁN CHẠY NHẤT";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3682,66 +4506,75 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 5 cột: ID, Tên thuốc, Danh mục, Doanh thu, Phần trăm
             worksheet.Cell(startRow, 1).Value = "ID";
             worksheet.Cell(startRow, 2).Value = "Tên thuốc";
             worksheet.Cell(startRow, 3).Value = "Danh mục";
             worksheet.Cell(startRow, 4).Value = "Doanh thu";
             worksheet.Cell(startRow, 5).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 5);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU ===
             if (TopSellingProducts != null && TopSellingProducts.Count > 0)
             {
+                /// Có dữ liệu - ghi từng sản phẩm bán chạy
                 foreach (var product in TopSellingProducts)
                 {
                     worksheet.Cell(startRow, 1).Value = product.Id;
                     worksheet.Cell(startRow, 2).Value = product.Name;
                     worksheet.Cell(startRow, 3).Value = product.Category;
                     worksheet.Cell(startRow, 4).Value = product.Sales;
-                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
-                    worksheet.Cell(startRow, 5).Value = product.Percentage / 100;
-                    worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
+                    worksheet.Cell(startRow, 5).Value = product.Percentage / 100; // Chia 100 để Excel hiểu là percentage
+                    worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Value = TopSellingProducts.Sum(p => p.Sales);
                 worksheet.Cell(startRow, 4).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
-                worksheet.Cell(startRow, 5).Value = 1;
+                worksheet.Cell(startRow, 5).Value = 1; // 100%
                 worksheet.Cell(startRow, 5).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
             else
             {
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
                 worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
                 var noDataRange = worksheet.Range(startRow, 1, startRow, 5);
-                noDataRange.Merge();
+                noDataRange.Merge(); // Merge 5 cột để hiển thị thông báo
                 noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
         /// <summary>
-        /// Exports Warning Medicines to Excel
+        /// Xuất bảng cảnh báo tồn kho thuốc ra Excel
+        /// Tạo bảng với 3 cột: ID, Tên thuốc, Cảnh báo
+        /// Sử dụng color-coding để phân biệt mức độ nghiêm trọng của cảnh báo
+        /// Không có hàng tổng cộng vì là dữ liệu định tính
         /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportWarningMedicinesTable(IXLWorksheet worksheet, int startRow)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "CẢNH BÁO TỒN KHO";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3749,63 +4582,79 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Chỉ có 3 cột: ID, Tên thuốc và Cảnh báo
             worksheet.Cell(startRow, 1).Value = "ID";
             worksheet.Cell(startRow, 2).Value = "Tên thuốc";
             worksheet.Cell(startRow, 3).Value = "Cảnh báo";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU VỚI COLOR-CODING ===
             if (WarningMedicines != null && WarningMedicines.Count > 0)
             {
+                /// Có dữ liệu cảnh báo - ghi từng thuốc với màu sắc phù hợp
                 foreach (var medicine in WarningMedicines)
                 {
                     worksheet.Cell(startRow, 1).Value = medicine.Id;
                     worksheet.Cell(startRow, 2).Value = medicine.Name;
                     worksheet.Cell(startRow, 3).Value = medicine.WarningMessage;
 
-                    // Color-code warnings based on severity
+                    // === PHÂN BIỆT MÀU SẮC THEO MỨC ĐỘ NGHIÊM TRỌNG ===
+                    /// Áp dụng color-coding dựa trên nội dung cảnh báo để dễ nhận biết
                     if (medicine.WarningMessage.Contains("CẦN TIÊU HỦY"))
                     {
+                        // Màu đỏ cho cảnh báo nghiêm trọng nhất - thuốc hết hạn cần tiêu hủy
                         worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Red;
                         worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                     }
                     else if (medicine.WarningMessage.Contains("SẮP HẾT HẠN"))
                     {
+                        // Màu cam cho cảnh báo trung bình - thuốc sắp hết hạn
                         worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Orange;
                     }
                     else if (medicine.WarningMessage.Contains("TỒN KHO THẤP"))
                     {
+                        // Màu xanh cho cảnh báo thấp - tồn kho thấp cần nhập thêm
                         worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Blue;
                     }
+                    // Note: Các cảnh báo khác như "LÔ CUỐI CÙNG" và "LỖI CẤU HÌNH" sẽ giữ màu mặc định
 
                     startRow++;
                 }
             }
             else
             {
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ CẢNH BÁO ===
+                /// Thông báo tích cực khi không có cảnh báo nào
                 worksheet.Cell(startRow, 1).Value = "Không có cảnh báo";
                 var noDataRange = worksheet.Range(startRow, 1, startRow, 3);
-                noDataRange.Merge();
+                noDataRange.Merge(); // Merge 3 cột để hiển thị thông báo
                 noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
-
-   
+        /// <summary>
+        /// Xuất biểu đồ phân tích theo loại bệnh nhân ra Excel từ bản sao dữ liệu
+        /// Sử dụng pattern copy data để tránh cross-thread issues khi export trong background thread
+        /// Tạo bảng với 3 cột: Loại bệnh nhân, Số lượng, Phần trăm
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <param name="patientTypes">Bản sao dữ liệu loại bệnh nhân đã được extract từ UI thread</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportPatientTypeChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Title, double Value)> patientTypes)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "PHÂN TÍCH THEO LOẠI BỆNH NHÂN";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3813,53 +4662,66 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 3 cột tiêu chuẩn cho phân tích dữ liệu loại bệnh nhân
             worksheet.Cell(startRow, 1).Value = "Loại bệnh nhân";
             worksheet.Cell(startRow, 2).Value = "Số lượng";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU TỪ BẢN SAO ===
+            /// Sử dụng bản sao dữ liệu đã được chuẩn bị trên UI thread
+            /// Tránh cross-thread exception khi truy cập ObservableCollection từ background thread
             if (patientTypes != null && patientTypes.Count > 0)
             {
                 double total = patientTypes.Sum(pt => pt.Value);
 
+                /// Ghi dữ liệu cho từng loại bệnh nhân
                 foreach (var item in patientTypes)
                 {
                     double percentage = total > 0 ? (item.Value / total) * 100 : 0;
 
                     worksheet.Cell(startRow, 1).Value = item.Title;
                     worksheet.Cell(startRow, 2).Value = item.Value;
-                    worksheet.Cell(startRow, 3).Value = percentage / 100;
+                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Excel percentage format
                     worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 2).Value = total;
                 worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Value = 1; // 100%
                 worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
+        /// <summary>
+        /// Xuất bảng top bệnh nhân VIP (chi tiêu nhiều nhất) ra Excel từ bản sao dữ liệu
+        /// Sử dụng pattern copy data để tránh cross-thread issues
+        /// Tạo bảng với 4 cột: ID, Họ và tên, Số điện thoại, Tổng chi tiêu
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <param name="patients">Bản sao danh sách bệnh nhân VIP đã được extract từ UI thread</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportTopVIPPatientsTableFromCopy(IXLWorksheet worksheet, int startRow, List<VIPPatient> patients)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN VIP (CHI TIÊU NHIỀU NHẤT)";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3867,33 +4729,34 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "ID";
             worksheet.Cell(startRow, 2).Value = "Họ và tên";
             worksheet.Cell(startRow, 3).Value = "Số điện thoại";
             worksheet.Cell(startRow, 4).Value = "Tổng chi tiêu";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 4);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU TỪ BẢN SAO ===
             if (patients != null && patients.Count > 0)
             {
+                /// Ghi thông tin từng bệnh nhân VIP
                 foreach (var patient in patients)
                 {
                     worksheet.Cell(startRow, 1).Value = patient.Id;
                     worksheet.Cell(startRow, 2).Value = patient.FullName;
                     worksheet.Cell(startRow, 3).Value = patient.Phone;
                     worksheet.Cell(startRow, 4).Value = patient.TotalSpending;
-                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Value = patients.Sum(p => p.TotalSpending);
@@ -3903,6 +4766,7 @@ namespace ClinicManagement.ViewModels
             }
             else
             {
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
                 worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
                 var noDataRange = worksheet.Range(startRow, 1, startRow, 4);
                 noDataRange.Merge();
@@ -3910,14 +4774,23 @@ namespace ClinicManagement.ViewModels
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
+        /// <summary>
+        /// Xuất biểu đồ doanh thu theo danh mục thuốc ra Excel từ bản sao dữ liệu
+        /// Sử dụng pattern copy data để tránh cross-thread issues
+        /// Tạo bảng với 3 cột: Danh mục, Doanh thu, Phần trăm
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <param name="categories">Bản sao dữ liệu danh mục đã được extract từ UI thread</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportRevenueByCategoryChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Category, double Value)> categories)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "DOANH THU THEO DANH MỤC THUỐC";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3925,55 +4798,66 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "Danh mục";
             worksheet.Cell(startRow, 2).Value = "Doanh thu";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU TỪ BẢN SAO ===
             if (categories != null && categories.Count > 0)
             {
                 double total = categories.Sum(c => c.Value);
 
+                /// Ghi dữ liệu doanh thu cho từng danh mục thuốc
                 foreach (var category in categories)
                 {
                     double percentage = total > 0 ? (category.Value / total) * 100 : 0;
 
                     worksheet.Cell(startRow, 1).Value = category.Category;
                     worksheet.Cell(startRow, 2).Value = category.Value;
-                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
                     worksheet.Cell(startRow, 3).Value = percentage / 100;
                     worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 2).Value = total;
                 worksheet.Cell(startRow, 2).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
-                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Value = 1; // 100%
                 worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
+        /// <summary>
+        /// Xuất biểu đồ phân bố sản phẩm theo danh mục thuốc ra Excel từ bản sao dữ liệu
+        /// Sử dụng pattern copy data để tránh cross-thread issues
+        /// Tạo bảng với 3 cột: Danh mục, Số lượng, Phần trăm
+        /// Khác với RevenueByCategoryChart ở chỗ này là số lượng thay vì doanh thu
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <param name="categories">Bản sao dữ liệu phân bố sản phẩm đã được extract từ UI thread</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportProductDistributionChartFromCopy(IXLWorksheet worksheet, int startRow, List<(string Title, double Value)> categories)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "PHÂN BỔ THEO DANH MỤC THUỐC";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -3981,53 +4865,64 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Khác với revenue chart: cột 2 là "Số lượng" thay vì "Doanh thu"
             worksheet.Cell(startRow, 1).Value = "Danh mục";
             worksheet.Cell(startRow, 2).Value = "Số lượng";
             worksheet.Cell(startRow, 3).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU TỪ BẢN SAO ===
             if (categories != null && categories.Count > 0)
             {
                 double total = categories.Sum(item => item.Value);
 
+                /// Ghi dữ liệu phân bố số lượng cho từng danh mục
                 foreach (var item in categories)
                 {
                     double percentage = total > 0 ? (item.Value / total) * 100 : 0;
 
                     worksheet.Cell(startRow, 1).Value = item.Title;
-                    worksheet.Cell(startRow, 2).Value = item.Value;
+                    worksheet.Cell(startRow, 2).Value = item.Value; // Số lượng (không cần format tiền)
                     worksheet.Cell(startRow, 3).Value = percentage / 100;
                     worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 2).Value = total;
                 worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Value = 1;
+                worksheet.Cell(startRow, 3).Value = 1; // 100%
                 worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
+        /// <summary>
+        /// Xuất bảng top thuốc bán chạy nhất ra Excel từ bản sao dữ liệu
+        /// Sử dụng pattern copy data để tránh cross-thread issues
+        /// Tạo bảng với 5 cột: ID, Tên thuốc, Danh mục, Doanh thu, Phần trăm
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <param name="products">Bản sao danh sách sản phẩm bán chạy đã được extract từ UI thread</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportTopSellingProductsTableFromCopy(IXLWorksheet worksheet, int startRow, List<TopSellingProduct> products)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "TOP THUỐC BÁN CHẠY NHẤT";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -4035,63 +4930,76 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
+            /// Tạo 5 cột cho thông tin chi tiết sản phẩm
             worksheet.Cell(startRow, 1).Value = "ID";
             worksheet.Cell(startRow, 2).Value = "Tên thuốc";
             worksheet.Cell(startRow, 3).Value = "Danh mục";
             worksheet.Cell(startRow, 4).Value = "Doanh thu";
             worksheet.Cell(startRow, 5).Value = "Phần trăm";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 5);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU TỪ BẢN SAO ===
             if (products != null && products.Count > 0)
             {
+                /// Ghi thông tin chi tiết từng sản phẩm bán chạy
                 foreach (var product in products)
                 {
                     worksheet.Cell(startRow, 1).Value = product.Id;
                     worksheet.Cell(startRow, 2).Value = product.Name;
                     worksheet.Cell(startRow, 3).Value = product.Category;
                     worksheet.Cell(startRow, 4).Value = product.Sales;
-                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
+                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
                     worksheet.Cell(startRow, 5).Value = product.Percentage / 100;
                     worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
                     startRow++;
                 }
 
-                // Add total row
+                // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Value = products.Sum(p => p.Sales);
                 worksheet.Cell(startRow, 4).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
-                worksheet.Cell(startRow, 5).Value = 1;
+                worksheet.Cell(startRow, 5).Value = 1; // 100%
                 worksheet.Cell(startRow, 5).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
                 startRow++;
             }
             else
             {
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
                 worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
                 var noDataRange = worksheet.Range(startRow, 1, startRow, 5);
-                noDataRange.Merge();
+                noDataRange.Merge(); // Merge 5 cột để hiển thị thông báo
                 noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
 
+        /// <summary>
+        /// Xuất bảng cảnh báo tồn kho thuốc ra Excel từ bản sao dữ liệu
+        /// Sử dụng pattern copy data để tránh cross-thread issues
+        /// Tạo bảng với 3 cột: ID, Tên thuốc, Cảnh báo
+        /// Áp dụng color-coding để phân biệt mức độ nghiêm trọng
+        /// </summary>
+        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
+        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
+        /// <param name="medicines">Bản sao danh sách cảnh báo thuốc đã được extract từ UI thread</param>
+        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
         private int ExportWarningMedicinesTableFromCopy(IXLWorksheet worksheet, int startRow, List<WarningMedicine> medicines)
         {
-            // Add section title
+            // === THÊM TIÊU ĐỀ SECTION ===
             worksheet.Cell(startRow, 1).Value = "CẢNH BÁO TỒN KHO";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
@@ -4099,47 +5007,55 @@ namespace ClinicManagement.ViewModels
             sectionTitleRange.Style.Font.FontSize = 14;
             startRow += 1;
 
-            // Add header row
+            // === THÊM HEADER ROW ===
             worksheet.Cell(startRow, 1).Value = "ID";
             worksheet.Cell(startRow, 2).Value = "Tên thuốc";
             worksheet.Cell(startRow, 3).Value = "Cảnh báo";
 
-            // Style header row
+            // === ĐỊNH DẠNG HEADER ===
             var headerRange = worksheet.Range(startRow, 1, startRow, 3);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             startRow += 1;
 
-            // Add data rows
+            // === THÊM DỮ LIỆU VỚI COLOR-CODING TỪ BẢN SAO ===
             if (medicines != null && medicines.Count > 0)
             {
+                /// Ghi thông tin cảnh báo cho từng thuốc với màu sắc phân biệt
                 foreach (var medicine in medicines)
                 {
                     worksheet.Cell(startRow, 1).Value = medicine.Id;
                     worksheet.Cell(startRow, 2).Value = medicine.Name;
                     worksheet.Cell(startRow, 3).Value = medicine.WarningMessage;
 
-                    // Color-code warnings based on severity
+                    // === PHÂN BIỆT MÀU SẮC THEO MỨC ĐỘ NGHIÊM TRỌNG ===
+                    /// Áp dụng color-coding với null-safe checking để tránh NullReferenceException
                     if (medicine.WarningMessage?.Contains("CẦN TIÊU HỦY") == true)
                     {
+                        // Màu đỏ + Bold cho cảnh báo nghiêm trọng nhất - thuốc hết hạn cần tiêu hủy
                         worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Red;
                         worksheet.Cell(startRow, 3).Style.Font.Bold = true;
                     }
                     else if (medicine.WarningMessage?.Contains("SẮP HẾT HẠN") == true)
                     {
+                        // Màu cam cho cảnh báo trung bình - thuốc sắp hết hạn
                         worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Orange;
                     }
                     else if (medicine.WarningMessage?.Contains("TỒN KHO THẤP") == true)
                     {
+                        // Màu xanh cho cảnh báo thấp - tồn kho thấp cần nhập thêm
                         worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Blue;
                     }
+                    // Note: Các cảnh báo khác như "LÔ CUỐI CÙNG" và "LỖI CẤU HÌNH" giữ màu mặc định
 
                     startRow++;
                 }
             }
             else
             {
+                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ CẢNH BÁO ===
+                /// Thông báo tích cực khi không có cảnh báo nào
                 worksheet.Cell(startRow, 1).Value = "Không có cảnh báo";
                 var noDataRange = worksheet.Range(startRow, 1, startRow, 3);
                 noDataRange.Merge();
@@ -4147,38 +5063,160 @@ namespace ClinicManagement.ViewModels
                 startRow++;
             }
 
-            // Add empty row as separator
+            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;
             return startRow;
         }
-        #endregion
+#endregion
 
-        #endregion
 
-        #region Model Classes
-        public class TopSellingProduct
+
+#region Model Classes
+
+/// <summary>
+/// Lớp đại diện cho sản phẩm bán chạy nhất trong hệ thống
+/// Được sử dụng để hiển thị trong bảng "Top sản phẩm bán chạy" trên dashboard
+/// Chứa thông tin về thuốc và hiệu suất bán hàng của chúng
+/// </summary>
+public class TopSellingProduct
         {
+            /// <summary>
+            /// ID của thuốc trong hệ thống
+            /// Tương ứng với MedicineId trong bảng Medicine
+            /// </summary>
             public int Id { get; set; }
+
+            /// <summary>
+            /// Tên thuốc hiển thị
+            /// Được lấy từ trường Name trong bảng Medicine
+            /// </summary>
             public string Name { get; set; }
+
+            /// <summary>
+            /// Tên danh mục thuốc
+            /// Được lấy từ bảng MedicineCategory thông qua quan hệ CategoryId
+            /// Ví dụ: "Thuốc giảm đau", "Kháng sinh", "Vitamin"
+            /// </summary>
             public string Category { get; set; }
+
+            /// <summary>
+            /// Tổng doanh thu bán được của thuốc này trong khoảng thời gian thống kê
+            /// Được tính từ: Quantity × SalePrice của tất cả InvoiceDetail có MedicineId tương ứng
+            /// Đơn vị: VND
+            /// </summary>
             public decimal Sales { get; set; }
+
+            /// <summary>
+            /// Phần trăm đóng góp vào tổng doanh thu thuốc
+            /// Được tính theo công thức: (Sales của thuốc này / Tổng Sales của tất cả thuốc) × 100
+            /// Ví dụ: 25 nghĩa là thuốc này chiếm 25% tổng doanh thu thuốc
+            /// Sử dụng để hiển thị tầm quan trọng tương đối của từng sản phẩm
+            /// </summary>
             public int Percentage { get; set; }
         }
 
+        /// <summary>
+        /// Lớp đại diện cho bệnh nhân VIP có chi tiêu cao nhất
+        /// Được sử dụng để hiển thị trong bảng "Top bệnh nhân VIP" trên dashboard
+        /// Hỗ trợ chiến lược chăm sóc khách hàng và phân khúc thị trường
+        /// </summary>
         public class VIPPatient
         {
+            /// <summary>
+            /// ID của bệnh nhân trong hệ thống
+            /// Tương ứng với PatientId trong bảng Patient
+            /// </summary>
             public int Id { get; set; }
+
+            /// <summary>
+            /// Họ và tên đầy đủ của bệnh nhân
+            /// Được lấy từ trường FullName trong bảng Patient
+            /// </summary>
             public string FullName { get; set; }
+
+            /// <summary>
+            /// Số điện thoại liên hệ của bệnh nhân
+            /// Được lấy từ trường Phone trong bảng Patient
+            /// Sử dụng để liên hệ chăm sóc khách hàng VIP
+            /// </summary>
             public string Phone { get; set; }
+
+            /// <summary>
+            /// Tổng số tiền bệnh nhân đã chi tiêu trong khoảng thời gian thống kê
+            /// Được tính từ tổng TotalAmount của tất cả hóa đơn đã thanh toán (Status = "Đã thanh toán")
+            /// Đơn vị: VND
+            /// Sử dụng để xếp hạng và xác định bệnh nhân có giá trị cao
+            /// </summary>
             public decimal TotalSpending { get; set; }
-            public string PatientType { get; set; } // New property for displaying patient type
+
+            /// <summary>
+            /// Loại bệnh nhân hiện tại
+            /// Được lấy từ bảng PatientType thông qua quan hệ PatientTypeId
+            /// Ví dụ: "VIP", "Thường", "Bảo hiểm y tế"
+            /// 
+            /// Thuộc tính mới được thêm để hiển thị thông tin phân loại bệnh nhân
+            /// Giúp nhân viên nhanh chóng nhận biết loại khách hàng khi chăm sóc
+            /// </summary>
+            public string PatientType { get; set; }
+
+            /// <summary>
+            /// Phần trăm đóng góp vào tổng doanh thu bệnh nhân
+            /// Được tính theo công thức: (TotalSpending của bệnh nhân này / Tổng spending của tất cả bệnh nhân) × 100
+            /// Ví dụ: 15 nghĩa là bệnh nhân này chiếm 15% tổng doanh thu từ bệnh nhân
+            /// Sử dụng để đánh giá tầm quan trọng của từng bệnh nhân VIP
+            /// </summary>
             public int Percentage { get; set; }
         }
 
+        /// <summary>
+        /// Lớp đại diện cho cảnh báo liên quan đến thuốc trong kho
+        /// Được sử dụng để hiển thị trong bảng "Cảnh báo tồn kho" trên dashboard
+        /// Hỗ trợ quản lý kho hiệu quả và tránh rủi ro về chất lượng thuốc
+        /// </summary>
         public class WarningMedicine
         {
+            /// <summary>
+            /// ID của thuốc cần cảnh báo
+            /// Tương ứng với MedicineId trong bảng Medicine
+            /// </summary>
             public int Id { get; set; }
+
+            /// <summary>
+            /// Tên thuốc cần cảnh báo
+            /// Được lấy từ trường Name trong bảng Medicine
+            /// </summary>
             public string Name { get; set; }
+
+            /// <summary>
+            /// Thông điệp cảnh báo chi tiết về tình trạng thuốc
+            /// Các loại cảnh báo được ưu tiên theo mức độ nghiêm trọng:
+            /// 
+            /// 1. "CẦN TIÊU HỦY" (Mức độ cao nhất - màu đỏ khi export Excel):
+            ///    - Lô thuốc đã hết hạn nhưng chưa được tiêu hủy
+            ///    - Ví dụ: "CẦN TIÊU HỦY: Lô thuốc đã hết hạn từ 15/01/2024 nhưng vẫn còn 50 viên"
+            /// 
+            /// 2. "LỖI CẤU HÌNH" (Mức độ cao):
+            ///    - Lô thuốc được đánh dấu tiêu hủy nhưng vẫn là lô đang bán
+            ///    - Ví dụ: "LỖI CẤU HÌNH: Lô thuốc được đánh dấu tiêu hủy nhưng vẫn là lô đang bán"
+            /// 
+            /// 3. "SẮP HẾT HẠN" (Mức độ trung bình - màu cam khi export Excel):
+            ///    - Lô thuốc sẽ hết hạn trong vòng 30 ngày
+            ///    - Ví dụ: "SẮP HẾT HẠN: Còn 15 ngày đến hạn sử dụng (30/01/2024)"
+            /// 
+            /// 4. "LÔ CUỐI CÙNG" (Mức độ thấp):
+            ///    - Thuốc chỉ còn lại 1 lô duy nhất
+            ///    - Ví dụ: "LÔ CUỐI CÙNG: Thuốc chỉ còn 1 lô với 100 viên"
+            /// 
+            /// 5. "TỒN KHO THẤP" (Mức độ thấp - màu xanh khi export Excel):
+            ///    - Số lượng tồn kho ≤ 20 đơn vị (cần nhập thêm)
+            ///    - Số lượng tồn kho ≤ 10 đơn vị (cần nhập gấp)
+            ///    - Ví dụ: "TỒN KHO THẤP: Chỉ còn 15 viên - Nên nhập thêm"
+            /// 
+            /// Thông điệp này giúp:
+            /// - Quản lý kho nhanh chóng nhận biết vấn đề
+            /// - Ưu tiên xử lý theo mức độ nghiêm trọng
+            /// - Thực hiện hành động phù hợp (tiêu hủy, nhập hàng, chuyển lô)
+            /// </summary>
             public string WarningMessage { get; set; }
         }
         #endregion

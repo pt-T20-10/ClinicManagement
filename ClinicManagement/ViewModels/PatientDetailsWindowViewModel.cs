@@ -85,20 +85,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        /// <summary>
-        /// Quyền chỉnh sửa thông tin bệnh nhân
-        /// Chỉ Admin và Manager mới có quyền này
-        /// </summary>
-        private bool _canEditPatient = false;
-        public bool CanEditPatient
-        {
-            get => _canEditPatient;
-            set
-            {
-                _canEditPatient = value;
-                OnPropertyChanged();
-            }
-        }
+
 
         /// <summary>
         /// Quyền xóa bệnh nhân
@@ -666,7 +653,7 @@ namespace ClinicManagement.ViewModels
             // Command cập nhật thông tin bệnh nhân - yêu cầu quyền chỉnh sửa
             UpdatePatientCommand = new RelayCommand<object>(
                 (p) => UpdatePatient(),
-                (p) => CanEditPatient && CanUpdatePatient()
+                (p) => CanUpdatePatient()
             );
 
             // Command xóa bệnh nhân - yêu cầu quyền xóa
@@ -1462,7 +1449,7 @@ namespace ClinicManagement.ViewModels
         private void UpdatePermissions()
         {
             // Mặc định không có quyền gì
-            CanEditPatient = false;
+  
             CanDeletePatient = false;
 
             // Kiểm tra xem tài khoản hiện tại có tồn tại không
@@ -1476,7 +1463,7 @@ namespace ClinicManagement.ViewModels
             if (role.Equals(UserRoles.Admin, StringComparison.OrdinalIgnoreCase) ||
                 role.Equals(UserRoles.Manager, StringComparison.OrdinalIgnoreCase))
             {
-                CanEditPatient = true;
+            
                 CanDeletePatient = true;
             }
 

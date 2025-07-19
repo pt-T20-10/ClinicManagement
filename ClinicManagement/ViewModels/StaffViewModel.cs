@@ -527,7 +527,7 @@ namespace ClinicManagement.ViewModels
                     // Refresh dữ liệu sau khi thêm nhân viên mới
                     LoadData();
                 },
-                (p) => true
+                (p) => CanModifySpecialties
             );
 
             // Command mở chi tiết nhân viên

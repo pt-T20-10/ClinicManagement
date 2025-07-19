@@ -571,7 +571,14 @@ namespace ClinicManagement.ViewModels
                         "Lỗi thông tin");
                     return;
                 }
-
+                bool result = MessageBoxService.ShowQuestion(
+                    "Bạn có chắc chắn muốn thêm nhân viên mới không?",
+                    "Xác nhận thêm nhân viên"
+                   );  
+                if (!result)
+                {
+                    return; 
+                }
                 // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {

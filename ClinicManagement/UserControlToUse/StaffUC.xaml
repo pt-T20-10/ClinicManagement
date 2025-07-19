@@ -80,6 +80,7 @@
                     Content="+ Thêm nhân viên" 
                     Style="{StaticResource MaterialDesignRaisedButton}"
                     Command="{Binding AddStaffCommand}"
+                    CommandParameter="{Binding}"
                     Margin="5,0,15,0"/>
                                 <ComboBox Width="180"
           ItemsSource="{Binding RoleList}"

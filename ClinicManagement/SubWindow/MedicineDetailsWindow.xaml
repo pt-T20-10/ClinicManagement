@@ -103,8 +103,8 @@
 
                 <!-- Expiry Date -->
                 <DatePicker Grid.Row="2" Grid.Column="1" 
-            SelectedDate="{Binding StockinExpiryDate, Mode=TwoWay}" 
-            materialDesign:HintAssist.Hint="Hạn sử dụng lô mới"
+            SelectedDate="{Binding StockinExpiryDate, Mode=TwoWay, StringFormat='{}{0:dd/MM/yyyy}'}" 
+            materialDesign:HintAssist.Hint="Hạn sử dụng đang bán"
             Style="{StaticResource MaterialDesignOutlinedDatePicker}"
             Width="220"
             Margin="0,0,8,8"/>
@@ -141,7 +141,7 @@
         Margin="0,0,8,8"
         Width="220"
         HorizontalAlignment="Left"
-        materialDesign:HintAssist.Hint="Giá nhập lô mới (VNĐ)"
+        materialDesign:HintAssist.Hint="Giá nhập đang bán (VNĐ)"
         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                 <!-- Profit Margin -->
@@ -161,13 +161,13 @@
         Margin="0,0,8,8"
         Width="220"
         HorizontalAlignment="Left"
-        materialDesign:HintAssist.Hint="Giá bán lô mới (VNĐ)"
+        materialDesign:HintAssist.Hint="Giá bán lô đang bán (VNĐ)"
         Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
 
                 <!-- Import Date -->
                 <DatePicker
     Grid.Column="3" Grid.Row="1"
-    SelectedDate="{Binding ImportDate, Mode=TwoWay}"
+    SelectedDate="{Binding ImportDate, Mode=TwoWay, StringFormat='{}{0:dd/MM/yyyy}'}"
     Margin="0,0,8,8"
     Width="220"
     HorizontalAlignment="Center"
