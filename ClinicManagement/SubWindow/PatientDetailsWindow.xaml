@@ -100,6 +100,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <!-- Patient ID - Read Only -->
@@ -112,7 +113,7 @@
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Họ tên bệnh nhân:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <TextBox Grid.Row="1" Grid.Column="1" 
-                                     Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Họ và tên"
                                      VerticalAlignment="Center" Margin="0,0,32,8"/>
@@ -121,7 +122,7 @@
                             <TextBlock Grid.Row="1" Grid.Column="2" Text="Ngày sinh:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <DatePicker Grid.Row="1" Grid.Column="3" 
-                                        SelectedDate="{Binding DateOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                                        SelectedDate="{Binding DateOfBirth, UpdateSourceTrigger=PropertyChanged,ValidatesOnDataErrors=True}"
                                         Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                         materialDesign:HintAssist.Hint="Chọn ngày sinh" 
                                         VerticalAlignment="Center" Margin="0,0,0,8"/>
@@ -131,7 +132,7 @@
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" 
                                       ItemsSource="{Binding GenderOptions}"
-                                      SelectedValue="{Binding Gender, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValue="{Binding Gender, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                       materialDesign:HintAssist.Hint="Chọn giới tính"
                                       VerticalAlignment="Center" Margin="0,0,32,8"/>
@@ -140,7 +141,7 @@
                             <TextBlock Grid.Row="2" Grid.Column="2" Text="Số điện thoại:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <TextBox Grid.Row="2" Grid.Column="3" 
-                                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Nhập số điện thoại"
                                      VerticalAlignment="Center" Margin="0,0,0,8"/>
@@ -149,7 +150,7 @@
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Mã bảo hiểm:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
                             <TextBox Grid.Row="3" Grid.Column="1" 
-                                     Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged}" 
+                                     Text="{Binding InsuranceCode, UpdateSourceTrigger=PropertyChanged,  ValidatesOnDataErrors=True}" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Nhập mã BHYT"
                                      VerticalAlignment="Center" Margin="0,0,32,8"/>
@@ -164,11 +165,18 @@
                                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                       materialDesign:HintAssist.Hint="Chọn loại bệnh nhân"
                                       VerticalAlignment="Center" Margin="0,0,0,8"/>
-
+                            <!-- Insurance Code -->
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Email:" 
+                                  FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,8"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" 
+                                Text="{Binding Email, UpdateSourceTrigger=PropertyChanged,  ValidatesOnDataErrors=True}" 
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                materialDesign:HintAssist.Hint="Nhập Email"
+                                VerticalAlignment="Center" Margin="0,0,32,8"/>
                             <!-- Address -->
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Địa chỉ:" 
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Địa chỉ:" 
                                        FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                            <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" 
+                            <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" 
                                      Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" 
                                      TextWrapping="Wrap" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -179,7 +187,7 @@
                                      VerticalAlignment="Center" Margin="0,0,0,0"/>
                         </Grid>
 
-                        <!-- Action Buttons -->
+                  
                         <!-- Action Buttons -->
                         <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
                             <Button Command="{Binding UpdatePatientCommand}" 

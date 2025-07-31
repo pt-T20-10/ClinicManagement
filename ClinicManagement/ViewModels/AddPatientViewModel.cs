@@ -507,6 +507,7 @@ namespace ClinicManagement.ViewModels
                             DateOfBirth = birthDate,
                             Gender = Gender,
                             Phone = Phone?.Trim(),
+                            Email = Email?.Trim(),
                             Address = Address?.Trim(),
                             InsuranceCode = InsuranceCode?.Trim(),
                             PatientTypeId = SelectedPatientType?.PatientTypeId,
@@ -524,13 +525,14 @@ namespace ClinicManagement.ViewModels
 
                         // Commit transaction khi mọi thứ thành công
                         transaction.Commit();
+                       
 
                         // Hiển thị thông báo thành công
                         MessageBoxService.ShowSuccess(
                             "Đã thêm bệnh nhân thành công!",
                             "Thành Công"
                         );
-
+                        ResetForm();
                         // Đóng cửa sổ
                         _window?.Close();
                     }

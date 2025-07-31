@@ -2836,7 +2836,7 @@ namespace ClinicManagement.ViewModels
         /// Bao gồm lịch hẹn hôm nay, thống kê tổng quát và các chỉ số quan trọng
         /// Sử dụng AsNoTracking để tối ưu hiệu suất cho dữ liệu chỉ đọc
         /// </summary>
-        private void LoadDashBoard()
+        public void LoadDashBoard()
         {
             try
             {

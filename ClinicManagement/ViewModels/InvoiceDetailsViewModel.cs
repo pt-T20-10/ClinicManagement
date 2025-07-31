@@ -45,6 +45,18 @@ namespace ClinicManagement.ViewModels
                 CheckPatient();
             }
         }
+        private Account _currentAccount;
+        public Account CurrentAccount
+        {
+            get => _currentAccount;
+            set
+            {
+                _currentAccount = value;
+                OnPropertyChanged();
+            }
+        }
+
+
 
         /// <summary>
         /// Danh sách các chi tiết hóa đơn (thuốc, dịch vụ) 
@@ -370,7 +382,7 @@ namespace ClinicManagement.ViewModels
         public ICommand ExportInvoiceCommand { get; set; }
 
         #endregion
-
+        public ICommand LoadedWindowCommand { get; set; }
         /// <summary>
         /// Constructor khởi tạo ViewModel với hóa đơn cụ thể
         /// </summary>
@@ -383,6 +395,22 @@ namespace ClinicManagement.ViewModels
             {
                 Invoice = invoice;
             }
+            // Khởi tạo LoadedUCCommand để tải tài khoản đúng cách
+            LoadedWindowCommand = new RelayCommand<Window>(
+                (w) => {
+                    if (w != null)
+                    {
+                        // Lấy MainViewModel từ Application resources
+                        var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
+                        if (mainVM != null && mainVM.CurrentAccount != null)
+                        {
+                            // Cập nhật tài khoản hiện tại
+                            CurrentAccount = mainVM.CurrentAccount;
+                        }
+                    }
+                },
+                (w) => true
+            );
         }
 
         /// <summary>
@@ -977,6 +1005,7 @@ namespace ClinicManagement.ViewModels
                     RecalculateTotals();
 
                     // Cập nhật trạng thái hóa đơn và tổng số tiền
+                    Invoice.StaffCashierId = CurrentAccount.StaffId; // Ghi nhận nhân viên thu ngân
                     Invoice.Status = "Đã thanh toán";
                     Invoice.TotalAmount = TotalAmount; // Đặt tổng số tiền đã tính toán
 

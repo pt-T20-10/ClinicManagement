@@ -163,6 +163,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+
         /// <summary>
         /// Danh sách các tùy chọn giới tính
         /// Sử dụng cho ComboBox chọn giới tính
@@ -268,6 +269,7 @@ namespace ClinicManagement.ViewModels
 
         // === THUỘC TÍNH THÔNG TIN BỆNH NHÂN ===
 
+
         /// <summary>
         /// Mã bệnh nhân - chỉ đọc
         /// </summary>
@@ -286,16 +288,30 @@ namespace ClinicManagement.ViewModels
         /// Họ và tên bệnh nhân
         /// Có validation bắt buộc nhập và độ dài tối thiểu
         /// </summary>
+        // Họ và tên bệnh nhân - có validation và theo dõi touched state
         private string _fullName;
         public string FullName
         {
             get => _fullName;
             set
             {
-                _fullName = value;
-                OnPropertyChanged();
+                if (_fullName != value)
+                {
+                    // Theo dõi trạng thái tương tác của người dùng
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_fullName);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(FullName));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(FullName));
+
+                    _fullName = value;
+                    OnPropertyChanged();
+                }
             }
         }
+
 
         /// <summary>
         /// Ngày sinh bệnh nhân
@@ -307,8 +323,16 @@ namespace ClinicManagement.ViewModels
             get => _dateOfBirth;
             set
             {
-                _dateOfBirth = value;
-                OnPropertyChanged();
+                if (_dateOfBirth != value)
+                {
+                    if (value.HasValue || _dateOfBirth.HasValue)
+                        _touchedFields.Add(nameof(DateOfBirth));
+                    else
+                        _touchedFields.Remove(nameof(DateOfBirth));
+
+                    _dateOfBirth = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -322,11 +346,42 @@ namespace ClinicManagement.ViewModels
             get => _phone;
             set
             {
-                _phone = value;
-                OnPropertyChanged();
+                if (_phone != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_phone);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(Phone));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Phone));
+
+                    _phone = value;
+                    OnPropertyChanged();
+                }
             }
         }
+        private string _email;
+        public string Email
+        {
+            get => _email;
+            set
+            {
+                if (_email != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_email);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
 
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(Email));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(Email));
+
+                    _email = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         /// <summary>
         /// Mã bảo hiểm y tế
         /// Có validation định dạng 10 chữ số
@@ -337,8 +392,19 @@ namespace ClinicManagement.ViewModels
             get => _insuranceCode;
             set
             {
-                _insuranceCode = value;
-                OnPropertyChanged();
+                if (_insuranceCode != value)
+                {
+                    bool wasEmpty = string.IsNullOrWhiteSpace(_insuranceCode);
+                    bool isEmpty = string.IsNullOrWhiteSpace(value);
+
+                    if (wasEmpty && !isEmpty)
+                        _touchedFields.Add(nameof(InsuranceCode));
+                    else if (!wasEmpty && isEmpty)
+                        _touchedFields.Remove(nameof(InsuranceCode));
+
+                    _insuranceCode = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -726,115 +792,8 @@ namespace ClinicManagement.ViewModels
         /// Indexer cho IDataErrorInfo - thực hiện validation cho từng property
         /// Chỉ validate khi field đã được touched hoặc đang trong chế độ validating
         /// </summary>
-        public string this[string columnName]
-        {
-            get
-            {
-                // Chỉ validate khi user đã tương tác với form hoặc khi submit
-                if (!_isValidating && !_touchedFields.Contains(columnName))
-                    return null;
+       
 
-                string error = null;
-
-                if (Patient == null)
-                    return null;
-
-                switch (columnName)
-                {
-                    case nameof(Patient.FullName):
-                        if (string.IsNullOrWhiteSpace(Patient.FullName))
-                        {
-                            error = "Họ và tên không được để trống";
-                        }
-                        else if (Patient.FullName.Trim().Length < 2)
-                        {
-                            error = "Họ và tên phải có ít nhất 2 ký tự";
-                        }
-                        break;
-
-                    case nameof(Patient.Phone):
-                        if (!string.IsNullOrWhiteSpace(Patient.Phone) &&
-                                !Regex.IsMatch(Patient.Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
-                        {
-                            error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
-                        }
-                        break;
-
-                    case nameof(Patient.InsuranceCode):
-                        if (!string.IsNullOrWhiteSpace(Patient.InsuranceCode))
-                        {
-                            if (!Regex.IsMatch(Patient.InsuranceCode.Trim(), @"^\d{10}$"))
-                            {
-                                error = "Mã BHYT phải có đúng 10 chữ số";
-                            }
-                        }
-                        break;
-
-                    case nameof(Patient.DateOfBirth):
-                        if (Patient.DateOfBirth.HasValue)
-                        {
-                            var today = DateOnly.FromDateTime(DateTime.Today);
-                            if (Patient.DateOfBirth > today)
-                            {
-                                error = "Ngày sinh không thể lớn hơn ngày hiện tại";
-                            }
-                        }
-                        break;
-                }
-
-                return error;
-            }
-        }
-
-        /// <summary>
-        /// Thực hiện validation toàn diện cho thông tin bệnh nhân
-        /// Được gọi trước khi lưu thông tin
-        /// </summary>
-        /// <returns>True nếu dữ liệu hợp lệ, False nếu có lỗi</returns>
-        private bool ValidatePatient()
-        {
-            if (Patient == null)
-                return false;
-
-            // Bật chế độ validation và đánh dấu tất cả field được touched
-            _isValidating = true;
-            _touchedFields.Add(nameof(Patient.FullName));
-            _touchedFields.Add(nameof(Patient.Phone));
-            _touchedFields.Add(nameof(Patient.DateOfBirth));
-            _touchedFields.Add(nameof(Patient.InsuranceCode));
-
-            // Kiểm tra từng field và hiển thị lỗi nếu có
-            string fullNameError = this[nameof(Patient.FullName)];
-            string phoneError = this[nameof(Patient.Phone)];
-            string dateOfBirthError = this[nameof(Patient.DateOfBirth)];
-            string insuranceCodeError = this[nameof(Patient.InsuranceCode)];
-
-            if (!string.IsNullOrEmpty(fullNameError))
-            {
-                MessageBoxService.ShowError(fullNameError, "Lỗi dữ liệu");
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(phoneError))
-            {
-                MessageBoxService.ShowError(phoneError, "Lỗi dữ liệu");
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(dateOfBirthError))
-            {
-                MessageBoxService.ShowError(dateOfBirthError, "Lỗi dữ liệu");
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(insuranceCodeError))
-            {
-                MessageBoxService.ShowError(insuranceCodeError, "Lỗi dữ liệu");
-                return false;
-            }
-
-            return true;
-        }
         #endregion
 
         /// <summary>
@@ -863,6 +822,7 @@ namespace ClinicManagement.ViewModels
             DateOfBirth = Patient.DateOfBirth?.ToDateTime(TimeOnly.MinValue);
             Phone = Patient.Phone ?? string.Empty;
             InsuranceCode = Patient.InsuranceCode ?? string.Empty;
+            Email = Patient.Email ?? string.Empty;
             Gender = Patient.Gender ?? string.Empty;
             Address = Patient.Address ?? string.Empty;
             PatientTypeId = Patient.PatientType.PatientTypeId;
@@ -983,9 +943,34 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Validate dữ liệu bệnh nhân trước khi lưu
-                if (!ValidatePatient())
+                // Bật validation cho tất cả các trường khi người dùng submit form
+                _isValidating = true;
+                _touchedFields.Add(nameof(FullName));
+                _touchedFields.Add(nameof(Phone));
+                _touchedFields.Add(nameof(Email));
+                _touchedFields.Add(nameof(DateOfBirth));
+                _touchedFields.Add(nameof(InsuranceCode));
+
+                // Kích hoạt kiểm tra validation cho các trường bắt buộc
+                OnPropertyChanged(nameof(FullName));
+                OnPropertyChanged(nameof(Phone));
+                OnPropertyChanged(nameof(Email));
+                OnPropertyChanged(nameof(DateOfBirth));
+                OnPropertyChanged(nameof(InsuranceCode));
+
+                // Kiểm tra lỗi nhập liệu
+                if (!string.IsNullOrEmpty(this[nameof(FullName)]) ||
+                    !string.IsNullOrEmpty(this[nameof(Phone)]) ||
+                    !string.IsNullOrEmpty(this[nameof(Email)]) ||
+                    !string.IsNullOrEmpty(this[nameof(DateOfBirth)]) ||
+                    !string.IsNullOrEmpty(this[nameof(InsuranceCode)]))
+                {
+                    MessageBoxService.ShowWarning(
+                        "Vui lòng sửa các lỗi nhập liệu trước khi cập nhật thông tin bệnh nhân.",
+                        "Lỗi dữ liệu"
+                    );
                     return;
+                }
 
                 // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
@@ -1006,6 +991,7 @@ namespace ClinicManagement.ViewModels
                         patientToUpdate.FullName = FullName?.Trim();
                         patientToUpdate.DateOfBirth = DateOfBirth.HasValue ? DateOnly.FromDateTime(DateOfBirth.Value) : null;
                         patientToUpdate.PatientTypeId = PatientTypeId;
+                        patientToUpdate.Email = Email;
                         patientToUpdate.Gender = Gender;
                         patientToUpdate.Phone = Phone?.Trim();
                         patientToUpdate.Address = Address?.Trim();
@@ -1109,6 +1095,78 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 MessageBoxService.ShowError($"Lỗi khi xóa bệnh nhân: {ex.Message}", "Lỗi");
+            }
+        }
+
+        public string this [string columnName]
+        {
+            get
+            {
+                // Chỉ xác thực khi người dùng đã tương tác với trường hoặc khi đang submit form
+                if (!_isValidating && !_touchedFields.Contains(columnName))
+                    return null;
+
+                string error = null;
+
+                switch (columnName)
+                {
+                    case nameof(FullName):
+                        // Chỉ hiển thị lỗi "bắt buộc" nếu trường đã được tương tác và để trống
+                        if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(FullName))
+                        {
+                            error = "Họ tên không được để trống";
+                        }
+                        // Kiểm tra độ dài tối thiểu
+                        else if (!string.IsNullOrWhiteSpace(FullName) && FullName.Trim().Length < 2)
+                        {
+                            error = "Họ tên phải có ít nhất 2 ký tự";
+                        }
+                        break;
+
+                    case nameof(Phone):
+                        // Chỉ validate nếu người dùng đã nhập gì đó
+                        if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(Phone))
+                        {
+                            error = "Số điện thoại không được để trống";
+                        }
+                        // Kiểm tra định dạng số điện thoại Việt Nam
+                        else if (!string.IsNullOrWhiteSpace(Phone) &&
+                            !Regex.IsMatch(Phone.Trim(), @"^(0[3|5|7|8|9])[0-9]{8}$"))
+                        {
+                            error = "Số điện thoại không đúng định dạng (VD: 0901234567)";
+                        }
+                        break;
+
+                    case nameof(Email):
+                        // Chỉ validate nếu người dùng đã nhập gì đó
+                        if (!string.IsNullOrWhiteSpace(Email) &&
+                            !Regex.IsMatch(Email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                        {
+                            error = "Email không đúng định dạng";
+                        }
+                        break;
+
+                    case nameof(BirthDate):
+                        // Kiểm tra ngày sinh không được lớn hơn ngày hiện tại
+                        if (_birthDate.HasValue && _birthDate.Value > DateTime.Now)
+                        {
+                            error = "Ngày sinh không được lớn hơn ngày hiện tại";
+                        }
+                        break;
+
+                    case nameof(InsuranceCode):
+                        // Kiểm tra định dạng mã BHYT nếu có nhập
+                        if (!string.IsNullOrWhiteSpace(InsuranceCode))
+                        {
+                            if (!Regex.IsMatch(InsuranceCode.Trim(), @"^\d{10}$"))
+                            {
+                                error = "Mã BHYT phải có đúng 10 chữ số";
+                            }
+                        }
+                        break;
+                }
+
+                return error;
             }
         }
 

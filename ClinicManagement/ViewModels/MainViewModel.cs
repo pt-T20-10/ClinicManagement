@@ -615,6 +615,7 @@ namespace ClinicManagement.ViewModels
             TabSelectionManager.Instance.RegisterTabReloadAction("StatisticsTab", () =>
             {
                 var statisticsVM = Application.Current.Resources["StatisticsVM"] as StatisticsViewModel;
+                statisticsVM?.LoadDashBoard();
                 statisticsVM?.LoadStatisticsAsync();
             });
         }

@@ -307,11 +307,15 @@ namespace ClinicManagement.ViewModels
 
             // Command hủy lịch hẹn
             CancelAppointmentCommand = new RelayCommand<object>(
-                (p) => CancelAppointment(),
-                (p) => OriginalAppointment != null &&
-                         OriginalAppointment.Status != "Đã hủy" &&
-                         OriginalAppointment.Status != "Đã khám"
-                );
+      (p) => CancelAppointment(),
+      (p) =>
+          CanAcceptAppointment &&
+          CanCurrentDoctorAccept &&
+          OriginalAppointment != null &&
+          OriginalAppointment.Status == "Đang chờ" &&
+          OriginalAppointment.Status != "Đã hủy"
+  );
+
 
             // Command xác nhận chọn thời gian
             ConfirmTimeSelectionCommand = new RelayCommand<DateTime?>(
@@ -585,11 +589,40 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Đã xảy ra lỗi khi cập nhật lịch hẹn: {ex.Message}", "Lỗi");
             }
         }
+        // Thêm hàm kiểm tra quyền hủy lịch hẹn
+        private bool CanCancelAppointment(Appointment appointment)
+        {
+            if (appointment == null ||
+                appointment.Status == "Đã hủy" ||
+                appointment.Status == "Đã khám" ||
+                appointment.Status == "Đang khám")
+                return false;
 
+            // Nếu lịch hẹn đã có bác sĩ chỉ định
+            if (appointment.StaffId.HasValue)
+            {
+                var role = CurrentAccount?.Role?.Trim() ?? string.Empty;
+                var isDoctor = role.Contains("Bác sĩ");
+                var isCashier = role.Equals("Thu ngân", StringComparison.OrdinalIgnoreCase);
+                var isAdmin = role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+                var isManager = role.Equals("Quản lí", StringComparison.OrdinalIgnoreCase);
+
+                // Chỉ bác sĩ được chỉ định, thu ngân, admin, manager mới được hủy
+                if (isDoctor && CurrentAccount?.StaffId == appointment.StaffId)
+                    return true;
+                if (isCashier || isAdmin || isManager)
+                    return true;
+                return false;
+            }
+
+            // Nếu chưa có bác sĩ chỉ định thì ai cũng có thể hủy (giữ nguyên logic cũ)
+            return true;
+        }
         /// <summary>
         /// Thực hiện hủy lịch hẹn
         /// Yêu cầu lý do hủy và sử dụng transaction
         /// </summary>
+        /// 
         private void CancelAppointment()
         {
             try
@@ -674,14 +707,7 @@ namespace ClinicManagement.ViewModels
                 if (OriginalAppointment == null)
                     return;
 
-                // Kiểm tra xem bác sĩ hiện tại có quyền tiếp nhận lịch hẹn này không
-                if (!CanCurrentDoctorAccept)
-                {
-                    MessageBoxService.ShowWarning(
-                        "Lịch hẹn này đã được chỉ định cho bác sĩ khác, bạn không thể tiếp nhận.",
-                        "Không thể tiếp nhận");
-                    return;
-                }
+            
 
                 // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())

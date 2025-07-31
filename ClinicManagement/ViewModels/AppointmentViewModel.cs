@@ -472,7 +472,7 @@ namespace ClinicManagement.ViewModels
         public ICommand AddAppointmentCommand { get; set; } // Thêm lịch hẹn mới
         public ICommand SelectPatientCommand { get; set; } // Chọn bệnh nhân từ danh sách tìm kiếm
         public ICommand FindPatientCommand { get; set; } // Tìm hoặc tạo bệnh nhân mới
-        public ICommand CancelAppointmentCommand { get; set; } // Hủy lịch hẹn đã chọn
+     
         public ICommand CancelTimeSelectionCommand { get; set; }// Hủy chọn thời gian hẹn
 
         // Appointment List Commands
@@ -615,100 +615,6 @@ namespace ClinicManagement.ViewModels
                (p) => p != null
             );
 
-            CancelAppointmentCommand = new RelayCommand<AppointmentDisplayInfo>(
-               (p) => CancelAppointmentDirectly(p),
-               (p) => CanManageAppointments && p != null && p.Status != "Đã hủy" && p.Status != "Đã khám" && p.Status != "Đang khám"
-            );
-        }
-
-        private void CancelAppointmentDirectly(AppointmentDisplayInfo appointmentInfo) //Method hủy lịch hẹn trực tiếp
-        {
-            try
-            {
-                // Kiểm tra tính hợp lệ của thông tin lịch hẹn
-                if (appointmentInfo?.OriginalAppointment == null) 
-                {
-                    MessageBoxService.ShowError(
-                        "Không tìm thấy thông tin lịch hẹn để hủy.",
-                        "Lỗi dữ liệu");
-                    return;
-                }
-
-                // Hiển thị hộp thoại nhập lý do hủy lịch hẹn
-                string reason = Microsoft.VisualBasic.Interaction.InputBox(
-                    "Vui lòng nhập lý do hủy lịch hẹn:",
-                    "Xác nhận hủy",
-                    appointmentInfo.OriginalAppointment.Notes ?? "");
-
-                // Kiểm tra người dùng có nhập lý do hay không
-                if (string.IsNullOrWhiteSpace(reason))
-                {
-                    MessageBoxService.ShowWarning(
-                        "Vui lòng nhập lý do hủy lịch hẹn.",
-                        "Thiếu thông tin");
-                    return;
-                }
-
-                // Xác nhận cuối cùng từ người dùng
-                bool result = MessageBoxService.ShowQuestion(
-                    "Bạn có chắc chắn muốn hủy lịch hẹn này không?",
-                    "Xác nhận hủy");
-
-                if (!result)
-                    return;
-
-                // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
-                using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
-                {
-                    try
-                    {
-                        // Tìm lịch hẹn trong cơ sở dữ liệu
-                        var appointmentToUpdate = DataProvider.Instance.Context.Appointments
-                            .FirstOrDefault(a => a.AppointmentId == appointmentInfo.OriginalAppointment.AppointmentId);
-
-                        if (appointmentToUpdate == null)
-                        {
-                            MessageBoxService.ShowError(
-                                "Không tìm thấy lịch hẹn trong cơ sở dữ liệu.",
-                                "Lỗi dữ liệu");
-                            return;
-                        }
-
-                        // Cập nhật trạng thái và lý do hủy
-                        appointmentToUpdate.Status = "Đã hủy";
-                        appointmentToUpdate.Notes = reason;
-
-                        // Lưu thay đổi vào cơ sở dữ liệu
-                        DataProvider.Instance.Context.SaveChanges();
-
-                        // Commit transaction khi mọi thứ thành công
-                        transaction.Commit();
-
-                        // Làm mới danh sách lịch hẹn để cập nhật giao diện
-                        LoadAppointments();
-
-                        // Thông báo thành công cho người dùng
-                        MessageBoxService.ShowSuccess(
-                            "Đã hủy lịch hẹn thành công!",
-                            "Thông báo");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Rollback transaction nếu có lỗi trong quá trình cập nhật
-                        transaction.Rollback();
-                        
-                        // Ném lại ngoại lệ để được xử lý bởi khối catch bên ngoài
-                        throw;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Xử lý các lỗi không mong muốn
-                MessageBoxService.ShowError(
-                    $"Đã xảy ra lỗi khi hủy lịch hẹn: {ex.Message}",
-                    "Lỗi");
-            }
         }
         private void OpenAppointmentDetails(AppointmentDisplayInfo appointmentInfo) //Method mở chi tiết lịch hẹn
         {
@@ -1709,8 +1615,7 @@ namespace ClinicManagement.ViewModels
                             IsDeleted = false
                         };
 
-                        // In thông tin debug để kiểm tra DateTime
-                        System.Diagnostics.Debug.WriteLine($"Saving appointment date/time: {newAppointment.AppointmentDate:yyyy-MM-dd HH:mm:ss}");
+                      
 
                         // Lưu vào cơ sở dữ liệu
                         DataProvider.Instance.Context.Appointments.Add(newAppointment);

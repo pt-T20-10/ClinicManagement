@@ -17,10 +17,14 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         WindowStyle="None"
-       
+       Name="invoiceDetailsWindow"
         Height="1000" Width="950"
         WindowStartupLocation="CenterScreen">
-    
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedWindowCommand}" CommandParameter="{Binding ElementName=invoiceDetailsWindow}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <!-- Khởi tạo Window Resouces để sử dụng Converter -->
     <Window.Resources>
         <conver:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>

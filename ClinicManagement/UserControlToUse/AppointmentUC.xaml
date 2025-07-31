@@ -597,22 +597,7 @@
                                                                 </Style>
                                                             </Button.Resources>
                                                         </Button>
-                                                        <Button Margin="10 0 0 0"
-                                                                Content="Hủy lịch hẹn" 
-                                                                Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.CancelAppointmentCommand}"
-                                                                CommandParameter="{Binding}"
-                                                                Background="#F44336" 
-                                                                BorderBrush="#D32F2F"
-                                                                Foreground="White"
-                                                                Width="120"
-                                                                Height="30"
-                                                                Style="{StaticResource MaterialDesignRaisedButton}">
-                                                            <Button.Resources>
-                                                                <Style TargetType="Border">
-                                                                    <Setter Property="CornerRadius" Value="4"/>
-                                                                </Style>
-                                                            </Button.Resources>
-                                                        </Button>
+                                                       
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
