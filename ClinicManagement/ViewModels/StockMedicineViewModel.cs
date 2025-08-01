@@ -215,6 +215,16 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private ObservableCollection<Supplier> _SupplierListStockIn;
+        public ObservableCollection<Supplier> SupplierListStockIn
+        {
+            get => _SupplierListStockIn;
+            set
+            {
+                _SupplierListStockIn = value;
+                OnPropertyChanged();
+            }
+        }
         /// <summary>
         /// Danh sách đơn vị tính có sẵn trong hệ thống
         /// Được sử dụng cho ComboBox chọn đơn vị tính khi thêm/sửa thuốc
@@ -1754,7 +1764,11 @@ namespace ClinicManagement.ViewModels
                     .Where(u => (bool)!u.IsDeleted)
                     .ToList()
                 );
-
+                SupplierListStockIn = new ObservableCollection<Supplier>(
+                  DataProvider.Instance.Context.Suppliers
+                  .Where(u => (bool)!u.IsDeleted && (bool)u.IsActive)
+                  .ToList()
+              );
                 CategoryList = new ObservableCollection<MedicineCategory>(
                     DataProvider.Instance.Context.MedicineCategories
                     .Where(u => (bool)!u.IsDeleted)
@@ -3221,6 +3235,11 @@ namespace ClinicManagement.ViewModels
                                 .Where(s => (bool)!s.IsDeleted)
                                 .ToList()
                         );
+                        SupplierListStockIn = new ObservableCollection<Supplier>(
+                           DataProvider.Instance.Context.Suppliers
+                           .Where(u => (bool)!u.IsDeleted && (bool)u.IsActive)
+                           .ToList()
+                       );
                         ClearForm();
                      
 
@@ -4654,20 +4673,19 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
+                var resultt = MessageBoxService.ShowQuestion(
+                    $"Bạn có chắc chắn muốn nhập thuốc '{StockinMedicineName}' với số lượng '{StockinQuantity}' không ?",
+                    "Xác nhận thêm thuốc"
+                );
+                if (!resultt)
+                    return;
+
                 // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
                 using (var transaction = DataProvider.Instance.Context.Database.BeginTransaction())
                 {
                     try
                     {
-                        // Kiểm tra nhà cung cấp có đang hoạt động không
-                        if (!IsSupplierWorking(StockinSelectedSupplier))
-                        {
-                            MessageBoxService.ShowWarning(
-                                "Nhà cung cấp này không hoạt động. Vui lòng chọn nhà cung cấp khác.",
-                                "Nhà Cung Cấp Không Hoạt Động"
-                            );
-                            return;
-                        }
+                      
 
                         // Chuyển đổi ngày hết hạn từ DateTime sang DateOnly
                         DateOnly? expiryDateOnly = null;
@@ -4931,7 +4949,7 @@ namespace ClinicManagement.ViewModels
                 StockProfitMargin = latestStockIn.ProfitMargin;
 
                 // Đối với nhà cung cấp, sử dụng nhà cung cấp của lô nhập gần nhất
-                StockinSelectedSupplier = SupplierList.FirstOrDefault(s => s.SupplierId == latestStockIn.SupplierId);
+                StockinSelectedSupplier = SupplierListStockIn.FirstOrDefault(s => s.SupplierId == latestStockIn.SupplierId);
 
                 // Sử dụng ngày hiện tại cho lô nhập mới
                 ImportDate = DateTime.Now;

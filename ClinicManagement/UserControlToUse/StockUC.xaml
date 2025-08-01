@@ -560,7 +560,7 @@
                             <!-- Nhà cung cấp -->
                             <ComboBox
                             Grid.Column="0" Grid.Row="0"
-                            ItemsSource="{Binding SupplierList}"
+                            ItemsSource="{Binding SupplierListStockIn}"
                             DisplayMemberPath="SupplierName"
                             SelectedItem="{Binding StockinSelectedSupplier, ValidatesOnDataErrors=True}"
                             Margin="5"
@@ -666,7 +666,7 @@
                             <!-- Hạn sử dụng -->
                             <DatePicker
                             Grid.Column="1" Grid.Row="1"
-                            SelectedDate="{Binding StockinExpiryDate, ValidatesOnDataErrors=True}"
+                            SelectedDate="{Binding StockinExpiryDate, ValidatesOnDataErrors=True, StringFormat='{}{0:dd/MM/yyyy}'}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"
@@ -676,7 +676,7 @@
                             <!--Ngày nhập-->
                             <DatePicker
                             Grid.Column="3" Grid.Row="0"
-                            SelectedDate="{Binding ImportDate}"
+                            SelectedDate="{Binding ImportDate, StringFormat='{}{0:dd/MM/yyyy}'}"
                             Margin="5"
                             Width="220"
                             HorizontalAlignment="Left"

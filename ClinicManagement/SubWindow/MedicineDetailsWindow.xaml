@@ -23,11 +23,7 @@
         WindowStyle="None"
         Title="{Binding DialogTitle}">
  
-    <i:Interaction.Triggers>
-        <i:EventTrigger EventName="Loaded">
-            <i:InvokeCommandAction Command="{Binding RefreshDataCommand}" CommandParameter="{Binding ElementName=medicineDetailsWindow}"/>
-        </i:EventTrigger>
-    </i:Interaction.Triggers>
+
     <Window.Resources>
         <!-- Converter để kiểm tra phủ định của IsTerminated -->
         <conver:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
@@ -620,7 +616,7 @@
                 <StackPanel Grid.Row="2" Grid.Column="3" Margin="0,8,8,0">
                     <TextBlock Text="Hạn sử dụng:" FontWeight="Medium" Margin="0,0,0,4"/>
                     <DatePicker
-                        SelectedDate="{Binding EditExpiryDate}"
+                        SelectedDate="{Binding EditExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}"
                         Width="180"
                         HorizontalAlignment="Left"
                         Style="{StaticResource MaterialDesignOutlinedDatePicker}"/>
