@@ -817,9 +817,7 @@ namespace ClinicManagement.ViewModels
             if (HasErrors)
                 return false;
 
-            // Chỉ kiểm tra so sánh TypeName nếu SelectedType không null
-            if (TypeName == SelectedType.TypeName)
-                return false;
+           
 
             return true;
         }

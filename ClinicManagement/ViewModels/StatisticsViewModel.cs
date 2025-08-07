@@ -19,7 +19,7 @@ namespace ClinicManagement.ViewModels
     /// </summary>
     public class StatisticsViewModel : BaseViewModel
     {
-        #region Thuộc tính cơ bản
+        #region Basic Properties - Các thuộc tính cơ bản
 
         /// <summary>
         /// Hàm định dạng tiền tệ cho các biểu đồ
@@ -405,7 +405,7 @@ namespace ClinicManagement.ViewModels
 
         #endregion
 
-        #region Thuộc tính biểu đồ
+        #region Chart Properties - Thuộc tính biểu đồ
 
         // === NHÃN CHO CÁC BIỂU ĐỒ ===
 
@@ -931,8 +931,9 @@ namespace ClinicManagement.ViewModels
         /// </summary>
         public ICommand ExportMedicineToExcelCommand { get; private set; }
         #endregion
-        // === THUỘC TÍNH KIỂM SOÁT LUỒNG ASYNC ===
 
+        #region Async Control Properties - Thuộc tính kiểm soát luồng bất đồng bộ
+    
         /// <summary>
         /// Cờ theo dõi xem có thao tác bất đồng bộ nào đang chạy không
         /// Ngăn chặn việc thực hiện nhiều thao tác async cùng lúc để tránh:
@@ -954,6 +955,7 @@ namespace ClinicManagement.ViewModels
         /// Thiết lập các formatter, commands và tải dữ liệu dashboard ban đầu
         /// Sử dụng Dispatcher để tự động lọc theo tháng sau khi UI được khởi tạo
         /// </summary>
+        #endregion
         public StatisticsViewModel()
         {
             InitializeCommands(); // Khởi tạo tất cả commands với logic CanExecute an toàn
@@ -980,7 +982,7 @@ namespace ClinicManagement.ViewModels
         /// Formatter để hiển thị số nguyên (không có đơn vị)
         /// Sử dụng cho các biểu đồ hiển thị số lượng (bệnh nhân, lịch hẹn, thuốc)
         /// </summary>
-        public Func<double, string> IntegerFormatter { get; set; }
+        public Func<double, string> IntegerFormatter { get; } = value => ((int)value).ToString("N0");
 
         /// <summary>
         /// Khởi tạo tất cả các command với logic CanExecute an toàn
@@ -3954,154 +3956,7 @@ namespace ClinicManagement.ViewModels
             return startRow;
         }
 
-        /// <summary>
-        /// Xuất biểu đồ phân tích theo loại bệnh nhân ra Excel
-        /// Trích xuất dữ liệu từ PieSeries để tạo bảng với số lượng và phần trăm
-        /// Bao gồm các loại: VIP, Thường, Bảo hiểm y tế, v.v.
-        /// </summary>
-        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
-        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
-        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
-        private int ExportPatientTypeChart(IXLWorksheet worksheet, int startRow)
-        {
-            // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "PHÂN TÍCH THEO LOẠI BỆNH NHÂN";
-            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
-            sectionTitleRange.Merge();
-            sectionTitleRange.Style.Font.Bold = true;
-            sectionTitleRange.Style.Font.FontSize = 14;
-            startRow += 1;
-
-            // === THÊM HEADER ROW ===
-            /// Tạo 3 cột: Loại bệnh nhân, Số lượng và Phần trăm
-            worksheet.Cell(startRow, 1).Value = "Loại bệnh nhân";
-            worksheet.Cell(startRow, 2).Value = "Số lượng";
-            worksheet.Cell(startRow, 3).Value = "Phần trăm";
-
-            // === ĐỊNH DẠNG HEADER ===
-            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            startRow += 1;
-
-            // === TRÍCH XUẤT DỮ LIỆU TỪ PIE CHART ===
-            if (PatientTypeSeries?.Count > 0)
-            {
-                double total = 0;
-                var patientTypes = new List<(string Label, double Value)>();
-
-                /// Lặp qua từng PieSeries trong SeriesCollection
-                /// PatientTypeSeries là pie chart nên cần xử lý khác với column/line chart
-                foreach (var series in PatientTypeSeries)
-                {
-                    if (series is LiveCharts.Wpf.PieSeries pieSeries &&
-                        pieSeries.Values is LiveCharts.ChartValues<double> values &&
-                        values.Count > 0)
-                    {
-                        string title = pieSeries.Title ?? "Không có tên";
-                        double value = values[0]; // PieSeries chỉ có 1 giá trị
-                        total += value;
-                        patientTypes.Add((title, value));
-                    }
-                }
-
-                // === GHI DỮ LIỆU VÀO EXCEL ===
-                foreach (var item in patientTypes)
-                {
-                    double percentage = total > 0 ? (item.Value / total) * 100 : 0;
-
-                    worksheet.Cell(startRow, 1).Value = item.Label;
-                    worksheet.Cell(startRow, 2).Value = item.Value;
-                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
-                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
-                    startRow++;
-                }
-
-                // === THÊM HÀNG TỔNG CỘNG ===
-                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
-                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 2).Value = total;
-                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Value = 1; // 100%
-                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
-                startRow++;
-            }
-
-            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
-            startRow += 2;
-            return startRow;
-        }
-
-        /// <summary>
-        /// Xuất bảng top bệnh nhân VIP (chi tiêu nhiều nhất) ra Excel
-        /// Tạo bảng với 4 cột: ID, Họ và tên, Số điện thoại, Tổng chi tiêu
-        /// Bao gồm hàng tổng cộng và xử lý trường hợp không có dữ liệu
-        /// </summary>
-        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
-        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
-        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
-        private int ExportTopVIPPatientsTable(IXLWorksheet worksheet, int startRow)
-        {
-            // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN VIP (CHI TIÊU NHIỀU NHẤT)";
-            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
-            sectionTitleRange.Merge();
-            sectionTitleRange.Style.Font.Bold = true;
-            sectionTitleRange.Style.Font.FontSize = 14;
-            startRow += 1;
-
-            // === THÊM HEADER ROW ===
-            /// Tạo 4 cột: ID, Họ và tên, Số điện thoại, Tổng chi tiêu
-            worksheet.Cell(startRow, 1).Value = "ID";
-            worksheet.Cell(startRow, 2).Value = "Họ và tên";
-            worksheet.Cell(startRow, 3).Value = "Số điện thoại";
-            worksheet.Cell(startRow, 4).Value = "Tổng chi tiêu";
-
-            // === ĐỊNH DẠNG HEADER ===
-            var headerRange = worksheet.Range(startRow, 1, startRow, 4);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            startRow += 1;
-
-            // === THÊM DỮ LIỆU ===
-            if (TopVIPPatients != null && TopVIPPatients.Count > 0)
-            {
-                /// Có dữ liệu - ghi từng bệnh nhân VIP
-                foreach (var patient in TopVIPPatients)
-                {
-                    worksheet.Cell(startRow, 1).Value = patient.Id;
-                    worksheet.Cell(startRow, 2).Value = patient.FullName;
-                    worksheet.Cell(startRow, 3).Value = patient.Phone;
-                    worksheet.Cell(startRow, 4).Value = patient.TotalSpending;
-                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
-                    startRow++;
-                }
-
-                // === THÊM HÀNG TỔNG CỘNG ===
-                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
-                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 4).Value = TopVIPPatients.Sum(p => p.TotalSpending);
-                worksheet.Cell(startRow, 4).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
-                startRow++;
-            }
-            else
-            {
-                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
-                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
-                var noDataRange = worksheet.Range(startRow, 1, startRow, 4);
-                noDataRange.Merge(); // Merge 4 cột để hiển thị thông báo
-                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                startRow++;
-            }
-
-            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
-            startRow += 2;
-            return startRow;
-        }
+   
 
         /// <summary>
         /// Xuất biểu đồ lịch hẹn theo trạng thái ra Excel
@@ -4328,316 +4183,6 @@ namespace ClinicManagement.ViewModels
             worksheet.Cell(startRow, 2).Value = totalPatients;
             worksheet.Cell(startRow, 2).Style.Font.Bold = true;
             startRow++;
-
-            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
-            startRow += 2;
-            return startRow;
-        }
-
-
-
-        /// <summary>
-        /// Xuất biểu đồ doanh thu theo danh mục thuốc ra Excel
-        /// Tạo bảng với 3 cột: Danh mục, Doanh thu, Phần trăm
-        /// Bao gồm hàng tổng cộng và định dạng tiền VNĐ
-        /// </summary>
-        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
-        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
-        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
-        private int ExportRevenueByCategoryChart(IXLWorksheet worksheet, int startRow)
-        {
-            // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "DOANH THU THEO DANH MỤC THUỐC";
-            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
-            sectionTitleRange.Merge();
-            sectionTitleRange.Style.Font.Bold = true;
-            sectionTitleRange.Style.Font.FontSize = 14;
-            startRow += 1;
-
-            // === THÊM HEADER ROW ===
-            /// Tạo 3 cột: Danh mục, Doanh thu và Phần trăm
-            worksheet.Cell(startRow, 1).Value = "Danh mục";
-            worksheet.Cell(startRow, 2).Value = "Doanh thu";
-            worksheet.Cell(startRow, 3).Value = "Phần trăm";
-
-            // === ĐỊNH DẠNG HEADER ===
-            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            startRow += 1;
-
-            // === THÊM DỮ LIỆU ===
-            if (RevenueByCategorySeries?.Count > 0 && CategoryLabels?.Length > 0)
-            {
-                // Trích xuất ColumnSeries từ SeriesCollection
-                var series = RevenueByCategorySeries[0] as LiveCharts.Wpf.ColumnSeries;
-
-                if (series?.Values is LiveCharts.ChartValues<double> values)
-                {
-                    double total = values.Sum(); // Tính tổng để tính phần trăm
-
-                    /// Ghi dữ liệu cho từng danh mục thuốc
-                    for (int i = 0; i < CategoryLabels.Length; i++)
-                    {
-                        double value = i < values.Count ? values[i] : 0;
-                        double percentage = total > 0 ? (value / total) * 100 : 0;
-
-                        worksheet.Cell(startRow, 1).Value = CategoryLabels[i];
-                        worksheet.Cell(startRow, 2).Value = value;
-                        worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
-                        worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
-                        worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
-                        startRow++;
-                    }
-
-                    // === THÊM HÀNG TỔNG CỘNG ===
-                    worksheet.Cell(startRow, 1).Value = "Tổng cộng";
-                    worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                    worksheet.Cell(startRow, 2).Value = total;
-                    worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                    worksheet.Cell(startRow, 2).Style.NumberFormat.Format = "#,##0";
-                    worksheet.Cell(startRow, 3).Value = 1; // 100%
-                    worksheet.Cell(startRow, 3).Style.Font.Bold = true;
-                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
-                    startRow++;
-                }
-            }
-
-            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
-            startRow += 2;
-            return startRow;
-        }
-
-        /// <summary>
-        /// Xuất biểu đồ phân bố sản phẩm theo danh mục thuốc ra Excel
-        /// Trích xuất dữ liệu từ PieSeries để tạo bảng với số lượng và phần trăm
-        /// Xử lý đặc biệt cho Pie Chart với nhiều series
-        /// </summary>
-        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
-        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
-        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
-        private int ExportProductDistributionChart(IXLWorksheet worksheet, int startRow)
-        {
-            // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "PHÂN BỔ THEO DANH MỤC THUỐC";
-            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
-            sectionTitleRange.Merge();
-            sectionTitleRange.Style.Font.Bold = true;
-            sectionTitleRange.Style.Font.FontSize = 14;
-            startRow += 1;
-
-            // === THÊM HEADER ROW ===
-            worksheet.Cell(startRow, 1).Value = "Danh mục";
-            worksheet.Cell(startRow, 2).Value = "Số lượng";
-            worksheet.Cell(startRow, 3).Value = "Phần trăm";
-
-            // === ĐỊNH DẠNG HEADER ===
-            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            startRow += 1;
-
-            // === TRÍCH XUẤT DỮ LIỆU TỪ PIE CHART ===
-            if (ProductDistributionSeries?.Count > 0)
-            {
-                double total = 0;
-                var categories = new List<(string Label, double Value)>();
-
-                /// Lặp qua từng PieSeries trong SeriesCollection
-                /// ProductDistributionSeries là pie chart nên cần xử lý khác với column chart
-                foreach (var series in ProductDistributionSeries)
-                {
-                    if (series is LiveCharts.Wpf.PieSeries pieSeries &&
-                        pieSeries.Values is LiveCharts.ChartValues<double> values &&
-                        values.Count > 0)
-                    {
-                        string title = pieSeries.Title ?? "Không có tên";
-                        double value = values[0]; // PieSeries chỉ có 1 giá trị
-                        total += value;
-                        categories.Add((title, value));
-                    }
-                }
-
-                // === GHI DỮ LIỆU VÀO EXCEL ===
-                foreach (var item in categories)
-                {
-                    double percentage = total > 0 ? (item.Value / total) * 100 : 0;
-
-                    worksheet.Cell(startRow, 1).Value = item.Label;
-                    worksheet.Cell(startRow, 2).Value = item.Value;
-                    worksheet.Cell(startRow, 3).Value = percentage / 100; // Chia 100 để Excel hiểu là percentage
-                    worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
-                    startRow++;
-                }
-
-                // === THÊM HÀNG TỔNG CỘNG ===
-                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
-                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 2).Value = total;
-                worksheet.Cell(startRow, 2).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Value = 1; // 100%
-                worksheet.Cell(startRow, 3).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 3).Style.NumberFormat.Format = "0.00%";
-                startRow++;
-            }
-
-            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
-            startRow += 2;
-            return startRow;
-        }
-
-        /// <summary>
-        /// Xuất bảng top thuốc bán chạy nhất ra Excel
-        /// Tạo bảng với 5 cột: ID, Tên thuốc, Danh mục, Doanh thu, Phần trăm
-        /// Bao gồm hàng tổng cộng và xử lý trường hợp không có dữ liệu
-        /// </summary>
-        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
-        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
-        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
-        private int ExportTopSellingProductsTable(IXLWorksheet worksheet, int startRow)
-        {
-            // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "TOP THUỐC BÁN CHẠY NHẤT";
-            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
-            sectionTitleRange.Merge();
-            sectionTitleRange.Style.Font.Bold = true;
-            sectionTitleRange.Style.Font.FontSize = 14;
-            startRow += 1;
-
-            // === THÊM HEADER ROW ===
-            /// Tạo 5 cột: ID, Tên thuốc, Danh mục, Doanh thu, Phần trăm
-            worksheet.Cell(startRow, 1).Value = "ID";
-            worksheet.Cell(startRow, 2).Value = "Tên thuốc";
-            worksheet.Cell(startRow, 3).Value = "Danh mục";
-            worksheet.Cell(startRow, 4).Value = "Doanh thu";
-            worksheet.Cell(startRow, 5).Value = "Phần trăm";
-
-            // === ĐỊNH DẠNG HEADER ===
-            var headerRange = worksheet.Range(startRow, 1, startRow, 5);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            startRow += 1;
-
-            // === THÊM DỮ LIỆU ===
-            if (TopSellingProducts != null && TopSellingProducts.Count > 0)
-            {
-                /// Có dữ liệu - ghi từng sản phẩm bán chạy
-                foreach (var product in TopSellingProducts)
-                {
-                    worksheet.Cell(startRow, 1).Value = product.Id;
-                    worksheet.Cell(startRow, 2).Value = product.Name;
-                    worksheet.Cell(startRow, 3).Value = product.Category;
-                    worksheet.Cell(startRow, 4).Value = product.Sales;
-                    worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0"; // Định dạng tiền VNĐ
-                    worksheet.Cell(startRow, 5).Value = product.Percentage / 100; // Chia 100 để Excel hiểu là percentage
-                    worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%"; // Định dạng phần trăm
-                    startRow++;
-                }
-
-                // === THÊM HÀNG TỔNG CỘNG ===
-                worksheet.Cell(startRow, 1).Value = "Tổng cộng";
-                worksheet.Cell(startRow, 1).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 4).Value = TopSellingProducts.Sum(p => p.Sales);
-                worksheet.Cell(startRow, 4).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
-                worksheet.Cell(startRow, 5).Value = 1; // 100%
-                worksheet.Cell(startRow, 5).Style.Font.Bold = true;
-                worksheet.Cell(startRow, 5).Style.NumberFormat.Format = "0.00%";
-                startRow++;
-            }
-            else
-            {
-                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ DỮ LIỆU ===
-                worksheet.Cell(startRow, 1).Value = "Không có dữ liệu";
-                var noDataRange = worksheet.Range(startRow, 1, startRow, 5);
-                noDataRange.Merge(); // Merge 5 cột để hiển thị thông báo
-                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                startRow++;
-            }
-
-            // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
-            startRow += 2;
-            return startRow;
-        }
-
-        /// <summary>
-        /// Xuất bảng cảnh báo tồn kho thuốc ra Excel
-        /// Tạo bảng với 3 cột: ID, Tên thuốc, Cảnh báo
-        /// Sử dụng color-coding để phân biệt mức độ nghiêm trọng của cảnh báo
-        /// Không có hàng tổng cộng vì là dữ liệu định tính
-        /// </summary>
-        /// <param name="worksheet">Worksheet Excel để ghi dữ liệu</param>
-        /// <param name="startRow">Hàng bắt đầu ghi dữ liệu</param>
-        /// <returns>Hàng tiếp theo sau khi hoàn thành việc ghi</returns>
-        private int ExportWarningMedicinesTable(IXLWorksheet worksheet, int startRow)
-        {
-            // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "CẢNH BÁO TỒN KHO";
-            var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
-            sectionTitleRange.Merge();
-            sectionTitleRange.Style.Font.Bold = true;
-            sectionTitleRange.Style.Font.FontSize = 14;
-            startRow += 1;
-
-            // === THÊM HEADER ROW ===
-            /// Chỉ có 3 cột: ID, Tên thuốc và Cảnh báo
-            worksheet.Cell(startRow, 1).Value = "ID";
-            worksheet.Cell(startRow, 2).Value = "Tên thuốc";
-            worksheet.Cell(startRow, 3).Value = "Cảnh báo";
-
-            // === ĐỊNH DẠNG HEADER ===
-            var headerRange = worksheet.Range(startRow, 1, startRow, 3);
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
-            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            startRow += 1;
-
-            // === THÊM DỮ LIỆU VỚI COLOR-CODING ===
-            if (WarningMedicines != null && WarningMedicines.Count > 0)
-            {
-                /// Có dữ liệu cảnh báo - ghi từng thuốc với màu sắc phù hợp
-                foreach (var medicine in WarningMedicines)
-                {
-                    worksheet.Cell(startRow, 1).Value = medicine.Id;
-                    worksheet.Cell(startRow, 2).Value = medicine.Name;
-                    worksheet.Cell(startRow, 3).Value = medicine.WarningMessage;
-
-                    // === PHÂN BIỆT MÀU SẮC THEO MỨC ĐỘ NGHIÊM TRỌNG ===
-                    /// Áp dụng color-coding dựa trên nội dung cảnh báo để dễ nhận biết
-                    if (medicine.WarningMessage.Contains("CẦN TIÊU HỦY"))
-                    {
-                        // Màu đỏ cho cảnh báo nghiêm trọng nhất - thuốc hết hạn cần tiêu hủy
-                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Red;
-                        worksheet.Cell(startRow, 3).Style.Font.Bold = true;
-                    }
-                    else if (medicine.WarningMessage.Contains("SẮP HẾT HẠN"))
-                    {
-                        // Màu cam cho cảnh báo trung bình - thuốc sắp hết hạn
-                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Orange;
-                    }
-                    else if (medicine.WarningMessage.Contains("TỒN KHO THẤP"))
-                    {
-                        // Màu xanh cho cảnh báo thấp - tồn kho thấp cần nhập thêm
-                        worksheet.Cell(startRow, 3).Style.Font.FontColor = XLColor.Blue;
-                    }
-                    // Note: Các cảnh báo khác như "LÔ CUỐI CÙNG" và "LỖI CẤU HÌNH" sẽ giữ màu mặc định
-
-                    startRow++;
-                }
-            }
-            else
-            {
-                // === XỬ LÝ TRƯỜNG HỢP KHÔNG CÓ CẢNH BÁO ===
-                /// Thông báo tích cực khi không có cảnh báo nào
-                worksheet.Cell(startRow, 1).Value = "Không có cảnh báo";
-                var noDataRange = worksheet.Range(startRow, 1, startRow, 3);
-                noDataRange.Merge(); // Merge 3 cột để hiển thị thông báo
-                noDataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                startRow++;
-            }
 
             // === THÊM HÀNG TRỐNG PHÂN CÁCH ===
             startRow += 2;

@@ -205,6 +205,14 @@ namespace ClinicManagement.ViewModels
         /// </summary>
         public MainViewModel()
         {
+
+            InitializeCommand();   
+            // Khởi tạo hệ thống quản lý tab
+            InitializeTabSelectionSystem();
+        }
+    
+        void InitializeCommand()
+        {
             // Command xử lý khi cửa sổ chính được tải
             LoadedWindowCommand = new RelayCommand<Window>(
                 (p) =>
@@ -332,11 +340,7 @@ namespace ClinicManagement.ViewModels
                 },
                 (p) => true
             );
-            
-            // Khởi tạo hệ thống quản lý tab
-            InitializeTabSelectionSystem();
         }
-
         /// <summary>
         /// Xử lý sự kiện đóng cửa sổ chính
         /// Gọi WindowClosingCommand để xử lý logic đăng xuất
@@ -457,7 +461,6 @@ namespace ClinicManagement.ViewModels
             // Kiểm tra điều kiện đầu vào
             if (CurrentAccount == null || string.IsNullOrEmpty(CurrentAccount.Role))
             {
-                Console.WriteLine("CurrentAccount is null or Role is empty");
                 return;
             }
 
@@ -479,7 +482,7 @@ namespace ClinicManagement.ViewModels
             }
             else
             {
-                Console.WriteLine($"Role '{role}' not found in permissions");
+             
                 MessageBoxService.ShowWarning($"Không tìm thấy quyền cho vai trò: '{role}'", "Lỗi phân quyền");
             }
         }

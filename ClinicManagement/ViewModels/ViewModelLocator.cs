@@ -8,9 +8,13 @@ namespace ClinicManagement.ViewModels
 {
     public class ViewModelLocator
     {
+        //dictionary để lưu trữ các ViewModel đã tạo
         private Dictionary<string, object> _viewModels = new Dictionary<string, object>();
+
+        // Biến cờ để xác định xem đã khởi tạo ViewModels hay chưa
         private bool _isInitialized = false;
 
+        // Phương thức để lấy ViewModel theo tên
         public object GetViewModel(string viewModelName)
         {
             // Chỉ cho phép MainVM và LoginVM trước khi khởi tạo

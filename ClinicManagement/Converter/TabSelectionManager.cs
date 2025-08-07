@@ -5,16 +5,17 @@ namespace ClinicManagement.Services
 {
     public class TabSelectionManager
     {
+        //Singleton cho TabSelectionManager
         private static TabSelectionManager _instance;
         public static TabSelectionManager Instance => _instance ??= new TabSelectionManager();
 
-        // Dictionary to store tab reload actions
+        // Dictionary để lưu trữ các hành động tải lại dữ liệu cho từng tab
         private Dictionary<string, Action> _tabReloadActions = new Dictionary<string, Action>();
 
-        // Last active tab
+        // Tab cuối cùng được chọn
         private string _lastActiveTab;
 
-        // Register a reload action for a specific tab
+        // Đăng kí hành động tải lại dữ liệu cho một tab cụ thể
         public void RegisterTabReloadAction(string tabName, Action reloadAction)
         {
             if (string.IsNullOrEmpty(tabName) || reloadAction == null)
@@ -23,7 +24,7 @@ namespace ClinicManagement.Services
             _tabReloadActions[tabName] = reloadAction;
         }
 
-        /// Trong TabSelectionManager hoặc MainViewModel
+    
         public void TabSelected(string tabName)
         {
             // Kiểm tra người dùng đã đăng nhập chưa
@@ -38,13 +39,6 @@ namespace ClinicManagement.Services
             {
                 reloadAction?.Invoke();
             }
-        }
-
-
-        // Get the name of the last active tab
-        public string GetLastActiveTab()
-        {
-            return _lastActiveTab;
         }
     }
 }
