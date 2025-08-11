@@ -15,7 +15,7 @@
     <viewmodel:InvoiceViewModel x:Key="InvoiceVM"/>
     <viewmodel:MedicineSellViewModel x:Key="MedicineSellVM"/>
     <viewmodel:StatisticsViewModel x:Key="StatisticsVM"/>
-    <conver:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
+
     <conver:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter"/>
     <conver:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     <viewmodel:SettingViewModel x:Key="SettingVM" />    

@@ -1048,59 +1048,93 @@ namespace ClinicManagement.ViewModels
                 {
                     var context = DataProvider.Instance.Context;
 
-                    // Reset tất cả các lô thuốc của medicine này về false
-                    var allBatches = context.StockIns
-                        .Where(si => si.MedicineId == Medicine.MedicineId)
-                        .ToList();
-
-                    foreach (var batch in allBatches)
-                    {
-                        batch.IsSelling = false;
-                    }
-
-                    // Đặt lô được chọn thành lô đang bán
                     var stockInToUpdate = context.StockIns.Find(stockEntry.StockIn.StockInId);
                     if (stockInToUpdate != null)
                     {
-                        stockInToUpdate.IsSelling = true;
-
-                        // Cập nhật trạng thái trong UI trước khi lưu database
-                        foreach (var item in DetailedStockList)
+                        // Kiểm tra nếu lô này đã được đánh dấu là đang bán
+                        if (stockInToUpdate.IsSelling)
                         {
-                            item.IsCurrentSellingBatch = (item.StockIn.StockInId == stockEntry.StockIn.StockInId);
-                        }
-
-                        // Kiểm tra nếu lô này gần hết hạn hoặc đã hết hạn
-                        if (stockEntry.IsExpired)
-                        {
-                            MessageBoxService.ShowWarning(
-                                "Bạn đang chọn một lô thuốc đã hết hạn làm lô đang bán.\n" +
-                                "Việc này có thể ảnh hưởng đến an toàn thuốc.",
-                                "Cảnh báo: Lô hết hạn"
+                            var result = MessageBoxService.ShowQuestion(
+                                "Lô thuốc này đã được đánh dấu là lô đang bán. Bạn có chắc muốn hủy đánh dấu không?",
+                                "Xác nhận hủy đánh dấu"
                             );
-                        }
-                        else if (stockEntry.IsNearExpiry)
-                        {
-                            MessageBoxService.ShowWarning(
-                                "Bạn đang chọn một lô thuốc sắp hết hạn làm lô đang bán.\n" +
-                                $"Lô thuốc này sẽ hết hạn vào ngày {stockEntry.ExpiryDate:dd/MM/yyyy}.",
-                                "Cảnh báo: Lô gần hết hạn"
+                            if (!result)
+                                return;
+                            // Nếu người dùng xác nhận, bỏ đánh dấu lô này
+                            stockInToUpdate.IsSelling = false;
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            context.SaveChanges();
+
+                            // Hoàn thành giao dịch nếu mọi thứ thành công
+                            transaction.Commit();
+
+                            MessageBoxService.ShowInfo(
+                                "Đã hủy đánh dấu lô thuốc này là lô đang bán.",
+                                "Thông báo"
                             );
+                            // Cập nhật lại thông tin hiển thị
+                            RefreshMedicineData();
+                            return;
+
                         }
+                        else
+                        {
+                            // Reset tất cả các lô thuốc của medicine này về false
+                            var allBatches = context.StockIns
+                            .Where(si => si.MedicineId == Medicine.MedicineId)
+                            .ToList();
 
-                        // Lưu thay đổi vào cơ sở dữ liệu
-                        context.SaveChanges();
+                            foreach (var batch in allBatches)
+                            {
+                                batch.IsSelling = false;
+                            }
+                            stockInToUpdate.IsSelling = true;
 
-                        // Hoàn thành giao dịch nếu mọi thứ thành công
-                        transaction.Commit();
+                            // Cập nhật trạng thái trong UI trước khi lưu database
+                            foreach (var item in DetailedStockList)
+                            {
+                                item.IsCurrentSellingBatch = (item.StockIn.StockInId == stockEntry.StockIn.StockInId);
+                            }
 
-                        MessageBoxService.ShowSuccess(
-                            $"Đã đặt lô thuốc (mã: {stockInToUpdate.StockInId}) làm lô đang bán.",
-                            "Thành công"
+                            // Kiểm tra nếu lô này gần hết hạn hoặc đã hết hạn
+                            if (stockEntry.IsExpired)
+                            {
+                                MessageBoxService.ShowWarning(
+                                    "Bạn đang chọn một lô thuốc đã hết hạn làm lô đang bán.\n" +
+                                    "Việc này có thể ảnh hưởng đến an toàn thuốc.",
+                                    "Cảnh báo: Lô hết hạn"
+                                );
+                            }
+                            else if (stockEntry.IsNearExpiry)
+                            {
+                                MessageBoxService.ShowWarning(
+                                    "Bạn đang chọn một lô thuốc sắp hết hạn làm lô đang bán.\n" +
+                                    $"Lô thuốc này sẽ hết hạn vào ngày {stockEntry.ExpiryDate:dd/MM/yyyy}.",
+                                    "Cảnh báo: Lô gần hết hạn"
+                                );
+                            }
+
+                            // Lưu thay đổi vào cơ sở dữ liệu
+                            context.SaveChanges();
+
+                            // Hoàn thành giao dịch nếu mọi thứ thành công
+                            transaction.Commit();
+
+                            MessageBoxService.ShowSuccess(
+                                $"Đã đặt lô thuốc (mã: {stockInToUpdate.StockInId}) làm lô đang bán.",
+                                "Thành công"
+                            );
+
+                            // Cập nhật lại thông tin hiển thị
+                            RefreshMedicineData();
+                        }
+                    }
+                    else
+                    {
+                        MessageBoxService.ShowError(
+                            "Không tìm thấy lô thuốc trong cơ sở dữ liệu.",
+                            "Lỗi"
                         );
-
-                        // Cập nhật lại thông tin hiển thị
-                        RefreshMedicineData();
                     }
                 }
                 catch (Exception ex)

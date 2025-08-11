@@ -34,21 +34,6 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        /// <summary>
-        /// Danh sách các tab được phép hiển thị cho người dùng hiện tại
-        /// Được duy trì để tương thích ngược với code cũ
-        /// </summary>
-        private ObservableCollection<string> _AllowedTabs = new ObservableCollection<string>();
-        public ObservableCollection<string> AllowedTabs
-        {
-            get => _AllowedTabs;
-            set
-            {
-                _AllowedTabs = value;
-                OnPropertyChanged();
-            }
-        }
-
         // === CÁC THUỘC TÍNH BOOLEAN KIỂM SOÁT QUYỀN TRUY CẬP TAB ===
         // Mỗi thuộc tính tương ứng với một tab trong ứng dụng
 
@@ -376,7 +361,7 @@ namespace ClinicManagement.ViewModels
 
                     // Reset current account và danh sách tab được phép
                     CurrentAccount = null;
-                    AllowedTabs.Clear();
+                
 
                     // Reset ViewModelLocator để các ViewModel được tạo mới khi đăng nhập lại
                     var viewModelLocator = Application.Current.Resources["ViewModelLocator"] as ViewModelLocator;
@@ -390,7 +375,6 @@ namespace ClinicManagement.ViewModels
                      "Lỗi");
             }
         }
-
         /// <summary>
         /// Đảm bảo tab được chọn là tab hợp lệ (người dùng có quyền truy cập)
         /// Nếu tab hiện tại không hợp lệ, chuyển sang tab đầu tiên được phép
@@ -421,6 +405,8 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
+        
+
 
         /// <summary>
         /// Phương thức helper kiểm tra xem một tab có được phép hiển thị không
@@ -455,8 +441,7 @@ namespace ClinicManagement.ViewModels
             // Reset tất cả quyền về false trước
             ResetAllPermissions();
 
-            // Duy trì tương thích ngược - xóa danh sách AllowedTabs
-            AllowedTabs.Clear();
+       
 
             // Kiểm tra điều kiện đầu vào
             if (CurrentAccount == null || string.IsNullOrEmpty(CurrentAccount.Role))
@@ -476,8 +461,7 @@ namespace ClinicManagement.ViewModels
                     // Thiết lập thuộc tính boolean tương ứng
                     SetTabPermission(cleanTabName, true);
 
-                    // Duy trì tương thích ngược
-                    AllowedTabs.Add(cleanTabName);
+                   
                 }
             }
             else

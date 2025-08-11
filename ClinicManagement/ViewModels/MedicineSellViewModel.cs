@@ -660,133 +660,96 @@ namespace ClinicManagement.ViewModels
 
         /// <summary>
         /// Tải danh sách thuốc có sẵn để bán
-        /// Chỉ hiển thị thuốc chưa bị xóa và còn tồn kho
+        /// Chỉ hiển thị thuốc chưa bị xóa và đang được set để bán
         /// Bao gồm cảnh báo về thuốc hết hạn và sắp hết hạn
         /// </summary>
         private void LoadMedicines()
         {
-            // Kiểm tra xem đã khởi tạo chưa
             if (!IsInitialized)
-            {
                 return;
-            }
 
             try
             {
                 var today = DateOnly.FromDateTime(DateTime.Today);
 
-                // Tải thuốc với eager loading các thực thể liên quan
+                // Tải thuốc với eager loading và điều kiện có lô đang bán
                 var medicines = DataProvider.Instance.Context.Medicines
-                    .AsNoTracking() // Sử dụng AsNoTracking để tăng hiệu suất
-                    .Where(m => m.IsDeleted != true)
+                    .AsNoTracking()
+                    .Where(m => m.IsDeleted != true &&
+                               m.StockIns.Any(si => si.IsSelling && si.RemainQuantity > 0)) // Chỉ lấy thuốc có lô đang bán
                     .Include(m => m.Category)
                     .Include(m => m.Unit)
                     .ToList();
 
-                // Xử lý dữ liệu tồn kho riêng để tránh lỗi LINQ translation
+                // Xử lý dữ liệu tồn kho
                 foreach (var medicine in medicines)
                 {
-                    // Tải thủ công StockIns để lấy dữ liệu RemainQuantity
+                    // Tải StockIns, ưu tiên lô đang bán
                     var stockIns = DataProvider.Instance.Context.StockIns
                         .AsNoTracking()
                         .Where(si => si.MedicineId == medicine.MedicineId)
+                        .OrderByDescending(si => si.IsSelling) // Ưu tiên lô đang bán lên đầu
                         .ToList();
 
-                    // Thay thế collection bằng dữ liệu đã tải thủ công
                     medicine.StockIns = stockIns;
-
-                    // Reset cache để đảm bảo tính toán mới
                     medicine._availableStockInsCache = null;
-
-                    // Thiết lập số lượng mặc định là 1
                     medicine.TempQuantity = 1;
                 }
 
-                // Lọc ra các thuốc có tồn kho hợp lệ
+                // Lọc ra các thuốc có lô đang bán và còn hàng
                 var validMedicines = medicines.Where(m =>
-                    m.StockIns.Any(si => si.RemainQuantity > 0)
+                    m.StockIns.Any(si => si.IsSelling && si.RemainQuantity > 0)
                 ).ToList();
 
-                // Chỉ hiển thị cảnh báo khi ứng dụng đã hoàn toàn tải xong
-                if (Application.Current != null &&
-                    Application.Current.MainWindow != null &&
-                    Application.Current.MainWindow.IsLoaded)
+                // Hiển thị cảnh báo nếu cần
+                if (Application.Current?.MainWindow?.IsLoaded == true)
                 {
-                    // Kiểm tra và cảnh báo về thuốc có thể gần/đã hết hạn nhưng vẫn còn tồn kho
                     foreach (var medicine in validMedicines)
                     {
-                        // Kiểm tra có lô hết hạn chưa được tiêu hủy không
-                        bool hasNonTerminatedExpiredStock = medicine.StockIns.Any(si =>
-                            si.RemainQuantity > 0 &&
-                            si.ExpiryDate.HasValue &&
-                            si.ExpiryDate.Value < today &&
-                            !si.IsTerminated);
-
-                        if (hasNonTerminatedExpiredStock)
+                        var sellingBatch = medicine.StockIns.FirstOrDefault(si => si.IsSelling);
+                        if (sellingBatch != null)
                         {
-                            MessageBoxService.ShowWarning(
-                                $"Lưu ý: {medicine.Name} có lô thuốc đã hết hạn nhưng chưa được tiêu hủy. Vui lòng tiêu hủy các lô đã hết hạn.",
-                                "Cảnh báo thuốc hết hạn"
-                            );
-                        }
-                        // Kiểm tra xem có lô sắp hết hạn và là lô cuối cùng không
-                        else if (medicine.HasNearExpiryStock && medicine.IsLastestStockIn)
-                        {
-                            // Lấy lô đang sử dụng để bán và sắp hết hạn
-                            var nearExpirySellingBatch = medicine.StockIns.FirstOrDefault(si =>
-                                si.IsSelling &&
-                                si.RemainQuantity > 0 &&
-                                si.ExpiryDate.HasValue &&
-                                si.ExpiryDate.Value >= today &&
-                                si.ExpiryDate.Value <= today.AddDays(Medicine.MinimumDaysBeforeExpiry) &&
-                                !si.IsTerminated);
-
-                            if (nearExpirySellingBatch != null)
+                            // Cảnh báo lô đang bán đã hết hạn
+                            if (sellingBatch.ExpiryDate.HasValue && sellingBatch.ExpiryDate.Value < today)
                             {
-                                int daysRemaining = (nearExpirySellingBatch.ExpiryDate.Value.ToDateTime(TimeOnly.MinValue) - today.ToDateTime(TimeOnly.MinValue)).Days;
+                                MessageBoxService.ShowWarning(
+                                    $"Cảnh báo: Lô đang bán của {medicine.Name} đã hết hạn. Vui lòng chọn lô khác để bán.",
+                                    "Cảnh báo thuốc hết hạn"
+                                );
+                            }
+                            // Cảnh báo lô đang bán sắp hết hạn
+                            else if (sellingBatch.ExpiryDate.HasValue &&
+                                   sellingBatch.ExpiryDate.Value <= today.AddDays(Medicine.MinimumDaysBeforeExpiry))
+                            {
+                                int daysRemaining = (sellingBatch.ExpiryDate.Value.ToDateTime(TimeOnly.MinValue) -
+                                                   today.ToDateTime(TimeOnly.MinValue)).Days;
 
                                 MessageBoxService.ShowWarning(
-                                    $"Lưu ý: {medicine.Name} đang sử dụng lô cuối cùng và sẽ hết hạn sau {daysRemaining} ngày. Cần nhập thêm hàng.",
+                                    $"Lưu ý: Lô đang bán của {medicine.Name} sẽ hết hạn sau {daysRemaining} ngày. " +
+                                    "Vui lòng chọn lô khác hoặc nhập thêm hàng.",
                                     "Cảnh báo hạn sử dụng"
                                 );
                             }
-                        }
-
-                        // Kiểm tra nếu lô đang bán đã bị tiêu hủy
-                        var sellingBatchIsTerminated = medicine.StockIns.Any(si =>
-                            si.IsSelling &&
-                            si.IsTerminated);
-
-                        if (sellingBatchIsTerminated)
-                        {
-                            MessageBoxService.ShowWarning(
-                                $"Cảnh báo: {medicine.Name} có lô đang bán đã được đánh dấu là tiêu hủy. Cần chọn lô khác để bán.",
-                                "Cảnh báo lô đã tiêu hủy"
-                            );
                         }
                     }
                 }
 
                 MedicineList = new ObservableCollection<Medicine>(validMedicines);
 
-                // Áp dụng lọc view để tìm kiếm
+                // Áp dụng bộ lọc tìm kiếm
                 CollectionViewSource.GetDefaultView(MedicineList).Filter = item =>
                 {
-                    if (item is Medicine medicine)
-                    {
-                        return FilterMedicine(medicine);
-                    }
-                    return false;
+                    return item is Medicine medicine && FilterMedicine(medicine);
                 };
             }
             catch (Exception ex)
             {
-                // Chỉ hiển thị lỗi khi ứng dụng đã được khởi tạo hoàn toàn
-                if (Application.Current != null &&
-                    Application.Current.MainWindow != null &&
-                    Application.Current.MainWindow.IsLoaded)
+                if (Application.Current?.MainWindow?.IsLoaded == true)
                 {
-                    MessageBoxService.ShowError($"Không thể tải danh sách thuốc: {ex.Message}", "Lỗi");
+                    MessageBoxService.ShowError(
+                        $"Không thể tải danh sách thuốc: {ex.Message}",
+                        "Lỗi"
+                    );
                 }
             }
         }
