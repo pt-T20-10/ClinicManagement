@@ -1258,7 +1258,7 @@ namespace ClinicManagement.ViewModels
                                     worksheet.Cell(row, 8).Value = patient.Address ?? "";
 
                                     if (patient.CreatedAt.HasValue)
-                                        worksheet.Cell(row, 9).Value = patient.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm");
+                                        worksheet.Cell(row, 9).Value = patient.CreatedAt.Value.ToString("dd/MM/yyyy");
                                     else
                                         worksheet.Cell(row, 9).Value = "";
 

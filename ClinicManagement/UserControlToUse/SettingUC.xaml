@@ -67,7 +67,7 @@
                                 Grid.Column="0"
                                 Text="{Binding StaffId, Mode=OneWay}"
                                 IsReadOnly="True"
-                                materialDesign:HintAssist.Hint="ID bác sĩ"
+                                materialDesign:HintAssist.Hint="ID"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                 Margin="5,10,15,10"
                                 VerticalAlignment="Center"/>

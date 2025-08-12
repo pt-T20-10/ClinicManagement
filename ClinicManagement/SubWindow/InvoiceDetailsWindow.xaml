@@ -130,22 +130,22 @@
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Họ tên:" FontWeight="SemiBold" Width="100"/>
-                                <TextBlock Text="{Binding Invoice.Patient.FullName}"/>
+                                <TextBlock Margin="8 0 0 0" Text="{Binding Invoice.Patient.FullName}"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Số điện thoại:" FontWeight="SemiBold" Width="100"/>
-                                <TextBlock Text="{Binding Invoice.Patient.Phone}"/>
+                            <TextBlock Margin="8 0 0 0" Text="{Binding Invoice.Patient.Phone}"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Mã BHYT:" FontWeight="SemiBold" Width="100"/>
-                                <TextBlock Text="{Binding Invoice.Patient.InsuranceCode}"/>
+                            <TextBlock Margin="8 0 0 0" Text="{Binding Invoice.Patient.InsuranceCode}"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="Loại khách hàng:" FontWeight="SemiBold" Width="100"/>
-                                <TextBlock Text="{Binding Invoice.Patient.PatientType.TypeName}"/>
+                            <TextBlock Margin="8 0 0 0" Text="{Binding Invoice.Patient.PatientType.TypeName}"/>
                             </StackPanel>
                         </StackPanel>
 

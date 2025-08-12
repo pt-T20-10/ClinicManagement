@@ -24,20 +24,27 @@ namespace ClinicManagement.Services
             _tabReloadActions[tabName] = reloadAction;
         }
 
-    
+
         public void TabSelected(string tabName)
         {
             // Kiểm tra người dùng đã đăng nhập chưa
             var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
-            if (mainVM == null || mainVM.CurrentAccount == null)
+            if (mainVM?.CurrentAccount == null)
             {
-                return; // Chưa đăng nhập, không tải dữ liệu
+                return;
             }
 
-            // Tiến hành tải dữ liệu cho tab được chọn
+            // Tìm action tương ứng và thực thi
             if (_tabReloadActions.TryGetValue(tabName, out Action reloadAction))
             {
-                reloadAction?.Invoke();
+                try
+                {
+                    reloadAction?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    MessageBoxService.ShowError($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi");
+                }
             }
         }
     }
