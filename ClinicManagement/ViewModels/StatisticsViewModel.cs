@@ -2,6 +2,7 @@ using ClinicManagement.Models;
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using LiveCharts;
 using LiveCharts.Wpf;
 using Microsoft.EntityFrameworkCore;
@@ -854,6 +855,7 @@ namespace ClinicManagement.ViewModels
         /// Tải lại tất cả biểu đồ, số liệu và cảnh báo từ cơ sở dữ liệu
         /// Sử dụng khi cần cập nhật dữ liệu real-time hoặc sau khi có thay đổi
         /// </summary>
+      
         public ICommand RefreshCommand { get; set; }
 
         /// <summary>
@@ -995,7 +997,7 @@ namespace ClinicManagement.ViewModels
             /// Tải lại toàn bộ thống kê từ database
             /// CanExecute: chỉ khi không đang loading và không có async operation nào khác
             RefreshCommand = new RelayCommand<object>(
-                p => LoadStatisticsAsync(),
+                p => RefreshData(),
                 p => !IsLoading && !_isAsyncOperationRunning
             );
 
@@ -1396,6 +1398,16 @@ namespace ClinicManagement.ViewModels
             }
         }
 
+        private void RefreshData()
+        {
+            LoadDashBoard();
+            using (var context = new ClinicDbContext())
+            {
+                context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking; // Tối ưu hiệu suất
+                LoadBasicStatistics(context);
+            }
+            LoadStatisticsAsync();
+        }
         #region Data Loading Methods - Các phương thức tải dữ liệu từ cơ sở dữ liệu
 
         /// <summary>
@@ -1404,7 +1416,7 @@ namespace ClinicManagement.ViewModels
         /// Bao gồm: lịch hẹn hôm nay/hôm qua, doanh thu, bệnh nhân mới, thuốc đã bán
         /// </summary>
         /// <param name="context">DbContext để truy xuất dữ liệu</param>
-        private void LoadBasicStatistics(ClinicDbContext context)
+        public void LoadBasicStatistics(ClinicDbContext context)
         {
             try
             {
@@ -1461,10 +1473,12 @@ namespace ClinicManagement.ViewModels
 
                 // === THỐNG KÊ DOANH THU THÁNG HIỆN TẠI ===
                 /// Lấy tất cả hóa đơn từ đầu tháng đến hiện tại
+                var tomorrow = today.AddDays(1);
+
                 var monthInvoices = context.Invoices
                     .Where(i => i.InvoiceDate.HasValue &&
                            i.InvoiceDate.Value >= firstDayOfMonth &&
-                           i.InvoiceDate.Value <= today &&
+                           i.InvoiceDate.Value < tomorrow &&
                            i.Status == "Đã thanh toán")
                     .ToList();
                 decimal monthRevenue = monthInvoices.Sum(i => i.TotalAmount);
@@ -1757,14 +1771,16 @@ namespace ClinicManagement.ViewModels
                            i.Status == "Đã thanh toán")
                     .ToList();
 
-                // === NHÓM THEO NGÀY VÀ SẮP XẾP THEO THỜI GIAN ===
-                /// Sử dụng OrderBy theo Date thay vì OrderByDescending theo Revenue
-                /// để hiển thị xu hướng thời gian thay vì ranking
+                // === NHÓM THEO NGÀY VÀ LẤY TOP 7 DOANH THU CAO NHẤT ===
                 var revenueByDate = invoices
                     .GroupBy(i => i.InvoiceDate.Value.Date)
-                    .Select(g => new { Date = g.Key, Revenue = g.Sum(i => i.TotalAmount) })
-                    .OrderBy(x => x.Date) // Sắp xếp theo thời gian (chronological order)
-                    .Take(7) // Lấy 7 ngày đầu tiên trong khoảng thời gian
+                    .Select(g => new {
+                        Date = g.Key,
+                        Revenue = g.Sum(i => i.TotalAmount)
+                    })
+                    .OrderByDescending(x => x.Revenue) // Sắp xếp theo doanh thu giảm dần
+                    .Take(7) // Lấy 7 ngày doanh thu cao nhất
+                    .OrderBy(x => x.Date) // Sắp xếp lại theo thời gian để hiển thị
                     .ToList();
 
                 if (revenueByDate.Any())
@@ -1774,15 +1790,15 @@ namespace ClinicManagement.ViewModels
                     var labels = revenueByDate.Select(x => x.Date.ToString("dd/MM")).ToArray();
 
                     TopRevenueDaysSeries = new SeriesCollection
-                    {
-                        new ColumnSeries
-                        {
-                            Title = "Doanh thu",
-                            Values = new ChartValues<double>(values),
-                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá Material Design
-                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                        }
-                    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(values),
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)), // Màu xanh lá Material Design
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
 
                     TopRevenueDaysLabels = labels;
                 }
@@ -1790,21 +1806,20 @@ namespace ClinicManagement.ViewModels
                 {
                     /// Xử lý trường hợp không có dữ liệu - tạo labels mặc định
                     var defaultLabels = Enumerable.Range(1, 7)
-                        .Select(i => DateTime.Now.AddDays(-i).ToString("dd/MM"))
-                        .Reverse() // Đảo ngược để hiển thị từ cũ đến mới
+                        .Select(i => StartDate.AddDays(i - 1).ToString("dd/MM"))
                         .ToArray();
 
                     /// Khởi tạo với giá trị 0 nhưng vẫn giữ định dạng đúng
                     TopRevenueDaysSeries = new SeriesCollection
-                    {
-                        new ColumnSeries
-                        {
-                            Title = "Doanh thu",
-                            Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
-                            Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                            LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
-                        }
-                    };
+            {
+                new ColumnSeries
+                {
+                    Title = "Doanh thu",
+                    Values = new ChartValues<double>(Enumerable.Repeat(0.0, 7)),
+                    Fill = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y)
+                }
+            };
 
                     TopRevenueDaysLabels = defaultLabels;
                 }

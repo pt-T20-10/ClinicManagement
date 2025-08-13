@@ -1,6 +1,7 @@
 ﻿using ClinicManagement.Models;
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -603,6 +604,11 @@ namespace ClinicManagement.ViewModels
             {
                 var statisticsVM = Application.Current.Resources["StatisticsVM"] as StatisticsViewModel;
                 statisticsVM?.LoadDashBoard();
+                using (var context = new ClinicDbContext())
+                {
+                    context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking; // Tối ưu hiệu suất
+                    statisticsVM?.LoadBasicStatistics(context);
+                }
                 statisticsVM?.LoadStatisticsAsync();
             });
         }

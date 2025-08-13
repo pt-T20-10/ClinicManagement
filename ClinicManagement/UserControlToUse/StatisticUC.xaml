@@ -87,10 +87,6 @@
                             <TextBlock Text="{Binding MonthRevenue, StringFormat={}{0:N0}đ}" 
                                  FontSize="18" Opacity="0.8"/>
                         </StackPanel>
-                        <TextBlock Text="So với cùng thời điểm tháng trước" 
-                          Margin="0,4,0,0"/>
-                        <TextBlock Text="{Binding RevenueGrowth}" 
-                             Foreground="#4CAF50" Margin="0,4,0,0"/>
                     </StackPanel>
                 </materialDesign:Card>
 
@@ -393,7 +389,7 @@
                                         <RowDefinition Height="350"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Text="Top 10 ngày có doanh thu cao nhất" 
+                                    <TextBlock Grid.Row="0" Text="Top 7 ngày có doanh thu cao nhất" 
                                FontWeight="Medium" Margin="0,0,0,15"/>
 
                                     <lvc:CartesianChart Grid.Row="1" Series="{Binding TopRevenueDaysSeries}" 
