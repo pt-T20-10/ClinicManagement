@@ -1165,70 +1165,57 @@ namespace ClinicManagement.ViewModels
                     return;
                 }
 
-                // Validation cho thông tin bệnh nhân
-                _isValidating = true;
-                _touchedFields.Add(nameof(PatientName));
-                _touchedFields.Add(nameof(Phone));
+                // Cho phép bán thuốc không cần thông tin bệnh nhân
+                Patient patient = null;
 
-                OnPropertyChanged(nameof(PatientName));
-                OnPropertyChanged(nameof(Phone));
-
-                if (HasErrors)
+                // Nếu có nhập thông tin bệnh nhân thì mới validate và tìm kiếm
+                if (!string.IsNullOrWhiteSpace(PatientName) || !string.IsNullOrWhiteSpace(Phone))
                 {
-                    MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi thanh toán.", "Lỗi dữ liệu");
-                    return;
-                }
+                    _isValidating = true;
+                    _touchedFields.Add(nameof(PatientName));
+                    _touchedFields.Add(nameof(Phone));
 
-                // Kiểm tra đã chọn bệnh nhân chưa
-                if (string.IsNullOrWhiteSpace(PatientName))
-                {
-                    MessageBoxService.ShowWarning("Vui lòng chọn hoặc nhập thông tin bệnh nhân trước khi thanh toán.", "Thiếu thông tin");
-                    return;
-                }
+                    OnPropertyChanged(nameof(PatientName));
+                    OnPropertyChanged(nameof(Phone));
 
-                // 1. Tìm bệnh nhân đã chọn
-                Patient patient = SelectedPatient;
-
-                // Nếu chưa chọn bệnh nhân nhưng đã nhập thông tin, tìm kiếm
-                if (patient == null && !string.IsNullOrWhiteSpace(PatientName))
-                {
-                    var query = DataProvider.Instance.Context.Patients
-                        .Include(p => p.PatientType)
-                        .Where(p => p.IsDeleted != true);
-
-                    if (!string.IsNullOrWhiteSpace(Phone))
+                    if (HasErrors)
                     {
-                        patient = query.FirstOrDefault(p => p.Phone == Phone.Trim());
+                        MessageBoxService.ShowWarning("Vui lòng sửa các lỗi nhập liệu trước khi thanh toán.", "Lỗi dữ liệu");
+                        return;
                     }
+
+                    // Tìm bệnh nhân đã chọn hoặc theo thông tin nhập
+                    patient = SelectedPatient;
 
                     if (patient == null)
                     {
-                        patient = query.FirstOrDefault(p => p.FullName == PatientName.Trim());
-                    }
+                        var query = DataProvider.Instance.Context.Patients
+                            .Include(p => p.PatientType)
+                            .Where(p => p.IsDeleted != true);
 
-                    // Nếu vẫn không tìm thấy, hỏi người dùng có muốn tạo mới không
-                    if (patient == null)
-                    {
-                        bool createNew = MessageBoxService.ShowQuestion(
-                            "Không tìm thấy thông tin bệnh nhân. Bạn có muốn thêm bệnh nhân mới không?",
-                            "Thêm bệnh nhân mới"
-                        );
-
-                        if (createNew)
+                        if (!string.IsNullOrWhiteSpace(Phone))
                         {
-                            AddNewPatient();
-                            // Sau khi thêm, bệnh nhân mới sẽ được gán vào SelectedPatient
-                            patient = SelectedPatient;
+                            patient = query.FirstOrDefault(p => p.Phone == Phone.Trim());
                         }
 
-                        // Nếu người dùng không muốn tạo mới hoặc việc tạo mới thất bại
+                        if (patient == null && !string.IsNullOrWhiteSpace(PatientName))
+                        {
+                            patient = query.FirstOrDefault(p => p.FullName == PatientName.Trim());
+                        }
+
+                        // Nếu vẫn không tìm thấy, hỏi người dùng có muốn tạo mới không
                         if (patient == null)
                         {
-                            MessageBoxService.ShowWarning(
-                                "Không thể thanh toán khi chưa chọn bệnh nhân.",
-                                "Thiếu thông tin"
+                            bool createNew = MessageBoxService.ShowQuestion(
+                                "Không tìm thấy thông tin bệnh nhân. Bạn có muốn thêm bệnh nhân mới không?",
+                                "Thêm bệnh nhân mới"
                             );
-                            return;
+
+                            if (createNew)
+                            {
+                                AddNewPatient();
+                                patient = SelectedPatient;
+                            }
                         }
                     }
                 }
@@ -1258,26 +1245,25 @@ namespace ClinicManagement.ViewModels
                                 .Where(d => d.InvoiceId == invoice.InvoiceId && d.MedicineId != null)
                                 .ToList();
 
-                            // Update invoice details
+                            // Cập nhật thông tin hóa đơn
                             invoice.PatientId = patient?.PatientId;
                             invoice.TotalAmount = TotalAmount - Discount;
                             invoice.StaffPrescriberId = CurrentAccount.StaffId;
                             invoice.Discount = Discount;
                             invoice.Status = "Chưa thanh toán";
 
-                            // Update invoice type if needed
                             if (invoice.InvoiceType == "Khám bệnh")
                             {
                                 invoice.InvoiceType = "Khám và bán thuốc";
                             }
 
-                            // Remove all existing medicine invoice details
+             
                             foreach (var detail in originalDetails)
                             {
                                 context.InvoiceDetails.Remove(detail);
                             }
 
-                            // Save changes to remove old items
+                           
                             context.SaveChanges();
                         }
                         else
@@ -1302,7 +1288,7 @@ namespace ClinicManagement.ViewModels
                         // 3. Thêm chi tiết hóa đơn và xác định StockInId từ lô đang bán
                         foreach (var item in CartItems)
                         {
-                            // Load medicine with fresh StockIn data including RemainQuantity
+                            // Tải thông tin thuốc đầy đủ với dữ liệu RemainQuantity mới nhất
                             var medicine = context.Medicines
                                 .Include(m => m.StockIns)
                                 .FirstOrDefault(m => m.MedicineId == item.Medicine.MedicineId);
@@ -1314,7 +1300,7 @@ namespace ClinicManagement.ViewModels
 
                                 var invoiceDetail = item.ToInvoiceDetail(invoice.InvoiceId);
 
-                                // Assign StockInId from the selling stock in
+                                //Gán StockInId từ lô đang bán
                                 if (sellingStockIn != null)
                                 {
                                     invoiceDetail.StockInId = sellingStockIn.StockInId;
@@ -1340,7 +1326,7 @@ namespace ClinicManagement.ViewModels
 
                         if (refreshedInvoice.Status == "Đã thanh toán")
                         {
-                            // Update StockIn.RemainQuantity values for each medicine
+                            // Cập nhật số lượng tồn kho sau khi thanh toán
                             UpdateStockInRemainQuantity(refreshedInvoice);
 
                             ClearCart();
@@ -1381,7 +1367,7 @@ namespace ClinicManagement.ViewModels
                     {
                         // Hoàn tác transaction nếu có lỗi
                         transaction.Rollback();
-                        throw; // Ném lại ngoại lệ để bắt ở khối catch bên ngoài
+                        throw;
                     }
                 }
             }

@@ -91,7 +91,7 @@
                 <!-- Invoice Number -->
                 <StackPanel Grid.Column="2"  Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <TextBlock 
-                    Text="Hóa đơn #:" 
+                    Text="Hóa đơn:" 
                     FontWeight="Medium"
                     VerticalAlignment="Center"
                     Margin="0,0,8,0"/>
