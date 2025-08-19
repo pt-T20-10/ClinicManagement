@@ -1232,17 +1232,7 @@ namespace ClinicManagement.ViewModels
                     {
                         // Cập nhật số lượng tồn kho vật lý và có thể sử dụng
                         stockRecord.Quantity -= stockInToTerminate.RemainQuantity;
-
-                        // Nếu lô chưa hết hạn, thì giảm số lượng usable
-                        var today = DateOnly.FromDateTime(DateTime.Today);
-                        var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
-
-                        if (!stockInToTerminate.ExpiryDate.HasValue ||
-                            stockInToTerminate.ExpiryDate.Value >= minimumExpiryDate)
-                        {
-                            stockRecord.UsableQuantity -= stockInToTerminate.RemainQuantity;
-                        }
-
+                        stockRecord.UsableQuantity -= stockInToTerminate.RemainQuantity;
                         stockRecord.LastUpdated = DateTime.Now;
                     }
 

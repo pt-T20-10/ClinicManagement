@@ -254,37 +254,6 @@ public partial class Medicine : BaseViewModel
     }
 
     /// <summary>
-    /// Kiểm tra xem lô thuốc hiện tại có cần phải được chuyển sang lô mới không
-    /// Nếu lô hiện tại là lô cuối cùng, thì không cần chuyển
-    /// </summary>
-    public bool ShouldSwitchToNewBatch
-    {
-        get
-        {
-            // Nếu là lô cuối cùng, không cần chuyển
-            if (IsLastestStockIn)
-                return false;
-
-            var currentStockIn = ActiveStockIn;
-            if (currentStockIn == null)
-                return false;
-
-            // Kiểm tra hạn sử dụng của lô hiện tại
-            var today = DateOnly.FromDateTime(DateTime.Today);
-
-            // Nếu không có hạn sử dụng, không cần chuyển
-            if (!currentStockIn.ExpiryDate.HasValue)
-                return false;
-
-            // Nếu số ngày còn lại ít hơn ngưỡng tối thiểu để chuyển lô
-            int daysUntilExpiry = currentStockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
-
-            // Nếu còn ít hơn số ngày tối thiểu hoặc đã hết hàng, cần chuyển lô
-            return daysUntilExpiry < MinimumDaysBeforeSwitchingBatch || currentStockIn.RemainQuantity <= 0;
-        }
-    }
-
-    /// <summary>
     /// Lấy lô thuốc hiện có cuối cùng (bao gồm cả lô đã hết hạn hoặc sắp hết hạn)
     /// để hiển thị và cảnh báo người dùng
     /// </summary>
@@ -368,31 +337,6 @@ public partial class Medicine : BaseViewModel
     }
 
     /// <summary>
-    /// Lấy lô thuốc đang hoạt động và chưa hết hạn theo nguyên tắc FIFO
-    /// </summary>
-    public StockIn ActiveNonExpiredStockIn
-    {
-        get
-        {
-            if (StockIns == null || !StockIns.Any())
-                return null;
-
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var minimumExpiryDate = today.AddDays(MinimumDaysBeforeExpiry);
-
-            // Lấy các lô chưa hết hạn có số lượng còn lại, sắp xếp theo ngày nhập (FIFO)
-            var usableStockIns = StockIns
-                .Where(si => si.RemainQuantity > 0 &&
-                        (!si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate))
-                .OrderBy(si => si.ImportDate)
-                .ToList();
-
-            // Trả về lô cũ nhất chưa hết hạn có số lượng còn lại
-            return usableStockIns.FirstOrDefault();
-        }
-    }
-
-    /// <summary>
     /// Lấy thông tin lô nhập kèm số lượng còn lại
     /// Sử dụng StockIn.RemainQuantity được duy trì bởi cơ sở dữ liệu
     /// </summary>
@@ -461,7 +405,7 @@ public partial class Medicine : BaseViewModel
     }
 
     /// <summary>
-    /// Tổng số lượng tồn kho sử dụng được (còn hạn sử dụng)
+    /// Tổng số lượng tồn kho sử dụng được (còn hạn sử dụng và chưa bị tiêu hủy)
     /// </summary>
     public int TotalStockQuantity
     {
@@ -474,12 +418,18 @@ public partial class Medicine : BaseViewModel
                 return stockRecord.UsableQuantity;
             }
 
-            // Tính trực tiếp sử dụng RemainQuantity và lọc theo ngày hết hạn
+            // Tính trực tiếp sử dụng RemainQuantity
             var today = DateOnly.FromDateTime(DateTime.Today);
             var minimumExpiryDate = today.AddDays(MinimumDaysBeforeExpiry);
 
             return StockIns?
-                .Where(si => !si.ExpiryDate.HasValue || si.ExpiryDate.Value >= minimumExpiryDate)
+                .Where(si =>
+                    !si.IsTerminated && // Chưa bị tiêu hủy VÀ
+                    (
+                        !si.ExpiryDate.HasValue || // Không có ngày hết hạn HOẶC
+                        si.ExpiryDate.Value >= minimumExpiryDate // Chưa hết hạn
+                    )
+                )
                 .Sum(si => si.RemainQuantity) ?? 0;
         }
     }
@@ -526,9 +476,6 @@ public partial class Medicine : BaseViewModel
         public decimal? SellPrice => StockIn.SellPrice;
         public DateTime? ImportDate => StockIn.ImportDate;
         public DateOnly? ExpiryDate => StockIn.ExpiryDate;
-
-        // Add this property to check if stock is available (more than 0)
-        public bool HasAvailableStock => RemainingQuantity > 0;
 
         public bool IsExpired => StockIn.ExpiryDate.HasValue &&
                                StockIn.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.Today);
