@@ -14,14 +14,8 @@ namespace ClinicManagement.Models
         private int _quantity;
         private decimal _unitPrice;
 
-        /// <summary>
-        /// The medicine product
-        /// </summary>
         public Medicine Medicine { get; }
 
-        /// <summary>
-        /// Quantity of the medicine in the cart
-        /// </summary>
         public int Quantity
         {
             get => _quantity;
@@ -36,9 +30,7 @@ namespace ClinicManagement.Models
             }
         }
 
-        /// <summary>
-        /// Unit price of the medicine (used from the medicine's current sell price)
-        /// </summary>
+
         public decimal UnitPrice
         {
             get => _unitPrice;
@@ -53,9 +45,7 @@ namespace ClinicManagement.Models
             }
         }
 
-        /// <summary>
-        /// Total price for this line item (quantity * unit price)
-        /// </summary>
+
         public decimal LineTotal => Quantity * UnitPrice;
 
         /// <summary>

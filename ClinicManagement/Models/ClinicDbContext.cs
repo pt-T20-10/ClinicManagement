@@ -36,8 +36,6 @@ public partial class ClinicDbContext : DbContext
 
     public virtual DbSet<MedicineCategory> MedicineCategories { get; set; }
 
-    public virtual DbSet<Notification> Notifications { get; set; }
-
     public virtual DbSet<Patient> Patients { get; set; }
 
     public virtual DbSet<PatientType> PatientTypes { get; set; }
@@ -71,7 +69,6 @@ public partial class ClinicDbContext : DbContext
         modelBuilder.ApplyConfiguration(new MedicalRecordConfiguration());
         modelBuilder.ApplyConfiguration(new MedicineConfiguration());
         modelBuilder.ApplyConfiguration(new MedicineCategoryConfiguration());
-        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
         modelBuilder.ApplyConfiguration(new PatientConfiguration());
         modelBuilder.ApplyConfiguration(new PatientTypeConfiguration());
         modelBuilder.ApplyConfiguration(new StockConfiguration());

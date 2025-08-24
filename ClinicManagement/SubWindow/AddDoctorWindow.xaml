@@ -55,13 +55,13 @@
                                HorizontalAlignment="Center"
                                Margin="0,0,0,24"/>
                     <ComboBox 
-    Margin="0,0,0,16"
-    ItemsSource="{Binding RoleList}"
-    DisplayMemberPath="RoleName"
-    SelectedItem="{Binding SelectedRole}"
-    materialDesign:HintAssist.Hint="Vai trò *"
-    Style="{StaticResource MaterialDesignOutlinedComboBox}"
-    VerticalAlignment="Center"/>
+                        Margin="0,0,0,16"
+                        ItemsSource="{Binding RoleList}"
+                        DisplayMemberPath="RoleName"
+                        SelectedItem="{Binding SelectedRole}"
+                        materialDesign:HintAssist.Hint="Vai trò *"
+                        Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                        VerticalAlignment="Center"/>
 
                     <!-- Full Name -->
                     <StackPanel Margin="0,0,0,16">
@@ -131,11 +131,7 @@
                                  materialDesign:HintAssist.Hint="Tên đăng nhập"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
-
-                 
-                    <!-- Add informational text about default password: -->
                     <TextBlock 
-
                     Text="Tài khoản sẽ được tạo với mật khẩu mặc định là '1111'"
                     Foreground="Gray"
                     Margin="0,5,0,10"

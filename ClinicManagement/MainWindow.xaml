@@ -58,13 +58,12 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <!-- Nút chức năng -->
                 </Grid>
                 <!--#region Tab control-->
 
                 <TabControl Grid.Row="1"
                             Margin="0 10 0 0 "
-                         TabStripPlacement="Left"
+                            TabStripPlacement="Left"
                              SelectionChanged="MainTabControl_SelectionChanged"
                            x:Name="MainTabControl" Grid.RowSpan="2">
                     

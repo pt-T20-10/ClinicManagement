@@ -3,7 +3,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Đang xuất dữ liệu" 
-        Height="150" 
+        Height="120" 
         Width="350"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"

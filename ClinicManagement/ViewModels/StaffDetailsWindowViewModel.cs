@@ -159,9 +159,9 @@ namespace ClinicManagement.ViewModels
                     break;
 
                 case UserRoles.Manager:
-                    // Manager có quyền quản lý nhân viên nhưng hạn chế xóa
+               
                     CanEditStaff = true;
-                    CanDeleteStaff = true; // Manager có thể xóa nhưng với điều kiện
+                    CanDeleteStaff = true; 
                     CanCreateAccount = true;
                     CanResetPassword = true;
                     CanViewAppointments = true;
@@ -891,39 +891,102 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Validation cho định dạng lịch làm việc
-        /// Hỗ trợ nhiều định dạng phức tạp cho lịch làm việc
-        /// Ví dụ: "T2, T3, T4: 7h-13h", "T2-T7: 8h-17h", "T2: 8h-12h, 13h30-17h"
+        /// Xác thực định dạng lịch làm việc theo các mẫu được phép
+        /// Hỗ trợ các định dạng: "T2, T3, T4: 7h-13h", "T2-T7: 7h-11h", v.v.
         /// </summary>
-        /// <param name="schedule">Chuỗi lịch làm việc cần validate</param>
-        /// <returns>True nếu định dạng hợp lệ</returns>
+        /// <param name="schedule">Chuỗi lịch làm việc cần kiểm tra</param>
+        /// <returns>True nếu hợp lệ, False nếu không hợp lệ</returns>
         private bool IsValidScheduleFormat(string schedule)
         {
             if (string.IsNullOrWhiteSpace(schedule))
-                return true; // Lịch rỗng là hợp lệ (không bắt buộc)
+                return true; // Lịch làm việc trống là hợp lệ (không bắt buộc)
 
-            // Hỗ trợ nhiều pattern
-
-            // Pattern 1: "T2, T3, T4: 7h-13h"
+            // Các pattern regex để kiểm tra định dạng lịch làm việc
+            // Pattern 1: "T2, T3, T4: 7h-13h" (danh sách các ngày)
             string pattern1 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
 
-            // Pattern 2: "T2, T3, T4, T5, T6: 8h-12h, 13h30-17h"
-            string pattern2 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)*$";
+            // Pattern 2: "T2-T7: 7h-11h" (khoảng ngày)
+            string pattern2 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
 
-            // Pattern 3: "T2-T7: 7h-11h"
-            string pattern3 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?$";
+            // Pattern 3: "T2, T3, T4, T5,T6: 8h-12h, 13h30-17h" (nhiều ca làm việc)
+            string pattern3 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
 
-            // Kiểm tra xem có pattern nào match không
+            // Pattern 4: Khoảng ngày với nhiều ca
+            string pattern4 = @"^T[2-7]-T[2-7]: \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?(, \d{1,2}h(\d{1,2})?-\d{1,2}h(\d{1,2})?)+$";
+
+            // Pattern 5: Định dạng có phút cụ thể
+            string pattern5 = @"^(T[2-7]|CN)(, (T[2-7]|CN))*: \d{1,2}h\d{2}-\d{1,2}h\d{2}(, \d{1,2}h\d{2}-\d{1,2}h\d{2})*$";
+
+            // Kiểm tra xem có pattern nào khớp không
             if (Regex.IsMatch(schedule, pattern1) ||
                 Regex.IsMatch(schedule, pattern2) ||
-                Regex.IsMatch(schedule, pattern3))
+                Regex.IsMatch(schedule, pattern3) ||
+                Regex.IsMatch(schedule, pattern4) ||
+                Regex.IsMatch(schedule, pattern5))
             {
-                return true;
+                try
+                {
+                    // Phân tích và kiểm tra tính logic của các khoảng thời gian
+                    string[] parts = schedule.Split(':');
+                    if (parts.Length < 2)
+                        return false;
+
+                    // Lấy phần thời gian sau dấu ':')
+                    string timeSection = string.Join(":", parts.Skip(1)).Trim();
+                    var timeRanges = timeSection.Split(',');
+
+                    // Kiểm tra từng khoảng thời gian
+                    foreach (var range in timeRanges)
+                    {
+                        var times = range.Trim().Split('-');
+                        if (times.Length == 2)
+                        {
+                            var start = ParseTimeString(times[0].Trim());
+                            var end = ParseTimeString(times[1].Trim());
+
+                            // Kiểm tra định dạng thời gian hợp lệ
+                            if (start == TimeSpan.Zero && end == TimeSpan.Zero)
+                                return false; // Định dạng thời gian không hợp lệ
+
+                            // Kiểm tra thời gian bắt đầu phải nhỏ hơn thời gian kết thúc
+                            if (start >= end)
+                                return false;
+                        }
+                    }
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
 
             return false;
         }
+        /// <summary>
+        /// Phân tích chuỗi thời gian thành TimeSpan
+        /// Hỗ trợ các định dạng: "8h", "8h30", "13h", "13h30", v.v.
+        /// </summary>
+        /// <param name="timeStr">Chuỗi thời gian cần phân tích</param>
+        /// <returns>TimeSpan tương ứng hoặc TimeSpan.Zero nếu không hợp lệ</returns>
+        private TimeSpan ParseTimeString(string timeStr)
+        {
+            // Chuyển đổi định dạng "8h30" thành "8:30"
+            timeStr = timeStr.Replace("h", ":").Replace(" ", "");
+            if (timeStr.EndsWith(":")) timeStr += "00";
 
+            var parts = timeStr.Split(':');
+
+            // Xử lý định dạng "giờ:phút"
+            if (parts.Length == 2 && int.TryParse(parts[0], out int h) && int.TryParse(parts[1], out int m))
+                return new TimeSpan(h, m, 0);
+
+            // Xử lý định dạng chỉ có giờ
+            if (parts.Length == 1 && int.TryParse(parts[0], out h))
+                return new TimeSpan(h, 0, 0);
+
+            return TimeSpan.Zero;
+        }
         /// <summary>
         /// Validation cho URL
         /// Kiểm tra xem chuỗi có phải là URL hợp lệ không

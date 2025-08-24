@@ -371,16 +371,16 @@ namespace ClinicManagement.ViewModels
         #endregion
 
         #region Constructors
-        // Constructor for manual patient entry
+ 
         public ExamineViewModel()
         {
             InitializeCommands();
 
-            // Get the current logged-in account
+  
             var mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
             if (mainViewModel?.CurrentAccount != null)
             {
-                // Load the staff information for the current account
+     
                 using (var context = new ClinicDbContext())
                 {
                     CurrentStaff = context.Staffs
@@ -393,16 +393,16 @@ namespace ClinicManagement.ViewModels
             LoadAppointmentTypes();
         }
 
-        // Constructor for starting examination from an appointment
+  
         public ExamineViewModel(Patient patient, Appointment appointment = null)
         {
             InitializeCommands();
 
-            // Get the current logged-in account
+      
             var mainViewModel = Application.Current.Resources["MainVM"] as MainViewModel;
             if (mainViewModel?.CurrentAccount != null)
             {
-                // Load the staff information for the current account
+          
                 using (var context = new ClinicDbContext())
                 {
                     CurrentStaff = context.Staffs
@@ -417,15 +417,13 @@ namespace ClinicManagement.ViewModels
             PatienName = patient?.FullName;
             Phone = patient?.Phone;
 
-            // If an appointment is provided, set it as related and change its status
             if (appointment != null)
             {
                 RelatedAppointment = appointment;
 
-                // For appointments, prioritize the appointment's doctor over current user
                 SelectedDoctor = appointment.Staff;
 
-                // Update appointment status to "Đang khám"
+      
                 UpdateAppointmentStatus(appointment, "Đang khám");
             }
         }
@@ -445,7 +443,7 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
 
-            // Add this new command
+   
             SearchPatientCommand = new RelayCommand<object>(
                 (p) => SearchPatientExplicit(),
                 (p) => true
@@ -453,23 +451,23 @@ namespace ClinicManagement.ViewModels
             AddPatientCommand = new RelayCommand<object>(
                 (p) =>
                 {
-                    // Open a new window to add a new patient
+               
                     var addPatientWindow = new AddPatientWindow();
                     var viewModel = new AddPatientViewModel();
                     addPatientWindow.DataContext = viewModel;
 
                     addPatientWindow.ShowDialog();
 
-                    // After window closes, check if a new patient was created
+               
                     if (viewModel.NewPatient != null)
                     {
-                        // Do something with the newly created patient
+                    
                         var createdPatient = viewModel.NewPatient;
                         SelectedPatient = createdPatient;
                         PatienName = createdPatient.FullName;
                         Phone = createdPatient.Phone;
-                        InsuranceCode = createdPatient.InsuranceCode; // Add this line
-                        // For example, select this patient in another view
+                        InsuranceCode = createdPatient.InsuranceCode;
+                  
                     }
     
 
@@ -599,48 +597,47 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // First, make sure we get all doctors regardless of specialty
-                // This ensures we don't accidentally filter out the current doctor
+          
                 var staffs = DataProvider.Instance.Context.Staffs
-                    .Where(d => d.IsDeleted != true && d.Role.RoleName.Contains("Bác sĩ"))
+                    .Where(d => d.IsDeleted != true && d.RoleId == 1)
                     .OrderBy(d => d.FullName)
                     .ToList();
 
                 DoctorList = new ObservableCollection<Staff>(staffs);
 
-                // If current user is a doctor, select them automatically
+            
                 if (CurrentStaff != null && CurrentStaff.Role?.RoleName?.Contains("Bác sĩ") == true)
                 {
-                    // Find the doctor in the list by StaffId
+         
                     var currentDoctor = DoctorList.FirstOrDefault(d => d.StaffId == CurrentStaff.StaffId);
 
-                    // If the current doctor isn't in the list (which shouldn't happen, but just in case)
+              
                     if (currentDoctor == null)
                     {
-                        // Add the current doctor to the list
+           
                         DoctorList.Add(CurrentStaff);
-                        SelectedDoctor = CurrentStaff; // Select the doctor we just added
+                        SelectedDoctor = CurrentStaff; 
                     }
                     else
                     {
-                        SelectedDoctor = currentDoctor; // Select the existing doctor in the list
+                        SelectedDoctor = currentDoctor; 
                     }
 
-                    // Make sure to disable doctor selection for doctor users
+         
                     IsDoctorSelectionEnabled = false;
 
-                    // Force UI to update with the selected doctor
+    
                     OnPropertyChanged(nameof(SelectedDoctor));
                 }
                 else
                 {
-                    // For admin users, select first doctor by default if available and none is selected
+                
                     if (DoctorList.Count > 0 && SelectedDoctor == null)
                     {
                         SelectedDoctor = DoctorList.First();
                     }
 
-                    // Admin can select any doctor
+           
                     IsDoctorSelectionEnabled = true;
                 }
             }
@@ -655,7 +652,7 @@ namespace ClinicManagement.ViewModels
 
         private void SearchPatient()
         {
-            // Only auto-search when both name and phone have sufficient characters
+
             if (string.IsNullOrWhiteSpace(PatienName) || PatienName.Length < 2 ||
                 string.IsNullOrWhiteSpace(Phone) || Phone.Length < 5)
             {
@@ -677,7 +674,7 @@ namespace ClinicManagement.ViewModels
                     SelectedPatient = patient;
                     InsuranceCode = patient.InsuranceCode;
 
-                    // Check if there's a pending appointment for this patient
+
                     var pendingAppointment = DataProvider.Instance.Context.Appointments
                         .Include(a => a.Staff)
                         .FirstOrDefault(a => a.PatientId == patient.PatientId &&
@@ -690,7 +687,7 @@ namespace ClinicManagement.ViewModels
                         RelatedAppointment = pendingAppointment;
                         SelectedDoctor = pendingAppointment.Staff;
 
-                        // Ask if the user wants to proceed with this appointment
+              
                          bool  result = MessageBoxService.ShowInfo(
                             $"Tìm thấy lịch hẹn đang chờ của bệnh nhân {patient.FullName} với bác sĩ {pendingAppointment.Staff.FullName}.\n" +
                             $"Bạn có muốn tiến hành khám với lịch hẹn này không?",
@@ -869,31 +866,30 @@ namespace ClinicManagement.ViewModels
         {
             List<string> vitalSigns = new List<string>();
 
-            // Add pulse if available
+   
             if (!string.IsNullOrWhiteSpace(Pulse) && int.TryParse(Pulse, out _))
             {
                 vitalSigns.Add($"Mạch: {Pulse} lần/ph");
             }
 
-            // Add respiration if available
+           
             if (!string.IsNullOrWhiteSpace(Respiration) && int.TryParse(Respiration, out _))
             {
                 vitalSigns.Add($"Nhịp thở: {Respiration} lần/ph");
             }
 
-            // Add temperature if available
+         
             if (!string.IsNullOrWhiteSpace(Temperature) && decimal.TryParse(Temperature, out _))
             {
                 vitalSigns.Add($"Nhiệt độ: {Temperature}°C");
             }
 
-            // Add weight if available
             if (!string.IsNullOrWhiteSpace(Weight) && decimal.TryParse(Weight, out _))
             {
                 vitalSigns.Add($"Cân nặng: {Weight}kg");
             }
 
-            // Add blood pressure if available
+          
             if (!string.IsNullOrWhiteSpace(SystolicPressure) || !string.IsNullOrWhiteSpace(DiastolicPressure))
             {
                 string bloodPressure = CombineBloodPressure(SystolicPressure, DiastolicPressure);
@@ -903,24 +899,20 @@ namespace ClinicManagement.ViewModels
                 }
             }
 
-            // Join all vital signs with commas
+       
             return vitalSigns.Count > 0 ? string.Join(", ", vitalSigns) + "." : "";
         }
 
         private void ResetForm()
         {
-            // Always reset patient information after saving a record
+            
             SelectedPatient = null;
             PatienName = string.Empty;
             Phone = string.Empty;
             InsuranceCode = string.Empty;
 
-            // Reset appointment reference
             RelatedAppointment = null;
 
-           
-
-            // Reset examination details
             RecordDate = DateTime.Today;
             Pulse = string.Empty;
             Respiration = string.Empty;
@@ -933,7 +925,6 @@ namespace ClinicManagement.ViewModels
             TestResults = string.Empty;
             Prescription = string.Empty;
 
-            // Reset validation state
             _touchedFields.Clear();
             _isValidating = false;
         }
@@ -1001,7 +992,7 @@ namespace ClinicManagement.ViewModels
 
                 AppointmentTypeList = new ObservableCollection<AppointmentType>(appointmentTypes);
 
-                // Set default appointment type if available
+
                 if (AppointmentTypeList.Count > 0 && SelectedAppointmentType == null)
                 {
                     SelectedAppointmentType = AppointmentTypeList.First();
@@ -1018,29 +1009,6 @@ namespace ClinicManagement.ViewModels
         }
         #endregion
 
-        #region Helper Methods
-        private int? ParseNullableInt(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            if (int.TryParse(value, out int result))
-                return result;
-
-            return null;
-        }
-
-        private decimal? ParseNullableDecimal(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            if (decimal.TryParse(value, out decimal result))
-                return result;
-
-            return null;
-        }
-
         private string CombineBloodPressure(string systolic, string diastolic)
         {
             if (string.IsNullOrWhiteSpace(systolic) && string.IsNullOrWhiteSpace(diastolic))
@@ -1048,14 +1016,14 @@ namespace ClinicManagement.ViewModels
 
             return $"{systolic ?? "?"}/{diastolic ?? "?"} mmHg";
         }
-        #endregion
+
 
         #region Validation
         public string this[string columnName]
         {
             get
             {
-                // Don't validate until user has interacted with the field
+              
                 if (!_isValidating && !_touchedFields.Contains(columnName))
                     return null;
 

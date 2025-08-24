@@ -501,30 +501,34 @@
 
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Ngày" 
-                              Width="120" 
-                              Binding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}"
-                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                                  Width="120" 
+                                                  Binding="{Binding AppointmentDate, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                                  ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Giờ" 
-                              Width="120" 
-                              Binding="{Binding AppointmentTimeString}"
-                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                                  Width="120" 
+                                                  Binding="{Binding AppointmentTimeString}"
+                                                  ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Bệnh nhân" 
-                              Width="180" 
-                              Binding="{Binding PatientName}"
-                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                                  Width="180" 
+                                                  Binding="{Binding PatientName}"
+                                                  ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="SĐT" 
-                              Width="130"
-                              Binding="{Binding OriginalAppointment.Patient.Phone, FallbackValue=N/A}"
-                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                                  Width="130"
+                                                  Binding="{Binding OriginalAppointment.Patient.Phone, FallbackValue=N/A}"
+                                                  ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Bác sĩ" 
-                              Width="190"
-                              Binding="{Binding OriginalAppointment.Staff.FullName, FallbackValue=N/A}"
-                              ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                                      Width="190"
+                                                      Binding="{Binding OriginalAppointment.Staff.FullName, FallbackValue=N/A}"
+                                                      ElementStyle="{StaticResource CenteredCellStyle}"/>
                                         <DataGridTextColumn Header="Phân loại" 
-                              Width="130"
-                              Binding="{Binding OriginalAppointment.AppointmentType.TypeName, FallbackValue=N/A}"
-                              ElementStyle="{StaticResource CenteredCellStyle}"/>
-                                        <DataGridTemplateColumn Header="Trạng thái" Width="150">
+                                                      Width="130"
+                                                      Binding="{Binding OriginalAppointment.AppointmentType.TypeName, FallbackValue=N/A}"
+                                                      ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                            <DataGridTextColumn Header="Ghi chú" 
+                                                    Width="250"
+                                                    Binding="{Binding OriginalAppointment.Notes, FallbackValue=N/A}"
+                                                    ElementStyle="{StaticResource CenteredCellStyle}"/>
+                                            <DataGridTemplateColumn Header="Trạng thái" Width="150">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Border CornerRadius="6" Padding="10,5">

@@ -324,8 +324,11 @@ namespace ClinicManagement.ViewModels
                         {
                             error = "Họ tên phải có ít nhất 2 ký tự";
                         }
+                        else if (!Regex.IsMatch(FullName, @"^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$"))
+                        {
+                            error = "Tên bệnh nhân chỉ được chứa chữ cái và khoảng trắng";
+                        }
                         break;
-
                     case nameof(Phone):
                         // Chỉ validate nếu người dùng đã nhập gì đó
                         if (_touchedFields.Contains(columnName) && string.IsNullOrWhiteSpace(Phone))
@@ -348,7 +351,6 @@ namespace ClinicManagement.ViewModels
                             error = "Email không đúng định dạng";
                         }
                         break;
-
                     case nameof(BirthDate):
                         // Kiểm tra ngày sinh không được lớn hơn ngày hiện tại
                         if (_birthDate.HasValue && _birthDate.Value > DateTime.Now)
@@ -398,14 +400,13 @@ namespace ClinicManagement.ViewModels
         private void LoadPatientTypes()
         {
             PatientTypeList = new ObservableCollection<PatientType>(
-                DataProvider.Instance.Context.PatientTypes
-                .Where(pt => pt.IsDeleted != true)
-                .ToList()
-            );
+                                DataProvider.Instance.Context.PatientTypes
+                                .Where(pt => pt.IsDeleted != true)
+                                .ToList()
+                );
 
-            // Mặc định chọn loại bệnh nhân "Thường"
             SelectedPatientType = PatientTypeList.FirstOrDefault(pt =>
-                pt.TypeName?.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase) == true);
+                                  pt.TypeName.Trim().Equals("Thường", StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -446,6 +447,7 @@ namespace ClinicManagement.ViewModels
                     );
                     return;
                 }
+
                 bool result = MessageBoxService.ShowQuestion(
                     "Bạn có chắc chắn muốn thêm bệnh nhân mới không?",
                     "Xác nhận thêm bệnh nhân"
@@ -538,6 +540,7 @@ namespace ClinicManagement.ViewModels
                     }
                     catch (Exception ex)
                     {
+                
                         // Rollback transaction nếu có bất kỳ lỗi nào
                         transaction.Rollback();
 

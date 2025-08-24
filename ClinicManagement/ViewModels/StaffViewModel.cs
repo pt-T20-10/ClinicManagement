@@ -1093,7 +1093,7 @@ namespace ClinicManagement.ViewModels
 
                 // Xác nhận từ người dùng trước khi sửa chuyên khoa
                 bool result = MessageBoxService.ShowQuestion(
-                    $"Bạn có chắc muốn sửa chuyên khoa '{SelectedItem.SpecialtyName}' thành '{SpecialtyName}' không?",
+                    $"Bạn có chắc muốn sửa chuyên khoa '{SelectedItem.SpecialtyName}'không?",
                     "Xác Nhận Sửa");
 
                 if (!result)
@@ -1183,18 +1183,6 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // Kiểm tra chuyên khoa có đang được sử dụng bởi nhân viên nào không
-                bool isInUse = DataProvider.Instance.Context.Staffs
-                    .Any(d => d.SpecialtyId == SelectedItem.SpecialtyId && (bool)!d.IsDeleted);
-
-                if (isInUse)
-                {
-                    MessageBoxService.ShowError(
-                        "Không thể xóa chuyên khoa này vì đang được sử dụng bởi một hoặc nhiều bác sĩ.",
-                        "Ràng buộc dữ liệu");
-                    return;
-                }
-
                 // Xác nhận từ người dùng trước khi xóa chuyên khoa
                 bool result = MessageBoxService.ShowQuestion(
                     $"Bạn có chắc muốn xóa chuyên khoa '{SelectedItem.SpecialtyName}' không?",

@@ -519,19 +519,6 @@ namespace ClinicManagement.ViewModels
                 LoadData();
             }
         }
-
-        /// <summary>
-        /// Constructor với Invoice - Luôn khởi tạo dữ liệu ngay lập tức
-        /// Sử dụng khi chỉnh sửa hóa đơn có sẵn
-        /// </summary>
-        /// <param name="invoice">Hóa đơn cần chỉnh sửa</param>
-        public MedicineSellViewModel(Invoice invoice)
-        {
-            InitializeCommands();
-            IsInitialized = true;
-            LoadData();
-            CurrentInvoice = invoice;
-        }
         #endregion
 
         /// <summary>
@@ -788,10 +775,6 @@ namespace ClinicManagement.ViewModels
                 {
                     MessageBoxService.ShowError($"Không thể tải danh sách loại thuốc: {ex.Message}", "Lỗi");
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"LoadCategories Error: {ex.Message}");
-                }
             }
         }
 
@@ -825,7 +808,7 @@ namespace ClinicManagement.ViewModels
                 // Thêm các item từ hóa đơn vào giỏ
                 foreach (var detail in invoiceWithDetails.InvoiceDetails.Where(d => d.MedicineId.HasValue))
                 {
-                    // Tải thông tin thuốc đầy đủ với dữ liệu RemainQuantity mới nhất
+                    // Tải thông tin thuốc đầy đủ
                     var medicine = DataProvider.Instance.Context.Medicines
                         .Include(m => m.StockIns)
                         .FirstOrDefault(m => m.MedicineId == detail.MedicineId);
@@ -918,7 +901,7 @@ namespace ClinicManagement.ViewModels
 
             try
             {
-                // Đảm bảo có thông tin tồn kho mới nhất với giá trị RemainQuantity fresh
+                // Đảm bảo có thông tin tồn kho mới nhất
                 var context = DataProvider.Instance.Context;
                 var refreshedMedicine = context.Medicines
                     .Include(m => m.StockIns)
@@ -1189,34 +1172,7 @@ namespace ClinicManagement.ViewModels
 
                     if (patient == null)
                     {
-                        var query = DataProvider.Instance.Context.Patients
-                            .Include(p => p.PatientType)
-                            .Where(p => p.IsDeleted != true);
-
-                        if (!string.IsNullOrWhiteSpace(Phone))
-                        {
-                            patient = query.FirstOrDefault(p => p.Phone == Phone.Trim());
-                        }
-
-                        if (patient == null && !string.IsNullOrWhiteSpace(PatientName))
-                        {
-                            patient = query.FirstOrDefault(p => p.FullName == PatientName.Trim());
-                        }
-
-                        // Nếu vẫn không tìm thấy, hỏi người dùng có muốn tạo mới không
-                        if (patient == null)
-                        {
-                            bool createNew = MessageBoxService.ShowQuestion(
-                                "Không tìm thấy thông tin bệnh nhân. Bạn có muốn thêm bệnh nhân mới không?",
-                                "Thêm bệnh nhân mới"
-                            );
-
-                            if (createNew)
-                            {
-                                AddNewPatient();
-                                patient = SelectedPatient;
-                            }
-                        }
+                        FindPatient();
                     }
                 }
 
@@ -1288,7 +1244,6 @@ namespace ClinicManagement.ViewModels
                         // 3. Thêm chi tiết hóa đơn và xác định StockInId từ lô đang bán
                         foreach (var item in CartItems)
                         {
-                            // Tải thông tin thuốc đầy đủ với dữ liệu RemainQuantity mới nhất
                             var medicine = context.Medicines
                                 .Include(m => m.StockIns)
                                 .FirstOrDefault(m => m.MedicineId == item.Medicine.MedicineId);

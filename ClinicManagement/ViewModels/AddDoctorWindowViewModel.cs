@@ -257,9 +257,6 @@ namespace ClinicManagement.ViewModels
 
         #endregion
 
-        // Ví dụ định dạng lịch làm việc để hướng dẫn người dùng
-        public string ScheduleFormatExample => "Ví dụ: T2, T3, T4: 7h-13h";
-
         #region Commands - Các lệnh xử lý sự kiện
 
         public ICommand LoadedWindowCommand { get; private set; }  // Lệnh khi cửa sổ được tải
@@ -309,6 +306,10 @@ namespace ClinicManagement.ViewModels
                         else if (!string.IsNullOrWhiteSpace(FullName) && FullName.Trim().Length < 2)
                         {
                             error = "Họ và tên phải có ít nhất 2 ký tự";
+                        }
+                        else if (!Regex.IsMatch(FullName, @"^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$"))
+                        {
+                            error = "Tên nhân viên chỉ được chứa chữ cái và khoảng trắng";
                         }
                         break;
 
@@ -682,7 +683,7 @@ namespace ClinicManagement.ViewModels
                         }
 
                         MessageBoxService.ShowSuccess(
-                            $"Đã thêm {(SelectedRole.RoleName == "Bác sĩ" ? "bác sĩ" : "nhân viên")} thành công!",
+                            $"Đã thêm {SelectedRole.RoleName} thành công!",
                             "Thành Công");
 
                         // Đóng cửa sổ

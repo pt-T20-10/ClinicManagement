@@ -27,7 +27,5 @@ public partial class Appointment
 
     public virtual Staff? Staff { get; set; } = null!;  // Change to nullable Staff
 
-    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-
     public virtual Patient Patient { get; set; } = null!;
 }

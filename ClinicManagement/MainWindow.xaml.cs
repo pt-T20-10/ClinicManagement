@@ -30,11 +30,11 @@ namespace ClinicManagement
         {
             if (e.AddedItems.Count > 0 && e.AddedItems[0] is TabItem selectedTab)
             {
-                // Get the MainViewModel
+                
                 var mainVM = Application.Current.Resources["MainVM"] as MainViewModel;
                 if (mainVM != null && mainVM.TabSelectedCommand != null && selectedTab.Name != null)
                 {
-                    // Execute the command with the tab name
+                    
                     mainVM.TabSelectedCommand.Execute(selectedTab.Name);
                 }
             }

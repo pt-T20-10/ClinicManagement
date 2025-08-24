@@ -204,40 +204,7 @@ namespace ClinicManagement.ViewModels
 
         // === THỐNG KÊ DOANH THU TỔNG QUAN ===
 
-        /// <summary>
-        /// Tổng doanh thu trong khoảng thời gian được chọn
-        /// Tự động cập nhật phần trăm hoàn thành mục tiêu khi thay đổi
-        /// </summary>
-        private decimal _totalRevenue;
-        public decimal TotalRevenue
-        {
-            get => _totalRevenue;
-            set
-            {
-                _totalRevenue = value;
-                OnPropertyChanged();
-                // Cập nhật phần trăm hoàn thành mục tiêu doanh thu khi tổng doanh thu thay đổi
-                RevenuePercentage = RevenueTarget > 0 ? (double)((TotalRevenue / RevenueTarget) * 100) : 0;
-            }
-        }
-
-        /// <summary>
-        /// Mục tiêu doanh thu đã đặt ra
-        /// Mặc định là 600,000 (VND)
-        /// </summary>
-        private decimal _revenueTarget = 600000;
-        public decimal RevenueTarget
-        {
-            get => _revenueTarget;
-            set
-            {
-                _revenueTarget = value;
-                OnPropertyChanged();
-                // Cập nhật phần trăm hoàn thành mục tiêu khi mục tiêu thay đổi
-                RevenuePercentage = RevenueTarget > 0 ? (double)((TotalRevenue / RevenueTarget) * 100) : 0;
-            }
-        }
-
+    
         /// <summary>
         /// Phần trăm hoàn thành mục tiêu doanh thu
         /// Được tính tự động dựa trên TotalRevenue và RevenueTarget
@@ -255,22 +222,6 @@ namespace ClinicManagement.ViewModels
                 }
             }
         }
-
-        /// <summary>
-        /// Tỷ lệ tăng trưởng doanh thu so với kỳ trước (dạng chuỗi)
-        /// Ví dụ: "+25%" hoặc "-10%"
-        /// </summary>
-        private string _revenueGrowth;
-        public string RevenueGrowth
-        {
-            get => _revenueGrowth;
-            set
-            {
-                _revenueGrowth = value;
-                OnPropertyChanged();
-            }
-        }
-
         // === THỐNG KÊ BỆNH NHÂN CHI TIẾT ===
 
         /// <summary>
@@ -425,20 +376,7 @@ namespace ClinicManagement.ViewModels
 
         // === BIỂU ĐỒ DOANH THU THEO THỜI GIAN ===
 
-        /// <summary>
-        /// Dữ liệu biểu đồ doanh thu theo tháng
-        /// Hiển thị xu hướng doanh thu qua các tháng trong năm
-        /// </summary>
-        private SeriesCollection _revenueByMonthSeries;
-        public SeriesCollection RevenueByMonthSeries
-        {
-            get => _revenueByMonthSeries;
-            set
-            {
-                _revenueByMonthSeries = value;
-                OnPropertyChanged();
-            }
-        }
+
 
         /// <summary>
         /// Nhãn thời gian cho biểu đồ doanh thu
@@ -798,7 +736,7 @@ namespace ClinicManagement.ViewModels
         }
 
         /// <summary>
-        /// Danh sách top bệnh nhân VIP theo tổng chi tiêu trong khoảng thời gian được chọn
+        /// Danh sách top bệnh nhân theo tổng chi tiêu trong khoảng thời gian được chọn
         /// Chứa thông tin ID, họ tên, số điện thoại, loại bệnh nhân và tổng chi tiêu
         /// Được sắp xếp theo tổng chi tiêu giảm dần, lấy top 10 bệnh nhân
         /// Hiển thị trong bảng "Bệnh nhân VIP" để nhận biết khách hàng quan trọng
@@ -819,7 +757,7 @@ namespace ClinicManagement.ViewModels
         /// Danh sách cảnh báo về thuốc cần chú ý trong kho
         /// Bao gồm các loại cảnh báo:
         /// - Thuốc đã hết hạn nhưng chưa được tiêu hủy (ưu tiên cao nhất)
-        /// - Thuốc sắp hết hạn (trong vòng 30 ngày)
+        /// - Thuốc sắp hết hạn (trong vòng 60 ngày)
         /// - Thuốc tồn kho thấp (≤ 20 đơn vị)
         /// - Lô thuốc cuối cùng (chỉ còn 1 lô)
         /// - Lỗi cấu hình (lô bán bị đánh dấu tiêu hủy)
@@ -1073,28 +1011,7 @@ namespace ClinicManagement.ViewModels
         /// </summary>
         public void InitializeCharts()
         {
-            // === BIỂU ĐỒ DOANH THU THEO THÁNG ===
-            /// Khởi tạo biểu đồ doanh thu thực tế vs mục tiêu theo 12 tháng
-            /// Sử dụng ColumnSeries cho doanh thu thực tế và LineSeries cho mục tiêu
-            RevenueByMonthSeries = new SeriesCollection
-            {
-                new ColumnSeries
-                {
-                    Title = "Thực tế",
-                    Values = new ChartValues<double>(new double[12]), // Khởi tạo 12 tháng với giá trị 0
-                    Fill = new SolidColorBrush(Color.FromRgb(33, 150, 243)), // Màu xanh dương Material Design
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng hiển thị tiền tệ VN
-                },
-                new LineSeries
-                {
-                    Title = "Mục tiêu",
-                    Values = new ChartValues<double>(new double[12]), // Khởi tạo 12 tháng với giá trị mục tiêu
-                    PointGeometry = DefaultGeometries.Circle, // Hiển thị điểm tròn trên đường
-                    StrokeThickness = 3, // Độ dày đường vẽ
-                    Stroke = new SolidColorBrush(Color.FromRgb(255, 82, 82)), // Màu đỏ cho mục tiêu
-                    LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y) // Định dạng tiền tệ
-                }
-            };
+    
 
             // === BIỂU ĐỒ DOANH THU THEO GIỜ ===
             /// Biểu đồ cột hiển thị doanh thu theo 24 giờ trong ngày
@@ -1328,7 +1245,7 @@ namespace ClinicManagement.ViewModels
                         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking; // Tối ưu hiệu suất
 
                         // Tải các biểu đồ doanh thu
-                        LoadRevenueByMonthChart(context);      // Doanh thu theo tháng
+                       
                         LoadRevenueByHourChart(context);       // Doanh thu theo giờ
                         LoadProductDistributionChart(context); // Phân bố sản phẩm
                         LoadTopRevenueDaysChart(context);      // Top ngày doanh thu cao
@@ -1532,7 +1449,6 @@ namespace ClinicManagement.ViewModels
                     AppointmentPercentage = appointmentPercentage;
                     TodayRevenue = todayRevenue;
                     MonthRevenue = monthRevenue;
-                    TotalRevenue = totalRevenue;
                     NewPatients = newPatientsCount;
                     TotalPatients = totalPatientsCount;
                     TotalAppointments = totalAppointmentsCount;
@@ -1547,72 +1463,6 @@ namespace ClinicManagement.ViewModels
                 {
                     MessageBoxService.ShowError($"Lỗi khi tải thống kê cơ bản: {ex.Message}", "Lỗi");
                 });
-            }
-        }
-
-        /// <summary>
-        /// Tải dữ liệu biểu đồ doanh thu theo 12 tháng trong năm
-        /// So sánh doanh thu thực tế với mục tiêu đã đặt ra
-        /// Sử dụng ColumnSeries cho thực tế và LineSeries cho mục tiêu
-        /// </summary>
-        /// <param name="context">DbContext để truy xuất dữ liệu hóa đơn</param>
-        private void LoadRevenueByMonthChart(ClinicDbContext context)
-        {
-            try
-            {
-                var currentYear = DateTime.Now.Year;
-                var monthlyRevenue = new double[12];  // Mảng 12 tháng (index 0-11)
-
-                /// Mục tiêu doanh thu cho từng tháng (có thể điều chỉnh theo chiến lược kinh doanh)
-                var monthlyTarget = new double[12] { 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000 };
-
-                // === TẢI VÀ XỬ LÝ DỮ LIỆU HÓA ĐƠN ===
-                /// Lấy tất cả hóa đơn đã thanh toán trong năm hiện tại
-                var invoices = context.Invoices
-                    .Where(i => i.InvoiceDate.HasValue &&
-                           i.InvoiceDate.Value.Year == currentYear &&
-                           i.Status == "Đã thanh toán")
-                    .ToList();
-
-                /// Nhóm doanh thu theo từng tháng
-                foreach (var invoice in invoices)
-                {
-                    if (invoice.InvoiceDate.HasValue)
-                    {
-                        int month = invoice.InvoiceDate.Value.Month - 1; // Chuyển về 0-based index
-                        monthlyRevenue[month] += (double)invoice.TotalAmount;
-                    }
-                }
-
-                // === CẬP NHẬT DỮ LIỆU BIỂU ĐỒ ===
-                /// Kiểm tra biểu đồ đã được khởi tạo và có đủ 2 series (thực tế + mục tiêu)
-                if (RevenueByMonthSeries?.Count >= 2)
-                {
-                    var actualSeries = RevenueByMonthSeries[0] as ColumnSeries;    // Series doanh thu thực tế
-                    var targetSeries = RevenueByMonthSeries[1] as LineSeries;      // Series mục tiêu
-
-                    /// Cập nhật dữ liệu doanh thu thực tế
-                    if (actualSeries?.Values is ChartValues<double> actualValues)
-                    {
-                        actualValues.Clear();
-                        actualValues.AddRange(monthlyRevenue);
-                        // Định dạng hiển thị tiền tệ Việt Nam
-                        actualSeries.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
-                    }
-
-                    /// Cập nhật dữ liệu mục tiêu
-                    if (targetSeries?.Values is ChartValues<double> targetValues)
-                    {
-                        targetValues.Clear();
-                        targetValues.AddRange(monthlyTarget);
-                        // Định dạng hiển thị tiền tệ Việt Nam
-                        targetSeries.LabelPoint = point => string.Format("{0:N0} VNĐ", point.Y);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi khi tải biểu đồ doanh thu theo tháng: {ex.Message}", "Lỗi");
             }
         }
 
@@ -1676,19 +1526,12 @@ namespace ClinicManagement.ViewModels
         {
             try
             {
-                // === LẤY DANH MỤC THUỐC ===
-                /// Giới hạn 5 danh mục để tránh biểu đồ quá phức tạp
-                var medicineCategories = context.MedicineCategories
-                    .Where(c => c.IsDeleted != true)
-                    .Take(5)
-                    .ToList();
-
                 // === LẤY CHI TIẾT HÓA ĐƠN THUỐC ===
                 /// Include các entity liên quan để tránh N+1 query problem
                 var invoiceDetails = context.InvoiceDetails
                     .Include(id => id.Invoice)
                     .Include(id => id.Medicine)
-                    .ThenInclude(m => m.Category)
+                        .ThenInclude(m => m.Category)
                     .Where(id => id.Invoice.InvoiceDate >= StartDate &&
                            id.Invoice.InvoiceDate <= EndDate &&
                            id.Invoice.Status == "Đã thanh toán" &&
@@ -1707,7 +1550,6 @@ namespace ClinicManagement.ViewModels
                         TotalSales = g.Sum(id => id.Quantity * id.SalePrice) ?? 0
                     })
                     .OrderByDescending(x => x.TotalSales)
-                    .Take(5) // Top 5 danh mục có doanh thu cao nhất
                     .ToList();
 
                 var totalSales = categorySales.Sum(c => c.TotalSales);
@@ -2036,8 +1878,6 @@ namespace ClinicManagement.ViewModels
 
         /// <summary>
         /// Tải biểu đồ phân loại bệnh nhân theo loại (VIP, thường, BHYT, v.v.)
-        /// Phân tích cơ cấu khách hàng để đưa ra chiến lược chăm sóc phù hợp
-        /// Sử dụng màu sắc khác nhau cho từng loại bệnh nhân
         /// </summary>
         /// <param name="context">DbContext để truy xuất dữ liệu bệnh nhân và loại bệnh nhân</param>
         private void LoadPatientTypeChart(ClinicDbContext context)
@@ -2311,7 +2151,7 @@ namespace ClinicManagement.ViewModels
             catch (Exception ex)
             {
                 /// Ghi log lỗi và thiết lập biểu đồ trống
-                System.Diagnostics.Debug.WriteLine($"Error loading patients by doctor chart: {ex.Message}");
+       
                 PatientsByStaffseries = new SeriesCollection();
                 DoctorLabels = new string[0];
             }
@@ -2481,7 +2321,7 @@ namespace ClinicManagement.ViewModels
 
                 // Điểm tham chiếu ngày hiện tại
                 var today = DateOnly.FromDateTime(DateTime.Today);
-                var thirtyDaysLater = today.AddDays(30);
+                var sixtyDaysLater = today.AddDays(60);
 
                 foreach (var medicine in medicines)
                 {
@@ -2518,7 +2358,7 @@ namespace ClinicManagement.ViewModels
                             break; // Ưu tiên cảnh báo tiêu hủy
                         }
                         // 2. Kiểm tra nếu là lô sắp hết hạn
-                        else if (stockIn.ExpiryDate.HasValue && stockIn.ExpiryDate.Value <= thirtyDaysLater)
+                        else if (stockIn.ExpiryDate.HasValue && stockIn.ExpiryDate.Value <= sixtyDaysLater)
                         {
                             int daysUntilExpiry = stockIn.ExpiryDate.Value.DayNumber - today.DayNumber;
                             warnings.Add(new WarningMedicine
@@ -2603,42 +2443,6 @@ namespace ClinicManagement.ViewModels
                 });
             }
         }
-
-
-        /// <summary>
-        /// Tính toán tỷ lệ tăng trưởng doanh thu và bệnh nhân mới giữa kỳ hiện tại và kỳ trước đó.
-        /// </summary>
-        /// <param name="context">Context cơ sở dữ liệu để truy xuất dữ liệu</param>
-        /// <remarks>
-        /// Phương thức này thực hiện các tính toán sau:
-        /// 1. Xác định khoảng thời gian của kỳ trước đó (có cùng độ dài với kỳ hiện tại)
-        /// 2. Tính toán doanh thu của cả hai kỳ từ các hóa đơn đã thanh toán
-        /// 3. Tính toán số lượng bệnh nhân mới trong cả hai kỳ
-        /// 4. Tính tỷ lệ tăng trưởng doanh thu và bệnh nhân dưới dạng phần trăm
-        /// 5. Định dạng kết quả với dấu +/- phù hợp và một chữ số thập phân
-        /// 
-        /// Các trường hợp đặc biệt:
-        /// - Kỳ trước có doanh thu bằng 0, kỳ này có doanh thu: hiển thị "+100.0%"
-        /// - Cả hai kỳ đều có doanh thu bằng 0: hiển thị "0.0%"
-        /// - Có lỗi trong quá trình tính toán: hiển thị "N/A"
-        /// </remarks>
-        /// <summary>
-        /// Tính toán tỷ lệ tăng trưởng doanh thu và bệnh nhân mới giữa kỳ hiện tại và kỳ trước đó.
-        /// </summary>
-        /// <param name="context">Context cơ sở dữ liệu để truy xuất dữ liệu</param>
-        /// <remarks>
-        /// Phương thức này thực hiện các tính toán sau:
-        /// 1. Xác định khoảng thời gian của kỳ trước đó (có cùng độ dài với kỳ hiện tại)
-        /// 2. Tính toán doanh thu của cả hai kỳ từ các hóa đơn đã thanh toán
-        /// 3. Tính toán số lượng bệnh nhân mới trong cả hai kỳ
-        /// 4. Tính tỷ lệ tăng trưởng doanh thu và bệnh nhân dưới dạng phần trăm
-        /// 5. Định dạng kết quả với dấu +/- phù hợp và một chữ số thập phân
-        /// 
-        /// Các trường hợp đặc biệt:
-        /// - Kỳ trước có doanh thu bằng 0, kỳ này có doanh thu: hiển thị "+100.0%"
-        /// - Cả hai kỳ đều có doanh thu bằng 0: hiển thị "0.0%"
-        /// - Có lỗi trong quá trình tính toán: hiển thị "N/A"
-        /// </remarks>
         private void CalculateGrowthRates(ClinicDbContext context)
         {
             try
@@ -2648,56 +2452,6 @@ namespace ClinicManagement.ViewModels
                 /// Ví dụ: nếu kỳ hiện tại là 10 ngày, kỳ trước cũng sẽ là 10 ngày
                 var previousPeriodStart = StartDate.AddDays(-(EndDate - StartDate).TotalDays);
                 var previousPeriodEnd = StartDate.AddDays(-1); // Kết thúc ngay trước kỳ hiện tại
-
-                // === LẤY DỮ LIỆU HÓA ĐƠN CHO CẢ HAI KỲ ===
-                /// Lấy hóa đơn đã thanh toán của kỳ hiện tại
-                var currentPeriodInvoices = context.Invoices
-                    .Where(i => i.InvoiceDate >= StartDate &&
-                           i.InvoiceDate <= EndDate &&
-                           i.Status == "Đã thanh toán")
-                    .ToList();
-
-                /// Lấy hóa đơn đã thanh toán của kỳ trước đó
-                var previousPeriodInvoices = context.Invoices
-                    .Where(i => i.InvoiceDate >= previousPeriodStart &&
-                           i.InvoiceDate <= previousPeriodEnd &&
-                           i.Status == "Đã thanh toán")
-                    .ToList();
-
-                // === TÍNH TOÁN DOANH THU CỦA CẢ HAI KỲ ===
-                /// Thực hiện tính toán trong memory để tránh lỗi LINQ translation
-                var currentRevenue = currentPeriodInvoices.Sum(i => i.TotalAmount);
-                var previousRevenue = previousPeriodInvoices.Sum(i => i.TotalAmount);
-
-                // === TÍNH TỶ LỆ TĂNG TRƯỞNG DOANH THU ===
-                /// Xử lý các trường hợp đặc biệt để tránh chia cho 0
-                if (previousRevenue > 0)
-                {
-                    /// Trường hợp bình thường: có doanh thu kỳ trước để so sánh
-                    var revenueGrowth = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
-
-                    // Định dạng với dấu + cho tăng trưởng dương và 1 chữ số thập phân
-                    if (revenueGrowth > 0)
-                        RevenueGrowth = $"+{revenueGrowth:0.0}%";
-                    else
-                        RevenueGrowth = $"{revenueGrowth:0.0}%";
-                }
-                else if (previousRevenue == 0 && currentRevenue > 0)
-                {
-                    /// Trường hợp đặc biệt: kỳ trước không có doanh thu, kỳ này có
-                    /// Coi như tăng trưởng 100%
-                    RevenueGrowth = "+100.0%";
-                }
-                else if (previousRevenue == 0 && currentRevenue == 0)
-                {
-                    /// Trường hợp cả hai kỳ đều không có doanh thu
-                    RevenueGrowth = "0.0%";
-                }
-                else
-                {
-                    /// Trường hợp không xác định được (lý thuyết không xảy ra)
-                    RevenueGrowth = "N/A";
-                }
 
                 // === TÍNH TỶ LỆ TĂNG TRƯỞNG BỆNH NHÂN MỚI ===
                 /// Đếm số bệnh nhân mới được tạo trong kỳ hiện tại
@@ -2718,7 +2472,7 @@ namespace ClinicManagement.ViewModels
                     /// Trường hợp bình thường: có bệnh nhân mới kỳ trước để so sánh
                     var patientGrowth = ((currentPeriodPatients - previousPeriodPatients) / (double)previousPeriodPatients) * 100;
 
-                    // Định dạng tương tự như RevenueGrowth
+                
                     if (patientGrowth > 0)
                         PatientGrowth = $"+{patientGrowth:0.0}%";
                     else
@@ -2745,7 +2499,7 @@ namespace ClinicManagement.ViewModels
                 // === XỬ LÝ LỖI ===
                 /// Ghi log lỗi và thiết lập giá trị mặc định
                 MessageBoxService.ShowError($"Lỗi khi tính toán tỷ lệ tăng trưởng: {ex.Message}", "Lỗi");
-                RevenueGrowth = "N/A";
+        
                 PatientGrowth = "N/A";
             }
         }
@@ -4282,7 +4036,7 @@ namespace ClinicManagement.ViewModels
         private int ExportTopVIPPatientsTableFromCopy(IXLWorksheet worksheet, int startRow, List<VIPPatient> patients)
         {
             // === THÊM TIÊU ĐỀ SECTION ===
-            worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN VIP (CHI TIÊU NHIỀU NHẤT)";
+            worksheet.Cell(startRow, 1).Value = "TOP BỆNH NHÂN CHI TIÊU NHIỀU NHẤT";
             var sectionTitleRange = worksheet.Range(startRow, 1, startRow, 5);
             sectionTitleRange.Merge();
             sectionTitleRange.Style.Font.Bold = true;
@@ -4309,6 +4063,7 @@ namespace ClinicManagement.ViewModels
                 foreach (var patient in patients)
                 {
                     worksheet.Cell(startRow, 1).Value = patient.Id;
+                    worksheet.Cell(startRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     worksheet.Cell(startRow, 2).Value = patient.FullName;
                     worksheet.Cell(startRow, 3).Value = patient.Phone;
                     worksheet.Cell(startRow, 4).Value = patient.TotalSpending;
@@ -4319,6 +4074,7 @@ namespace ClinicManagement.ViewModels
                 // === THÊM HÀNG TỔNG CỘNG ===
                 worksheet.Cell(startRow, 1).Value = "Tổng cộng";
                 worksheet.Cell(startRow, 1).Style.Font.Bold = true;
+           
                 worksheet.Cell(startRow, 4).Value = patients.Sum(p => p.TotalSpending);
                 worksheet.Cell(startRow, 4).Style.Font.Bold = true;
                 worksheet.Cell(startRow, 4).Style.NumberFormat.Format = "#,##0";
@@ -4629,9 +4385,7 @@ namespace ClinicManagement.ViewModels
         }
 #endregion
 
-
-
-#region Model Classes
+        #region Model Classes
 
 /// <summary>
 /// Lớp đại diện cho sản phẩm bán chạy nhất trong hệ thống

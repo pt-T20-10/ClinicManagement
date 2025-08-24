@@ -23,7 +23,6 @@ namespace ClinicManagement.ViewModels
     public class StockMedicineViewModel : BaseViewModel, IDataErrorInfo
     {
 
-
         #region Properties
 
         #region Validation 
@@ -63,17 +62,6 @@ namespace ClinicManagement.ViewModels
             /// Trường hợp nguy hiểm nhất cần ưu tiên xử lý
             /// True = Hiển thị cảnh báo đỏ trên UI
             /// </summary>
-            public bool ShowLastBatchExpiryWarning =>
-                Medicine?.IsLastestStockIn == true && Medicine?.HasNearExpiryStock == true;
-
-            /// <summary>
-            /// Cảnh báo khi thuốc đang sử dụng lô cuối cùng và số lượng thấp
-            /// Cần nhập thêm hàng ngay để tránh hết thuốc
-            /// True = Hiển thị cảnh báo cam trên UI (ngưỡng mặc định ≤ 10)
-            /// </summary>
-            public bool ShowLastBatchQuantityWarning =>
-                Medicine?.IsLastestStockIn == true &&
-                (Medicine?.TotalPhysicalStockQuantity ?? 0) <= 10; // Ngưỡng tồn kho thấp là 10 đơn vị
         }
 
         // === CÁC TRƯỜNG TRẠNG THÁI VÀ VALIDATION ===
@@ -257,11 +245,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        /// <summary>
-        /// Số lượng tạm thời để tính toán
-        /// Được sử dụng trong các thao tác tính toán số lượng trung gian
-        /// </summary>
-        public int TempQuantity { get; set; }
+ 
 
         /// <summary>
         /// Tổng số lượng thuốc hiển thị dưới dạng chuỗi
@@ -571,7 +555,7 @@ namespace ClinicManagement.ViewModels
             }
         }
 
-        // === CÁC THUỘC TÍNH TỔNG HỢP THEO CHȘTE ĐỘ XEM ===
+        // === CÁC THUỘC TÍNH TỔNG HỢP THEO CHẾ ĐỘ XEM ===
 
         /// <summary>
         /// Tổng số lượng tồn kho trong tháng được chọn
@@ -619,7 +603,7 @@ namespace ClinicManagement.ViewModels
             set
             {
                 _currentTotalQuantity = value;
-                OnPropertyChanged();
+  
                 OnPropertyChanged(nameof(TotalQuantity)); // Cập nhật computed property
             }
         }
@@ -636,7 +620,7 @@ namespace ClinicManagement.ViewModels
             set
             {
                 _currentTotalValue = value;
-                OnPropertyChanged();
+            
                 OnPropertyChanged(nameof(TotalValue)); // Cập nhật computed property
             }
         }
@@ -1723,8 +1707,6 @@ namespace ClinicManagement.ViewModels
             // Khởi tạo các lệnh và tải dữ liệu
             LoadData();
             InitializeCommands();
-
-        
         }
 
 
@@ -4685,7 +4667,7 @@ namespace ClinicManagement.ViewModels
                 {
                     try
                     {
-                      
+
 
                         // Chuyển đổi ngày hết hạn từ DateTime sang DateOnly
                         DateOnly? expiryDateOnly = null;
@@ -4840,10 +4822,17 @@ namespace ClinicManagement.ViewModels
                     {
                         // Hoàn tác transaction khi có lỗi
                         transaction.Rollback();
-                        throw new Exception("Lỗi khi lưu dữ liệu: " + ex.Message);
+                        MessageBoxService.ShowError(
+                           $"Đã xảy ra lỗi khi thêm dữ liệu: {ex.Message}",
+                           "Lỗi thêm dữ liệu"
+                       );
                     }
                 }
             }
+
+
+
+
             catch (Exception ex)
             {
                 MessageBoxService.ShowError(
@@ -4852,6 +4841,8 @@ namespace ClinicManagement.ViewModels
                 );
             }
         }
+
+
 
         /// <summary>
         /// Phương thức helper tạo thông báo mô tả sự khác biệt giữa thuốc hiện có và thuốc đang nhập

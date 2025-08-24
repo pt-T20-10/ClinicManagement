@@ -2,7 +2,6 @@
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -142,13 +141,6 @@ namespace ClinicManagement.ViewModels
         /// Cờ kiểm tra ứng dụng đã được tải chưa
         /// </summary>
         public bool Isloaded = false;
-
-        /// <summary>
-        /// Thông tin tổng kho thuốc (hiện chưa được sử dụng)
-        /// </summary>
-        public string _TotalStock;
-        public string TotalStock { get => _TotalStock; set { _TotalStock = value; OnPropertyChanged(); } }
-
         #endregion
 
         #region Commands - Các lệnh xử lý sự kiện
@@ -235,6 +227,7 @@ namespace ClinicManagement.ViewModels
                 (p) => true
             );
 
+
             // Command xử lý khi cửa sổ đóng
             WindowClosingCommand = new RelayCommand<CancelEventArgs>(
                 (e) =>
@@ -243,7 +236,7 @@ namespace ClinicManagement.ViewModels
                     if (CurrentAccount != null)
                     {
                         // Sử dụng MessageBoxService để hiển thị hộp thoại xác nhận
-                        bool result = ClinicManagement.Services.MessageBoxService.ShowQuestion(
+                        bool result = MessageBoxService.ShowQuestion(
                             "Bạn có chắc chắn muốn đăng xuất?",
                             "Xác nhận đăng xuất");
 
@@ -267,10 +260,12 @@ namespace ClinicManagement.ViewModels
             SignOutCommand = new RelayCommand<Window>(
                 (window) =>
                 {
-                    SignOut();
 
                     if (window == null)
                         return;
+
+                    SignOut();
+
 
                     // Ẩn cửa sổ và hiển thị màn hình đăng nhập
                     window.Hide();
@@ -282,11 +277,6 @@ namespace ClinicManagement.ViewModels
                     if (loginWindow.DataContext is LoginViewModel loginVM && loginVM.IsLogin)
                     {
                         window.Show();
-                        // Hiển thị thông báo chào mừng
-                        if (CurrentAccount != null)
-                        {
-                            MessageBoxService.ShowInfo($"Chào mừng {CurrentAccount.Username}!", "Thông báo đăng nhập thành công");
-                        }
                     }
                     else
                     {
@@ -308,7 +298,7 @@ namespace ClinicManagement.ViewModels
             );
 
             // Command thêm lịch hẹn - chuyển đến tab lịch hẹn
-            AddAppointmentCommand = new RelayCommand<System.Windows.Controls.TabControl>(
+            AddAppointmentCommand = new RelayCommand<TabControl>(
                 (tabControl) =>
                 {
                     if (tabControl != null)
@@ -345,43 +335,30 @@ namespace ClinicManagement.ViewModels
         /// </summary>
         public void SignOut()
         {
-            try
+         try
             {
-                // Đăng xuất người dùng khỏi hệ thống
-                if (CurrentAccount != null)
+                if(CurrentAccount != null)
                 {
-                    // Cập nhật trạng thái đăng nhập trong database nếu cần
-                    var accountToUpdate = DataProvider.Instance.Context.Accounts
-                        .FirstOrDefault(a => a.Username == CurrentAccount.Username);
-
-                    if (accountToUpdate != null)
-                    {
-                        accountToUpdate.IsLogined = false;
-                        DataProvider.Instance.Context.SaveChanges();
-                    }
-
-                    // Reset current account và danh sách tab được phép
                     CurrentAccount = null;
-                
 
-                    // Reset ViewModelLocator để các ViewModel được tạo mới khi đăng nhập lại
-                    var viewModelLocator = Application.Current.Resources["ViewModelLocator"] as ViewModelLocator;
-                    viewModelLocator?.Reset();
-                }
+                    var viewModelLacator = Application.Current.Resources["ViewModelLocator"] as ViewModelLocator;
+                    viewModelLacator?.Reset();
+                }    
             }
-            catch (Exception ex)
+         catch(Exception ex)
             {
                 MessageBoxService.ShowError(
-                     $"Lỗi khi đăng xuất: {ex.Message}",
-                     "Lỗi");
+                    $"Lỗi khi đăng xuất: {ex.Message}",
+                      "Lỗi");
             }
         }
+
         /// <summary>
         /// Đảm bảo tab được chọn là tab hợp lệ (người dùng có quyền truy cập)
         /// Nếu tab hiện tại không hợp lệ, chuyển sang tab đầu tiên được phép
         /// </summary>
         /// <param name="tabControl">TabControl cần kiểm tra</param>
-        public void EnsureValidTabSelected(System.Windows.Controls.TabControl tabControl)
+        public void EnsureValidTabSelected(TabControl tabControl)
         {
             if (tabControl == null)
                 return;
@@ -407,8 +384,6 @@ namespace ClinicManagement.ViewModels
             }
         }
         
-
-
         /// <summary>
         /// Phương thức helper kiểm tra xem một tab có được phép hiển thị không
         /// Dựa trên các thuộc tính boolean quyền truy cập
