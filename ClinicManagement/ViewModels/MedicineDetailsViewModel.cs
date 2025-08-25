@@ -98,7 +98,7 @@ namespace ClinicManagement.ViewModels
                 _medicine = value;
                 OnPropertyChanged();
                 // Chỉ tải dữ liệu ban đầu, không refresh liên tục
-                LoadInitialStockData();
+                RefreshMedicineData();
             }
         }
 
@@ -578,9 +578,6 @@ namespace ClinicManagement.ViewModels
                 parameter => _window.Close(),
                 parameter => true
             );
-
-        
-
             // Lệnh làm mới dữ liệu - chỉ khả dụng khi có thuốc
             RefreshDataCommand = new RelayCommand<object>(
                 parameter => RefreshMedicineData(),
@@ -658,82 +655,6 @@ namespace ClinicManagement.ViewModels
                 MessageBoxService.ShowError($"Lỗi khi tải thông tin liên quan: {ex.Message}", "Lỗi");
             }
         }
-
-        /// <summary>
-        /// Tải dữ liệu ban đầu khi Medicine được khởi tạo - Sử dụng RemainQuantity trực tiếp
-        /// </summary>
-        private void LoadInitialStockData()
-        {
-            try
-            {
-                if (Medicine != null)
-                {
-                    var context = DataProvider.Instance.Context;
-
-                    // Lấy thuốc đã refresh với tất cả các mối quan hệ cần thiết
-                    var refreshedMedicine = context.Medicines
-                        .Include(m => m.StockIns)
-                            .ThenInclude(si => si.Supplier)
-                        .Include(m => m.Category)
-                        .Include(m => m.Unit)
-                        .FirstOrDefault(m => m.MedicineId == Medicine.MedicineId);
-
-                    if (refreshedMedicine != null)
-                    {
-                        // Xóa cache để buộc tính toán lại
-                        refreshedMedicine._availableStockInsCache = null;
-
-                        // Tạo các entry cho StockIn trực tiếp từ RemainQuantity
-                        var allStockEntries = new List<Medicine.StockInWithRemaining>();
-                        var stockIns = refreshedMedicine.StockIns.OrderByDescending(si => si.ImportDate).ToList();
-
-                        foreach (var si in stockIns)
-                        {
-                            // Tạo instance StockInWithRemaining mới cho mỗi StockIn với trạng thái bán
-                            var stockEntry = new Medicine.StockInWithRemaining
-                            {
-                                StockIn = si,
-                                RemainingQuantity = si.RemainQuantity,
-                                IsCurrentSellingBatch = si.IsSelling
-                            };
-                            allStockEntries.Add(stockEntry);
-                        }
-
-                        DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>(allStockEntries);
-
-                        // Lấy thông tin nhà cung cấp mới nhất
-                        var latestStockIn = refreshedMedicine.StockIns
-                            .OrderByDescending(si => si.ImportDate)
-                            .FirstOrDefault();
-
-                        if (latestStockIn?.Supplier != null)
-                        {
-                            LatestSupplierName = latestStockIn.Supplier.SupplierName;
-                        }
-                        else
-                        {
-                            LatestSupplierName = "Chưa có thông tin nhà cung cấp";
-                        }
-                    }
-                    else
-                    {
-                        DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
-                        LatestSupplierName = "Không tìm thấy thông tin thuốc";
-                    }
-                }
-                else
-                {
-                    DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
-                    LatestSupplierName = "Không có thông tin thuốc";
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBoxService.ShowError($"Lỗi xảy ra trong quá trình tải dữ liệu: {ex.Message}", "Lỗi");
-                DetailedStockList = new ObservableCollection<Medicine.StockInWithRemaining>();
-            }
-        }
-
         /// <summary>
         /// Làm mới dữ liệu từ cơ sở dữ liệu mà không gây ra vòng lặp
         /// </summary>
@@ -952,7 +873,7 @@ namespace ClinicManagement.ViewModels
                         var minimumExpiryDate = today.AddDays(Medicine.MinimumDaysBeforeExpiry);
 
                         // Chuyển đổi EditExpiryDate sang DateOnly nếu có giá trị
-                        DateOnly? expiryDateOnly = EditExpiryDate.HasValue ?
+                            DateOnly? expiryDateOnly = EditExpiryDate.HasValue ?
                             DateOnly.FromDateTime(EditExpiryDate.Value) : null;
 
                         bool isUsable = !expiryDateOnly.HasValue || expiryDateOnly.Value >= minimumExpiryDate;
