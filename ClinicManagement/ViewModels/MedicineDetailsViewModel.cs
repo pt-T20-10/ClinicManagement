@@ -775,7 +775,6 @@ namespace ClinicManagement.ViewModels
         private void UpdateDropdownSelections()
         {
             if (Medicine == null) return;
-
             SelectedCategory = CategoryList?.FirstOrDefault(c => c.CategoryId == Medicine.CategoryId);
             SelectedUnit = UnitList?.FirstOrDefault(u => u.UnitId == Medicine.UnitId);
         }

@@ -2,7 +2,6 @@ using ClinicManagement.Models;
 using ClinicManagement.Services;
 using ClinicManagement.SubWindow;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using LiveCharts;
 using LiveCharts.Wpf;
 using Microsoft.EntityFrameworkCore;

@@ -28,7 +28,7 @@ namespace ClinicManagement.ViewModels
         private HashSet<string> _touchedFields = new HashSet<string>();
         
         // Cờ để bật validation khi người dùng nhấn Save
-        private bool _isValidating = false;
+        private bool _isValidating = true;
 
         #region Thông tin bác sĩ/nhân viên
 

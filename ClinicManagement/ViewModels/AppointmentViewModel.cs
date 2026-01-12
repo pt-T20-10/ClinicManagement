@@ -1492,7 +1492,204 @@ namespace ClinicManagement.ViewModels
             };
         }
 
+        private string GetVietnameseDayName(DayOfWeek dayOfWeek)//Method lấy tên ngày trong tuần bằng tiếng Việt
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday => "Thứ hai",
+                DayOfWeek.Tuesday => "Thứ ba",
+                DayOfWeek.Wednesday => "Thứ tư",
+                DayOfWeek.Thursday => "Thứ năm",
+                DayOfWeek.Friday => "Thứ sáu",
+                DayOfWeek.Saturday => "Thứ bảy",
+                DayOfWeek.Sunday => "Chủ nhật",
+                _ => string.Empty
+            };
+        }
 
+        private bool ValidateDateTimeSelection()//ethod kiểm tra xem đã chọn ngày và giờ hẹn hợp lệ hay chưa
+        {
+            //Kiểm tra xem đã chọn ngày hẹn hay chưa
+            if (!AppointmentDate.HasValue)
+            {
+                MessageBoxService.ShowWarning(
+                    "Vui lòng chọn ngày hẹn.",
+                    "Lỗi - Ngày hẹn");
+
+                return false;
+            }
+            if (AppointmentDate.Value.Date < DateTime.Today)
+            {
+                MessageBoxService.ShowWarning(
+                    "Ngày hẹn không hợp lệ. Vui lòng chọn ngày hiện tại hoặc trong tương lai.",
+                    "Lỗi - Ngày hẹn");
+
+                return false;
+            }
+            if (!SelectedAppointmentTime.HasValue)
+            {
+                MessageBoxService.ShowError(
+                    "Vui lòng chọn giờ hẹn.",
+                    "Lỗi - Giờ hẹn");
+
+                return false;
+            }
+
+            
+            DateTime appointmentDateTime = AppointmentDate.Value.Date
+                .Add(new TimeSpan(SelectedAppointmentTime.Value.Hour, SelectedAppointmentTime.Value.Minute, 0));
+
+            
+            if (appointmentDateTime < DateTime.Now)
+            {
+                MessageBoxService.ShowError(
+                    "Thời gian hẹn đã qua. Vui lòng chọn thời gian trong tương lai.",
+                    "Lỗi - Thời gian hẹn");
+
+                return false;
+            }
+
+            // Tạo khoảng thời gian hợp lệ có thể lựa chọn
+            TimeSpan minTime = new TimeSpan(7, 0, 0);  // 07:00
+            TimeSpan maxTime = new TimeSpan(17, 0, 0); // 17:00
+            TimeSpan selectedTime = appointmentDateTime.TimeOfDay;
+            if (selectedTime < minTime || selectedTime > maxTime)
+            {
+                MessageBoxService.ShowWarning(
+                    "Giờ hẹn chỉ được phép trong khoảng từ 07:00 đến 17:00.",
+                    "Lỗi - Giờ hẹn");
+                return false;
+            }
+
+        //Kiểm tra xem bệnh nhân đã có cuộc hẹn nào vào thời gian này chưa
+            if (SelectedPatient != null)
+            {
+                var patientAppointments = DataProvider.Instance.Context.Appointments
+                    .Where(a =>
+                        a.PatientId == SelectedPatient.PatientId &&
+                        a.IsDeleted != true &&
+                        a.Status != "Đã hủy" &&
+                        a.AppointmentDate.Date == appointmentDateTime.Date)
+                    .ToList();
+
+               
+                bool hasExactSameTime = patientAppointments.Any(a =>
+                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
+                    a.AppointmentDate.Minute == appointmentDateTime.Minute);
+
+                if (hasExactSameTime)
+                {
+                    MessageBoxService.ShowError(
+                        $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn vào lúc " +
+                        $"{appointmentDateTime.ToString("HH:mm")}.\n" +
+                        $"Vui lòng chọn thời gian khác.",
+                        "Lỗi - Trùng lịch");
+
+                    return false;
+                }
+
+
+                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
+
+                foreach (var existingAppointment in patientAppointments)
+                {
+                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
+                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
+
+                    if (timeDifference < 30 && timeDifference > 0)
+                    {
+                        MessageBoxService.ShowError(
+                            $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn khác vào lúc " +
+                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
+                            $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
+                            "Lỗi - Trùng lịch");
+
+                        return false;
+                    }
+                }
+            }
+
+
+            if (SelectedDoctor != null)
+            {
+            
+                if (!string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
+                {
+                 
+                    DayOfWeek dayOfWeek = appointmentDateTime.DayOfWeek;
+                    string dayCode = ConvertDayOfWeekToVietnameseCode(dayOfWeek);
+
+         
+                    var (workingDays, startTime, endTime) = ParseWorkingSchedule(SelectedDoctor.Schedule);
+
+             
+                    if (!workingDays.Contains(dayCode))
+                    {
+                        MessageBoxService.ShowError(
+                            $"Bác sĩ {SelectedDoctor.FullName} không làm việc vào ngày {AppointmentDate.Value:dd/MM/yyyy} ({GetVietnameseDayName(dayOfWeek)}).",
+                            "Lỗi - Lịch làm việc");
+
+                        return false;
+                    }
+
+    
+                    TimeSpan appointmentTime = new TimeSpan(appointmentDateTime.Hour, appointmentDateTime.Minute, 0);
+                    if (appointmentTime < startTime || appointmentTime > endTime)
+                    {
+                        MessageBoxService.ShowError(
+                            $"Giờ hẹn không nằm trong thời gian làm việc của bác sĩ {SelectedDoctor.FullName}.\n" +
+                            $"Thời gian làm việc: {startTime.ToString("hh\\:mm")} - {endTime.ToString("hh\\:mm")}.",
+                            "Lỗi - Giờ làm việc");
+
+                        return false;
+                    }
+                }
+
+       
+                var doctorAppointments = DataProvider.Instance.Context.Appointments
+                    .Where(a =>
+                        a.StaffId == SelectedDoctor.StaffId &&
+                        a.IsDeleted != true &&
+                        a.Status != "Đã hủy" &&
+                        a.AppointmentDate.Date == appointmentDateTime.Date)
+                    .ToList();
+
+                
+                if (doctorAppointments.Any(a =>
+                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
+                    a.AppointmentDate.Minute == appointmentDateTime.Minute))
+                {
+                    MessageBoxService.ShowError(
+                        $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
+                        $"{appointmentDateTime.ToString("HH:mm")}.\n" +
+                        $"Vui lòng chọn thời gian khác.",
+                        "Lỗi - Trùng lịch");
+
+                    return false;
+                }
+
+      
+                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
+                foreach (var existingAppointment in doctorAppointments)
+                {
+                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
+                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
+
+                    if (timeDifference < 30 && timeDifference % 30 != 0)
+                    {
+                        MessageBoxService.ShowError(
+                            $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
+                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
+                            $"Vui lòng chọn thời gian cách ít nhất 30 phút hoặc đúng khung giờ 30 phút.",
+                            "Lỗi - Trùng lịch");
+
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
         private void AddNewAppointment() //Method thêm cuộc hẹn mới
         {
             try
@@ -1676,9 +1873,6 @@ namespace ClinicManagement.ViewModels
 
             return true;
         }
-
-   
-
         private bool ValidateAppointmentType()//Method kiểm tra xem đã chọn loại lịch hẹn hay chưa
         {
             if (SelectedAppointmentType == null)
@@ -1693,207 +1887,6 @@ namespace ClinicManagement.ViewModels
             return true;
         }
 
-        private bool ValidateDateTimeSelection()//ethod kiểm tra xem đã chọn ngày và giờ hẹn hợp lệ hay chưa
-        {
-            //Kiểm tra xem đã chọn ngày hẹn hay chưa
-            if (!AppointmentDate.HasValue)
-            {
-                MessageBoxService.ShowWarning(
-                    "Vui lòng chọn ngày hẹn.",
-                    "Lỗi - Ngày hẹn");
-
-                return false;
-            }
-
-           
-            if (AppointmentDate.Value.Date < DateTime.Today)
-            {
-                MessageBoxService.ShowWarning(
-                    "Ngày hẹn không hợp lệ. Vui lòng chọn ngày hiện tại hoặc trong tương lai.",
-                    "Lỗi - Ngày hẹn");
-
-                return false;
-            }
-
-           
-            if (!SelectedAppointmentTime.HasValue)
-            {
-                MessageBoxService.ShowError(
-                    "Vui lòng chọn giờ hẹn.",
-                    "Lỗi - Giờ hẹn");
-
-                return false;
-            }
-
-            
-            DateTime appointmentDateTime = AppointmentDate.Value.Date
-                .Add(new TimeSpan(SelectedAppointmentTime.Value.Hour, SelectedAppointmentTime.Value.Minute, 0));
-
-            
-            if (appointmentDateTime < DateTime.Now)
-            {
-                MessageBoxService.ShowError(
-                    "Thời gian hẹn đã qua. Vui lòng chọn thời gian trong tương lai.",
-                    "Lỗi - Thời gian hẹn");
-
-                return false;
-            }
-
-            // Tạo khoảng thời gian hợp lệ có thể lựa chọn
-            TimeSpan minTime = new TimeSpan(7, 0, 0);  // 07:00
-            TimeSpan maxTime = new TimeSpan(17, 0, 0); // 17:00
-            TimeSpan selectedTime = appointmentDateTime.TimeOfDay;
-            if (selectedTime < minTime || selectedTime > maxTime)
-            {
-                MessageBoxService.ShowWarning(
-                    "Giờ hẹn chỉ được phép trong khoảng từ 07:00 đến 17:00.",
-                    "Lỗi - Giờ hẹn");
-                return false;
-            }
-
-        //Kiểm tra xem bệnh nhân đã có cuộc hẹn nào vào thời gian này chưa
-            if (SelectedPatient != null)
-            {
-                var patientAppointments = DataProvider.Instance.Context.Appointments
-                    .Where(a =>
-                        a.PatientId == SelectedPatient.PatientId &&
-                        a.IsDeleted != true &&
-                        a.Status != "Đã hủy" &&
-                        a.AppointmentDate.Date == appointmentDateTime.Date)
-                    .ToList();
-
-               
-                bool hasExactSameTime = patientAppointments.Any(a =>
-                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
-                    a.AppointmentDate.Minute == appointmentDateTime.Minute);
-
-                if (hasExactSameTime)
-                {
-                    MessageBoxService.ShowError(
-                        $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn vào lúc " +
-                        $"{appointmentDateTime.ToString("HH:mm")}.\n" +
-                        $"Vui lòng chọn thời gian khác.",
-                        "Lỗi - Trùng lịch");
-
-                    return false;
-                }
-
-
-                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
-
-                foreach (var existingAppointment in patientAppointments)
-                {
-                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
-                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
-
-                    if (timeDifference < 30 && timeDifference > 0)
-                    {
-                        MessageBoxService.ShowError(
-                            $"Bệnh nhân {SelectedPatient.FullName} đã có lịch hẹn khác vào lúc " +
-                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
-                            $"Vui lòng chọn thời gian cách ít nhất 30 phút.",
-                            "Lỗi - Trùng lịch");
-
-                        return false;
-                    }
-                }
-            }
-
-
-            if (SelectedDoctor != null)
-            {
-            
-                if (!string.IsNullOrWhiteSpace(SelectedDoctor.Schedule))
-                {
-                 
-                    DayOfWeek dayOfWeek = appointmentDateTime.DayOfWeek;
-                    string dayCode = ConvertDayOfWeekToVietnameseCode(dayOfWeek);
-
-         
-                    var (workingDays, startTime, endTime) = ParseWorkingSchedule(SelectedDoctor.Schedule);
-
-             
-                    if (!workingDays.Contains(dayCode))
-                    {
-                        MessageBoxService.ShowError(
-                            $"Bác sĩ {SelectedDoctor.FullName} không làm việc vào ngày {AppointmentDate.Value:dd/MM/yyyy} ({GetVietnameseDayName(dayOfWeek)}).",
-                            "Lỗi - Lịch làm việc");
-
-                        return false;
-                    }
-
-    
-                    TimeSpan appointmentTime = new TimeSpan(appointmentDateTime.Hour, appointmentDateTime.Minute, 0);
-                    if (appointmentTime < startTime || appointmentTime > endTime)
-                    {
-                        MessageBoxService.ShowError(
-                            $"Giờ hẹn không nằm trong thời gian làm việc của bác sĩ {SelectedDoctor.FullName}.\n" +
-                            $"Thời gian làm việc: {startTime.ToString("hh\\:mm")} - {endTime.ToString("hh\\:mm")}.",
-                            "Lỗi - Giờ làm việc");
-
-                        return false;
-                    }
-                }
-
-       
-                var doctorAppointments = DataProvider.Instance.Context.Appointments
-                    .Where(a =>
-                        a.StaffId == SelectedDoctor.StaffId &&
-                        a.IsDeleted != true &&
-                        a.Status != "Đã hủy" &&
-                        a.AppointmentDate.Date == appointmentDateTime.Date)
-                    .ToList();
-
-                
-                if (doctorAppointments.Any(a =>
-                    a.AppointmentDate.Hour == appointmentDateTime.Hour &&
-                    a.AppointmentDate.Minute == appointmentDateTime.Minute))
-                {
-                    MessageBoxService.ShowError(
-                        $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
-                        $"{appointmentDateTime.ToString("HH:mm")}.\n" +
-                        $"Vui lòng chọn thời gian khác.",
-                        "Lỗi - Trùng lịch");
-
-                    return false;
-                }
-
-      
-                var appointmentTimeMinutes = appointmentDateTime.TimeOfDay.TotalMinutes;
-                foreach (var existingAppointment in doctorAppointments)
-                {
-                    double existingTimeMinutes = existingAppointment.AppointmentDate.TimeOfDay.TotalMinutes;
-                    double timeDifference = Math.Abs(existingTimeMinutes - appointmentTimeMinutes);
-
-                    if (timeDifference < 30 && timeDifference % 30 != 0)
-                    {
-                        MessageBoxService.ShowError(
-                            $"Bác sĩ {SelectedDoctor.FullName} đã có lịch hẹn vào lúc " +
-                            $"{existingAppointment.AppointmentDate.ToString("HH:mm")}.\n" +
-                            $"Vui lòng chọn thời gian cách ít nhất 30 phút hoặc đúng khung giờ 30 phút.",
-                            "Lỗi - Trùng lịch");
-
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-        private string GetVietnameseDayName(DayOfWeek dayOfWeek)//Method lấy tên ngày trong tuần bằng tiếng Việt
-        {
-            return dayOfWeek switch
-            {
-                DayOfWeek.Monday => "Thứ hai",
-                DayOfWeek.Tuesday => "Thứ ba",
-                DayOfWeek.Wednesday => "Thứ tư",
-                DayOfWeek.Thursday => "Thứ năm",
-                DayOfWeek.Friday => "Thứ sáu",
-                DayOfWeek.Saturday => "Thứ bảy",
-                DayOfWeek.Sunday => "Chủ nhật",
-                _ => string.Empty
-            };
-        }
         private void ClearAppointmentForm() //Method xóa form cuộc hẹn
         {
             PatientSearch = string.Empty;

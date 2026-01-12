@@ -115,14 +115,6 @@ namespace ClinicManagement.SubWindow
             this.WindowState = WindowState.Minimized;
         }
 
-        /// <summary>
-        /// Shows a custom message box with the specified message, caption, and message type.
-        /// </summary>
-        /// <param name="message">The message to display.</param>
-        /// <param name="caption">The caption for the message box.</param>
-        /// <param name="messageType">The type of the message (Information, Warning, Error, etc.)</param>
-        /// <param name="showCancelButton">Whether to show a Cancel button or not.</param>
-        /// <returns>true if the OK button was clicked; false if Cancel or Close was clicked.</returns>
         public static bool ShowDialog(string message, string caption = "", MessageType messageType = MessageType.Information, bool showCancelButton = false)
         {
             var msgBox = new CustomMessageBox

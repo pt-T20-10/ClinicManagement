@@ -54,7 +54,7 @@ public partial class ClinicDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=acer\\mssqlserver03;Initial Catalog=ClinicManagement;Integrated Security=True;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=database-clinicproject.c12wwy6e6swn.ap-southeast-1.rds.amazonaws.com;Initial Catalog=ClinicManagement;Persist Security Info=True;User ID=admin;Password=VH9jPoZrN0skyNbc;Trust Server Certificate=True;MultipleActiveResultSets=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
